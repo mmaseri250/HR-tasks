@@ -194,7 +194,13 @@
         <!-- 7. Organization -->
         <button onclick="switchTab('organization')" id="nav-organization" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-sitemap w-5 text-center text-base"></i>
-          <span>الهيكل التنظيمي والأقسام</span>
+          <span>الهيكل التنظيمي والإدارات</span>
+        </button>
+
+        <!-- 7.1 Branches (فروع الشركة) -->
+        <button onclick="switchTab('branches')" id="nav-branches" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-code-branch w-5 text-center text-base text-amber-600"></i>
+          <span>فروع الشركة والمواقع</span>
         </button>
 
         <!-- 8. Users & Permissions (Requested) -->
@@ -428,7 +434,7 @@
           </div>
 
           <!-- Search & Filter Controls -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-600 mb-1">بحث سريع:</label>
               <div class="relative">
@@ -441,6 +447,13 @@
               <label class="block text-xs font-bold text-slate-600 mb-1">تصفية حسب الإدارة:</label>
               <select id="empDeptFilter" onchange="filterEmployeesTable()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand">
                 <option value="">جميع الإدارات</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">تصفية حسب الفرع:</label>
+              <select id="empBranchFilter" onchange="filterEmployeesTable()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand">
+                <option value="">جميع الفروع</option>
               </select>
             </div>
 
@@ -605,6 +618,9 @@
               <p class="text-xs text-slate-500 mt-1">تكامل أجهزة ZKTeco، تسجيل البصمة الذكية GPS، ومتابعة الانضباط وفق نظام العمل.</p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="openAddDeviceModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> إضافة جهاز بصمة جديد
+              </button>
               <button onclick="openModal('modalSmartPunch')" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
                 <i class="fa-solid fa-map-location-dot"></i> تسجيل حضور GPS
               </button>
@@ -618,7 +634,7 @@
           </div>
 
           <!-- Connected Devices Hardware Cards -->
-          <div id="biometricDevicesGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div id="biometricDevicesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- JS populated -->
           </div>
         </div>
@@ -881,6 +897,15 @@
            ===================================================================== -->
       <section id="view-organization" class="space-y-6 hidden">
         <div class="card-elevated p-6">
+          <div class="flex items-center gap-2 mb-5 border-b border-slate-100 pb-3">
+            <button onclick="switchTab('organization')" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand text-white shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-sitemap"></i> إدارات المنشأة التنظيمية
+            </button>
+            <button onclick="switchTab('branches')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-2">
+              <i class="fa-solid fa-code-branch text-amber-600"></i> فروع ومواقع الشركة
+            </button>
+          </div>
+
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-6">
             <div>
               <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
@@ -893,6 +918,57 @@
             </button>
           </div>
           <div id="departmentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- JS populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW 7.1: BRANCHES & LOCATIONS (فروع ومواقع شركة جوهرة المجد)
+           ===================================================================== -->
+      <section id="view-branches" class="space-y-6 hidden">
+        <div class="card-elevated p-6">
+          <div class="flex items-center gap-2 mb-5 border-b border-slate-100 pb-3">
+            <button onclick="switchTab('organization')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-2">
+              <i class="fa-solid fa-sitemap text-slate-500"></i> إدارات المنشأة التنظيمية
+            </button>
+            <button onclick="switchTab('branches')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 text-white shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-code-branch"></i> فروع ومواقع الشركة
+            </button>
+          </div>
+
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-6">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-code-branch text-amber-600"></i> فروع ومواقع شركة جوهرة المجد
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">إدارة الفروع الإدارية والتجارية والميدانية وتحديد مدراء الفروع وربط الموظفين وأجهزة البصمة بها.</p>
+            </div>
+            <button onclick="openAddBranchModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> إضافة فرع جديد
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+              <div class="text-[11px] font-bold text-slate-500">إجمالي الفروع المسجلة</div>
+              <div id="statBranchesTotal" class="text-lg font-black text-slate-800">4</div>
+            </div>
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center">
+              <div class="text-[11px] font-bold text-amber-700">المقر الرئيسي</div>
+              <div class="text-xs font-black text-amber-900 mt-1">فرع أبها الرئيسي</div>
+            </div>
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+              <div class="text-[11px] font-bold text-emerald-700">تغطية البصمة الحيوية</div>
+              <div class="text-xs font-black text-emerald-900 mt-1">100% مغطى بأجهزة ZK</div>
+            </div>
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl text-center">
+              <div class="text-[11px] font-bold text-blue-700">أجهزة البصمة المربوطة</div>
+              <div id="statBranchesDevices" class="text-lg font-black text-blue-800">4</div>
+            </div>
+          </div>
+
+          <div id="branchesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- JS populated -->
           </div>
         </div>
@@ -1150,11 +1226,19 @@
           </div>
         </div>
 
-        <!-- الإسناد الإداري وسياسة الدوام (Direct Manager & Shift Policy) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200">
+        <!-- الإسناد الإداري والفرع وسياسة الدوام (Direct Manager, Branch & Shift Policy) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200">
           <div>
             <label class="block font-bold text-slate-800 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-user-tie text-brand"></i> المدير المباشر (Direct Manager):
+              <i class="fa-solid fa-code-branch text-amber-600"></i> فرع العمل (Branch):
+            </label>
+            <select id="empFormBranch" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 bg-white">
+              <!-- JS populated with branches -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-user-tie text-brand"></i> المدير المباشر:
             </label>
             <select id="empFormManager" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 bg-white">
               <option value="">بدون مدير مباشر (إدارة عليا)</option>
@@ -1880,6 +1964,160 @@
     </div>
   </div>
 
+  <!-- Modal: Add / Edit Branch (إضافة / تعديل فرع) -->
+  <div id="modalAddBranch" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="branchModalTitle" class="text-base font-black text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-code-branch text-amber-600"></i> إضافة فرع جديد
+        </h3>
+        <button onclick="closeModal('modalAddBranch')" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="branchForm" onsubmit="handleBranchFormSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="branchFormId" value="">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">كود الفرع: *</label>
+            <input type="text" id="branchFormCode" required placeholder="مثال: BR-ABHA-01" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">اسم الفرع (عربي): *</label>
+            <input type="text" id="branchFormNameAr" required placeholder="فرع أبها الرئيسي" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اسم الفرع (إنجليزي):</label>
+          <input type="text" id="branchFormNameEn" placeholder="Abha Main Branch" class="w-full rounded-xl border border-slate-300 py-2 px-3">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">المدينة: *</label>
+            <input type="text" id="branchFormCity" value="أبها" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">هاتف الفرع:</label>
+            <input type="text" id="branchFormPhone" placeholder="0172XXXXXX" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">العنوان والموقع الجغرافي:</label>
+          <input type="text" id="branchFormAddress" placeholder="أبها - شارع الملك عبدالعزيز" class="w-full rounded-xl border border-slate-300 py-2 px-3">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">مدير / مشرف الفرع المسؤول:</label>
+          <input type="text" id="branchFormManagerName" placeholder="الاسم الكامل لمدير الفرع" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+        </div>
+
+        <div class="flex items-center gap-2 p-2.5 bg-amber-50 rounded-xl border border-amber-200">
+          <input type="checkbox" id="branchFormIsMain" class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500">
+          <label for="branchFormIsMain" class="font-bold text-slate-800 text-xs cursor-pointer">
+            تعيين كفرع رئيسي للشركة (Main Branch)
+          </label>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalAddBranch')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ الفرع
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Biometric Device (ربط / تعديل جهاز بصمة) -->
+  <div id="modalBiometricDevice" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="deviceModalTitle" class="text-base font-black text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-fingerprint text-blue-600"></i> ربط جهاز بصمة جديد
+        </h3>
+        <button onclick="closeModal('modalBiometricDevice')" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="deviceForm" onsubmit="handleDeviceFormSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="deviceFormId" value="">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">اسم الجهاز: *</label>
+            <input type="text" id="deviceFormName" required placeholder="جهاز بوابة فرع أبها" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">كود الجهاز الفريد: *</label>
+            <input type="text" id="deviceFormCode" required placeholder="ZK-ABHA-01" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">عنوان IP للجهاز: *</label>
+            <input type="text" id="deviceFormIp" required placeholder="192.168.10.201" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">المنفذ (Port): *</label>
+            <input type="number" id="deviceFormPort" value="4370" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الفرع التابع له الجهاز:</label>
+            <select id="deviceFormBranch" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">حالة الجهاز:</label>
+            <select id="deviceFormStatus" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+              <option value="متصل">متصل ونشط</option>
+              <option value="قيد الصيانة">قيد الصيانة</option>
+              <option value="غير متصل">غير متصل</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الموقع داخل المقر:</label>
+          <input type="text" id="deviceFormLocation" placeholder="المدخل الرئيسي - صالة الاستقبال" class="w-full rounded-xl border border-slate-300 py-2 px-3">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">طراز وموديل الجهاز (Hardware Model):</label>
+          <select id="deviceFormModel" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+            <option value="ZKTeco SilkBio-101TC">ZKTeco SilkBio-101TC (بصمة إصبع + وجه)</option>
+            <option value="ZKTeco SpeedFace-V5L">ZKTeco SpeedFace-V5L (بصمة وجه عالية السرعة)</option>
+            <option value="ZKTeco ProFace X">ZKTeco ProFace X (بيومتري متقدم)</option>
+            <option value="ZKTeco uFace800">ZKTeco uFace800 (متعدد القياسات الحيوية)</option>
+            <option value="ZKTeco Horus E1">ZKTeco Horus E1 (محمول ولاسلكي)</option>
+          </select>
+        </div>
+
+        <div class="flex justify-between items-center pt-3 border-t">
+          <button type="button" onclick="testCurrentModalDevice()" class="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-network-wired"></i> فحص الاتصال الآن
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeModal('modalBiometricDevice')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> حفظ الجهاز
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Dedicated Print Area -->
   <div id="printableArea" class="hidden"></div>
 
@@ -2002,6 +2240,16 @@
           <div>
             <div class="font-black text-slate-800">الهيكل التنظيمي</div>
             <div class="text-[10px] text-slate-400">سلسلة المراتب والمدراء</div>
+          </div>
+        </button>
+
+        <button id="mobMoreBranchesBtn" onclick="closeModal('modalMobileMore'); switchTab('branches')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg flex-shrink-0">
+            <i class="fa-solid fa-code-branch"></i>
+          </div>
+          <div>
+            <div class="font-black text-slate-800">فروع الشركة</div>
+            <div class="text-[10px] text-slate-400">الفروع والمواقع الميدانية</div>
           </div>
         </button>
 

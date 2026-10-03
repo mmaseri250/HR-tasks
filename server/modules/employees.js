@@ -4,9 +4,11 @@ const { query, get, run } = require('../database/db');
 function getAllEmployees(filters = {}) {
   let sql = `
     SELECT e.*, d.name_ar AS department_name_ar, d.name_en AS department_name_en,
+           b.name_ar AS branch_name_ar,
            m.full_name_ar AS manager_name_ar
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
+    LEFT JOIN branches b ON e.branch_id = b.id
     LEFT JOIN employees m ON e.manager_id = m.id
     WHERE 1=1
   `;
@@ -15,6 +17,11 @@ function getAllEmployees(filters = {}) {
   if (filters.department_id) {
     sql += ` AND e.department_id = ?`;
     params.push(filters.department_id);
+  }
+
+  if (filters.branch_id) {
+    sql += ` AND e.branch_id = ?`;
+    params.push(filters.branch_id);
   }
 
   if (filters.status) {
@@ -40,9 +47,11 @@ function getAllEmployees(filters = {}) {
 function getEmployeeById(id) {
   const sql = `
     SELECT e.*, d.name_ar AS department_name_ar, d.name_en AS department_name_en,
+           b.name_ar AS branch_name_ar,
            m.full_name_ar AS manager_name_ar
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
+    LEFT JOIN branches b ON e.branch_id = b.id
     LEFT JOIN employees m ON e.manager_id = m.id
     WHERE e.id = ?
   `;
@@ -66,13 +75,13 @@ function createEmployee(data) {
   const sql = `
     INSERT INTO employees (
       emp_code, full_name_ar, full_name_en, national_id, nationality,
-      is_saudi, gender, birth_date, email, phone, department_id,
-      job_title_ar, job_title_en, grade_level, manager_id, contract_type,
+      is_saudi, gender, birth_date, email, phone, department_id, branch_id,
+      job_title_ar, job_title_en, grade_level, manager_id, policy_id, contract_type,
       join_date, contract_start, contract_end, iqama_expiry, passport_expiry,
       insurance_expiry, basic_salary, housing_allowance, transport_allowance,
       other_allowance, gosi_number, bank_name, bank_code, iban,
       annual_leave_balance, shift_type, status, role
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const result = run(sql, [
@@ -87,10 +96,12 @@ function createEmployee(data) {
     data.email,
     data.phone || '',
     data.department_id || null,
+    data.branch_id ? Number(data.branch_id) : null,
     data.job_title_ar || 'موظف',
     data.job_title_en || 'Employee',
     data.grade_level || 'P-1',
-    data.manager_id || null,
+    data.manager_id ? Number(data.manager_id) : null,
+    data.policy_id ? Number(data.policy_id) : null,
     data.contract_type || 'محدد المدة',
     data.join_date || new Date().toISOString().split('T')[0],
     data.contract_start || null,
@@ -126,8 +137,8 @@ function updateEmployee(id, data) {
   const sql = `
     UPDATE employees SET
       emp_code = ?, full_name_ar = ?, full_name_en = ?, national_id = ?, nationality = ?,
-      is_saudi = ?, gender = ?, birth_date = ?, email = ?, phone = ?, department_id = ?,
-      job_title_ar = ?, job_title_en = ?, grade_level = ?, manager_id = ?, contract_type = ?,
+      is_saudi = ?, gender = ?, birth_date = ?, email = ?, phone = ?, department_id = ?, branch_id = ?,
+      job_title_ar = ?, job_title_en = ?, grade_level = ?, manager_id = ?, policy_id = ?, contract_type = ?,
       join_date = ?, contract_start = ?, contract_end = ?, iqama_expiry = ?, passport_expiry = ?,
       insurance_expiry = ?, basic_salary = ?, housing_allowance = ?, transport_allowance = ?,
       other_allowance = ?, gosi_number = ?, bank_name = ?, bank_code = ?, iban = ?,
@@ -147,10 +158,12 @@ function updateEmployee(id, data) {
     data.email !== undefined ? data.email : existing.email,
     data.phone !== undefined ? data.phone : existing.phone,
     data.department_id !== undefined ? data.department_id : existing.department_id,
+    data.branch_id !== undefined ? (data.branch_id ? Number(data.branch_id) : null) : existing.branch_id,
     data.job_title_ar !== undefined ? data.job_title_ar : existing.job_title_ar,
     data.job_title_en !== undefined ? data.job_title_en : existing.job_title_en,
     data.grade_level !== undefined ? data.grade_level : existing.grade_level,
-    data.manager_id !== undefined ? data.manager_id : existing.manager_id,
+    data.manager_id !== undefined ? (data.manager_id ? Number(data.manager_id) : null) : existing.manager_id,
+    data.policy_id !== undefined ? (data.policy_id ? Number(data.policy_id) : null) : existing.policy_id,
     data.contract_type !== undefined ? data.contract_type : existing.contract_type,
     data.join_date !== undefined ? data.join_date : existing.join_date,
     data.contract_start !== undefined ? data.contract_start : existing.contract_start,

@@ -44,6 +44,19 @@ function initSchema() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS branches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT UNIQUE NOT NULL,
+      name_ar TEXT NOT NULL,
+      name_en TEXT,
+      city TEXT DEFAULT 'أبها',
+      address TEXT,
+      phone TEXT,
+      manager_name TEXT,
+      is_main INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS departments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT UNIQUE NOT NULL,
@@ -292,6 +305,12 @@ function initSchema() {
   } catch (e) {}
   try {
     db.exec('ALTER TABLE employees ADD COLUMN policy_id INTEGER;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE employees ADD COLUMN branch_id INTEGER;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE biometric_devices ADD COLUMN branch_id INTEGER;');
   } catch (e) {}
 }
 

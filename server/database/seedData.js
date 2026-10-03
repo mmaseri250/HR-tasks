@@ -37,67 +37,73 @@ function seedDatabase() {
       updated_at = datetime('now')
   `);
 
-  // 1. Users System: Seed admin, plus sample employee and manager accounts
+  // 1. Users System: Keep ONLY admin user
   run(`DELETE FROM users`);
   run(`
-    INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active)
-    VALUES 
-      ('admin', 'Jj123', 'مدير النظام (Admin)', 'admin@jalmajd.com', 'admin', '["all"]', 1, 1),
-      ('sarah', '123456', 'سارة عبدالله الشهري', 'sarah.shehri@jalmajd.com', 'employee', '["requests","payslips"]', 3, 1),
-      ('fahad', '123456', 'م. فهد عبدالعزيز القحطاني', 'fahad.qahtani@jalmajd.com', 'dept_manager', '["requests","payslips","approvals"]', 2, 1)
+    INSERT INTO users (id, username, password, full_name, email, role, permissions, emp_id, is_active)
+    VALUES (1, 'admin', 'Jj123', 'مدير النظام (Admin)', 'admin@jalmajd.com', 'admin', '["all"]', NULL, 1)
   `);
 
-  // 2. Departments
-  const deptCount = get('SELECT COUNT(*) AS count FROM departments').count;
-  if (deptCount === 0) {
-    const departments = [
-      { code: 'EXEC', name_ar: 'الإدارة العامة والتنفيذية', name_en: 'Executive Management', manager: 'سعود بن محمد القحطاني', budget: 500000, loc: 'الطابق الإداري' },
-      { code: 'HR', name_ar: 'الموارد البشرية والخدمات المشتركة', name_en: 'Human Resources & Shared Services', manager: 'خالد سعد الشهراني', budget: 250000, loc: 'مكتب HR - جناح A' },
-      { code: 'IT', name_ar: 'تقنية المعلومات والتحول الرقمي', name_en: 'Information Technology & Digital Transformation', manager: 'م. فهد عبدالعزيز القحطاني', budget: 400000, loc: 'مكتب التقنية - جناح C' },
-      { code: 'FIN', name_ar: 'الشؤون المالية والمحاسبة', name_en: 'Finance & Accounting', manager: 'عبدالله بن إبراهيم السبيعي', budget: 300000, loc: 'مكتب المالية - جناح B' },
-      { code: 'OPS', name_ar: 'إدارة العمليات والمشاريع', name_en: 'Operations & Project Management', manager: 'عبدالرحمن علي عسيري', budget: 650000, loc: 'سيتي بارك - مبنى العمليات' },
-      { code: 'MKT', name_ar: 'التسويق والاتصال المؤسسي', name_en: 'Marketing & Corporate Communication', manager: 'نورة سعيد الغامدي', budget: 200000, loc: 'الجناح الإعلامي' }
-    ];
+  // 2. Departments: Seed exact 6 departments requested
+  run(`DELETE FROM departments`);
+  const departments = [
+    { code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager: 'الرئيس التنفيذي', budget: 500000, loc: 'مقر أبها - الطابق الإداري' },
+    { code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager: 'مدير الموارد البشرية', budget: 250000, loc: 'مقر أبها - مبنى الإدارة' },
+    { code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager: 'مدير المشتريات', budget: 350000, loc: 'مقر أبها - قسم المشتريات' },
+    { code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager: 'مدير المبيعات', budget: 400000, loc: 'مقر أبها - الإدارة التجارية' },
+    { code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager: 'مدير تقنية المعلومات', budget: 300000, loc: 'مقر أبها - مركز العمليات الرقمية' },
+    { code: 'MKT', name_ar: 'ادارة التسويق', name_en: 'Marketing Department', manager: 'مدير التسويق', budget: 200000, loc: 'مقر أبها - الجناح الإعلامي' }
+  ];
 
-    for (const dept of departments) {
-      run(`
-        INSERT INTO departments (code, name_ar, name_en, manager_name, budget, location)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [dept.code, dept.name_ar, dept.name_en, dept.manager, dept.budget, dept.loc]);
-    }
+  for (const dept of departments) {
+    run(`
+      INSERT INTO departments (code, name_ar, name_en, manager_name, budget, location)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [dept.code, dept.name_ar, dept.name_en, dept.manager, dept.budget, dept.loc]);
   }
 
-  // 3. Biometric Devices
-  const devCount = get('SELECT COUNT(*) AS count FROM biometric_devices').count;
-  if (devCount === 0) {
-    const devices = [
-      { name: 'جهاز البوابة الرئيسية (ZK-MAIN)', code: 'ZK-BIO-MAIN-01', ip: '192.168.10.201', port: 4370, loc: 'المدخل الرئيسي - الاستقبال', status: 'متصل', model: 'ZKTeco SilkBio-101TC' },
-      { name: 'جهاز بوابة العمليات والتقنية (ZK-TECH)', code: 'ZK-BIO-TECH-02', ip: '192.168.10.202', port: 4370, loc: 'مدخل أجنحة التقنية والعمليات', status: 'متصل', model: 'ZKTeco SpeedFace-V5L' },
-      { name: 'جهاز الإدارة العامة ومول سيتي بارك (ZK-EXEC)', code: 'ZK-BIO-CITY-03', ip: '192.168.10.203', port: 4370, loc: 'الطابق الثاني - صالة الموظفين', status: 'متصل', model: 'ZKTeco ProFace X' }
-    ];
+  // 3. Branches: Seed exact 4 branches requested
+  run(`DELETE FROM branches`);
+  const branches = [
+    { code: 'BR-ABHA-01', name_ar: 'فرع ابها الرئيسي', name_en: 'Abha Main Branch', city: 'أبها', address: 'أبها - شارع الملك عبدالعزيز - برج جوهرة المجد', phone: '0172201122', manager: 'مدير فرع أبها الرئيسي', is_main: 1 },
+    { code: 'BR-MANSAK-02', name_ar: 'فرع المنسك', name_en: 'Al-Mansak Branch', city: 'أبها', address: 'أبها - حي المنسك - طريق الأربعين', phone: '0172203344', manager: 'مشرف فرع المنسك', is_main: 0 },
+    { code: 'BR-MUWADAF-03', name_ar: 'فرع حي الموظفين', name_en: 'Hay Al-Muwadhafeen Branch', city: 'أبها', address: 'أبها - حي الموظفين - الشارع التجاري العام', phone: '0172205566', manager: 'مشرف فرع حي الموظفين', is_main: 0 },
+    { code: 'BR-MUHAYIL-04', name_ar: 'فرع محايل عسير', name_en: 'Muhayil Asir Branch', city: 'محايل عسير', address: 'محايل عسير - طريق الشعبين الرئيسي - مجمع جوهرة المجد', phone: '0172851122', manager: 'مشرف فرع محايل عسير', is_main: 0 }
+  ];
 
-    for (const dev of devices) {
-      run(`
-        INSERT INTO biometric_devices (device_name, device_code, ip_address, port, location, status, last_sync, model)
-        VALUES (?, ?, ?, ?, ?, ?, datetime('now', '-5 minutes'), ?)
-      `, [dev.name, dev.code, dev.ip, dev.port, dev.loc, dev.status, dev.model]);
-    }
+  for (const b of branches) {
+    run(`
+      INSERT INTO branches (code, name_ar, name_en, city, address, phone, manager_name, is_main)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [b.code, b.name_ar, b.name_en, b.city, b.address, b.phone, b.manager, b.is_main]);
   }
 
-  // 4. Employees
-  const empCount = get('SELECT COUNT(*) AS count FROM employees').count;
-  if (empCount === 0) {
-    seedEmployees();
+  // 4. Biometric Devices: Seed devices linked to branches
+  run(`DELETE FROM biometric_devices`);
+  const devices = [
+    { name: 'جهاز بصمة فرع أبها الرئيسي', code: 'ZK-ABHA-01', ip: '192.168.10.201', port: 4370, loc: 'المدخل الرئيسي - الاستقبال', branch_id: 1, status: 'متصل', model: 'ZKTeco SilkBio-101TC' },
+    { name: 'جهاز بصمة فرع المنسك', code: 'ZK-MANSAK-02', ip: '192.168.11.201', port: 4370, loc: 'صالة فرع المنسك - المدخل', branch_id: 2, status: 'متصل', model: 'ZKTeco SpeedFace-V5L' },
+    { name: 'جهاز بصمة فرع حي الموظفين', code: 'ZK-MUWADAF-03', ip: '192.168.12.201', port: 4370, loc: 'مدخل فرع حي الموظفين', branch_id: 3, status: 'متصل', model: 'ZKTeco ProFace X' },
+    { name: 'جهاز بصمة فرع محايل عسير', code: 'ZK-MUHAYIL-04', ip: '192.168.13.201', port: 4370, loc: 'استقبال فرع محايل عسير', branch_id: 4, status: 'متصل', model: 'ZKTeco SilkBio-101TC' }
+  ];
+
+  for (const dev of devices) {
+    run(`
+      INSERT INTO biometric_devices (device_name, device_code, ip_address, port, location, branch_id, status, last_sync, model)
+      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', '-5 minutes'), ?)
+    `, [dev.name, dev.code, dev.ip, dev.port, dev.loc, dev.branch_id, dev.status, dev.model]);
   }
 
-  // Ensure manager_id and policy_id links are set for employees
-  run(`UPDATE employees SET manager_id = 1 WHERE id IN (2, 3, 4, 6, 7, 10, 13, 15) AND (manager_id IS NULL OR manager_id = 0)`);
-  run(`UPDATE employees SET manager_id = 2 WHERE id IN (5, 8) AND (manager_id IS NULL OR manager_id = 0)`);
-  run(`UPDATE employees SET manager_id = 6 WHERE id IN (9, 11, 14) AND (manager_id IS NULL OR manager_id = 0)`);
-  run(`UPDATE employees SET manager_id = 7 WHERE id IN (12) AND (manager_id IS NULL OR manager_id = 0)`);
-  run(`UPDATE employees SET policy_id = 1 WHERE policy_id IS NULL`);
+  // 5. Purge all demo employee data, demo requests, penalties, and logs (Start Clean for Management)
+  run(`DELETE FROM employees`);
+  run(`DELETE FROM requests`);
+  run(`DELETE FROM penalties_issued`);
+  run(`DELETE FROM attendance_logs`);
+  run(`DELETE FROM attendance_daily_summary`);
+  run(`DELETE FROM payroll_items`);
+  run(`DELETE FROM payroll_periods`);
 
-  // 5. Attendance & Shift Policies (سياسات الدوام)
+  // 6. Attendance & Shift Policies (سياسات الدوام)
   const policyCount = get('SELECT COUNT(*) AS count FROM attendance_policies').count;
   if (policyCount === 0) {
     const defaultPolicies = [
@@ -147,14 +153,8 @@ function seedDatabase() {
     }
   }
 
-  // 6. Seed Disciplinary Regulations (50 clauses from Desktop اكواد المخالفات.xlsx)
+  // 7. Seed Disciplinary Regulations (50 clauses from Desktop اكواد المخالفات.xlsx)
   seedPenaltyRegulations();
-
-  // 7. Seed Sample Issued Penalties if empty
-  const issuedCount = get('SELECT COUNT(*) AS count FROM penalties_issued').count;
-  if (issuedCount === 0) {
-    seedIssuedPenalties();
-  }
 }
 
 function seedEmployees() {

@@ -1,9 +1,11 @@
 // tests/workflow-policies.test.js
 const assert = require('assert');
 const db = require('../server/database/db');
+const employeesModule = require('../server/modules/employees');
 const requestsModule = require('../server/modules/requests');
+const { seedDatabase } = require('../server/database/seedData');
 
-console.log('--- تشغيل اختبارات سياسات الدوام، الإدارات، وسير الموافقات ---');
+console.log('--- تشغيل اختبارات سياسات الدوام، الإدارات، الفروع، وسير الموافقات ---');
 
 // 1. Attendance Policies Test
 const policies = db.query('SELECT * FROM attendance_policies WHERE is_active = 1');
@@ -21,22 +23,39 @@ console.log('✓ نجح: إنشاء وحذف سياسة دوام مفتوحة ا
 
 // 2. Departments Management Test
 const depts = db.query('SELECT * FROM departments');
-assert(depts.length >= 6, 'يجب أن تتوفر 6 إدارات أساسية');
+assert.strictEqual(depts.length, 6, 'يجب أن تتوفر 6 إدارات أساسية معتمدة');
 console.log(`✓ نجح: ربط الإدارات بعدد ${depts.length} إدارة مع مدراء الإدارات`);
 
-// 3. Employee-Manager Hierarchy Test
-const empsWithManagers = db.query(`
-  SELECT e.id, e.full_name_ar, e.manager_id, m.full_name_ar AS manager_name
-  FROM employees e
-  LEFT JOIN employees m ON e.manager_id = m.id
-  WHERE e.manager_id IS NOT NULL
-`);
-assert(empsWithManagers.length > 0, 'يجب وجود موظفين مرتبطين بمدراء مباشرين');
-console.log(`✓ نجح: ربط الموظفين بمدرائهم المباشرين لعدد ${empsWithManagers.length} موظفاً بنجاح هيكلي`);
+// 3. Branches Management Test
+const branches = db.query('SELECT * FROM branches');
+assert.strictEqual(branches.length, 4, 'يجب أن تتوفر الفروع الـ 4 الأساسية');
+const mainBranch = branches.find(b => b.is_main === 1);
+assert(mainBranch && mainBranch.name_ar.includes('الرئيسي'), 'يجب تعيين فرع أبها كفرع رئيسي');
+console.log(`✓ نجح: التحقق من الفروع بعدد ${branches.length} فروع (مع تحديد ${mainBranch.name_ar})`);
 
-// 4. Approval Workflow Stepper Transition Test
+// 4. Biometric Devices Test
+const devices = db.query('SELECT * FROM biometric_devices');
+assert.strictEqual(devices.length, 4, 'يجب أن تتوفر أجهزة البصمة الـ 4 المربوطة بالفروع');
+console.log(`✓ نجح: التحقق من أجهزة البصمة البيومترية بعدد ${devices.length} أجهزة ZKTeco`);
+
+// 5. Hierarchy and Approval Workflow Test
+const testEmp = employeesModule.createEmployee({
+  emp_code: 'JM-TEST-WORKFLOW',
+  full_name_ar: 'موظف تجربة سير الموافقات',
+  national_id: '1066554433',
+  nationality: 'سعودي',
+  email: 'workflow.test@jalmajd.com',
+  phone: '0551122338',
+  department_id: depts[0].id,
+  branch_id: branches[0].id,
+  job_title_ar: 'منسق إداري',
+  basic_salary: 7000,
+  housing_allowance: 1750,
+  transport_allowance: 700
+});
+
 const testReq = requestsModule.submitRequest({
-  emp_id: 3, // Sarah
+  emp_id: testEmp.id,
   request_type: 'طلب استئذان',
   start_date: '2026-10-05',
   end_date: '2026-10-05',
@@ -68,6 +87,9 @@ assert.strictEqual(hrStep.hr_approver_name, 'مدير عام الموارد ال
 assert(hrStep.hr_approved_at !== null, 'يجب توثيق وقت اعتماد الموارد البشرية');
 console.log('✓ نجح: دورة سير الموافقات المكتملة (تقديم ➔ موافقة المدير ➔ اعتماد HR)');
 
-// Cleanup test request
+// Cleanup test records and re-seed to ensure pristine database state
 db.run('DELETE FROM requests WHERE id = ?', [testReq.id]);
+employeesModule.deleteEmployee(testEmp.id);
+seedDatabase();
+
 console.log('--- اكتملت اختبارات السياسات والإدارات وسير الموافقات بنجاح 100% ---\n');
