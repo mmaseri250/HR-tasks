@@ -90,10 +90,67 @@ function seedDatabase() {
     seedEmployees();
   }
 
-  // 5. Seed Disciplinary Regulations (50 clauses from Desktop اكواد المخالفات.xlsx)
+  // Ensure manager_id and policy_id links are set for employees
+  run(`UPDATE employees SET manager_id = 1 WHERE id IN (2, 3, 4, 6, 7, 10, 13, 15) AND (manager_id IS NULL OR manager_id = 0)`);
+  run(`UPDATE employees SET manager_id = 2 WHERE id IN (5, 8) AND (manager_id IS NULL OR manager_id = 0)`);
+  run(`UPDATE employees SET manager_id = 6 WHERE id IN (9, 11, 14) AND (manager_id IS NULL OR manager_id = 0)`);
+  run(`UPDATE employees SET manager_id = 7 WHERE id IN (12) AND (manager_id IS NULL OR manager_id = 0)`);
+  run(`UPDATE employees SET policy_id = 1 WHERE policy_id IS NULL`);
+
+  // 5. Attendance & Shift Policies (سياسات الدوام)
+  const policyCount = get('SELECT COUNT(*) AS count FROM attendance_policies').count;
+  if (policyCount === 0) {
+    const defaultPolicies = [
+      {
+        policy_name: 'سياسة دوام المقر الرئيسي المعتمد (سيتي بارك)',
+        shift_type: 'دوام صباحي',
+        start_time: '08:00',
+        end_time: '16:00',
+        grace_period_mins: 15,
+        daily_hours: 8.0,
+        work_days: 'الأحد إلى الخميس',
+        flexible_hours: 0,
+        overtime_allowed: 1,
+        notes: 'الدوام الرسمي المعتمد للإدارة العامة بمقر مول سيتي بارك في أبها. تحسب ساعات التأخير بعد 08:15 صباحاً وفق لائحة الجزاءات.'
+      },
+      {
+        policy_name: 'سياسة دوام الفرق الفنية والتقنية (دوام مرن)',
+        shift_type: 'دوام مرن',
+        start_time: '07:30',
+        end_time: '15:30',
+        grace_period_mins: 30,
+        daily_hours: 8.0,
+        work_days: 'الأحد إلى الخميس',
+        flexible_hours: 1,
+        overtime_allowed: 1,
+        notes: 'حضور مرن بين 07:30 و 09:30 صباحاً مع إكمال 8 ساعات عمل يومية، مخصص لمهندسي البرمجيات والأنظمة.'
+      },
+      {
+        policy_name: 'سياسة دوام العمليات والمشاريع الميدانية',
+        shift_type: 'دوام ميداني',
+        start_time: '09:00',
+        end_time: '17:00',
+        grace_period_mins: 15,
+        daily_hours: 8.0,
+        work_days: 'الأحد إلى الخميس',
+        flexible_hours: 0,
+        overtime_allowed: 1,
+        notes: 'خاص بفرق العمليات والتشغيل وإشراف المواقع والمشاريع الخارجية.'
+      }
+    ];
+
+    for (const p of defaultPolicies) {
+      run(`
+        INSERT INTO attendance_policies (policy_name, shift_type, start_time, end_time, grace_period_mins, daily_hours, work_days, flexible_hours, overtime_allowed, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [p.policy_name, p.shift_type, p.start_time, p.end_time, p.grace_period_mins, p.daily_hours, p.work_days, p.flexible_hours, p.overtime_allowed, p.notes]);
+    }
+  }
+
+  // 6. Seed Disciplinary Regulations (50 clauses from Desktop اكواد المخالفات.xlsx)
   seedPenaltyRegulations();
 
-  // 6. Seed Sample Issued Penalties if empty
+  // 7. Seed Sample Issued Penalties if empty
   const issuedCount = get('SELECT COUNT(*) AS count FROM penalties_issued').count;
   if (issuedCount === 0) {
     seedIssuedPenalties();

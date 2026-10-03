@@ -452,6 +452,11 @@ const FALLBACK_DATA = {
     { id: 1, decision_no: 'DEC-2026-0012', emp_id: 4, emp_code: 'JM-1004', full_name_ar: 'محمد أحمد العتيبي', job_title_ar: 'محاسب مالي أول', national_id: '1074829103', violation_code: 'v1', violation_text: 'التأخر عن مواعيد الحضور للعمل لغاية (15) دقيقة دون عذر', category: 'مخالفات مواعيد العمل', repetition_level: 'المرة الأولى', penalty_text: 'إنذار كتابي رسمي', deduction_type: 'إنذار كتابي', deduction_days: 0, incident_date: '2026-09-25', investigation_details: 'تأخر الموظف عن بدء الدوام الصباحي بمقدار 12 دقيقة دون إشعار مسبق. تمت مساءلته وتوجيه إنذار كتابي أول.', issued_by: 'خالد سعد الشهراني (مدير الموارد البشرية)' },
     { id: 2, decision_no: 'DEC-2026-0013', emp_id: 14, emp_code: 'JM-1014', full_name_ar: 'كمال الدين حسن مرسي', job_title_ar: 'مشرف تشغيل وصيانة', national_id: '2192837465', violation_code: 'v11', violation_text: 'الغياب دون إذن كتابي أو عذر مقبول لمدة يوم خلال السنة', category: 'مخالفات مواعيد العمل', repetition_level: 'المرة الأولى', penalty_text: 'خصم أجر نصف يوم من الراتب', deduction_type: 'خصم راتب', deduction_days: 0.5, incident_date: '2026-09-22', investigation_details: 'تغيب الموظف عن العمل يوم 22 سبتمبر دون تقديم عذر طبي أو إجازة معتمدة. تقرر حسم نصف يوم وفق اللائحة.', issued_by: 'خالد سعد الشهراني (مدير الموارد البشرية)' },
     { id: 3, decision_no: 'DEC-2026-0014', emp_id: 11, emp_code: 'JM-1011', full_name_ar: 'عمر فاروق البشير', job_title_ar: 'منسق لوجستيات', national_id: '2581928471', violation_code: 'v23', violation_text: 'عدم وضع أدوات الإصلاح والصيانة في أماكنها المخصصة', category: 'مخالفات السلوك والعمل', repetition_level: 'المرة الأولى', penalty_text: 'إنذار كتابي رسمي', deduction_type: 'إنذار كتابي', deduction_days: 0, incident_date: '2026-09-18', investigation_details: 'ترك معدات الفحص اللوجستي خارج مستودع المستلزمات مما عرضها للتلف الجزئي.', issued_by: 'عبدالرحمن علي عسيري (مدير العمليات)' }
+  ],
+  policies: [
+    { id: 1, policy_name: 'سياسة دوام الإدارة العامة والمكاتب الرئيسية (مول سيتي بارك)', shift_type: 'دوام صباحي', start_time: '08:00', end_time: '16:00', grace_period_mins: 15, daily_hours: 8, work_days: 'الأحد إلى الخميس', flexible_hours: 0, overtime_allowed: 1, notes: 'الدوام الرسمي المعتمد للإدارة العامة بمقر مول سيتي بارك في أبها. تحسب ساعات التأخير بعد 08:15 صباحاً وفق لائحة الجزاءات.', is_active: 1 },
+    { id: 2, policy_name: 'سياسة دوام الفرق الفنية والتقنية (دوام مرن)', shift_type: 'دوام مرن', start_time: '07:30', end_time: '15:30', grace_period_mins: 30, daily_hours: 8, work_days: 'الأحد إلى الخميس', flexible_hours: 1, overtime_allowed: 1, notes: 'حضور مرن بين 07:30 و 09:30 صباحاً مع إكمال 8 ساعات عمل يومية، مخصص لمهندسي البرمجيات والأنظمة.', is_active: 1 },
+    { id: 3, policy_name: 'سياسة دوام العمليات والمشاريع الميدانية', shift_type: 'دوام ميداني', start_time: '09:00', end_time: '17:00', grace_period_mins: 15, daily_hours: 8, work_days: 'الأحد إلى الخميس', flexible_hours: 0, overtime_allowed: 1, notes: 'خاص بفرق العمليات والتشغيل وإشراف المواقع والمشاريع الخارجية.', is_active: 1 }
   ]
 };
 
@@ -461,11 +466,13 @@ const state = {
   currentUser: null,
   currentLang: localStorage.getItem('jm_hrms_lang') || 'ar',
   myRequests: [],
+  allRequests: [],
   departments: [...FALLBACK_DATA.departments],
   employees: [...FALLBACK_DATA.employees],
   regulations: [...FALLBACK_DATA.regulations],
   issuedPenalties: [...FALLBACK_DATA.issuedPenalties],
   users: [...FALLBACK_DATA.users],
+  policies: [...(FALLBACK_DATA.policies || [])],
   charts: { dept: null, attendance: null }
 };
 
@@ -767,6 +774,12 @@ async function syncDataFromBackend() {
 
   const usersRes = await apiFetch('/api/users');
   if (usersRes && usersRes.success) state.users = usersRes.data;
+
+  const polRes = await apiFetch('/api/policies');
+  if (polRes && polRes.success) state.policies = polRes.data;
+
+  const reqRes = await apiFetch('/api/requests');
+  if (reqRes && reqRes.success) state.allRequests = reqRes.data;
 }
 
 function populateDropdowns() {
@@ -781,6 +794,33 @@ function populateDropdowns() {
       el.innerHTML += `<option value="${d.id}">${d.name_ar}</option>`;
     });
   });
+
+  // Direct Manager dropdown in Add Employee modal (#empFormManager)
+  const mgrSelect = document.getElementById('empFormManager');
+  if (mgrSelect) {
+    mgrSelect.innerHTML = '<option value="">-- بدون مدير مباشر (إدارة عليا) --</option>';
+    state.employees.forEach(emp => {
+      mgrSelect.innerHTML += `<option value="${emp.id}">${emp.full_name_ar} (${emp.job_title_ar})</option>`;
+    });
+  }
+
+  // Work Policy dropdown in Add Employee modal (#empFormPolicy)
+  const policySelect = document.getElementById('empFormPolicy');
+  if (policySelect) {
+    policySelect.innerHTML = '<option value="">-- اختر سياسة الدوام والورديات --</option>';
+    (state.policies || []).forEach(pol => {
+      policySelect.innerHTML += `<option value="${pol.id}">${pol.policy_name} (${pol.shift_type || 'دوام'})</option>`;
+    });
+  }
+
+  // Department Manager dropdown in Add Department modal (#deptManager)
+  const deptMgrSelect = document.getElementById('deptManager');
+  if (deptMgrSelect) {
+    deptMgrSelect.innerHTML = '<option value="">-- بدون مدير حالياً --</option>';
+    state.employees.forEach(emp => {
+      deptMgrSelect.innerHTML += `<option value="${emp.full_name_ar}">${emp.full_name_ar} (${emp.job_title_ar})</option>`;
+    });
+  }
 
   // Employee dropdown in Issue Penalty modal
   const penEmpSelect = document.getElementById('penEmpSelect');
@@ -1110,6 +1150,11 @@ function renderEmployeesTable(list) {
       docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-warning">عقد قوى ينتهي قريباً</span>`;
     }
 
+    const manager = state.employees.find(m => m.id === emp.manager_id);
+    const managerName = manager ? manager.full_name_ar : null;
+    const policy = (state.policies || []).find(p => p.id === emp.policy_id);
+    const policyName = policy ? policy.policy_name : (emp.shift_type || null);
+
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-slate-50 transition';
     tr.innerHTML = `
@@ -1122,6 +1167,8 @@ function renderEmployeesTable(list) {
       <td class="py-3 px-3">
         <div class="font-semibold text-slate-800">${emp.job_title_ar}</div>
         <div class="text-[11px] text-slate-400">${emp.department_name_ar || 'الإدارة العامة'}</div>
+        ${managerName ? `<div class="text-[10px] text-amber-700 font-medium mt-0.5"><i class="fa-solid fa-user-tie"></i> المدير: ${managerName}</div>` : ''}
+        ${policyName ? `<div class="text-[10px] text-indigo-700 font-medium mt-0.5"><i class="fa-solid fa-clock"></i> الدوام: ${policyName}</div>` : ''}
       </td>
       <td class="py-3 px-3">${isSaudiBadge}</td>
       <td class="py-3 px-3 font-mono font-bold text-slate-700">${Number(emp.basic_salary).toLocaleString('ar-SA')} ر.س</td>
@@ -1189,7 +1236,9 @@ async function handleEmployeeFormSubmit(e) {
     bank_name: document.getElementById('empFormBankName').value.trim(),
     iban: document.getElementById('empFormIban').value.trim(),
     iqama_expiry: document.getElementById('empFormIqamaExpiry').value || null,
-    contract_end: document.getElementById('empFormContractEnd').value || null
+    contract_end: document.getElementById('empFormContractEnd').value || null,
+    manager_id: document.getElementById('empFormManager') && document.getElementById('empFormManager').value ? Number(document.getElementById('empFormManager').value) : null,
+    policy_id: document.getElementById('empFormPolicy') && document.getElementById('empFormPolicy').value ? Number(document.getElementById('empFormPolicy').value) : null
   };
 
   const isSaudi = payload.national_id.startsWith('1') ? 1 : 0;
@@ -1224,10 +1273,23 @@ async function handleEmployeeFormSubmit(e) {
   loadDashboard();
 }
 
+function openAddEmployeeModal() {
+  populateDropdowns();
+  const form = document.getElementById('addEmployeeForm');
+  if (form) form.reset();
+  const title = document.getElementById('employeeModalTitle');
+  if (title) title.innerHTML = `<i class="fa-solid fa-user-plus text-brand"></i> إضافة موظف جديد`;
+  document.getElementById('empFormId').value = '';
+  if (document.getElementById('empFormManager')) document.getElementById('empFormManager').value = '';
+  if (document.getElementById('empFormPolicy')) document.getElementById('empFormPolicy').value = '';
+  openModal('modalAddEmployee');
+}
+
 function editEmployee(id) {
   const emp = state.employees.find(e => e.id === id);
   if (!emp) return;
 
+  populateDropdowns();
   document.getElementById('employeeModalTitle').innerHTML = `<i class="fa-solid fa-user-pen text-brand"></i> تعديل بيانات الموظف: ${emp.full_name_ar}`;
   document.getElementById('empFormId').value = emp.id;
   document.getElementById('empFormCode').value = emp.emp_code;
@@ -1247,6 +1309,8 @@ function editEmployee(id) {
   document.getElementById('empFormIban').value = emp.iban;
   document.getElementById('empFormIqamaExpiry').value = emp.iqama_expiry || '';
   document.getElementById('empFormContractEnd').value = emp.contract_end || '';
+  if (document.getElementById('empFormManager')) document.getElementById('empFormManager').value = emp.manager_id || '';
+  if (document.getElementById('empFormPolicy')) document.getElementById('empFormPolicy').value = emp.policy_id || '';
 
   openModal('modalAddEmployee');
 }
@@ -1610,6 +1674,203 @@ function loadAttendance(dateStr) {
       `;
     });
   }
+
+  // Render Attendance Policies
+  renderPolicies();
+}
+
+/* =========================================================================
+   5.1 ATTENDANCE POLICIES & WORK SHIFTS (سياسات الدوام والورديات)
+   ========================================================================= */
+
+function renderPolicies() {
+  const grid = document.getElementById('policiesGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const list = state.policies || [];
+  if (list.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full p-8 text-center bg-slate-50 border border-dashed border-slate-300 rounded-2xl text-slate-400">
+        <i class="fa-solid fa-clock text-3xl mb-2 text-slate-300"></i>
+        <div class="font-bold text-sm">لم يتم تسجيل أي سياسة دوام بعد</div>
+        <div class="text-xs mt-1">اضغط على زر "إنشاء سياسة دوام جديدة" لتحديد مواعيد الورديات وساعات العمل.</div>
+      </div>
+    `;
+    return;
+  }
+
+  list.forEach(p => {
+    const shiftBadge = p.shift_type === 'morning' || p.shift_type === 'دوام صباحي'
+      ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800"><i class="fa-solid fa-sun"></i> صباحي</span>`
+      : (p.shift_type === 'evening' || p.shift_type === 'دوام مسائي'
+        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800"><i class="fa-solid fa-moon"></i> مسائي</span>`
+        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800"><i class="fa-solid fa-sliders"></i> ${p.shift_type || 'مرن'}</span>`);
+
+    grid.innerHTML += `
+      <div class="card-elevated p-5 space-y-3.5 border-t-4 border-amber-500 hover:shadow-lg transition">
+        <div class="flex justify-between items-start gap-2">
+          <div>
+            <h4 class="font-black text-slate-900 text-sm leading-snug">${p.policy_name}</h4>
+            <div class="mt-1 flex items-center gap-1.5 flex-wrap">
+              ${shiftBadge}
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${p.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}">
+                ${p.is_active ? 'مفعلة' : 'معطلة'}
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="openAddPolicyModal(${p.id})" title="تعديل السياسة" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button onclick="deletePolicy(${p.id})" title="حذف السياسة" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <div>
+            <span class="text-slate-400 block text-[10px]">مواعيد العمل:</span>
+            <span class="font-bold text-slate-800 font-mono text-[11px]">${p.start_time || '08:00'} - ${p.end_time || '16:00'}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">ساعات العمل اليومية:</span>
+            <span class="font-bold text-brand font-mono text-[11px]">${p.daily_hours || 8} ساعات</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">فترة السماح صباحاً:</span>
+            <span class="font-bold text-amber-700 font-mono text-[11px]">${p.grace_period_mins || 15} دقيقة</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px]">أيام الدوام:</span>
+            <span class="font-bold text-slate-700 text-[10px] truncate block" title="${p.work_days || 'الأحد - الخميس'}">${p.work_days || 'الأحد - الخميس'}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 text-[11px] text-slate-600">
+          <span class="flex items-center gap-1">
+            <i class="fa-solid ${p.flexible_hours ? 'fa-circle-check text-emerald-500' : 'fa-circle-xmark text-slate-300'}"></i>
+            ساعات مرنة
+          </span>
+          <span class="flex items-center gap-1">
+            <i class="fa-solid ${p.overtime_allowed ? 'fa-circle-check text-emerald-500' : 'fa-circle-xmark text-slate-300'}"></i>
+            عمل إضافي
+          </span>
+        </div>
+
+        ${p.notes ? `
+          <div class="text-[11px] text-slate-500 bg-amber-50/50 p-2 rounded-lg border border-amber-100/60 leading-relaxed">
+            <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i> ${p.notes}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  });
+}
+
+function openAddPolicyModal(id = null) {
+  const modal = document.getElementById('modalAttendancePolicy');
+  if (!modal) return;
+
+  const form = document.getElementById('attendancePolicyForm');
+  if (form) form.reset();
+
+  const title = document.getElementById('policyModalTitle');
+  const idInp = document.getElementById('policyId');
+
+  if (id) {
+    const p = (state.policies || []).find(x => x.id === Number(id));
+    if (p) {
+      if (title) title.innerHTML = `<i class="fa-solid fa-clock text-amber-600"></i> تعديل سياسة الدوام: ${p.policy_name}`;
+      if (idInp) idInp.value = p.id;
+      document.getElementById('policyName').value = p.policy_name || '';
+      document.getElementById('shiftType').value = p.shift_type || 'morning';
+      document.getElementById('startTime').value = p.start_time || '08:00';
+      document.getElementById('endTime').value = p.end_time || '16:00';
+      document.getElementById('gracePeriod').value = p.grace_period_mins || 15;
+      document.getElementById('dailyHours').value = p.daily_hours || 8.0;
+      document.getElementById('workDays').value = p.work_days || 'الأحد إلى الخميس';
+      document.getElementById('flexibleHours').checked = !!p.flexible_hours;
+      document.getElementById('overtimeAllowed').checked = !!p.overtime_allowed;
+      document.getElementById('policyNotes').value = p.notes || '';
+      document.getElementById('policyIsActive').value = p.is_active !== undefined ? p.is_active : 1;
+    }
+  } else {
+    if (title) title.innerHTML = `<i class="fa-solid fa-clock text-amber-600"></i> إنشاء سياسة دوام وورديات جديدة`;
+    if (idInp) idInp.value = '';
+    document.getElementById('policyName').value = '';
+    document.getElementById('shiftType').value = 'morning';
+    document.getElementById('startTime').value = '08:00';
+    document.getElementById('endTime').value = '16:00';
+    document.getElementById('gracePeriod').value = 15;
+    document.getElementById('dailyHours').value = 8.0;
+    document.getElementById('workDays').value = 'الأحد إلى الخميس';
+    document.getElementById('flexibleHours').checked = false;
+    document.getElementById('overtimeAllowed').checked = true;
+    document.getElementById('policyNotes').value = '';
+    document.getElementById('policyIsActive').value = 1;
+  }
+
+  openModal('modalAttendancePolicy');
+}
+
+async function handlePolicyFormSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('policyId').value;
+  const payload = {
+    policy_name: document.getElementById('policyName').value.trim(),
+    shift_type: document.getElementById('shiftType').value,
+    start_time: document.getElementById('startTime').value,
+    end_time: document.getElementById('endTime').value,
+    grace_period_mins: Number(document.getElementById('gracePeriod').value),
+    daily_hours: Number(document.getElementById('dailyHours').value),
+    work_days: document.getElementById('workDays').value.trim(),
+    flexible_hours: document.getElementById('flexibleHours').checked ? 1 : 0,
+    overtime_allowed: document.getElementById('overtimeAllowed').checked ? 1 : 0,
+    notes: document.getElementById('policyNotes').value.trim(),
+    is_active: Number(document.getElementById('policyIsActive').value)
+  };
+
+  if (!payload.policy_name) {
+    alert('يرجى إدخال اسم سياسة الدوام');
+    return;
+  }
+
+  if (id) {
+    const idx = (state.policies || []).findIndex(p => p.id === Number(id));
+    if (idx !== -1) {
+      state.policies[idx] = { ...state.policies[idx], ...payload };
+    }
+    await apiFetch(`/api/policies/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    alert('تم تحديث سياسة الدوام بنجاح');
+  } else {
+    payload.id = Date.now();
+    if (!state.policies) state.policies = [];
+    state.policies.unshift(payload);
+    await apiFetch('/api/policies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    alert('تم إنشاء سياسة الدوام الجديدة بنجاح');
+  }
+
+  closeModal('modalAttendancePolicy');
+  renderPolicies();
+  populateDropdowns();
+}
+
+async function deletePolicy(id) {
+  if (!confirm('هل أنت متأكد من حذف سياسة الدوام هذه؟')) return;
+  state.policies = (state.policies || []).filter(p => p.id !== Number(id));
+  await apiFetch(`/api/policies/${id}`, { method: 'DELETE' });
+  renderPolicies();
+  populateDropdowns();
 }
 
 async function triggerBiometricSimulation() {
@@ -1815,54 +2076,185 @@ function renderSelfServiceRequests() {
   const tbody = document.getElementById('essRequestsTableBody');
   if (!tbody) return;
 
-  // Load from localStorage if state is empty
-  if (!state.myRequests || state.myRequests.length === 0) {
-    try {
-      const saved = localStorage.getItem('jm_my_requests');
-      if (saved) state.myRequests = JSON.parse(saved);
-    } catch (e) {}
-  }
-
-  // If still empty, provide default mock requests
-  if (!state.myRequests || state.myRequests.length === 0) {
-    state.myRequests = [
+  // Combine backend requests with local requests
+  let list = [];
+  if (state.allRequests && state.allRequests.length > 0) {
+    list = [...state.allRequests];
+  } else if (state.myRequests && state.myRequests.length > 0) {
+    list = [...state.myRequests];
+  } else {
+    // Default fallback requests demonstrating full workflow
+    list = [
       {
-        id: 'REQ-2026-0081',
-        type: 'إجازة سنوية',
-        date: '2026-09-28',
-        duration: '5 أيام',
-        details: 'إجازة اعتيادية سنوية (خصم من الرصيد)',
+        id: 1,
+        request_no: 'REQ-2026-0081',
+        emp_code: 'JM-1011',
+        full_name_ar: 'عمر فاروق البشير',
+        department_name: 'إدارة العمليات والمشاريع',
+        direct_manager_name: 'عبدالرحمن علي عسيري',
+        request_type: 'إجازة سنوية',
+        date: '2026-09-30',
+        days_count: 5,
+        reason: 'إجازة اعتيادية سنوية للسفر وزيارة العائلة',
         status: 'معتمد نهائياً',
-        statusClass: 'bg-emerald-100 text-emerald-800',
-        notes: 'تم الخصم من الرصيد السنوي'
+        manager_name: 'عبدالرحمن علي عسيري',
+        manager_approved_at: '2026-09-28',
+        hr_approver_name: 'خالد سعد الشهراني',
+        hr_approved_at: '2026-09-29'
       },
       {
-        id: 'REQ-2026-0083',
-        type: 'سلفة مالية',
+        id: 4,
+        request_no: 'REQ-2026-0084',
+        emp_code: 'JM-1008',
+        full_name_ar: 'م. أحمد رضوان الشامي',
+        department_name: 'تقنية المعلومات والتحول الرقمي',
+        direct_manager_name: 'م. فهد عبدالعزيز القحطاني',
+        request_type: 'استئذان ساعي',
+        date: '2026-10-01',
+        days_count: 0.25,
+        reason: 'مراجعة طبية في مستشفى عسير المركزي من 1:00م إلى 3:00م',
+        status: 'موافقة مبدئية - بانتظار اعتماد الموارد البشرية',
+        manager_name: 'م. فهد عبدالعزيز القحطاني',
+        manager_approved_at: '2026-09-29',
+        hr_approver_name: null,
+        hr_approved_at: null
+      },
+      {
+        id: 3,
+        request_no: 'REQ-2026-0083',
+        emp_code: 'JM-1003',
+        full_name_ar: 'سارة عبدالله الشهري',
+        department_name: 'الموارد البشرية والخدمات المشتركة',
+        direct_manager_name: 'خالد سعد الشهراني',
+        request_type: 'سلفة مالية',
         date: '2026-09-29',
-        duration: '4,000 ر.س',
-        details: 'سلفة طارئة مستردة تقسيط 3 أشهر',
-        status: 'معلق',
-        statusClass: 'bg-amber-100 text-amber-800',
-        notes: 'قيد اعتماد الموارد البشرية'
+        amount: 4000,
+        reason: 'سلفة مالية مستردة على قسطين لظرف عائلي طارئ',
+        status: 'معلق - بانتظار موافقة المدير المباشر',
+        manager_name: null,
+        manager_approved_at: null,
+        hr_approver_name: null,
+        hr_approved_at: null
       }
     ];
   }
 
-  tbody.innerHTML = state.myRequests.map(r => `
-    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-      <td class="py-3 px-3 font-mono font-bold text-brand">${r.id}</td>
-      <td class="py-3 px-3 font-bold text-slate-900">
-        ${r.type}
-        ${r.attachment ? `<span class="inline-block mr-1 text-[10px] text-brand bg-brand/10 px-1.5 py-0.5 rounded font-mono"><i class="fa-solid fa-paperclip"></i> مرفق</span>` : ''}
-      </td>
-      <td class="py-3 px-3 font-mono text-slate-500">${r.date}</td>
-      <td class="py-3 px-3 text-slate-700 font-bold">${r.duration}</td>
-      <td class="py-3 px-3 text-slate-600">${r.details}</td>
-      <td class="py-3 px-3"><span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded ${r.statusClass}">${r.status}</span></td>
-      <td class="py-3 px-3 text-slate-500 text-[11px]">${r.notes}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = list.map(r => {
+    const reqId = r.id || r.request_no;
+    const reqCode = r.request_no || (typeof r.id === 'string' ? r.id : `REQ-2026-${r.id}`);
+    const empName = r.full_name_ar || (state.currentUser ? state.currentUser.full_name : 'الموظف');
+    const deptName = r.department_name || (state.currentUser ? state.currentUser.role : 'جوهرة المجد');
+    const mgrName = r.direct_manager_name || r.manager_name || 'المدير المباشر';
+
+    // Status classes
+    let statusClass = 'bg-amber-100 text-amber-800';
+    if (r.status.includes('معتمد نهائياً')) {
+      statusClass = 'bg-emerald-100 text-emerald-800';
+    } else if (r.status.includes('موافقة مبدئية')) {
+      statusClass = 'bg-blue-100 text-blue-800';
+    } else if (r.status.includes('مرفوض')) {
+      statusClass = 'bg-rose-100 text-rose-800';
+    }
+
+    // Multi-stage Stepper visualization
+    const step2Done = !!r.manager_approved_at || r.status.includes('موافقة مبدئية') || r.status.includes('معتمد نهائياً');
+    const step2Rejected = r.status.includes('مرفوض من المدير');
+    const step3Done = r.status.includes('معتمد نهائياً');
+    const step3Rejected = r.status.includes('مرفوض من الموارد');
+
+    const stepperHtml = `
+      <div class="space-y-1.5 min-w-[210px] text-xs">
+        <div class="flex items-center gap-1.5 text-emerald-700 font-bold">
+          <i class="fa-solid fa-circle-check text-[11px]"></i>
+          <span>1. تم التقديم من الموظف</span>
+        </div>
+        <div class="flex items-center gap-1.5 ${step2Done ? 'text-emerald-700 font-bold' : (step2Rejected ? 'text-rose-700 font-bold' : 'text-amber-700')}">
+          <i class="fa-solid ${step2Done ? 'fa-circle-check' : (step2Rejected ? 'fa-circle-xmark' : 'fa-hourglass-half')} text-[11px]"></i>
+          <span>2. موافقة المدير (${r.manager_name || mgrName}): ${step2Done ? 'معتمد ✓' : (step2Rejected ? 'مرفوض ✗' : 'بانتظار الموافقة')}</span>
+        </div>
+        <div class="flex items-center gap-1.5 ${step3Done ? 'text-emerald-700 font-bold' : (step3Rejected ? 'text-rose-700 font-bold' : (step2Done ? 'text-blue-700 font-semibold' : 'text-slate-400'))}">
+          <i class="fa-solid ${step3Done ? 'fa-stamp' : (step3Rejected ? 'fa-circle-xmark' : (step2Done ? 'fa-hourglass-half' : 'fa-circle-pause'))} text-[11px]"></i>
+          <span>3. اعتماد HR (${r.hr_approver_name || 'إدارة HR'}): ${step3Done ? 'معتمد نهائياً ✓' : (step3Rejected ? 'مرفوض ✗' : (step2Done ? 'قيد المراجعة' : 'مؤجل'))}</span>
+        </div>
+      </div>
+    `;
+
+    // Action buttons based on current status and user role
+    let actionButtons = '';
+    const isPendingMgr = r.status.includes('معلق') || r.status.includes('المدير المباشر');
+    const isPendingHr = r.status.includes('موافقة مبدئية') || r.status.includes('الموارد البشرية');
+
+    if (isPendingMgr) {
+      actionButtons = `
+        <div class="flex flex-col gap-1.5 items-center w-full max-w-[130px] mx-auto">
+          <button onclick="approveRequestManager('${reqId}')" class="w-full text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-slate-900 px-2 py-1.5 rounded-lg shadow-sm flex items-center justify-center gap-1">
+            <i class="fa-solid fa-check"></i> موافقة المدير
+          </button>
+          <button onclick="rejectRequest('${reqId}', 'manager')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
+            <i class="fa-solid fa-xmark"></i> رفض
+          </button>
+        </div>
+      `;
+    } else if (isPendingHr) {
+      actionButtons = `
+        <div class="flex flex-col gap-1.5 items-center w-full max-w-[130px] mx-auto">
+          <button onclick="approveRequestHr('${reqId}')" class="w-full text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg shadow-sm flex items-center justify-center gap-1">
+            <i class="fa-solid fa-stamp"></i> اعتماد نهائي HR
+          </button>
+          <button onclick="rejectRequest('${reqId}', 'hr')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
+            <i class="fa-solid fa-xmark"></i> رفض
+          </button>
+        </div>
+      `;
+    } else if (step3Done) {
+      actionButtons = `
+        <div class="text-center">
+          <span class="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+            <i class="fa-solid fa-circle-check"></i> مكتمل ومعتمد
+          </span>
+        </div>
+      `;
+    } else {
+      actionButtons = `
+        <div class="text-center">
+          <span class="inline-block text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">
+            <i class="fa-solid fa-circle-xmark"></i> تم الرفض
+          </span>
+        </div>
+      `;
+    }
+
+    const durationText = r.duration || (r.days_count ? `${r.days_count} يوم` : (r.amount ? `${Number(r.amount).toLocaleString()} ر.س` : '-'));
+    const dateText = r.date || r.start_date || (r.created_at ? r.created_at.split(' ')[0] : '-');
+    const reasonText = r.reason || r.details || '-';
+
+    return `
+      <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+        <td class="py-3 px-3 font-mono font-bold text-brand">${reqCode}</td>
+        <td class="py-3 px-3">
+          <div class="font-bold text-slate-900">${r.type || r.request_type}</div>
+          ${r.attachment ? `<span class="inline-block mt-0.5 text-[10px] text-brand bg-brand/10 px-1.5 py-0.5 rounded font-mono"><i class="fa-solid fa-paperclip"></i> مرفق</span>` : ''}
+        </td>
+        <td class="py-3 px-3">
+          <div class="font-bold text-slate-800">${empName}</div>
+          <div class="text-[11px] text-slate-400">${deptName}</div>
+          <div class="text-[10px] text-amber-700 font-medium mt-0.5"><i class="fa-solid fa-user-tie"></i> المدير: ${mgrName}</div>
+        </td>
+        <td class="py-3 px-3">
+          <div class="font-mono text-slate-700 font-bold">${durationText}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${dateText}</div>
+          <div class="text-[11px] text-slate-600 mt-0.5 line-clamp-1" title="${reasonText}">${reasonText}</div>
+        </td>
+        <td class="py-3 px-3">${stepperHtml}</td>
+        <td class="py-3 px-3">
+          <span class="inline-block text-[10px] font-bold px-2 py-1 rounded-full ${statusClass}">
+            ${r.status}
+          </span>
+        </td>
+        <td class="py-3 px-3 text-center">${actionButtons}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function openModalRequest(category = 'إجازة', specificType = null) {
@@ -2045,7 +2437,7 @@ function clearReqFile() {
   if (badge) badge.classList.add('hidden');
 }
 
-function handleRequestFormSubmit(e) {
+async function handleRequestFormSubmit(e) {
   e.preventDefault();
   
   const category = document.getElementById('reqCategorySelect')?.value || 'إجازة';
@@ -2095,21 +2487,51 @@ function handleRequestFormSubmit(e) {
     displayDuration = 'تصريح خروج';
   }
 
+  const currentEmpId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : 3;
+  const currentEmp = state.employees.find(e => e.id === currentEmpId) || state.employees[0];
+
+  const payload = {
+    emp_id: currentEmpId,
+    request_type: displayType,
+    start_date: startDate || today,
+    end_date: endDate || today,
+    days_count: Number(days) || 1,
+    amount: Number(amount) || 0,
+    destination_entity: missionDest || null,
+    reason: displayDetails
+  };
+
+  const apiRes = await apiFetch('/api/requests', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const backendData = apiRes && apiRes.data ? apiRes.data : null;
+
   const newReq = {
-    id: reqCode,
+    id: backendData ? backendData.id : reqCode,
+    request_no: backendData ? backendData.request_no : reqCode,
     type: displayType,
+    request_type: displayType,
     date: today,
     duration: displayDuration,
     details: displayDetails,
-    status: 'معلق',
+    status: 'معلق - بانتظار موافقة المدير المباشر',
     statusClass: 'bg-amber-100 text-amber-800',
     notes: 'قيد اعتماد المدير المباشر والموارد البشرية',
-    attachment: currentAttachedFileName
+    attachment: currentAttachedFileName,
+    emp_code: currentEmp ? currentEmp.emp_code : 'JM-1003',
+    full_name_ar: currentEmp ? currentEmp.full_name_ar : 'الموظف',
+    department_name: currentEmp ? currentEmp.department_name_ar : 'الموارد البشرية',
+    direct_manager_name: currentEmp ? (state.employees.find(m => m.id === currentEmp.manager_id)?.full_name_ar || 'المدير المباشر') : 'المدير المباشر'
   };
 
   // Add to state
   if (!state.myRequests) state.myRequests = [];
   state.myRequests.unshift(newReq);
+  if (!state.allRequests) state.allRequests = [];
+  state.allRequests.unshift(backendData || newReq);
 
   // Save to localStorage
   try {
@@ -2119,7 +2541,7 @@ function handleRequestFormSubmit(e) {
   closeModal('modalNewRequest');
 
   // Success Alert
-  alert(`✓ تم تقديم طلبك بنجاح!\nالرقم المرجعي: ${reqCode}\nالنوع: ${displayType}\nالمدة/المبلغ: ${displayDuration}\n\nسيتم إشعارك فور اعتماد الطلب من إدارة الموارد البشرية.`);
+  alert(`✓ تم تقديم طلبك بنجاح!\nالرقم المرجعي: ${newReq.request_no}\nالنوع: ${displayType}\nالمدة/المبلغ: ${displayDuration}\n\nالمسار: بانتظار موافقة المدير المباشر أولاً ثم اعتماد الموارد البشرية.`);
 
   // Reset form
   const form = document.getElementById('newRequestForm');
@@ -2127,6 +2549,123 @@ function handleRequestFormSubmit(e) {
   clearReqFile();
 
   // Reload table
+  renderSelfServiceRequests();
+}
+
+/* =========================================================================
+   7.1 APPROVAL WORKFLOW ACTIONS (سير الموافقات متعدد المراحل)
+   ========================================================================= */
+
+async function approveRequestManager(id) {
+  const approver = state.currentUser ? state.currentUser.full_name : 'م. فهد عبدالعزيز القحطاني (المدير المباشر)';
+  const newStatus = 'موافقة مبدئية - بانتظار اعتماد الموارد البشرية';
+
+  // Update in state
+  const r = (state.allRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
+  if (r) {
+    r.status = newStatus;
+    r.manager_name = approver;
+    r.manager_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  }
+  const mr = (state.myRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
+  if (mr) {
+    mr.status = newStatus;
+    mr.manager_name = approver;
+    mr.manager_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  }
+
+  await apiFetch(`/api/requests/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      status: newStatus,
+      role: 'manager',
+      approver_name: approver,
+      comment: 'تمت الموافقة المبدئية من قبل المدير المباشر'
+    })
+  });
+
+  try {
+    localStorage.setItem('jm_my_requests', JSON.stringify(state.myRequests));
+  } catch (e) {}
+
+  alert(`✓ تمت موافقة المدير المباشر بنجاح على الطلب!\nانتقل الطلب للمرحلة التالية: [بانتظار اعتماد الموارد البشرية]`);
+  renderSelfServiceRequests();
+}
+
+async function approveRequestHr(id) {
+  const approver = state.currentUser ? state.currentUser.full_name : 'خالد سعد الشهراني (مدير الموارد البشرية)';
+  const newStatus = 'معتمد نهائياً';
+
+  // Update in state
+  const r = (state.allRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
+  if (r) {
+    r.status = newStatus;
+    r.hr_approver_name = approver;
+    r.hr_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  }
+  const mr = (state.myRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
+  if (mr) {
+    mr.status = newStatus;
+    mr.hr_approver_name = approver;
+    mr.hr_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  }
+
+  await apiFetch(`/api/requests/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      status: newStatus,
+      role: 'admin',
+      approver_name: approver,
+      comment: 'تم الاعتماد النهائي من إدارة الموارد البشرية'
+    })
+  });
+
+  try {
+    localStorage.setItem('jm_my_requests', JSON.stringify(state.myRequests));
+  } catch (e) {}
+
+  alert(`✓ تم الاعتماد النهائي للطلب بنجاح من الموارد البشرية!\nتم توثيق الطلب وإشعار الموظف.`);
+  renderSelfServiceRequests();
+}
+
+async function rejectRequest(id, stage = 'manager') {
+  const reason = prompt('يرجى كتابة سبب رفض الطلب:', 'لا يتوافق مع خطة العمل الحالية');
+  if (reason === null) return;
+
+  const newStatus = stage === 'manager' ? 'مرفوض من المدير المباشر' : 'مرفوض من الموارد البشرية';
+  const approver = state.currentUser ? state.currentUser.full_name : (stage === 'manager' ? 'المدير المباشر' : 'الموارد البشرية');
+
+  const r = (state.allRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
+  if (r) {
+    r.status = newStatus;
+    if (stage === 'manager') r.manager_name = approver;
+    else r.hr_approver_name = approver;
+  }
+  const mr = (state.myRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
+  if (mr) {
+    mr.status = newStatus;
+    if (stage === 'manager') mr.manager_name = approver;
+    else mr.hr_approver_name = approver;
+  }
+
+  await apiFetch(`/api/requests/${id}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      status: newStatus,
+      role: stage,
+      approver_name: approver,
+      comment: reason
+    })
+  });
+
+  try {
+    localStorage.setItem('jm_my_requests', JSON.stringify(state.myRequests));
+  } catch (e) {}
+
+  alert(`تم رفض الطلب وتسجيل سبب الرفض بنجاح.`);
   renderSelfServiceRequests();
 }
 
@@ -2272,22 +2811,126 @@ function renderOrganization() {
   grid.innerHTML = '';
   state.departments.forEach(d => {
     grid.innerHTML += `
-      <div class="card-elevated p-5 space-y-3">
+      <div class="card-elevated p-5 space-y-3 hover:shadow-lg transition border-t-2 border-brand">
         <div class="flex justify-between items-start">
           <span class="text-xs font-mono font-bold px-2 py-0.5 bg-brand/10 text-brand rounded">${d.code}</span>
-          <span class="text-xs font-bold text-slate-500">${d.employee_count} موظف</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">${d.employee_count || 0} موظف</span>
+            <button onclick="openAddDepartmentModal(${d.id})" title="تعديل الإدارة" class="w-6 h-6 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-[11px]">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button onclick="deleteDepartment(${d.id})" title="حذف الإدارة" class="w-6 h-6 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-[11px]">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
         </div>
         <div>
           <h3 class="font-bold text-slate-900 text-sm">${d.name_ar}</h3>
-          <p class="text-xs text-slate-400 font-sans">${d.name_en}</p>
+          <p class="text-xs text-slate-400 font-sans">${d.name_en || ''}</p>
         </div>
-        <div class="pt-3 border-t text-xs space-y-1 text-slate-600">
-          <div><span class="text-slate-400">المدير: </span><span class="font-bold">${d.manager_name}</span></div>
-          <div><span class="text-slate-400">الموقع: </span><span>${d.location}</span></div>
+        <div class="pt-3 border-t text-xs space-y-1.5 text-slate-600">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">المدير المسؤول:</span>
+            <span class="font-bold text-slate-800">${d.manager_name || 'غير محدد'}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">المقر / الجناح:</span>
+            <span>${d.location || 'المقر الرئيسي'}</span>
+          </div>
+          ${d.annual_budget ? `
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="text-slate-400">الميزانية التقديرية:</span>
+              <span class="font-mono font-bold text-emerald-700">${Number(d.annual_budget).toLocaleString()} ر.س</span>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
   });
+}
+
+function openAddDepartmentModal(id = null) {
+  populateDropdowns();
+  const modal = document.getElementById('modalAddDepartment');
+  if (!modal) return;
+
+  const form = document.getElementById('addDepartmentForm');
+  if (form) form.reset();
+
+  const title = document.getElementById('deptModalTitle');
+  const idInp = document.getElementById('deptId');
+
+  if (id) {
+    const d = state.departments.find(x => x.id === Number(id));
+    if (d) {
+      if (title) title.innerHTML = `<i class="fa-solid fa-sitemap text-brand"></i> تعديل بيانات الإدارة: ${d.name_ar}`;
+      if (idInp) idInp.value = d.id;
+      document.getElementById('deptCode').value = d.code || '';
+      document.getElementById('deptNameAr').value = d.name_ar || '';
+      document.getElementById('deptNameEn').value = d.name_en || '';
+      document.getElementById('deptManager').value = d.manager_name || '';
+      document.getElementById('deptLocation').value = d.location || '';
+      document.getElementById('deptBudget').value = d.annual_budget || 0;
+    }
+  } else {
+    if (title) title.innerHTML = `<i class="fa-solid fa-sitemap text-brand"></i> إضافة إدارة تنظيمية جديدة`;
+    if (idInp) idInp.value = '';
+  }
+
+  openModal('modalAddDepartment');
+}
+
+async function handleDepartmentFormSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('deptId').value;
+  const payload = {
+    code: document.getElementById('deptCode').value.trim().toUpperCase(),
+    name_ar: document.getElementById('deptNameAr').value.trim(),
+    name_en: document.getElementById('deptNameEn').value.trim(),
+    manager_name: document.getElementById('deptManager').value.trim(),
+    location: document.getElementById('deptLocation').value.trim(),
+    annual_budget: Number(document.getElementById('deptBudget').value || 0)
+  };
+
+  if (!payload.name_ar) {
+    alert('يرجى إدخال اسم الإدارة بالعربية');
+    return;
+  }
+
+  if (id) {
+    const idx = state.departments.findIndex(d => d.id === Number(id));
+    if (idx !== -1) {
+      state.departments[idx] = { ...state.departments[idx], ...payload };
+    }
+    await apiFetch(`/api/departments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    alert('تم تحديث بيانات الإدارة بنجاح');
+  } else {
+    payload.id = Date.now();
+    payload.employee_count = 0;
+    state.departments.unshift(payload);
+    await apiFetch('/api/departments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    alert('تم إضافة الإدارة الجديدة بنجاح');
+  }
+
+  closeModal('modalAddDepartment');
+  renderOrganization();
+  populateDropdowns();
+}
+
+async function deleteDepartment(id) {
+  if (!confirm('هل أنت متأكد من حذف هذه الإدارة؟')) return;
+  state.departments = state.departments.filter(d => d.id !== Number(id));
+  await apiFetch(`/api/departments/${id}`, { method: 'DELETE' });
+  renderOrganization();
+  populateDropdowns();
 }
 
 /* =========================================================================
@@ -3337,5 +3980,24 @@ window.viewMyPayslip = viewMyPayslip;
 window.openSalaryCertificateModal = openSalaryCertificateModal;
 window.loadSelfService = loadSelfService;
 window.renderSelfServiceRequests = renderSelfServiceRequests;
+
+// Policy Functions
+window.renderPolicies = renderPolicies;
+window.openAddPolicyModal = openAddPolicyModal;
+window.handlePolicyFormSubmit = handlePolicyFormSubmit;
+window.deletePolicy = deletePolicy;
+
+// Department Functions
+window.openAddDepartmentModal = openAddDepartmentModal;
+window.handleDepartmentFormSubmit = handleDepartmentFormSubmit;
+window.deleteDepartment = deleteDepartment;
+
+// Employee Add Function
+window.openAddEmployeeModal = openAddEmployeeModal;
+
+// Approval Workflow Actions
+window.approveRequestManager = approveRequestManager;
+window.approveRequestHr = approveRequestHr;
+window.rejectRequest = rejectRequest;
 
 

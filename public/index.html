@@ -658,6 +658,26 @@
           </div>
         </div>
 
+        <!-- Section: Attendance Policies & Shifts (سياسات ومواعيد الدوام) -->
+        <div class="card-elevated p-6 space-y-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-clock text-amber-600"></i> سياسات الدوام والورديات المعتمدة
+              </h3>
+              <p class="text-xs text-slate-500 mt-1">تحديد ساعات العمل، فترات السماح، أنواع الورديات، مع إمكانية إنشاء سياسات مخصصة وتركها مفتوحة للتعديل لاحقاً من قبل الإدارة.</p>
+            </div>
+            <button onclick="openAddPolicyModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-plus"></i> إنشاء سياسة دوام جديدة
+            </button>
+          </div>
+
+          <!-- Policies Grid -->
+          <div id="policiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- JS Populated -->
+          </div>
+        </div>
+
       </section>
 
       <!-- =====================================================================
@@ -840,11 +860,11 @@
                 <tr>
                   <th class="py-3 px-3">رقم الطلب</th>
                   <th class="py-3 px-3">نوع الطلب</th>
-                  <th class="py-3 px-3">تاريخ التقديم</th>
-                  <th class="py-3 px-3">التفاصيل</th>
-                  <th class="py-3 px-3">السبب</th>
-                  <th class="py-3 px-3">الحالة</th>
-                  <th class="py-3 px-3">ملاحظات الإدارة</th>
+                  <th class="py-3 px-3">الموظف / الإدارة</th>
+                  <th class="py-3 px-3">التفاصيل والمدة</th>
+                  <th class="py-3 px-3">سير الموافقات (Approval Workflow)</th>
+                  <th class="py-3 px-3">الحالة الحالية</th>
+                  <th class="py-3 px-3 text-center">الإجراء والاعتماد</th>
                 </tr>
               </thead>
               <tbody id="essRequestsTableBody" class="divide-y divide-slate-100">
@@ -861,11 +881,16 @@
            ===================================================================== -->
       <section id="view-organization" class="space-y-6 hidden">
         <div class="card-elevated p-6">
-          <div class="border-b border-slate-100 pb-4 mb-6">
-            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
-              <i class="fa-solid fa-sitemap text-brand"></i> الهيكل التنظيمي وإدارات شركة جوهرة المجد
-            </h2>
-            <p class="text-xs text-slate-500 mt-1">توزيع الإدارات، مسؤولو الإدارات، والمقر الرئيسي بمول سيتي بارك في أبها.</p>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-6">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-sitemap text-brand"></i> الهيكل التنظيمي وإدارات شركة جوهرة المجد
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">إدارة الأقسام وتعيين المدراء والمواقع والميزانيات، وربط الموظفين بإداراتهم.</p>
+            </div>
+            <button onclick="openAddDepartmentModal()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-folder-plus"></i> إضافة إدارة جديدة
+            </button>
           </div>
           <div id="departmentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- JS populated -->
@@ -1122,6 +1147,27 @@
           <div>
             <label class="block font-bold text-slate-700 mb-1">انتهاء الجواز:</label>
             <input type="date" id="empFormPassportExpiry" class="w-full rounded-xl border border-slate-300 py-1.5 px-3">
+          </div>
+        </div>
+
+        <!-- الإسناد الإداري وسياسة الدوام (Direct Manager & Shift Policy) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200">
+          <div>
+            <label class="block font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-user-tie text-brand"></i> المدير المباشر (Direct Manager):
+            </label>
+            <select id="empFormManager" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 bg-white">
+              <option value="">بدون مدير مباشر (إدارة عليا)</option>
+              <!-- JS populated with employees -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-800 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-business-time text-amber-600"></i> سياسة الدوام والوردية:
+            </label>
+            <select id="empFormPolicy" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 bg-white">
+              <!-- JS populated with policies -->
+            </select>
           </div>
         </div>
 
@@ -1692,6 +1738,145 @@
         <button onclick="closeModal('modalImportAttendance')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">إلغاء</button>
         <button onclick="executeImportAttendance()" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-2"><i class="fa-solid fa-upload"></i> استيراد البصمة</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create / Edit Attendance Policy (سياسة الدوام المفتوحة) -->
+  <div id="modalAttendancePolicy" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="policyModalTitle" class="text-base font-black text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-amber-600"></i> إنشاء سياسة دوام جديدة
+        </h3>
+        <button onclick="closeModal('modalAttendancePolicy')" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="attendancePolicyForm" onsubmit="handlePolicyFormSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="policyFormId" value="">
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اسم السياسة: *</label>
+          <input type="text" id="policyFormName" required placeholder="مثال: سياسة دوام فرع الرياض / دوام شهر رمضان المبارك" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">نوع الوردية / الدوام:</label>
+            <select id="policyFormShiftType" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 bg-white">
+              <option value="دوام صباحي">دوام صباحي معتمد</option>
+              <option value="دوام مسائي">دوام مسائي</option>
+              <option value="دوام مرن">دوام مرن (ساعات مرنة)</option>
+              <option value="دوام مناوبات">دوام ورديات ومناوبات</option>
+              <option value="دوام جزئي">دوام جزئي</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">أيام العمل الأسبوعية:</label>
+            <input type="text" id="policyFormWorkDays" value="الأحد إلى الخميس" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">وقت الحضور:</label>
+            <input type="time" id="policyFormStartTime" value="08:00" class="w-full rounded-lg border border-slate-300 py-1.5 px-2 font-bold font-mono">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">وقت الانصراف:</label>
+            <input type="time" id="policyFormEndTime" value="16:00" class="w-full rounded-lg border border-slate-300 py-1.5 px-2 font-bold font-mono">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">فترة السماح (دقيقة):</label>
+            <input type="number" id="policyFormGraceMins" value="15" min="0" max="120" class="w-full rounded-lg border border-slate-300 py-1.5 px-2 font-bold font-mono">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">ساعات العمل اليومية:</label>
+            <input type="number" id="policyFormDailyHours" value="8" step="0.5" min="1" max="16" class="w-full rounded-lg border border-slate-300 py-1.5 px-2 font-bold font-mono">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6 p-2.5 bg-amber-50/60 rounded-xl border border-amber-200 text-xs font-bold text-slate-700">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="policyFormFlexible" class="w-4 h-4 text-brand rounded">
+            <span>ساعات حضور مرنة</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="policyFormOvertime" checked class="w-4 h-4 text-brand rounded">
+            <span>يسمح باحتساب العمل الإضافي</span>
+          </label>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">شروط وملاحظات السياسة (مفتوحة ليتم تعبئتها لاحقاً):</label>
+          <textarea id="policyFormNotes" rows="3" placeholder="أدخل أي شروط استثنائية، قواعد التأخير، أوقات الراحة، أو اتركها لتعبئتها لاحقاً من قبل إدارة الموارد البشرية..." class="w-full rounded-xl border border-slate-300 p-2.5"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalAttendancePolicy')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ سياسة الدوام
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Department (إضافة / تعديل إدارة) -->
+  <div id="modalAddDepartment" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="deptModalTitle" class="text-base font-black text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-sitemap text-brand"></i> إضافة إدارة جديدة
+        </h3>
+        <button onclick="closeModal('modalAddDepartment')" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="departmentForm" onsubmit="handleDepartmentFormSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="deptFormId" value="">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">كود الإدارة: *</label>
+            <input type="text" id="deptFormCode" required placeholder="مثال: TECH-07" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">اسم الإدارة (عربي): *</label>
+            <input type="text" id="deptFormNameAr" required placeholder="إدارة سلاسل الإمداد" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اسم الإدارة (إنجليزي):</label>
+          <input type="text" id="deptFormNameEn" placeholder="Supply Chain Department" class="w-full rounded-xl border border-slate-300 py-2 px-3">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">مدير الإدارة (المسؤول):</label>
+            <input type="text" id="deptFormManagerName" placeholder="الاسم أو كود الموظف" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الموقع / المقر:</label>
+            <input type="text" id="deptFormLocation" value="مقر أبها - سيتي بارك" class="w-full rounded-xl border border-slate-300 py-2 px-3">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الميزانية التشغيلية (SAR):</label>
+          <input type="number" id="deptFormBudget" value="0" min="0" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalAddDepartment')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ الإدارة
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

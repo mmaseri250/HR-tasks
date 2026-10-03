@@ -3,10 +3,12 @@ const { query, get, run } = require('../database/db');
 
 function getAllRequests(filters = {}) {
   let sql = `
-    SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar, d.name_ar AS department_name
+    SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar, e.manager_id,
+           d.name_ar AS department_name, m.full_name_ar AS direct_manager_name
     FROM requests r
     JOIN employees e ON r.emp_id = e.id
     LEFT JOIN departments d ON e.department_id = d.id
+    LEFT JOIN employees m ON e.manager_id = m.id
     WHERE 1=1
   `;
   const params = [];
@@ -32,13 +34,14 @@ function getAllRequests(filters = {}) {
 
 function getRequestById(id) {
   const sql = `
-    SELECT r.*, e.emp_code, e.full_name_ar, e.full_name_en, e.job_title_ar,
+    SELECT r.*, e.emp_code, e.full_name_ar, e.full_name_en, e.job_title_ar, e.manager_id,
            e.national_id, e.nationality, e.is_saudi, e.join_date, e.basic_salary,
            e.housing_allowance, e.transport_allowance, e.other_allowance,
-           d.name_ar AS department_name
+           d.name_ar AS department_name, m.full_name_ar AS direct_manager_name
     FROM requests r
     JOIN employees e ON r.emp_id = e.id
     LEFT JOIN departments d ON e.department_id = d.id
+    LEFT JOIN employees m ON e.manager_id = m.id
     WHERE r.id = ?
   `;
   return get(sql, [id]);
@@ -60,7 +63,7 @@ function submitRequest(data) {
     throw new Error('يرجى تحديد الموظف ونوع الطلب وسبب الطلب');
   }
 
-  const emp = get('SELECT id, annual_leave_balance FROM employees WHERE id = ?', [emp_id]);
+  const emp = get('SELECT id, annual_leave_balance, manager_id FROM employees WHERE id = ?', [emp_id]);
   if (!emp) {
     throw new Error('الموظف غير موجود');
   }
@@ -79,7 +82,7 @@ function submitRequest(data) {
     INSERT INTO requests (
       request_no, emp_id, request_type, start_date, end_date, days_count,
       amount, destination_entity, reason, status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', datetime('now'), datetime('now'))
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق - بانتظار موافقة المدير المباشر', datetime('now'), datetime('now'))
   `;
 
   const result = run(sql, [
@@ -90,7 +93,7 @@ function submitRequest(data) {
   return getRequestById(result.lastInsertRowid);
 }
 
-function updateRequestStatus(id, newStatus, role, comment) {
+function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
   const req = getRequestById(id);
   if (!req) {
     throw new Error('الطلب غير موجود');
@@ -99,24 +102,42 @@ function updateRequestStatus(id, newStatus, role, comment) {
   let sql = '';
   let params = [];
 
-  if (role === 'manager') {
+  if (role === 'manager' || role === 'dept_manager') {
     sql = `
       UPDATE requests
-      SET status = ?, manager_comment = ?, updated_at = datetime('now')
+      SET status = ?,
+          manager_comment = ?,
+          manager_name = ?,
+          manager_approved_at = datetime('now'),
+          updated_at = datetime('now')
       WHERE id = ?
     `;
-    params = [newStatus, comment || 'تمت مراجعة الطلب من قبل المدير المباشر', id];
+    params = [
+      newStatus,
+      comment || (newStatus.includes('مرفوض') ? 'تم الرفض من قبل المدير المباشر' : 'موافقة مبدئية من قبل المدير المباشر'),
+      approverName || req.direct_manager_name || 'المدير المباشر',
+      id
+    ];
   } else {
     // Admin / HR
     sql = `
       UPDATE requests
-      SET status = ?, hr_comment = ?, updated_at = datetime('now')
+      SET status = ?,
+          hr_comment = ?,
+          hr_approver_name = ?,
+          hr_approved_at = datetime('now'),
+          updated_at = datetime('now')
       WHERE id = ?
     `;
-    params = [newStatus, comment || 'تم اعتماد الطلب من قبل إدارة الموارد البشرية', id];
+    params = [
+      newStatus,
+      comment || (newStatus.includes('مرفوض') ? 'تم الرفض من قبل الموارد البشرية' : 'تم الاعتماد النهائي من إدارة الموارد البشرية'),
+      approverName || 'إدارة الموارد البشرية',
+      id
+    ];
 
     // If approved and it's annual leave, deduct from balance
-    if (newStatus === 'معتمد نهائياً' && req.request_type === 'إجازة سنوية' && req.days_count > 0) {
+    if (newStatus.includes('معتمد نهائياً') && req.request_type === 'إجازة سنوية' && req.days_count > 0) {
       run(`
         UPDATE employees
         SET annual_leave_balance = MAX(0, annual_leave_balance - ?)

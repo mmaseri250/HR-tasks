@@ -152,6 +152,57 @@ app.get('/api/departments', (req, res) => {
   }
 });
 
+app.post('/api/departments', (req, res) => {
+  try {
+    const { code, name_ar, name_en, manager_name, budget = 0, location } = req.body;
+    if (!code || !name_ar) {
+      return res.status(400).json({ success: false, error: 'كود الإدارة واسمها بالعربية مطلوبان' });
+    }
+    const result = run(`
+      INSERT INTO departments (code, name_ar, name_en, manager_name, budget, location)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [code, name_ar, name_en || name_ar, manager_name || '', Number(budget) || 0, location || 'مقر أبها - سيتي بارك']);
+    const dept = get('SELECT * FROM departments WHERE id = ?', [result.lastInsertRowid]);
+    res.status(201).json({ success: true, message: 'تمت إضافة الإدارة بنجاح', data: dept });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/departments/:id', (req, res) => {
+  try {
+    const { code, name_ar, name_en, manager_name, budget, location } = req.body;
+    const existing = get('SELECT * FROM departments WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ success: false, error: 'الإدارة غير موجودة' });
+    run(`
+      UPDATE departments
+      SET code = ?, name_ar = ?, name_en = ?, manager_name = ?, budget = ?, location = ?
+      WHERE id = ?
+    `, [
+      code || existing.code,
+      name_ar || existing.name_ar,
+      name_en !== undefined ? name_en : existing.name_en,
+      manager_name !== undefined ? manager_name : existing.manager_name,
+      budget !== undefined ? Number(budget) : existing.budget,
+      location !== undefined ? location : existing.location,
+      req.params.id
+    ]);
+    const updated = get('SELECT * FROM departments WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'تم تحديث بيانات الإدارة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/departments/:id', (req, res) => {
+  try {
+    run('DELETE FROM departments WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'تم حذف الإدارة بنجاح' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 /* =========================================================================
    3. DISCIPLINARY REGULATIONS & DECISIONS (القرارات الجزائية)
    ========================================================================= */
@@ -360,6 +411,94 @@ app.post('/api/biometrics/push', (req, res) => {
 });
 
 /* =========================================================================
+   5.1 ATTENDANCE POLICIES & WORK SHIFTS (سياسات الدوام)
+   ========================================================================= */
+
+app.get('/api/policies', (req, res) => {
+  try {
+    const policies = query('SELECT * FROM attendance_policies ORDER BY id ASC');
+    res.json({ success: true, count: policies.length, data: policies });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/policies', (req, res) => {
+  try {
+    const {
+      policy_name,
+      shift_type = 'دوام صباحي',
+      start_time = '08:00',
+      end_time = '16:00',
+      grace_period_mins = 15,
+      daily_hours = 8.0,
+      work_days = 'الأحد إلى الخميس',
+      flexible_hours = 0,
+      overtime_allowed = 1,
+      notes = ''
+    } = req.body;
+    if (!policy_name) {
+      return res.status(400).json({ success: false, error: 'اسم سياسة الدوام مطلوب' });
+    }
+    const result = run(`
+      INSERT INTO attendance_policies (
+        policy_name, shift_type, start_time, end_time, grace_period_mins,
+        daily_hours, work_days, flexible_hours, overtime_allowed, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      policy_name, shift_type, start_time, end_time,
+      Number(grace_period_mins) || 15, Number(daily_hours) || 8.0,
+      work_days, flexible_hours ? 1 : 0, overtime_allowed ? 1 : 0, notes
+    ]);
+    const policy = get('SELECT * FROM attendance_policies WHERE id = ?', [result.lastInsertRowid]);
+    res.status(201).json({ success: true, message: 'تم إنشاء سياسة الدوام بنجاح', data: policy });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/policies/:id', (req, res) => {
+  try {
+    const existing = get('SELECT * FROM attendance_policies WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ success: false, error: 'سياسة الدوام غير موجودة' });
+    const b = req.body;
+    run(`
+      UPDATE attendance_policies SET
+        policy_name = ?, shift_type = ?, start_time = ?, end_time = ?,
+        grace_period_mins = ?, daily_hours = ?, work_days = ?,
+        flexible_hours = ?, overtime_allowed = ?, notes = ?, is_active = ?
+      WHERE id = ?
+    `, [
+      b.policy_name || existing.policy_name,
+      b.shift_type || existing.shift_type,
+      b.start_time || existing.start_time,
+      b.end_time || existing.end_time,
+      b.grace_period_mins !== undefined ? Number(b.grace_period_mins) : existing.grace_period_mins,
+      b.daily_hours !== undefined ? Number(b.daily_hours) : existing.daily_hours,
+      b.work_days || existing.work_days,
+      b.flexible_hours !== undefined ? (b.flexible_hours ? 1 : 0) : existing.flexible_hours,
+      b.overtime_allowed !== undefined ? (b.overtime_allowed ? 1 : 0) : existing.overtime_allowed,
+      b.notes !== undefined ? b.notes : existing.notes,
+      b.is_active !== undefined ? (b.is_active ? 1 : 0) : existing.is_active,
+      req.params.id
+    ]);
+    const updated = get('SELECT * FROM attendance_policies WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'تم تحديث سياسة الدوام بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/policies/:id', (req, res) => {
+  try {
+    run('DELETE FROM attendance_policies WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'تم حذف سياسة الدوام بنجاح' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
    6. PAYROLL & WPS ROUTES
    ========================================================================= */
 
@@ -503,9 +642,9 @@ app.post('/api/requests', (req, res) => {
 
 app.put('/api/requests/:id/status', (req, res) => {
   try {
-    const { status, role = 'admin', comment } = req.body;
+    const { status, role = 'admin', comment, approver_name } = req.body;
     if (!status) return res.status(400).json({ success: false, error: 'الحالة الجديدة مطلوبة' });
-    const updated = requestsModule.updateRequestStatus(req.params.id, status, role, comment);
+    const updated = requestsModule.updateRequestStatus(req.params.id, status, role, comment, approver_name);
     res.json({ success: true, message: 'تم تحديث حالة الطلب بنجاح', data: updated });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

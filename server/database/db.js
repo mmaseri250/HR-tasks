@@ -253,6 +253,23 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_payroll_item_period ON payroll_items(payroll_period_id);
     CREATE INDEX IF NOT EXISTS idx_req_emp ON requests(emp_id);
     CREATE INDEX IF NOT EXISTS idx_penalty_emp ON penalties_issued(emp_id);
+
+    -- Attendance & Shift Policies (سياسات الدوام والورديات)
+    CREATE TABLE IF NOT EXISTS attendance_policies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      policy_name TEXT NOT NULL,
+      shift_type TEXT NOT NULL DEFAULT 'دوام صباحي',
+      start_time TEXT DEFAULT '08:00',
+      end_time TEXT DEFAULT '16:00',
+      grace_period_mins INTEGER DEFAULT 15,
+      daily_hours REAL DEFAULT 8.0,
+      work_days TEXT DEFAULT 'الأحد إلى الخميس',
+      flexible_hours INTEGER DEFAULT 0,
+      overtime_allowed INTEGER DEFAULT 1,
+      notes TEXT,
+      is_active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 
   try {
@@ -260,6 +277,22 @@ function initSchema() {
   } catch (e) {
     // Column already exists
   }
+
+  try {
+    db.exec('ALTER TABLE requests ADD COLUMN manager_approved_at TEXT;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE requests ADD COLUMN manager_name TEXT;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE requests ADD COLUMN hr_approved_at TEXT;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE requests ADD COLUMN hr_approver_name TEXT;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE employees ADD COLUMN policy_id INTEGER;');
+  } catch (e) {}
 }
 
 initSchema();
