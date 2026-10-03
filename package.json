@@ -1,0 +1,27 @@
+{
+  "name": "jawharat-al-majd-hrms",
+  "version": "1.0.0",
+  "description": "نظام موارد بشرية متكامل لشركة جوهرة المجد - Jawharat Al-Majd HRMS",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node tests/run-all-tests.js"
+  },
+  "keywords": [
+    "hrms",
+    "saudi-labor-law",
+    "wps",
+    "gosi",
+    "biometric",
+    "payroll",
+    "attendance",
+    "self-service"
+  ],
+  "author": "Jawharat Al-Majd Engineering",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1"
+  }
+}

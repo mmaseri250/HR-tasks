@@ -1,0 +1,443 @@
+/* public/css/style.css - Jawharat Al-Majd HRMS Enterprise Stylesheet */
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap');
+
+:root {
+  --brand-primary: #700c14;      /* جوهرة المجد Maroon */
+  --brand-primary-dark: #50080e;
+  --brand-primary-light: #8e1520;
+  --brand-gold: #d4af37;         /* Elegant Gold */
+  --brand-gold-dark: #b89123;
+  --brand-gold-light: #f3d068;
+  --brand-accent: #e67e22;       /* Warm Orange from logo */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --font-family: 'Cairo', 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  direction: rtl;
+  text-align: right;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Brand Helpers */
+.brand-gradient {
+  background: linear-gradient(135deg, #700c14 0%, #4a070d 100%);
+}
+
+.brand-gold-gradient {
+  background: linear-gradient(135deg, #d4af37 0%, #e67e22 100%);
+}
+
+.card-elevated {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease-in-out;
+}
+
+.card-elevated:hover {
+  box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.06);
+}
+
+/* Sidebar & Navigation */
+.nav-item-active {
+  background: linear-gradient(90deg, rgba(112, 12, 20, 0.12) 0%, rgba(112, 12, 20, 0.03) 100%);
+  color: var(--brand-primary) !important;
+  border-right: 4px solid var(--brand-primary);
+  font-weight: 700 !important;
+}
+
+.nav-item {
+  transition: all 0.15s ease;
+  border-radius: 0.6rem;
+}
+
+.nav-item:hover:not(.nav-item-active) {
+  background-color: #f1f5f9;
+  color: var(--brand-primary);
+}
+
+/* Badges */
+.badge-saudi {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.badge-expat {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-expired {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  animation: pulse-danger 2s infinite;
+}
+
+.badge-warning {
+  background-color: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-valid {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+/* Modal Backdrops - Clean & Crisp, no blur to keep header and company title 100% sharp */
+.modal-overlay {
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Tabs */
+.sub-tab-btn-active {
+  background-color: var(--brand-primary) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+/* Chart Canvas Fix: strictly sized container */
+.chart-container-fixed {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  max-height: 250px;
+}
+
+/* Official Certificate & Print Styling */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printableArea, #printableArea * {
+    visibility: visible;
+  }
+  #printableArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+.official-stamp {
+  width: 120px;
+  height: 120px;
+  border: 3px dashed var(--brand-primary);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-8deg);
+  color: var(--brand-primary);
+  font-weight: 800;
+  text-align: center;
+  font-size: 10.5px;
+  padding: 4px;
+  background-color: rgba(112, 12, 20, 0.03);
+}
+
+.official-stamp-penalty {
+  width: 120px;
+  height: 120px;
+  border: 3px dashed #b91c1c;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-5deg);
+  color: #b91c1c;
+  font-weight: 800;
+  text-align: center;
+  font-size: 10.5px;
+  padding: 4px;
+  background-color: rgba(185, 28, 28, 0.04);
+}
+
+/* =========================================================================
+   MOBILE OPTIMIZATIONS & NATIVE BOTTOM NAV (Edge-to-Edge Full Screen)
+   ========================================================================= */
+
+html {
+  height: 100%;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom, 10px));
+  }
+
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(60px + env(safe-area-inset-bottom, 8px));
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    z-index: 40;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    align-items: center;
+    justify-content: space-around;
+    padding-left: env(safe-area-inset-left, 4px);
+    padding-right: env(safe-area-inset-right, 4px);
+  }
+
+  .mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    transition: all 0.15s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .mobile-nav-btn i {
+    font-size: 17px;
+    margin-bottom: 2px;
+  }
+
+  .mobile-nav-btn.active {
+    color: var(--brand-primary);
+  }
+
+  .mobile-nav-btn.active i {
+    transform: scale(1.15);
+  }
+
+  .table-responsive-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+}
+
+/* Auth Gate (Login protection full cover) */
+.auth-gate-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: radial-gradient(circle at center, rgba(112, 12, 20, 0.94) 0%, rgba(35, 4, 7, 0.98) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Language Switcher Pills */
+.lang-pill {
+  color: #475569;
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.lang-pill:hover {
+  background: rgba(112, 12, 20, 0.08);
+  color: var(--brand-primary);
+}
+.lang-pill.active {
+  background: var(--brand-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(112, 12, 20, 0.25);
+}
+
+/* Chatbot Styles */
+#hrChatbotWindow {
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.25), 0 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.chat-msg-bot {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px 18px 18px 4px;
+  padding: 10px 13px;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  max-width: 90%;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.chat-msg-user {
+  background: var(--brand-primary);
+  color: #ffffff;
+  border-radius: 18px 18px 4px 18px;
+  padding: 10px 13px;
+  margin-left: auto;
+  max-width: 86%;
+  line-height: 1.5;
+  box-shadow: 0 2px 6px rgba(112, 12, 20, 0.2);
+  word-break: break-word;
+}
+
+.chat-chip {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  border-radius: 9999px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.chat-chip:hover {
+  background: #e2e8f0;
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  transform: translateY(-1px);
+}
+
+.chat-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border: 1px solid #d4af37;
+  color: #700c14;
+  font-weight: 800;
+  font-size: 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.chat-action-btn:hover {
+  background: #700c14;
+  color: #ffffff;
+}
+
+/* LTR Multi-language Layout Helpers */
+html[dir="ltr"] body {
+  direction: ltr;
+  text-align: left;
+}
+html[dir="ltr"] .text-right {
+  text-align: left !important;
+}
+html[dir="ltr"] .text-left {
+  text-align: right !important;
+}
+html[dir="ltr"] .chat-msg-user {
+  margin-left: auto;
+  margin-right: 0;
+  border-radius: 18px 18px 4px 18px;
+}
+html[dir="ltr"] .chat-msg-bot {
+  border-radius: 18px 18px 18px 4px;
+}
+html[dir="ltr"] #hrChatbotWidget {
+  left: 1.5rem;
+  right: auto;
+  align-items: flex-start;
+}
+html[dir="ltr"] #hrChatbotWindow {
+  transform-origin: bottom left;
+}
+html[dir="ltr"] .border-r {
+  border-right-width: 0 !important;
+  border-left-width: 1px !important;
+  padding-right: 0 !important;
+  padding-left: 0.75rem !important;
+}
+html[dir="ltr"] #headerLangMenu {
+  left: 0;
+  right: auto;
+}
+
