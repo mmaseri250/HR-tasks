@@ -163,6 +163,13 @@
           <span>قاعدة بيانات الموظفين</span>
         </button>
 
+        <!-- 2.1 Compliance Index (مؤشر الامتثال المؤسسي وتجديد الإقامات ورخص العمل) -->
+        <button onclick="switchTab('compliance')" id="nav-compliance" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-shield-halved w-5 text-center text-base text-emerald-600"></i>
+          <span class="flex-1 text-right">مؤشر الامتثال والإقامات</span>
+          <span id="badgeNavCompliance" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">16</span>
+        </button>
+
         <!-- 3. Disciplinary Penalties (Requested Desktop Items) -->
         <button onclick="switchTab('penalties')" id="nav-penalties" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-gavel w-5 text-center text-base text-amber-600"></i>
@@ -277,15 +284,21 @@
             </div>
           </div>
 
-          <div class="card-elevated p-5">
+          <div class="card-elevated p-5 cursor-pointer hover:border-emerald-300 transition" onclick="switchTab('compliance')">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400">نسبة التوطين (نطاقات)</p>
-                <h3 id="statSaudizationRate" class="text-3xl font-black text-emerald-700 mt-2">66.7%</h3>
-                <span id="statNitaqatBadge" class="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 mt-1">النطاق البلاتيني</span>
+                <div class="flex items-center gap-1.5">
+                  <p class="text-xs font-bold text-slate-400">مؤشر الامتثال والتوطين</p>
+                  <span class="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded-full">قوى ومقيم</span>
+                </div>
+                <h3 id="statComplianceRate" class="text-3xl font-black text-emerald-700 mt-2">100%</h3>
+                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                  <span id="statNitaqatBadge" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">النطاق البلاتيني</span>
+                  <span id="statSaudizationRateBadge" class="text-[10px] text-slate-500 font-bold">توطين 32.1% (35 سعودي)</span>
+                </div>
               </div>
               <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
-                <i class="fa-solid fa-id-card-clip"></i>
+                <i class="fa-solid fa-shield-halved"></i>
               </div>
             </div>
           </div>
@@ -306,9 +319,9 @@
           <div class="card-elevated p-5">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400">مسير رواتب سبتمبر 2026</p>
-                <h3 id="statPayrollAmount" class="text-2xl font-black text-amber-600 mt-2">168,750 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
-                <p class="text-xs text-emerald-600 font-bold mt-1"><i class="fa-solid fa-circle-check"></i> معتمد وموثق WPS</p>
+                <p class="text-xs font-bold text-slate-400" id="statPayrollPeriodTitle">مسير الأجور الشهري</p>
+                <h3 id="statPayrollAmount" class="text-2xl font-black text-amber-600 mt-2">-- <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
+                <p class="text-xs text-emerald-600 font-bold mt-1" id="statPayrollStatusSubtitle"><i class="fa-solid fa-circle-check"></i> جاهز للاحتساب والصرف</p>
               </div>
               <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -505,6 +518,190 @@
       </section>
 
       <!-- =====================================================================
+           VIEW 2.1: ENTERPRISE COMPLIANCE DASHBOARD (مؤشر الامتثال ورخص العمل والإقامات)
+           ===================================================================== -->
+      <section id="view-compliance" class="space-y-6 hidden">
+        
+        <!-- Header Banner -->
+        <div class="card-elevated p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                  <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                  <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                    مؤشر الامتثال المؤسسي ولوحة الالتزام النظامي
+                    <span class="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full">نظام العمل والجهات الرقابية</span>
+                  </h2>
+                  <p class="text-xs text-slate-500 mt-0.5">متابعة حية لامتثال شركة جوهرة المجد بأنظمة تجديد الإقامات ورخص العمل (قوى)، توثيق العقود، حماية الأجور (مدد)، ونطاقات.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                متصل ومطابق مع منصة قوى ومقيم
+              </span>
+              <button onclick="loadCompliance()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrows-rotate"></i> تحديث الفحص
+              </button>
+              <button onclick="exportComplianceReport()" class="px-4 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs flex items-center gap-1.5 shadow transition">
+                <i class="fa-solid fa-file-pdf"></i> تصدير تقرير الامتثال الرسمي
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Metric Cards (4 KPIs) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6">
+            
+            <!-- Overall Compliance Score -->
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-50 to-transparent border border-emerald-200 space-y-2">
+              <div class="flex justify-between items-center text-xs font-bold text-slate-500">
+                <span>المؤشر العام للامتثال</span>
+                <span class="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm"><i class="fa-solid fa-award"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <h3 id="compOverallScore" class="text-3xl font-black text-emerald-800">100%</h3>
+                <span class="text-xs font-bold text-emerald-700">ممتثل بالكامل</span>
+              </div>
+              <p class="text-[11px] text-slate-600 font-semibold" id="compOverallSub">109 موظف (35 سعودي • 74 وافد)</p>
+            </div>
+
+            <!-- Iqama Renewal Compliance -->
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-sm">
+              <div class="flex justify-between items-center text-xs font-bold text-slate-500">
+                <span>امتثال تجديد الإقامات</span>
+                <span class="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-address-card"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <h3 id="compIqamaRate" class="text-3xl font-black text-slate-800">100%</h3>
+                <span id="compIqamaValidCount" class="text-xs font-bold text-emerald-600">58 سارية وممتثلة</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
+                <span>تشارف على الانتهاء:</span>
+                <span id="compIqamaExpiringCount" class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">16 موظف</span>
+              </div>
+            </div>
+
+            <!-- Work Permits Compliance (Qiwa) -->
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-sm">
+              <div class="flex justify-between items-center text-xs font-bold text-slate-500">
+                <span>امتثال رخص العمل (قوى)</span>
+                <span class="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm"><i class="fa-solid fa-briefcase"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <h3 id="compWorkPermitRate" class="text-3xl font-black text-slate-800">100%</h3>
+                <span class="text-xs font-bold text-purple-700">74 رخصة صادرة</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
+                <span>المقابل المالي للتجديد:</span>
+                <span id="compWorkPermitFee" class="font-bold text-slate-800">800 ر.س / شهرياً</span>
+              </div>
+            </div>
+
+            <!-- Contracts & Saudization -->
+            <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-sm">
+              <div class="flex justify-between items-center text-xs font-bold text-slate-500">
+                <span>توثيق العقود والتوطين</span>
+                <span class="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-file-signature"></i></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <h3 id="compSaudizationRate" class="text-3xl font-black text-slate-800">32.1%</h3>
+                <span id="compNitaqatBandBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">النطاق البلاتيني</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
+                <span>عقود موثقة بقوى:</span>
+                <span class="font-bold text-emerald-700">109 / 109 (100%)</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Alert Banner for Expiring Iqamas and Work Permits -->
+          <div id="compUrgentAlertBanner" class="mt-5 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center text-base flex-shrink-0 mt-0.5">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <h4 class="font-black text-amber-950 text-xs">تنبيه استباقي: 16 موظفاً وافداً تشارف إقاماتهم على الانتهاء خلال الـ 60 يوماً القادمة</h4>
+                <p class="text-[11px] text-amber-800 mt-0.5">يُرجى المبادرة بإصدار وسداد المقابل المالي لرخص العمل عبر منصة قوى، واستكمال تجديد الإقامات عبر مقيم تفادياً للغرامات النظامية.</p>
+              </div>
+            </div>
+            <button onclick="filterComplianceTable('expiring_soon')" class="px-3.5 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0 transition shadow-sm">
+              <i class="fa-solid fa-filter"></i> عرض الموظفين المشمولين
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Compliance Table Card -->
+        <div class="card-elevated p-6 space-y-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+            
+            <!-- Filter Tabs -->
+            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold overflow-x-auto max-w-full">
+              <button onclick="filterComplianceTable('all')" id="btnCompTabAll" class="px-3 py-1.5 rounded-lg bg-white text-brand shadow-sm">
+                الكل (109)
+              </button>
+              <button onclick="filterComplianceTable('expiring_soon')" id="btnCompTabExpiring" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                تشارف على الانتهاء (16)
+              </button>
+              <button onclick="filterComplianceTable('expats')" id="btnCompTabExpats" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                الوافدون (74)
+              </button>
+              <button onclick="filterComplianceTable('saudis')" id="btnCompTabSaudis" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                السعوديون (35)
+              </button>
+            </div>
+
+            <!-- Search Field -->
+            <div class="relative w-full md:w-72">
+              <input type="text" id="compSearchInput" oninput="handleComplianceSearch(this.value)" placeholder="بحث بالاسم، رقم الهوية، الكود، الوظيفة..." class="w-full rounded-xl border border-slate-300 py-2 pr-9 pl-3 text-xs focus:ring-2 focus:ring-brand font-bold">
+              <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400 text-xs"></i>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-right text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3">كود الموظف</th>
+                  <th class="py-3 px-3">اسم الموظف</th>
+                  <th class="py-3 px-3">الجنسية</th>
+                  <th class="py-3 px-3">الهوية / الإقامة</th>
+                  <th class="py-3 px-3">الوظيفة والفرع</th>
+                  <th class="py-3 px-3">تاريخ انتهاء الإقامة / العقد</th>
+                  <th class="py-3 px-3">الأيام المتبقية</th>
+                  <th class="py-3 px-3">رخصة العمل (قوى)</th>
+                  <th class="py-3 px-3">حالة الامتثال</th>
+                  <th class="py-3 px-3 text-center">الإجراء</th>
+                </tr>
+              </thead>
+              <tbody id="complianceTableBody" class="divide-y divide-slate-100">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Legal Reference Note -->
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between flex-wrap gap-2">
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-circle-info text-blue-600"></i>
+              تنويه نظامي: تجديد الإقامة يتطلب وجود تأمين طبي ساري (مجلس الضمان الصحي) + سداد رسوم رخصة العمل عبر منصة قوى (800 ر.س/شهرياً) + سداد رسوم الجوازات عبر مقيم.
+            </span>
+            <span class="font-bold text-brand">شركة جوهرة المجد للتجارة • سجل تجاري: 7004872169</span>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- =====================================================================
            VIEW 3: DISCIPLINARY PENALTIES (Requested: القرارات الجزائية)
            ===================================================================== -->
       <section id="view-penalties" class="space-y-6 hidden">
@@ -644,7 +841,7 @@
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="flex items-center gap-3">
               <label class="text-xs font-bold text-slate-700">تاريخ الحضور:</label>
-              <input type="date" id="attendanceDateInput" value="2026-09-30" onchange="loadAttendanceData(this.value)" class="text-xs rounded-xl border border-slate-300 py-1.5 px-3 font-bold text-slate-800">
+              <input type="date" id="attendanceDateInput" value="2026-10-05" onchange="loadAttendanceData(this.value)" class="text-xs rounded-xl border border-slate-300 py-1.5 px-3 font-bold text-slate-800">
             </div>
             <div id="attendanceStatsBadges" class="flex items-center gap-2 flex-wrap text-xs">
               <!-- Filled via JS -->
@@ -1624,7 +1821,7 @@
       <div class="space-y-3 text-xs">
         <div>
           <label class="block font-bold text-slate-700 mb-1">اختر الشهر:</label>
-          <input type="month" id="calcPayrollMonthInput" value="2026-09" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          <input type="month" id="calcPayrollMonthInput" value="2026-10" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
         </div>
       </div>
       <div class="flex justify-end gap-2 pt-3 border-t">
@@ -2203,6 +2400,16 @@
       </div>
 
       <div class="grid grid-cols-2 gap-3 text-xs">
+        <button id="mobMoreComplianceBtn" onclick="closeModal('modalMobileMore'); switchTab('compliance')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg flex-shrink-0">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <div class="font-black text-slate-800">مؤشر الامتثال</div>
+            <div class="text-[10px] text-slate-400">الإقامات ورخص العمل وقوى</div>
+          </div>
+        </button>
+
         <button id="mobMorePayrollBtn" onclick="closeModal('modalMobileMore'); switchTab('payroll')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
           <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg flex-shrink-0">
             <i class="fa-solid fa-money-check-dollar"></i>

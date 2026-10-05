@@ -78,23 +78,10 @@ function seedDatabase() {
     `, [b.code, b.name_ar, b.name_en, b.city, b.address, b.phone, b.manager, b.is_main]);
   }
 
-  // 4. Biometric Devices: Seed devices linked to branches
+  // 4. Biometric Devices: Purge demo devices (Hardware ready for real registration)
   run(`DELETE FROM biometric_devices`);
-  const devices = [
-    { name: 'جهاز بصمة فرع أبها الرئيسي', code: 'ZK-ABHA-01', ip: '192.168.10.201', port: 4370, loc: 'المدخل الرئيسي - الاستقبال', branch_id: 1, status: 'متصل', model: 'ZKTeco SilkBio-101TC' },
-    { name: 'جهاز بصمة فرع المنسك', code: 'ZK-MANSAK-02', ip: '192.168.11.201', port: 4370, loc: 'صالة فرع المنسك - المدخل', branch_id: 2, status: 'متصل', model: 'ZKTeco SpeedFace-V5L' },
-    { name: 'جهاز بصمة فرع حي الموظفين', code: 'ZK-MUWADAF-03', ip: '192.168.12.201', port: 4370, loc: 'مدخل فرع حي الموظفين', branch_id: 3, status: 'متصل', model: 'ZKTeco ProFace X' },
-    { name: 'جهاز بصمة فرع محايل عسير', code: 'ZK-MUHAYIL-04', ip: '192.168.13.201', port: 4370, loc: 'استقبال فرع محايل عسير', branch_id: 4, status: 'متصل', model: 'ZKTeco SilkBio-101TC' }
-  ];
 
-  for (const dev of devices) {
-    run(`
-      INSERT INTO biometric_devices (device_name, device_code, ip_address, port, location, branch_id, status, last_sync, model)
-      VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', '-5 minutes'), ?)
-    `, [dev.name, dev.code, dev.ip, dev.port, dev.loc, dev.branch_id, dev.status, dev.model]);
-  }
-
-  // 5. Purge all demo employee data, demo requests, penalties, and logs (Start Clean for Management)
+  // 5. Purge requests, penalties, logs, and seed official employees from Excel
   run(`DELETE FROM employees`);
   run(`DELETE FROM requests`);
   run(`DELETE FROM penalties_issued`);
@@ -102,6 +89,9 @@ function seedDatabase() {
   run(`DELETE FROM attendance_daily_summary`);
   run(`DELETE FROM payroll_items`);
   run(`DELETE FROM payroll_periods`);
+
+  // Seed all 109 official employees of Jawharat Al-Majd
+  seedEmployees();
 
   // 6. Attendance & Shift Policies (سياسات الدوام)
   const policyCount = get('SELECT COUNT(*) AS count FROM attendance_policies').count;
@@ -158,39 +148,37 @@ function seedDatabase() {
 }
 
 function seedEmployees() {
-  const employees = [
-    { emp_code: 'JM-1001', full_name_ar: 'خالد سعد الشهراني', full_name_en: 'Khaled Saad Al-Shahrani', national_id: '1084928172', nationality: 'سعودي', is_saudi: 1, gender: 'M', email: 'khaled.shahrani@jalmajd.com', phone: '0501234567', department_id: 2, job_title_ar: 'مدير الموارد البشرية والعمليات الإدارية', job_title_en: 'HR & Administrative Director', basic_salary: 16000, housing_allowance: 4000, transport_allowance: 1500, other_allowance: 1000, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA5580000201608010011001', annual_leave_balance: 24, shift_type: 'دوام صباحي', join_date: '2021-03-01', contract_end: '2027-02-28' },
-    { emp_code: 'JM-1002', full_name_ar: 'م. فهد عبدالعزيز القحطاني', full_name_en: 'Eng. Fahad Abdulaziz Al-Qahtani', national_id: '1092837461', nationality: 'سعودي', is_saudi: 1, gender: 'M', email: 'fahad.qahtani@jalmajd.com', phone: '0559876543', department_id: 3, job_title_ar: 'مدير إدارة تقنية المعلومات والتحول الرقمي', job_title_en: 'IT & Digital Transformation Director', basic_salary: 17500, housing_allowance: 4375, transport_allowance: 1500, other_allowance: 1500, bank_name: 'بنك الرياض', bank_code: 'RIBL', iban: 'SA3020000001092837461002', annual_leave_balance: 21, shift_type: 'دوام صباحي', join_date: '2022-01-15', contract_end: '2028-01-14' },
-    { emp_code: 'JM-1003', full_name_ar: 'سارة عبدالله الشهري', full_name_en: 'Sarah Abdullah Al-Shehri', national_id: '1102938475', nationality: 'سعودية', is_saudi: 1, gender: 'F', email: 'sarah.shehri@jalmajd.com', phone: '0543210987', department_id: 2, job_title_ar: 'أخصائية موارد بشرية وعلاقات موظفين', job_title_en: 'HR & Employee Relations Specialist', basic_salary: 8500, housing_allowance: 2125, transport_allowance: 1000, other_allowance: 500, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA7780000201608010011003', annual_leave_balance: 28, shift_type: 'دوام صباحي', join_date: '2023-05-10', contract_end: '2027-05-09' },
-    { emp_code: 'JM-1004', full_name_ar: 'محمد أحمد العتيبي', full_name_en: 'Mohammed Ahmed Al-Otaibi', national_id: '1074829103', nationality: 'سعودي', is_saudi: 1, gender: 'M', email: 'mohammed.otaibi@jalmajd.com', phone: '0567891234', department_id: 4, job_title_ar: 'محاسب مالي أول ومسؤول مسيرات الرواتب', job_title_en: 'Senior Payroll Accountant', basic_salary: 10500, housing_allowance: 2625, transport_allowance: 1000, other_allowance: 800, bank_name: 'البنك الأهلي السعودي', bank_code: 'NCBK', iban: 'SA1210000001074829103004', annual_leave_balance: 18, shift_type: 'دوام صباحي', join_date: '2022-09-01', contract_end: '2026-10-15' },
-    { emp_code: 'JM-1005', full_name_ar: 'م. طارق محمود المنصوري', full_name_en: 'Eng. Tarek Mahmoud Al-Mansouri', national_id: '2491827364', nationality: 'مصري', is_saudi: 0, gender: 'M', email: 'tarek.mansouri@jalmajd.com', phone: '0539182736', department_id: 3, job_title_ar: 'مهندس برمجيات أول ومطور أنظمة سحابية', job_title_en: 'Senior Software Engineer', basic_salary: 12000, housing_allowance: 3000, transport_allowance: 1000, other_allowance: 1000, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA4580000201608010011005', annual_leave_balance: 22, shift_type: 'دوام صباحي', join_date: '2022-11-15', contract_end: '2027-11-14', iqama_expiry: '2027-04-10' },
-    { emp_code: 'JM-1006', full_name_ar: 'عبدالرحمن علي عسيري', full_name_en: 'Abdulrahman Ali Asiri', national_id: '1063928174', nationality: 'سعودي', is_saudi: 1, gender: 'M', email: 'abdulrahman.asiri@jalmajd.com', phone: '0509871234', department_id: 5, job_title_ar: 'مدير العمليات التشغيلية والمشاريع', job_title_en: 'Operations Director', basic_salary: 15500, housing_allowance: 3875, transport_allowance: 1500, other_allowance: 1200, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA6680000201608010011006', annual_leave_balance: 15, shift_type: 'دوام صباحي', join_date: '2020-08-01', contract_end: '2028-07-31' },
-    { emp_code: 'JM-1007', full_name_ar: 'نورة سعيد الغامدي', full_name_en: 'Noura Saeed Al-Ghamdi', national_id: '1058291740', nationality: 'سعودية', is_saudi: 1, gender: 'F', email: 'noura.ghamdi@jalmajd.com', phone: '0551122334', department_id: 6, job_title_ar: 'مديرة إدارة التسويق والاتصال المؤسسي', job_title_en: 'Marketing Manager', basic_salary: 13000, housing_allowance: 3250, transport_allowance: 1200, other_allowance: 800, bank_name: 'بنك البلاد', bank_code: 'ALBI', iban: 'SA9015000001058291740007', annual_leave_balance: 26, shift_type: 'دوام صباحي', join_date: '2023-02-01', contract_end: '2027-01-31' },
-    { emp_code: 'JM-1008', full_name_ar: 'م. أحمد رضوان الشامي', full_name_en: 'Eng. Ahmad Radwan Al-Shami', national_id: '2381920485', nationality: 'أردني', is_saudi: 0, gender: 'M', email: 'ahmad.shami@jalmajd.com', phone: '0562233445', department_id: 3, job_title_ar: 'مهندس نظم وشبكات وأمن معلومات', job_title_en: 'Network & Security Engineer', basic_salary: 9500, housing_allowance: 2375, transport_allowance: 1000, other_allowance: 600, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA3380000201608010011008', annual_leave_balance: 19, shift_type: 'دوام صباحي', join_date: '2023-08-15', contract_end: '2027-08-14', iqama_expiry: '2026-10-10' },
-    { emp_code: 'JM-1009', full_name_ar: 'فيصل سلطان الدوسري', full_name_en: 'Faisal Sultan Al-Dossary', national_id: '1047291845', nationality: 'سعودي', is_saudi: 1, gender: 'M', email: 'faisal.dossary@jalmajd.com', phone: '0549988776', department_id: 5, job_title_ar: 'مسؤول السلامة والصحة المهنية (HSE)', job_title_en: 'HSE Officer', basic_salary: 7800, housing_allowance: 1950, transport_allowance: 1000, other_allowance: 500, bank_name: 'مصرف الإنماء', bank_code: 'INMA', iban: 'SA5505000001047291845009', annual_leave_balance: 30, shift_type: 'دوام صباحي', join_date: '2023-11-01', contract_end: '2027-10-31' },
-    { emp_code: 'JM-1010', full_name_ar: 'ريم محمد الدوسري', full_name_en: 'Reem Mohammed Al-Dossary', national_id: '1098273615', nationality: 'سعودية', is_saudi: 1, gender: 'F', email: 'reem.dossary@jalmajd.com', phone: '0534455667', department_id: 2, job_title_ar: 'أخصائية استقطاب وتوظيف وتدريب', job_title_en: 'Talent Acquisition Specialist', basic_salary: 7500, housing_allowance: 1875, transport_allowance: 1000, other_allowance: 400, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA1180000201608010011010', annual_leave_balance: 29, shift_type: 'دوام صباحي', join_date: '2024-03-01', contract_end: '2027-02-28' },
-    { emp_code: 'JM-1011', full_name_ar: 'عمر فاروق البشير', full_name_en: 'Omar Farooq Al-Bashir', national_id: '2581928471', nationality: 'سوداني', is_saudi: 0, gender: 'M', email: 'omar.bashir@jalmajd.com', phone: '0567788990', department_id: 5, job_title_ar: 'منسق لوجستيات وسلاسل الإمداد', job_title_en: 'Logistics Coordinator', basic_salary: 6500, housing_allowance: 1625, transport_allowance: 800, other_allowance: 300, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA2280000201608010011011', annual_leave_balance: 14, shift_type: 'دوام صباحي', join_date: '2022-04-10', contract_end: '2027-04-09', iqama_expiry: '2027-06-15' },
-    { emp_code: 'JM-1012', full_name_ar: 'مريم يوسف النجار', full_name_en: 'Mariam Yousef Al-Najjar', national_id: '2291827461', nationality: 'لبنانية', is_saudi: 0, gender: 'F', email: 'mariam.najjar@jalmajd.com', phone: '0541199882', department_id: 6, job_title_ar: 'مصممة جرافيك وواجهات رقمية (UI/UX)', job_title_en: 'UI/UX Designer', basic_salary: 8000, housing_allowance: 2000, transport_allowance: 1000, other_allowance: 500, bank_name: 'بنك ساب (SAB)', bank_code: 'SABB', iban: 'SA8845000002291827461012', annual_leave_balance: 23, shift_type: 'دوام صباحي', join_date: '2023-06-01', contract_end: '2027-05-31', iqama_expiry: '2027-01-20' },
-    { emp_code: 'JM-1013', full_name_ar: 'عبدالله بن صالح القرني', full_name_en: 'Abdullah Saleh Al-Qarni', national_id: '1039281745', nationality: 'سعودي', is_saudi: 1, gender: 'M', email: 'abdullah.qarni@jalmajd.com', phone: '0553344556', department_id: 2, job_title_ar: 'منسق إداري وعلاقات حكومية (معقب)', job_title_en: 'Government Relations Coordinator', basic_salary: 6000, housing_allowance: 1500, transport_allowance: 800, other_allowance: 300, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA9980000201608010011013', annual_leave_balance: 27, shift_type: 'دوام صباحي', join_date: '2024-01-15', contract_end: '2027-01-14' },
-    { emp_code: 'JM-1014', full_name_ar: 'كمال الدين حسن مرسي', full_name_en: 'Kamal Eldin Hassan Morsi', national_id: '2192837465', nationality: 'مصري', is_saudi: 0, gender: 'M', email: 'kamal.morsi@jalmajd.com', phone: '0502233114', department_id: 5, job_title_ar: 'مشرف تشغيل وصيانة المنشآت', job_title_en: 'Maintenance Supervisor', basic_salary: 5500, housing_allowance: 1375, transport_allowance: 600, other_allowance: 300, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA4480000201608010011014', annual_leave_balance: 12, shift_type: 'دوام صباحي', join_date: '2021-07-01', contract_end: '2027-06-30', iqama_expiry: '2026-09-15' },
-    { emp_code: 'JM-1015', full_name_ar: 'هدى خالد العمري', full_name_en: 'Huda Khaled Al-Omari', national_id: '1082917402', nationality: 'سعودية', is_saudi: 1, gender: 'F', email: 'huda.omari@jalmajd.com', phone: '0537766554', department_id: 4, job_title_ar: 'أخصائية رواتب ومزايا وامتثال مالي', job_title_en: 'Payroll Specialist', basic_salary: 7200, housing_allowance: 1800, transport_allowance: 1000, other_allowance: 400, bank_name: 'مصرف الراجحي', bank_code: 'RJHI', iban: 'SA6680000201608010011015', annual_leave_balance: 30, shift_type: 'دوام صباحي', join_date: '2024-05-01', contract_end: '2027-04-30' }
-  ];
+  const fs = require('fs');
+  const path = require('path');
+  const empsFile = path.join(__dirname, 'officialEmployees.json');
+  if (!fs.existsSync(empsFile)) return;
+
+  const employees = JSON.parse(fs.readFileSync(empsFile, 'utf8'));
+
+  const depts = query('SELECT id, code FROM departments');
+  const deptMap = {};
+  depts.forEach(d => deptMap[d.code] = d.id);
+
+  const brs = query('SELECT id, code FROM branches ORDER BY id ASC');
 
   for (const emp of employees) {
+    const deptId = deptMap[emp.dept_code] || (depts.length ? depts[0].id : null);
+    const branchId = brs.length ? brs[(emp.branch_idx - 1) % brs.length].id : null;
+
     run(`
       INSERT INTO employees (
         emp_code, full_name_ar, full_name_en, national_id, nationality,
-        is_saudi, gender, email, phone, department_id,
-        job_title_ar, job_title_en, basic_salary, housing_allowance, transport_allowance,
-        other_allowance, bank_name, bank_code, iban,
-        annual_leave_balance, shift_type, join_date, contract_end, iqama_expiry
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        is_saudi, gender, birth_date, email, phone, department_id, branch_id,
+        job_title_ar, job_title_en, grade_level, basic_salary, housing_allowance,
+        transport_allowance, other_allowance, bank_name, bank_code, iban,
+        annual_leave_balance, shift_type, join_date, contract_start, contract_end, iqama_expiry, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       emp.emp_code, emp.full_name_ar, emp.full_name_en, emp.national_id, emp.nationality,
-      emp.is_saudi, emp.gender, emp.email, emp.phone, emp.department_id,
-      emp.job_title_ar, emp.job_title_en, emp.basic_salary, emp.housing_allowance, emp.transport_allowance,
-      emp.other_allowance, emp.bank_name, emp.bank_code, emp.iban,
-      emp.annual_leave_balance, emp.shift_type, emp.join_date, emp.contract_end, emp.iqama_expiry || null
+      emp.is_saudi, emp.gender, emp.birth_date, emp.email, emp.phone, deptId, branchId,
+      emp.job_title_ar, emp.job_title_en, 'P-1', emp.basic_salary, emp.housing_allowance,
+      emp.transport_allowance, emp.other_allowance, emp.bank_name, emp.bank_code, emp.iban,
+      30, 'دوام صباحي', emp.join_date, emp.contract_start, emp.contract_end, emp.iqama_expiry, 'نشط'
     ]);
   }
 }

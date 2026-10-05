@@ -35,8 +35,17 @@ console.log(`✓ نجح: التحقق من الفروع بعدد ${branches.leng
 
 // 4. Biometric Devices Test
 const devices = db.query('SELECT * FROM biometric_devices');
-assert.strictEqual(devices.length, 4, 'يجب أن تتوفر أجهزة البصمة الـ 4 المربوطة بالفروع');
-console.log(`✓ نجح: التحقق من أجهزة البصمة البيومترية بعدد ${devices.length} أجهزة ZKTeco`);
+assert.strictEqual(devices.length, 0, 'يجب أن تبدأ أجهزة البصمة بقائمة نظيفة 0 جهاز بعد حذف الأجهزة التجريبية');
+
+const newDevice = db.run(`
+  INSERT INTO biometric_devices (device_code, device_name, ip_address, port, branch_id, location, model, status, last_sync)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`, ['ZK-MAIN-01', 'جهاز بصمة الاستقبال - الفرع الرئيسي', '192.168.1.201', 4370, branches[0].id, 'المدخل الرئيسي', 'ZKTeco ProFace X', 'متصل', '2026-10-05 08:00:00']);
+assert(newDevice.lastInsertRowid, 'يجب إضافة جهاز بصمة جديد بنجاح');
+const addedDevice = db.get('SELECT * FROM biometric_devices WHERE id = ?', [newDevice.lastInsertRowid]);
+assert.strictEqual(addedDevice.device_code, 'ZK-MAIN-01');
+console.log(`✓ نجح: التحقق من نظافة قائمة الأجهزة وإضافة جهاز بصمة رسمي جديد بنجاح (${addedDevice.device_name})`);
+db.run('DELETE FROM biometric_devices WHERE id = ?', [newDevice.lastInsertRowid]);
 
 // 5. Hierarchy and Approval Workflow Test
 const testEmp = employeesModule.createEmployee({

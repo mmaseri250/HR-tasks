@@ -10,9 +10,9 @@ function runEmployeeAndRequestTests() {
 
   seedDatabase();
 
-  // Test 1: Verify Clean Database Initial State (Zero demo data)
+  // Test 1: Verify Initial Database State (109 official employees, 0 demo biometric devices)
   const initialEmployees = employeesModule.getAllEmployees();
-  assert.strictEqual(initialEmployees.length, 0, 'يجب أن تكون قاعدة بيانات الموظفين نظيفة تماماً بدون أي بيانات تجريبية');
+  assert.strictEqual(initialEmployees.length, 109, 'يجب أن تحتوي قاعدة البيانات على 109 موظف رسمي من ملف جوهرة المجد');
   
   const depts = db.query('SELECT * FROM departments');
   assert.strictEqual(depts.length, 6, 'يجب أن تتوفر الإدارات الـ 6 المطلوبة بالكامل');
@@ -21,13 +21,21 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(branches.length, 4, 'يجب أن تتوفر الفروع الـ 4 المطلوبة بالكامل');
 
   const devices = db.query('SELECT * FROM biometric_devices');
-  assert.strictEqual(devices.length, 4, 'يجب أن تتوفر أجهزة البصمة الـ 4 المربوطة بالفروع');
+  assert.strictEqual(devices.length, 0, 'يجب أن تبدأ أجهزة البصمة بـ 0 بعد حذف الأجهزة التجريبية');
 
   const users = db.query('SELECT * FROM users');
   assert.strictEqual(users.length, 1, 'يجب أن يحتوي النظام على حساب المدير العام فقط (admin)');
   assert.strictEqual(users[0].username, 'admin', 'اسم مستخدم المدير العام يجب أن يكون admin');
 
-  console.log('✓ نجح: التحقق من نظافة النظام وجاهزيته (0 موظفين تجريبيين، 6 إدارات، 4 فروع، 4 أجهزة بصمة، وحساب admin فقط)');
+  // Verify Compliance Metrics for Official Employees
+  const compMetrics = employeesModule.getComplianceMetrics();
+  assert.strictEqual(compMetrics.metrics.expatCount, 74, 'يجب أن يكون عدد غير السعوديين 74 موظف');
+  assert.strictEqual(compMetrics.metrics.saudiCount, 35, 'يجب أن يكون عدد السعوديين 35 موظف');
+  assert.strictEqual(compMetrics.metrics.iqama.expiringSoon, 16, 'يجب أن يكون عدد الإقامات التي تنتهي قريباً 16 إقامة');
+  assert.strictEqual(compMetrics.metrics.workPermits.active, 74, 'يجب أن تتوفر 74 رخصة عمل في قوى');
+  assert.strictEqual(compMetrics.metrics.wps.complianceRate, 100, 'نسبة الالتزام بحماية الأجور يجب أن تكون 100%');
+
+  console.log('✓ نجح: التحقق من استيراد 109 موظف رسمي، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');
 
   // Test 2: Create Real Employee with branch and department
   const branch1 = branches[0];
@@ -70,7 +78,8 @@ function runEmployeeAndRequestTests() {
 
   // Test 4: Saudization Metrics with active employee
   const metrics = employeesModule.getSaudizationMetrics();
-  assert.strictEqual(metrics.saudizationRate, 100, 'نسبة التوطين يجب أن تكون 100% مع الموظف السعودي');
+  assert(metrics.saudizationRate > 30, 'نسبة التوطين يجب أن تتجاوز 30% مع الموظفين السعوديين');
+  assert.strictEqual(metrics.nitaqatBand, 'النطاق الأخضر المتوسط', 'المنشأة يجب أن تكون في النطاق الأخضر المتوسط');
   console.log(`✓ نجح: احتساب مؤشر التوطين ونطاقات (${metrics.saudizationRate}% - ${metrics.nitaqatBand})`);
 
   // Test 5: Submit Self-Service Request
@@ -104,8 +113,8 @@ function runEmployeeAndRequestTests() {
   // Test 8: Delete Employee (Clean up after test)
   employeesModule.deleteEmployee(created.id);
   const remaining = employeesModule.getAllEmployees();
-  assert.strictEqual(remaining.length, 0, 'يجب حذف الموظف التجريبي بنجاح ليبقى النظام نظيفاً');
-  console.log('✓ نجح: حذف الموظف وإعادة قاعدة البيانات للحالة النقية المجهزة للإدارة');
+  assert.strictEqual(remaining.length, 109, 'يجب حذف الموظف التجريبي بنجاح ليبقى في النظام الـ 109 موظف رسمي');
+  console.log('✓ نجح: حذف الموظف وإعادة قاعدة البيانات لحالة الـ 109 موظف رسمي المعتمدين');
 
   console.log('--- اكتملت اختبارات شؤون الموظفين والخدمة الذاتية بنجاح 100% ---\n');
 }

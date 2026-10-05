@@ -376,13 +376,3170 @@ const FALLBACK_DATA = {
     { id: 3, code: 'BR-MUWADAF-03', name_ar: 'فرع حي الموظفين', name_en: 'Hay Al-Muwadhafeen Branch', city: 'أبها', address: 'أبها - حي الموظفين - الشارع التجاري العام', phone: '0172205566', manager_name: 'مشرف فرع حي الموظفين', is_main: 0, employee_count: 0, device_count: 1 },
     { id: 4, code: 'BR-MUHAYIL-04', name_ar: 'فرع محايل عسير', name_en: 'Muhayil Asir Branch', city: 'محايل عسير', address: 'محايل عسير - طريق الشعبين الرئيسي - مجمع جوهرة المجد', phone: '0172851122', manager_name: 'مشرف فرع محايل عسير', is_main: 0, employee_count: 0, device_count: 1 }
   ],
-  employees: [],
-  devices: [
-    { id: 1, name: 'جهاز بصمة فرع أبها الرئيسي', code: 'ZK-ABHA-01', ip_address: '192.168.10.201', port: 4370, location: 'المدخل الرئيسي - الاستقبال', branch_id: 1, branch_name_ar: 'فرع ابها الرئيسي', status: 'متصل', last_sync: 'منذ دقيقتين', model: 'ZKTeco SilkBio-101TC' },
-    { id: 2, name: 'جهاز بصمة فرع المنسك', code: 'ZK-MANSAK-02', ip_address: '192.168.11.201', port: 4370, location: 'صالة فرع المنسك - المدخل', branch_id: 2, branch_name_ar: 'فرع المنسك', status: 'متصل', last_sync: 'منذ 5 دقائق', model: 'ZKTeco SpeedFace-V5L' },
-    { id: 3, name: 'جهاز بصمة فرع حي الموظفين', code: 'ZK-MUWADAF-03', ip_address: '192.168.12.201', port: 4370, location: 'مدخل فرع حي الموظفين', branch_id: 3, branch_name_ar: 'فرع حي الموظفين', status: 'متصل', last_sync: 'منذ 3 دقائق', model: 'ZKTeco ProFace X' },
-    { id: 4, name: 'جهاز بصمة فرع محايل عسير', code: 'ZK-MUHAYIL-04', ip_address: '192.168.13.201', port: 4370, location: 'استقبال فرع محايل عسير', branch_id: 4, branch_name_ar: 'فرع محايل عسير', status: 'متصل', last_sync: 'منذ 6 دقائق', model: 'ZKTeco SilkBio-101TC' }
-  ],
+  employees: [
+  {
+    "id": 1,
+    "emp_code": "JM-1001",
+    "full_name_ar": "MOHAMMAD RONY  MIAH",
+    "full_name_en": "MOHAMMAD RONY  MIAH",
+    "national_id": "2467149239",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1995-10-10",
+    "email": "mohammadro.1001@jalmajd.com",
+    "phone": "051000000",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 200,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1080000201608000000000",
+    "status": "نشط"
+  },
+  {
+    "id": 2,
+    "emp_code": "JM-1002",
+    "full_name_ar": "مفرح يحي محمد معشي",
+    "full_name_en": "مفرح يحي محمد معشي",
+    "national_id": "1207113836",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2007-02-25",
+    "email": "emp1002.1002@jalmajd.com",
+    "phone": "052000001",
+    "job_title_ar": "حارس أمن",
+    "job_title_en": "حارس أمن",
+    "department_id": 1,
+    "branch_id": 2,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2025-06-18",
+    "contract_end": "2027-06-17",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1180000201608000000001",
+    "status": "نشط"
+  },
+  {
+    "id": 3,
+    "emp_code": "JM-1003",
+    "full_name_ar": "MOHAMMAD ENAYET ULLAH KAZI",
+    "full_name_en": "MOHAMMAD ENAYET ULLAH KAZI",
+    "national_id": "2466859259",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1996-01-01",
+    "email": "mohammaden.1003@jalmajd.com",
+    "phone": "053000002",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1600,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1280000201608000000002",
+    "status": "نشط"
+  },
+  {
+    "id": 4,
+    "emp_code": "JM-1004",
+    "full_name_ar": "محمد علي جابر ال مفقع",
+    "full_name_en": "محمد علي جابر ال مفقع",
+    "national_id": "1111746069",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2000-04-07",
+    "email": "emp1004.1004@jalmajd.com",
+    "phone": "054000003",
+    "job_title_ar": "حارس أمن",
+    "job_title_en": "حارس أمن",
+    "department_id": 1,
+    "branch_id": 4,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2025-05-22",
+    "contract_end": "2027-05-21",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1380000201608000000003",
+    "status": "نشط"
+  },
+  {
+    "id": 5,
+    "emp_code": "JM-1005",
+    "full_name_ar": "PURNA BAHADUR  ALE",
+    "full_name_en": "PURNA BAHADUR  ALE",
+    "national_id": "2465831010",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1996-01-26",
+    "email": "purnabahad.1005@jalmajd.com",
+    "phone": "055000004",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1600,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1480000201608000000004",
+    "status": "نشط"
+  },
+  {
+    "id": 6,
+    "emp_code": "JM-1006",
+    "full_name_ar": "DEV BAHADUR  THADA",
+    "full_name_en": "DEV BAHADUR  THADA",
+    "national_id": "2465830822",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1991-08-30",
+    "email": "devbahadur.1006@jalmajd.com",
+    "phone": "056000005",
+    "job_title_ar": "عامل حفظ فواكه وخضروات",
+    "job_title_en": "عامل حفظ فواكه وخضروات",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 700,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1580000201608000000005",
+    "status": "نشط"
+  },
+  {
+    "id": 7,
+    "emp_code": "JM-1007",
+    "full_name_ar": "TASIR ANSARI  AAZAM ANSARI",
+    "full_name_en": "TASIR ANSARI  AAZAM ANSARI",
+    "national_id": "2367493182",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1989-07-05",
+    "email": "tasiransar.1007@jalmajd.com",
+    "phone": "057000006",
+    "job_title_ar": "موظف صندوق محاسبة",
+    "job_title_en": "موظف صندوق محاسبة",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-08-01",
+    "contract_end": "2027-07-31",
+    "iqama_expiry": "2027-07-31",
+    "basic_salary": 1100,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 600,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1680000201608000000006",
+    "status": "نشط"
+  },
+  {
+    "id": 8,
+    "emp_code": "JM-1008",
+    "full_name_ar": "BAYJID SHITOL  MIAH",
+    "full_name_en": "BAYJID SHITOL  MIAH",
+    "national_id": "2492235524",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1996-03-01",
+    "email": "bayjidshit.1008@jalmajd.com",
+    "phone": "058000007",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1780000201608000000007",
+    "status": "نشط"
+  },
+  {
+    "id": 9,
+    "emp_code": "JM-1009",
+    "full_name_ar": "YUSUF   ALI",
+    "full_name_en": "YUSUF   ALI",
+    "national_id": "2483667578",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1983-03-16",
+    "email": "yusufali.1009@jalmajd.com",
+    "phone": "059000008",
+    "job_title_ar": "عامل مخزن",
+    "job_title_en": "عامل مخزن",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1600,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1880000201608000000008",
+    "status": "نشط"
+  },
+  {
+    "id": 10,
+    "emp_code": "JM-1010",
+    "full_name_ar": "عايض بن محمد بن عبدربه عسيري",
+    "full_name_en": "عايض بن محمد بن عبدربه عسيري",
+    "national_id": "1056129370",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1979-01-27",
+    "email": "emp1010.1010@jalmajd.com",
+    "phone": "051000009",
+    "job_title_ar": "حارس أمن",
+    "job_title_en": "حارس أمن",
+    "department_id": 1,
+    "branch_id": 2,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2025-04-14",
+    "contract_end": "2027-04-13",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1980000201608000000009",
+    "status": "نشط"
+  },
+  {
+    "id": 11,
+    "emp_code": "JM-1011",
+    "full_name_ar": "منال سعيد حسن الاصلعي",
+    "full_name_en": "منال سعيد حسن الاصلعي",
+    "national_id": "1057909903",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1988-03-19",
+    "email": "emp1011.1011@jalmajd.com",
+    "phone": "052000010",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2023-10-15",
+    "contract_end": "2026-10-14",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2080000201608000000010",
+    "status": "نشط"
+  },
+  {
+    "id": 12,
+    "emp_code": "JM-1012",
+    "full_name_ar": "فاطمه محمد بن علي المغيدي",
+    "full_name_en": "فاطمه محمد بن علي المغيدي",
+    "national_id": "1067473056",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1990-05-01",
+    "email": "emp1012.1012@jalmajd.com",
+    "phone": "053000011",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2024-11-04",
+    "contract_end": "2026-11-03",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2180000201608000000011",
+    "status": "نشط"
+  },
+  {
+    "id": 13,
+    "emp_code": "JM-1013",
+    "full_name_ar": "هاني علي شامي عسيري",
+    "full_name_en": "هاني علي شامي عسيري",
+    "national_id": "1106795105",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2000-01-05",
+    "email": "emp1013.1013@jalmajd.com",
+    "phone": "054000012",
+    "job_title_ar": "مشرف مكتب",
+    "job_title_en": "مشرف مكتب",
+    "department_id": 2,
+    "branch_id": 1,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2023-12-26",
+    "contract_end": "2026-12-25",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 200,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2280000201608000000012",
+    "status": "نشط"
+  },
+  {
+    "id": 14,
+    "emp_code": "JM-1014",
+    "full_name_ar": "JUNAID SHADAN  MOHAMMED",
+    "full_name_en": "JUNAID SHADAN  MOHAMMED",
+    "national_id": "2467545568",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1996-09-27",
+    "email": "junaidshad.1014@jalmajd.com",
+    "phone": "055000013",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2380000201608000000013",
+    "status": "نشط"
+  },
+  {
+    "id": 15,
+    "emp_code": "JM-1015",
+    "full_name_ar": "فهمي سالم عبيد باعمير",
+    "full_name_en": "فهمي سالم عبيد باعمير",
+    "national_id": "2273877585",
+    "nationality": "اليمن",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1987-11-17",
+    "email": "emp1015.1015@jalmajd.com",
+    "phone": "056000014",
+    "job_title_ar": "عامل تحميل وتنزيل",
+    "job_title_en": "عامل تحميل وتنزيل",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-08-21",
+    "contract_end": "2027-08-20",
+    "iqama_expiry": "2027-08-20",
+    "basic_salary": 2200,
+    "housing_allowance": 750,
+    "transport_allowance": 0,
+    "other_allowance": 1450,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2480000201608000000014",
+    "status": "نشط"
+  },
+  {
+    "id": 16,
+    "emp_code": "JM-1016",
+    "full_name_ar": "فاطمه أحمد محمد عسيري",
+    "full_name_en": "فاطمه أحمد محمد عسيري",
+    "national_id": "1110816251",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1998-03-24",
+    "email": "emp1016.1016@jalmajd.com",
+    "phone": "057000015",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2025-05-28",
+    "contract_end": "2027-05-27",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2580000201608000000015",
+    "status": "نشط"
+  },
+  {
+    "id": 17,
+    "emp_code": "JM-1017",
+    "full_name_ar": "MD PALASH MULLA MD",
+    "full_name_en": "MD PALASH MULLA MD",
+    "national_id": "2466859713",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1988-07-12",
+    "email": "mdpalashmu.1017@jalmajd.com",
+    "phone": "058000016",
+    "job_title_ar": "عامل كاونتر مأكولات ومشروبات",
+    "job_title_en": "عامل كاونتر مأكولات ومشروبات",
+    "department_id": 4,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2680000201608000000016",
+    "status": "نشط"
+  },
+  {
+    "id": 18,
+    "emp_code": "JM-1018",
+    "full_name_ar": "GOPAL KUMAR  KUMHAL",
+    "full_name_en": "GOPAL KUMAR  KUMHAL",
+    "national_id": "2465830186",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1994-04-23",
+    "email": "gopalkumar.1018@jalmajd.com",
+    "phone": "059000017",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2780000201608000000017",
+    "status": "نشط"
+  },
+  {
+    "id": 19,
+    "emp_code": "JM-1019",
+    "full_name_ar": "علي محمد بن بدوي آل عساف",
+    "full_name_en": "علي محمد بن بدوي آل عساف",
+    "national_id": "1120990062",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2002-03-25",
+    "email": "emp1019.1019@jalmajd.com",
+    "phone": "051000018",
+    "job_title_ar": "مشرف مكتب",
+    "job_title_en": "مشرف مكتب",
+    "department_id": 2,
+    "branch_id": 3,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2025-02-11",
+    "contract_end": "2027-02-10",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 200,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2880000201608000000018",
+    "status": "نشط"
+  },
+  {
+    "id": 20,
+    "emp_code": "JM-1020",
+    "full_name_ar": "ندى يحيى بن جابر سفياني",
+    "full_name_en": "ندى يحيى بن جابر سفياني",
+    "national_id": "1106453341",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1999-12-25",
+    "email": "emp1020.1020@jalmajd.com",
+    "phone": "052000019",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2026-08-20",
+    "contract_end": "2027-08-19",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2980000201608000000019",
+    "status": "نشط"
+  },
+  {
+    "id": 21,
+    "emp_code": "JM-1021",
+    "full_name_ar": "محمد السيد فوزي سرور",
+    "full_name_en": "محمد السيد فوزي سرور",
+    "national_id": "2196758631",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1971-08-06",
+    "email": "emp1021.1021@jalmajd.com",
+    "phone": "053000020",
+    "job_title_ar": "عامل فرز منتجات",
+    "job_title_en": "عامل فرز منتجات",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-08-15",
+    "contract_end": "2027-08-14",
+    "iqama_expiry": "2027-08-14",
+    "basic_salary": 4700,
+    "housing_allowance": 571,
+    "transport_allowance": 0,
+    "other_allowance": 1571,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3080000201608000000020",
+    "status": "نشط"
+  },
+  {
+    "id": 22,
+    "emp_code": "JM-1022",
+    "full_name_ar": "علي سعد حسين البشري",
+    "full_name_en": "علي سعد حسين البشري",
+    "national_id": "1067121598",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1990-02-14",
+    "email": "emp1022.1022@jalmajd.com",
+    "phone": "054000021",
+    "job_title_ar": "مشرف مكتب",
+    "job_title_en": "مشرف مكتب",
+    "department_id": 2,
+    "branch_id": 2,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2025-10-16",
+    "contract_end": "2026-10-15",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3180000201608000000021",
+    "status": "نشط"
+  },
+  {
+    "id": 23,
+    "emp_code": "JM-1023",
+    "full_name_ar": "زهراء سعيد بن محمد آل مسد",
+    "full_name_en": "زهراء سعيد بن محمد آل مسد",
+    "national_id": "1050378478",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1980-08-19",
+    "email": "emp1023.1023@jalmajd.com",
+    "phone": "055000022",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2024-10-17",
+    "contract_end": "2026-10-16",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3280000201608000000022",
+    "status": "نشط"
+  },
+  {
+    "id": 24,
+    "emp_code": "JM-1024",
+    "full_name_ar": "أحمد علي هادي آل دحنان",
+    "full_name_en": "أحمد علي هادي آل دحنان",
+    "national_id": "1120256498",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2001-08-09",
+    "email": "emp1024.1024@jalmajd.com",
+    "phone": "056000023",
+    "job_title_ar": "حارس أمن",
+    "job_title_en": "حارس أمن",
+    "department_id": 1,
+    "branch_id": 4,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2025-02-10",
+    "contract_end": "2027-02-09",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3380000201608000000023",
+    "status": "نشط"
+  },
+  {
+    "id": 25,
+    "emp_code": "JM-1025",
+    "full_name_ar": "معدي موسى محمد عسيري",
+    "full_name_en": "معدي موسى محمد عسيري",
+    "national_id": "1126762093",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2004-10-28",
+    "email": "emp1025.1025@jalmajd.com",
+    "phone": "057000024",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2026-05-19",
+    "contract_end": "2027-05-18",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3480000201608000000024",
+    "status": "نشط"
+  },
+  {
+    "id": 26,
+    "emp_code": "JM-1026",
+    "full_name_ar": "شامه علي بن محمد عسيري",
+    "full_name_en": "شامه علي بن محمد عسيري",
+    "national_id": "1112576044",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2000-03-26",
+    "email": "emp1026.1026@jalmajd.com",
+    "phone": "058000025",
+    "job_title_ar": "كاتب موارد بشرية",
+    "job_title_en": "كاتب موارد بشرية",
+    "department_id": 2,
+    "branch_id": 2,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2023-05-02",
+    "contract_end": "2027-05-01",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3580000201608000000025",
+    "status": "نشط"
+  },
+  {
+    "id": 27,
+    "emp_code": "JM-1027",
+    "full_name_ar": "عبدالله حسين بكري عواجي",
+    "full_name_en": "عبدالله حسين بكري عواجي",
+    "national_id": "1124512797",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2003-08-17",
+    "email": "emp1027.1027@jalmajd.com",
+    "phone": "059000026",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2025-05-28",
+    "contract_end": "2027-05-27",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3680000201608000000026",
+    "status": "نشط"
+  },
+  {
+    "id": 28,
+    "emp_code": "JM-1028",
+    "full_name_ar": "محمد سعود ابن سعد آل ثقفان",
+    "full_name_en": "محمد سعود ابن سعد آل ثقفان",
+    "national_id": "1124354752",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2003-12-08",
+    "email": "emp1028.1028@jalmajd.com",
+    "phone": "051000027",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2025-04-20",
+    "contract_end": "2027-04-19",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3780000201608000000027",
+    "status": "نشط"
+  },
+  {
+    "id": 29,
+    "emp_code": "JM-1029",
+    "full_name_ar": "نوره حسين مقبول القحطاني",
+    "full_name_en": "نوره حسين مقبول القحطاني",
+    "national_id": "1052910237",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1978-10-09",
+    "email": "emp1029.1029@jalmajd.com",
+    "phone": "052000028",
+    "job_title_ar": "مصمم جرافيك",
+    "job_title_en": "مصمم جرافيك",
+    "department_id": 6,
+    "branch_id": 1,
+    "department_name_ar": "إدارة التسويق",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-06-08",
+    "contract_end": "2027-06-07",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3880000201608000000028",
+    "status": "نشط"
+  },
+  {
+    "id": 30,
+    "emp_code": "JM-1030",
+    "full_name_ar": "NUR ALOM GAZI YOUSUP",
+    "full_name_en": "NUR ALOM GAZI YOUSUP",
+    "national_id": "2497599486",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1984-05-01",
+    "email": "nuralomgaz.1030@jalmajd.com",
+    "phone": "053000029",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2022-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1600,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 100,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3980000201608000000029",
+    "status": "نشط"
+  },
+  {
+    "id": 31,
+    "emp_code": "JM-1031",
+    "full_name_ar": "عبير سعيد علي الاحمري",
+    "full_name_en": "عبير سعيد علي الاحمري",
+    "national_id": "1118810322",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2002-12-15",
+    "email": "emp1031.1031@jalmajd.com",
+    "phone": "054000030",
+    "job_title_ar": "بائع تذاكر",
+    "job_title_en": "بائع تذاكر",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2026-08-26",
+    "contract_end": "2027-08-25",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA4080000201608000000030",
+    "status": "نشط"
+  },
+  {
+    "id": 32,
+    "emp_code": "JM-1032",
+    "full_name_ar": "RASEL MIAH NOBI MIAH",
+    "full_name_en": "RASEL MIAH NOBI MIAH",
+    "national_id": "2471923587",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1996-12-12",
+    "email": "raselmiahn.1032@jalmajd.com",
+    "phone": "055000031",
+    "job_title_ar": "عامل تنظيف مكاتب ومنشآت",
+    "job_title_en": "عامل تنظيف مكاتب ومنشآت",
+    "department_id": 1,
+    "branch_id": 4,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2021-09-01",
+    "contract_end": "2027-08-31",
+    "iqama_expiry": "2027-08-31",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA4180000201608000000031",
+    "status": "نشط"
+  },
+  {
+    "id": 33,
+    "emp_code": "JM-1033",
+    "full_name_ar": "خالد احمد محمد راعي",
+    "full_name_en": "خالد احمد محمد راعي",
+    "national_id": "1110902515",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2001-03-21",
+    "email": "emp1033.1033@jalmajd.com",
+    "phone": "056000032",
+    "job_title_ar": "مشرف مكتب",
+    "job_title_en": "مشرف مكتب",
+    "department_id": 2,
+    "branch_id": 1,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2023-03-09",
+    "contract_end": "2027-03-08",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 200,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA4280000201608000000032",
+    "status": "نشط"
+  },
+  {
+    "id": 34,
+    "emp_code": "JM-1034",
+    "full_name_ar": "حسن علي حسن غظيف",
+    "full_name_en": "حسن علي حسن غظيف",
+    "national_id": "1078289384",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1992-09-11",
+    "email": "emp1034.1034@jalmajd.com",
+    "phone": "057000033",
+    "job_title_ar": "حارس أمن",
+    "job_title_en": "حارس أمن",
+    "department_id": 1,
+    "branch_id": 2,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-11-14",
+    "contract_end": "2026-11-13",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA4380000201608000000033",
+    "status": "نشط"
+  },
+  {
+    "id": 35,
+    "emp_code": "JM-1035",
+    "full_name_ar": "سميه سالم يحي الفيفي",
+    "full_name_en": "سميه سالم يحي الفيفي",
+    "national_id": "1072664301",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1991-08-14",
+    "email": "emp1035.1035@jalmajd.com",
+    "phone": "058000034",
+    "job_title_ar": "كاتب موارد بشرية",
+    "job_title_en": "كاتب موارد بشرية",
+    "department_id": 2,
+    "branch_id": 3,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2021-10-01",
+    "contract_end": "2027-09-30",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 500,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA4480000201608000000034",
+    "status": "نشط"
+  },
+  {
+    "id": 36,
+    "emp_code": "JM-1036",
+    "full_name_ar": "عبدالرحمن جابر بن مفرح عسيري",
+    "full_name_en": "عبدالرحمن جابر بن مفرح عسيري",
+    "national_id": "1119905212",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2002-04-06",
+    "email": "emp1036.1036@jalmajd.com",
+    "phone": "059000035",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2025-02-18",
+    "contract_end": "2027-02-17",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA4580000201608000000035",
+    "status": "نشط"
+  },
+  {
+    "id": 37,
+    "emp_code": "JM-1037",
+    "full_name_ar": "خيريه اسماعيل محمد خنفور",
+    "full_name_en": "خيريه اسماعيل محمد خنفور",
+    "national_id": "1135619938",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2001-12-27",
+    "email": "emp1037.1037@jalmajd.com",
+    "phone": "051000036",
+    "job_title_ar": "بائع تذاكر",
+    "job_title_en": "بائع تذاكر",
+    "department_id": 4,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2023-10-01",
+    "contract_end": "2027-09-30",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA4680000201608000000036",
+    "status": "نشط"
+  },
+  {
+    "id": 38,
+    "emp_code": "JM-1038",
+    "full_name_ar": "أحمد عبدالرحمن علي يعن الله",
+    "full_name_en": "أحمد عبدالرحمن علي يعن الله",
+    "national_id": "1099604686",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1997-06-29",
+    "email": "emp1038.1038@jalmajd.com",
+    "phone": "052000037",
+    "job_title_ar": "مشرف مكتب",
+    "job_title_en": "مشرف مكتب",
+    "department_id": 2,
+    "branch_id": 2,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2025-04-28",
+    "contract_end": "2027-04-27",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA4780000201608000000037",
+    "status": "نشط"
+  },
+  {
+    "id": 39,
+    "emp_code": "JM-1039",
+    "full_name_ar": "احمد علي عيسى السلمي",
+    "full_name_en": "احمد علي عيسى السلمي",
+    "national_id": "1083113686",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1993-03-01",
+    "email": "emp1039.1039@jalmajd.com",
+    "phone": "053000038",
+    "job_title_ar": "مشرف مكتب",
+    "job_title_en": "مشرف مكتب",
+    "department_id": 2,
+    "branch_id": 3,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2024-07-01",
+    "contract_end": "2027-06-30",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 200,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA4880000201608000000038",
+    "status": "نشط"
+  },
+  {
+    "id": 40,
+    "emp_code": "JM-1040",
+    "full_name_ar": "صالحه سلطان علي آل سعيده",
+    "full_name_en": "صالحه سلطان علي آل سعيده",
+    "national_id": "1075555365",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1992-03-09",
+    "email": "emp1040.1040@jalmajd.com",
+    "phone": "054000039",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2025-10-08",
+    "contract_end": "2026-10-07",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA4980000201608000000039",
+    "status": "نشط"
+  },
+  {
+    "id": 41,
+    "emp_code": "JM-1041",
+    "full_name_ar": "صاوي معتمد دياب عبدالحفيظ",
+    "full_name_en": "صاوي معتمد دياب عبدالحفيظ",
+    "national_id": "2533533523",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1978-11-28",
+    "email": "emp1041.1041@jalmajd.com",
+    "phone": "055000040",
+    "job_title_ar": "مشرف مدخلي البيانات",
+    "job_title_en": "مشرف مدخلي البيانات",
+    "department_id": 5,
+    "branch_id": 1,
+    "department_name_ar": "إدارة تقنية المعلومات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-11-19",
+    "contract_end": "2026-11-18",
+    "iqama_expiry": "2026-11-18",
+    "basic_salary": 2700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA5080000201608000000040",
+    "status": "نشط"
+  },
+  {
+    "id": 42,
+    "emp_code": "JM-1042",
+    "full_name_ar": "ملهي أحمد بن ملهي عسيري",
+    "full_name_en": "ملهي أحمد بن ملهي عسيري",
+    "national_id": "1122731514",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2003-11-22",
+    "email": "emp1042.1042@jalmajd.com",
+    "phone": "056000041",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2024-12-24",
+    "contract_end": "2026-12-23",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA5180000201608000000041",
+    "status": "نشط"
+  },
+  {
+    "id": 43,
+    "emp_code": "JM-1043",
+    "full_name_ar": "ريان يحي بن عبدالله آل بن محي",
+    "full_name_en": "ريان يحي بن عبدالله آل بن محي",
+    "national_id": "1127113163",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2004-12-01",
+    "email": "emp1043.1043@jalmajd.com",
+    "phone": "057000042",
+    "job_title_ar": "بائع تذاكر",
+    "job_title_en": "بائع تذاكر",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2026-02-26",
+    "contract_end": "2027-02-25",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA5280000201608000000042",
+    "status": "نشط"
+  },
+  {
+    "id": 44,
+    "emp_code": "JM-1044",
+    "full_name_ar": "SHAMSHER ALAM  DOST MOHAMMAD",
+    "full_name_en": "SHAMSHER ALAM  DOST MOHAMMAD",
+    "national_id": "2367493612",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1982-06-10",
+    "email": "shamsheral.1044@jalmajd.com",
+    "phone": "058000043",
+    "job_title_ar": "حدّاد",
+    "job_title_en": "حدّاد",
+    "department_id": 1,
+    "branch_id": 4,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-10-14",
+    "contract_end": "2026-10-13",
+    "iqama_expiry": "2026-10-13",
+    "basic_salary": 1100,
+    "housing_allowance": 594,
+    "transport_allowance": 0,
+    "other_allowance": 594,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA5380000201608000000043",
+    "status": "نشط"
+  },
+  {
+    "id": 45,
+    "emp_code": "JM-1045",
+    "full_name_ar": "عبدالواحد عبدالواحد محمود مصطفى",
+    "full_name_en": "عبدالواحد عبدالواحد محمود مصطفى",
+    "national_id": "2431370739",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1967-05-21",
+    "email": "emp1045.1045@jalmajd.com",
+    "phone": "059000044",
+    "job_title_ar": "عامل فرز منتجات",
+    "job_title_en": "عامل فرز منتجات",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 4200,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA5480000201608000000044",
+    "status": "نشط"
+  },
+  {
+    "id": 46,
+    "emp_code": "JM-1046",
+    "full_name_ar": "HAYAT MUHAMMAD KHAN  HAMZLA",
+    "full_name_en": "HAYAT MUHAMMAD KHAN  HAMZLA",
+    "national_id": "2341377923",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1982-01-03",
+    "email": "hayatmuham.1046@jalmajd.com",
+    "phone": "051000045",
+    "job_title_ar": "سائق شاحنة ثقيلة",
+    "job_title_en": "سائق شاحنة ثقيلة",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 2600,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA5580000201608000000045",
+    "status": "نشط"
+  },
+  {
+    "id": 47,
+    "emp_code": "JM-1047",
+    "full_name_ar": "HOSAIN MUHAMMAD  SAIFULLAH",
+    "full_name_en": "HOSAIN MUHAMMAD  SAIFULLAH",
+    "national_id": "2445505395",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1990-01-01",
+    "email": "hosainmuha.1047@jalmajd.com",
+    "phone": "052000046",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA5680000201608000000046",
+    "status": "نشط"
+  },
+  {
+    "id": 48,
+    "emp_code": "JM-1048",
+    "full_name_ar": "MOHAMMED SHARIF  HOSSAIN",
+    "full_name_en": "MOHAMMED SHARIF  HOSSAIN",
+    "national_id": "2431491014",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1991-05-03",
+    "email": "mohammedsh.1048@jalmajd.com",
+    "phone": "053000047",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA5780000201608000000047",
+    "status": "نشط"
+  },
+  {
+    "id": 49,
+    "emp_code": "JM-1049",
+    "full_name_ar": "SHAKEEL MOHAMMED  AZIZ MOHAMMED",
+    "full_name_en": "SHAKEEL MOHAMMED  AZIZ MOHAMMED",
+    "national_id": "2328836750",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1975-06-02",
+    "email": "shakeelmoh.1049@jalmajd.com",
+    "phone": "054000048",
+    "job_title_ar": "فني شبكات تقنية معلومات",
+    "job_title_en": "فني شبكات تقنية معلومات",
+    "department_id": 5,
+    "branch_id": 1,
+    "department_name_ar": "إدارة تقنية المعلومات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 4800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA5880000201608000000048",
+    "status": "نشط"
+  },
+  {
+    "id": 50,
+    "emp_code": "JM-1050",
+    "full_name_ar": "محمد أحمد عبدالرحمن زويته",
+    "full_name_en": "محمد أحمد عبدالرحمن زويته",
+    "national_id": "2311971309",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1988-11-22",
+    "email": "emp1050.1050@jalmajd.com",
+    "phone": "055000049",
+    "job_title_ar": "صانع حلويات",
+    "job_title_en": "صانع حلويات",
+    "department_id": 4,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 2500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA5980000201608000000049",
+    "status": "نشط"
+  },
+  {
+    "id": 51,
+    "emp_code": "JM-1051",
+    "full_name_ar": "ABDUL   AHAD",
+    "full_name_en": "ABDUL   AHAD",
+    "national_id": "2460208313",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1995-06-16",
+    "email": "abdulahad.1051@jalmajd.com",
+    "phone": "056000050",
+    "job_title_ar": "عامل تنظيف مكاتب ومنشآت",
+    "job_title_en": "عامل تنظيف مكاتب ومنشآت",
+    "department_id": 1,
+    "branch_id": 3,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA6080000201608000000050",
+    "status": "نشط"
+  },
+  {
+    "id": 52,
+    "emp_code": "JM-1052",
+    "full_name_ar": "SHAHID MANZOOR MANZOOR HUSSAIN",
+    "full_name_en": "SHAHID MANZOOR MANZOOR HUSSAIN",
+    "national_id": "2314527587",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1985-06-06",
+    "email": "shahidmanz.1052@jalmajd.com",
+    "phone": "057000051",
+    "job_title_ar": "عامل إنشاءات",
+    "job_title_en": "عامل إنشاءات",
+    "department_id": 1,
+    "branch_id": 4,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 1900,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA6180000201608000000051",
+    "status": "نشط"
+  },
+  {
+    "id": 53,
+    "emp_code": "JM-1053",
+    "full_name_ar": "ALI RAZA MUHAMMAD SAFDAR",
+    "full_name_en": "ALI RAZA MUHAMMAD SAFDAR",
+    "national_id": "2315919775",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1987-11-15",
+    "email": "alirazamuh.1053@jalmajd.com",
+    "phone": "058000052",
+    "job_title_ar": "موظف صندوق محاسبة",
+    "job_title_en": "موظف صندوق محاسبة",
+    "department_id": 4,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 2000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA6280000201608000000052",
+    "status": "نشط"
+  },
+  {
+    "id": 54,
+    "emp_code": "JM-1054",
+    "full_name_ar": "محمد امين عبد الصادق ابراهيم",
+    "full_name_en": "محمد امين عبد الصادق ابراهيم",
+    "national_id": "2315918215",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1989-02-17",
+    "email": "emp1054.1054@jalmajd.com",
+    "phone": "059000053",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 2500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA6380000201608000000053",
+    "status": "نشط"
+  },
+  {
+    "id": 55,
+    "emp_code": "JM-1055",
+    "full_name_ar": "صلاح محمد علي بن طاهر",
+    "full_name_en": "صلاح محمد علي بن طاهر",
+    "national_id": "2306940632",
+    "nationality": "اليمن",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1982-11-19",
+    "email": "emp1055.1055@jalmajd.com",
+    "phone": "051000054",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 3200,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA6480000201608000000054",
+    "status": "نشط"
+  },
+  {
+    "id": 56,
+    "emp_code": "JM-1056",
+    "full_name_ar": "JOWEL   MD HIRON MIA",
+    "full_name_en": "JOWEL   MD HIRON MIA",
+    "national_id": "2505700043",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1998-12-12",
+    "email": "jowelmdhir.1056@jalmajd.com",
+    "phone": "052000055",
+    "job_title_ar": "عامل تنظيف مكاتب ومنشآت",
+    "job_title_en": "عامل تنظيف مكاتب ومنشآت",
+    "department_id": 1,
+    "branch_id": 4,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-04-14",
+    "contract_end": "2027-04-13",
+    "iqama_expiry": "2027-04-13",
+    "basic_salary": 1500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA6580000201608000000055",
+    "status": "نشط"
+  },
+  {
+    "id": 57,
+    "emp_code": "JM-1057",
+    "full_name_ar": "KRISHNA BAHADUR DALA MAGAR",
+    "full_name_en": "KRISHNA BAHADUR DALA MAGAR",
+    "national_id": "2440333439",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1993-11-18",
+    "email": "krishnabah.1057@jalmajd.com",
+    "phone": "053000056",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA6680000201608000000056",
+    "status": "نشط"
+  },
+  {
+    "id": 58,
+    "emp_code": "JM-1058",
+    "full_name_ar": "هاني عبدالرحمن صالح القحطاني",
+    "full_name_en": "هاني عبدالرحمن صالح القحطاني",
+    "national_id": "1055798134",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1988-07-06",
+    "email": "emp1058.1058@jalmajd.com",
+    "phone": "054000057",
+    "job_title_ar": "مدير إداري",
+    "job_title_en": "مدير إداري",
+    "department_id": 2,
+    "branch_id": 2,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2022-02-15",
+    "contract_end": "2027-02-14",
+    "iqama_expiry": null,
+    "basic_salary": 10000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA6780000201608000000057",
+    "status": "نشط"
+  },
+  {
+    "id": 59,
+    "emp_code": "JM-1059",
+    "full_name_ar": "مؤمن جابر عطيت الله عثمان",
+    "full_name_en": "مؤمن جابر عطيت الله عثمان",
+    "national_id": "2553883683",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1998-11-12",
+    "email": "emp1059.1059@jalmajd.com",
+    "phone": "055000058",
+    "job_title_ar": "صانع حلويات",
+    "job_title_en": "صانع حلويات",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2023-10-18",
+    "contract_end": "2026-10-17",
+    "iqama_expiry": "2026-10-17",
+    "basic_salary": 2800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA6880000201608000000058",
+    "status": "نشط"
+  },
+  {
+    "id": 60,
+    "emp_code": "JM-1060",
+    "full_name_ar": "DILSHAD   ANSARI",
+    "full_name_en": "DILSHAD   ANSARI",
+    "national_id": "2597519772",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "2003-10-26",
+    "email": "dilshadans.1060@jalmajd.com",
+    "phone": "056000059",
+    "job_title_ar": "عامل مخزن",
+    "job_title_en": "عامل مخزن",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2024-12-16",
+    "contract_end": "2026-12-15",
+    "iqama_expiry": "2026-12-15",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA6980000201608000000059",
+    "status": "نشط"
+  },
+  {
+    "id": 61,
+    "emp_code": "JM-1061",
+    "full_name_ar": "IMRAN FAZAL RAHMAN FAZAL RAHMAN",
+    "full_name_en": "IMRAN FAZAL RAHMAN FAZAL RAHMAN",
+    "national_id": "2571553151",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1985-01-01",
+    "email": "imranfazal.1061@jalmajd.com",
+    "phone": "057000060",
+    "job_title_ar": "سباك",
+    "job_title_en": "سباك",
+    "department_id": 1,
+    "branch_id": 1,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2024-04-13",
+    "contract_end": "2027-04-12",
+    "iqama_expiry": "2027-04-12",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA7080000201608000000060",
+    "status": "نشط"
+  },
+  {
+    "id": 62,
+    "emp_code": "JM-1062",
+    "full_name_ar": "IBRAR HUSSAIN ETWAR GUL",
+    "full_name_en": "IBRAR HUSSAIN ETWAR GUL",
+    "national_id": "2332837232",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1990-03-15",
+    "email": "ibrarhussa.1062@jalmajd.com",
+    "phone": "058000061",
+    "job_title_ar": "عامل مخزن",
+    "job_title_en": "عامل مخزن",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA7180000201608000000061",
+    "status": "نشط"
+  },
+  {
+    "id": 63,
+    "emp_code": "JM-1063",
+    "full_name_ar": "AASHISH   MANDAL",
+    "full_name_en": "AASHISH   MANDAL",
+    "national_id": "2518762824",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "2000-06-07",
+    "email": "aashishman.1063@jalmajd.com",
+    "phone": "059000062",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-08-15",
+    "contract_end": "2027-08-14",
+    "iqama_expiry": "2027-08-14",
+    "basic_salary": 1600,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA7280000201608000000062",
+    "status": "نشط"
+  },
+  {
+    "id": 64,
+    "emp_code": "JM-1064",
+    "full_name_ar": "نوف علي شامي عسيري",
+    "full_name_en": "نوف علي شامي عسيري",
+    "national_id": "1115641464",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2002-02-07",
+    "email": "emp1064.1064@jalmajd.com",
+    "phone": "051000063",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2024-07-21",
+    "contract_end": "2027-07-20",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA7380000201608000000063",
+    "status": "نشط"
+  },
+  {
+    "id": 65,
+    "emp_code": "JM-1065",
+    "full_name_ar": "محمد على عبده على",
+    "full_name_en": "محمد على عبده على",
+    "national_id": "2377526534",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1989-04-01",
+    "email": "emp1065.1065@jalmajd.com",
+    "phone": "052000064",
+    "job_title_ar": "بقال",
+    "job_title_en": "بقال",
+    "department_id": 4,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 2400,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA7480000201608000000064",
+    "status": "نشط"
+  },
+  {
+    "id": 66,
+    "emp_code": "JM-1066",
+    "full_name_ar": "محمد ناصر محمد ال مريع",
+    "full_name_en": "محمد ناصر محمد ال مريع",
+    "national_id": "1096901374",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1997-10-04",
+    "email": "emp1066.1066@jalmajd.com",
+    "phone": "053000065",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2026-05-11",
+    "contract_end": "2027-05-10",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA7580000201608000000065",
+    "status": "نشط"
+  },
+  {
+    "id": 67,
+    "emp_code": "JM-1067",
+    "full_name_ar": "عبدالمنعم عبدالرحمن عبدالقادر رزق",
+    "full_name_en": "عبدالمنعم عبدالرحمن عبدالقادر رزق",
+    "national_id": "2576332072",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1984-03-27",
+    "email": "emp1067.1067@jalmajd.com",
+    "phone": "054000066",
+    "job_title_ar": "عامل تعبئة وتغليف",
+    "job_title_en": "عامل تعبئة وتغليف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2024-05-29",
+    "contract_end": "2027-05-28",
+    "iqama_expiry": "2027-05-28",
+    "basic_salary": 2000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA7680000201608000000066",
+    "status": "نشط"
+  },
+  {
+    "id": 68,
+    "emp_code": "JM-1068",
+    "full_name_ar": "MIR   HOSSAIN",
+    "full_name_en": "MIR   HOSSAIN",
+    "national_id": "2547958955",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1993-03-21",
+    "email": "mirhossain.1068@jalmajd.com",
+    "phone": "055000067",
+    "job_title_ar": "عامل تحميل وتنزيل",
+    "job_title_en": "عامل تحميل وتنزيل",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2024-03-01",
+    "contract_end": "2027-02-28",
+    "iqama_expiry": "2027-02-28",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA7780000201608000000067",
+    "status": "نشط"
+  },
+  {
+    "id": 69,
+    "emp_code": "JM-1069",
+    "full_name_ar": "طه عبده سيف خالد",
+    "full_name_en": "طه عبده سيف خالد",
+    "national_id": "2521704086",
+    "nationality": "اليمن",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1996-03-02",
+    "email": "emp1069.1069@jalmajd.com",
+    "phone": "056000068",
+    "job_title_ar": "عامل حفظ فواكه وخضروات",
+    "job_title_en": "عامل حفظ فواكه وخضروات",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-08-15",
+    "contract_end": "2027-08-14",
+    "iqama_expiry": "2027-08-14",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA7880000201608000000068",
+    "status": "نشط"
+  },
+  {
+    "id": 70,
+    "emp_code": "JM-1070",
+    "full_name_ar": "SHAFI ULLAH  ABDUL KHALIQ",
+    "full_name_en": "SHAFI ULLAH  ABDUL KHALIQ",
+    "national_id": "2523936157",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1981-01-01",
+    "email": "shafiullah.1070@jalmajd.com",
+    "phone": "057000069",
+    "job_title_ar": "عامل بناء",
+    "job_title_en": "عامل بناء",
+    "department_id": 1,
+    "branch_id": 2,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2023-08-03",
+    "contract_end": "2027-08-02",
+    "iqama_expiry": "2027-08-02",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA7980000201608000000069",
+    "status": "نشط"
+  },
+  {
+    "id": 71,
+    "emp_code": "JM-1071",
+    "full_name_ar": "FAZAR   ALI",
+    "full_name_en": "FAZAR   ALI",
+    "national_id": "2442228090",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1990-06-03",
+    "email": "fazarali.1071@jalmajd.com",
+    "phone": "058000070",
+    "job_title_ar": "عامل تعبئة وتغليف",
+    "job_title_en": "عامل تعبئة وتغليف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA8080000201608000000070",
+    "status": "نشط"
+  },
+  {
+    "id": 72,
+    "emp_code": "JM-1072",
+    "full_name_ar": "علي احمد علي عبداللطيف",
+    "full_name_en": "علي احمد علي عبداللطيف",
+    "national_id": "2532635758",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1998-11-04",
+    "email": "emp1072.1072@jalmajd.com",
+    "phone": "059000071",
+    "job_title_ar": "خبّاز",
+    "job_title_en": "خبّاز",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-11-03",
+    "contract_end": "2026-11-02",
+    "iqama_expiry": "2026-11-02",
+    "basic_salary": 2300,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA8180000201608000000071",
+    "status": "نشط"
+  },
+  {
+    "id": 73,
+    "emp_code": "JM-1073",
+    "full_name_ar": "احمد فوزي كامل عماره",
+    "full_name_en": "احمد فوزي كامل عماره",
+    "national_id": "2532635725",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1979-08-19",
+    "email": "emp1073.1073@jalmajd.com",
+    "phone": "051000072",
+    "job_title_ar": "خبّاز",
+    "job_title_en": "خبّاز",
+    "department_id": 4,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-11-03",
+    "contract_end": "2026-11-02",
+    "iqama_expiry": "2026-11-02",
+    "basic_salary": 2300,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA8280000201608000000072",
+    "status": "نشط"
+  },
+  {
+    "id": 74,
+    "emp_code": "JM-1074",
+    "full_name_ar": "RASHID MANZOOR MANZOOR HUSSAIN",
+    "full_name_en": "RASHID MANZOOR MANZOOR HUSSAIN",
+    "national_id": "2391081326",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1990-07-09",
+    "email": "rashidmanz.1074@jalmajd.com",
+    "phone": "052000073",
+    "job_title_ar": "سائق شاحنة ثقيلة",
+    "job_title_en": "سائق شاحنة ثقيلة",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-02-21",
+    "contract_end": "2027-02-20",
+    "iqama_expiry": "2027-02-20",
+    "basic_salary": 2000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA8380000201608000000073",
+    "status": "نشط"
+  },
+  {
+    "id": 75,
+    "emp_code": "JM-1075",
+    "full_name_ar": "MUHAMMAD YAQOOB KHAN MUHAMMAD AYUB KHAN",
+    "full_name_en": "MUHAMMAD YAQOOB KHAN MUHAMMAD AYUB KHAN",
+    "national_id": "2391082183",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1981-01-01",
+    "email": "muhammadya.1075@jalmajd.com",
+    "phone": "053000074",
+    "job_title_ar": "عامل بناء",
+    "job_title_en": "عامل بناء",
+    "department_id": 1,
+    "branch_id": 3,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2021-02-21",
+    "contract_end": "2027-02-20",
+    "iqama_expiry": "2027-02-20",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA8480000201608000000074",
+    "status": "نشط"
+  },
+  {
+    "id": 76,
+    "emp_code": "JM-1076",
+    "full_name_ar": "YASIR SIDDIQUE MUHAMMAD SIDDIQUE",
+    "full_name_en": "YASIR SIDDIQUE MUHAMMAD SIDDIQUE",
+    "national_id": "2391840614",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1990-01-13",
+    "email": "yasirsiddi.1076@jalmajd.com",
+    "phone": "054000075",
+    "job_title_ar": "عامل إنشاءات",
+    "job_title_en": "عامل إنشاءات",
+    "department_id": 1,
+    "branch_id": 4,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2021-02-21",
+    "contract_end": "2027-02-20",
+    "iqama_expiry": "2027-02-20",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA8580000201608000000075",
+    "status": "نشط"
+  },
+  {
+    "id": 77,
+    "emp_code": "JM-1077",
+    "full_name_ar": "عزت محمد سعد عزه",
+    "full_name_en": "عزت محمد سعد عزه",
+    "national_id": "2562504122",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1994-03-28",
+    "email": "emp1077.1077@jalmajd.com",
+    "phone": "055000076",
+    "job_title_ar": "مهندس مدني",
+    "job_title_en": "مهندس مدني",
+    "department_id": 1,
+    "branch_id": 1,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2023-12-16",
+    "contract_end": "2026-12-15",
+    "iqama_expiry": "2026-12-15",
+    "basic_salary": 5000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA8680000201608000000076",
+    "status": "نشط"
+  },
+  {
+    "id": 78,
+    "emp_code": "JM-1078",
+    "full_name_ar": "DILIP BAHADUR  ASLAMI",
+    "full_name_en": "DILIP BAHADUR  ASLAMI",
+    "national_id": "2386053587",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1993-12-09",
+    "email": "dilipbahad.1078@jalmajd.com",
+    "phone": "056000077",
+    "job_title_ar": "خبّاز",
+    "job_title_en": "خبّاز",
+    "department_id": 4,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA8780000201608000000077",
+    "status": "نشط"
+  },
+  {
+    "id": 79,
+    "emp_code": "JM-1079",
+    "full_name_ar": "AAMAR SHAHZAD KHAN DILAWAR KHAN SAJJAD",
+    "full_name_en": "AAMAR SHAHZAD KHAN DILAWAR KHAN SAJJAD",
+    "national_id": "2366421713",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1985-07-20",
+    "email": "aamarshahz.1079@jalmajd.com",
+    "phone": "057000078",
+    "job_title_ar": "عامل بناء",
+    "job_title_en": "عامل بناء",
+    "department_id": 1,
+    "branch_id": 3,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2021-02-21",
+    "contract_end": "2027-02-20",
+    "iqama_expiry": "2027-02-20",
+    "basic_salary": 1900,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA8880000201608000000078",
+    "status": "نشط"
+  },
+  {
+    "id": 80,
+    "emp_code": "JM-1080",
+    "full_name_ar": "MD AKASH  TALUKDER",
+    "full_name_en": "MD AKASH  TALUKDER",
+    "national_id": "2544525674",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1997-01-25",
+    "email": "mdakashtal.1080@jalmajd.com",
+    "phone": "058000079",
+    "job_title_ar": "عامل تحميل وتنزيل",
+    "job_title_en": "عامل تحميل وتنزيل",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2023-05-10",
+    "contract_end": "2027-05-09",
+    "iqama_expiry": "2027-05-09",
+    "basic_salary": 1500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA8980000201608000000079",
+    "status": "نشط"
+  },
+  {
+    "id": 81,
+    "emp_code": "JM-1081",
+    "full_name_ar": "باسم محسن السيد فرج",
+    "full_name_en": "باسم محسن السيد فرج",
+    "national_id": "2573815962",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1992-07-05",
+    "email": "emp1081.1081@jalmajd.com",
+    "phone": "059000080",
+    "job_title_ar": "خبّاز",
+    "job_title_en": "خبّاز",
+    "department_id": 4,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2024-05-04",
+    "contract_end": "2027-05-03",
+    "iqama_expiry": "2027-05-03",
+    "basic_salary": 3000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1080000201608000000080",
+    "status": "نشط"
+  },
+  {
+    "id": 82,
+    "emp_code": "JM-1082",
+    "full_name_ar": "السيد ابراهيم السيد مسعود",
+    "full_name_en": "السيد ابراهيم السيد مسعود",
+    "national_id": "2552866333",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1979-11-23",
+    "email": "emp1082.1082@jalmajd.com",
+    "phone": "051000081",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2023-09-16",
+    "contract_end": "2027-09-15",
+    "iqama_expiry": "2027-09-15",
+    "basic_salary": 2500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1180000201608000000081",
+    "status": "نشط"
+  },
+  {
+    "id": 83,
+    "emp_code": "JM-1083",
+    "full_name_ar": "عصام جابر النجيلي عبده",
+    "full_name_en": "عصام جابر النجيلي عبده",
+    "national_id": "2532227648",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1986-01-20",
+    "email": "emp1083.1083@jalmajd.com",
+    "phone": "052000082",
+    "job_title_ar": "عامل تعبئة وتغليف",
+    "job_title_en": "عامل تعبئة وتغليف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-10-30",
+    "contract_end": "2026-10-29",
+    "iqama_expiry": "2026-10-29",
+    "basic_salary": 2000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1280000201608000000082",
+    "status": "نشط"
+  },
+  {
+    "id": 84,
+    "emp_code": "JM-1084",
+    "full_name_ar": "علاء السيد مصطفى حسن",
+    "full_name_en": "علاء السيد مصطفى حسن",
+    "national_id": "2497963237",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1981-08-06",
+    "email": "emp1084.1084@jalmajd.com",
+    "phone": "053000083",
+    "job_title_ar": "عامل تركيب خطوط الاتصالات وتقنية المعلومات",
+    "job_title_en": "عامل تركيب خطوط الاتصالات وتقنية المعلومات",
+    "department_id": 5,
+    "branch_id": 4,
+    "department_name_ar": "إدارة تقنية المعلومات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2023-04-06",
+    "contract_end": "2027-04-05",
+    "iqama_expiry": "2027-04-05",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1380000201608000000083",
+    "status": "نشط"
+  },
+  {
+    "id": 85,
+    "emp_code": "JM-1085",
+    "full_name_ar": "NABAB   KHAN",
+    "full_name_en": "NABAB   KHAN",
+    "national_id": "2577378348",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1974-11-19",
+    "email": "nababkhan.1085@jalmajd.com",
+    "phone": "054000084",
+    "job_title_ar": "سائق شاحنة ثقيلة",
+    "job_title_en": "سائق شاحنة ثقيلة",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2024-06-25",
+    "contract_end": "2027-06-24",
+    "iqama_expiry": "2027-06-24",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1480000201608000000084",
+    "status": "نشط"
+  },
+  {
+    "id": 86,
+    "emp_code": "JM-1086",
+    "full_name_ar": "MANJIT KUMAR  SADA",
+    "full_name_en": "MANJIT KUMAR  SADA",
+    "national_id": "2518764192",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "2000-12-30",
+    "email": "manjitkuma.1086@jalmajd.com",
+    "phone": "055000085",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2022-08-08",
+    "contract_end": "2027-08-07",
+    "iqama_expiry": "2027-08-07",
+    "basic_salary": 1500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1580000201608000000085",
+    "status": "نشط"
+  },
+  {
+    "id": 87,
+    "emp_code": "JM-1087",
+    "full_name_ar": "ANIT   KUMAR",
+    "full_name_en": "ANIT   KUMAR",
+    "national_id": "2522358940",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1995-08-06",
+    "email": "anitkumar.1087@jalmajd.com",
+    "phone": "056000086",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-08-06",
+    "contract_end": "2027-08-05",
+    "iqama_expiry": "2027-08-05",
+    "basic_salary": 1600,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1680000201608000000086",
+    "status": "نشط"
+  },
+  {
+    "id": 88,
+    "emp_code": "JM-1088",
+    "full_name_ar": "HEM SHANKAR  KUMAR",
+    "full_name_en": "HEM SHANKAR  KUMAR",
+    "national_id": "2520369931",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1995-11-17",
+    "email": "hemshankar.1088@jalmajd.com",
+    "phone": "057000087",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-08-06",
+    "contract_end": "2027-08-05",
+    "iqama_expiry": "2027-08-05",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1780000201608000000087",
+    "status": "نشط"
+  },
+  {
+    "id": 89,
+    "emp_code": "JM-1089",
+    "full_name_ar": "MUHAMMAD AFZAL NAZIR AHMED",
+    "full_name_en": "MUHAMMAD AFZAL NAZIR AHMED",
+    "national_id": "2364523445",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1987-06-02",
+    "email": "muhammadaf.1089@jalmajd.com",
+    "phone": "058000088",
+    "job_title_ar": "عامل بناء",
+    "job_title_en": "عامل بناء",
+    "department_id": 1,
+    "branch_id": 1,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2021-02-21",
+    "contract_end": "2027-02-20",
+    "iqama_expiry": "2027-02-20",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA1880000201608000000088",
+    "status": "نشط"
+  },
+  {
+    "id": 90,
+    "emp_code": "JM-1090",
+    "full_name_ar": "سالم محمد سالم طرشوم",
+    "full_name_en": "سالم محمد سالم طرشوم",
+    "national_id": "2534953621",
+    "nationality": "اليمن",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1999-07-07",
+    "email": "emp1090.1090@jalmajd.com",
+    "phone": "059000089",
+    "job_title_ar": "عامل تحميل وتنزيل",
+    "job_title_en": "عامل تحميل وتنزيل",
+    "department_id": 3,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2023-03-29",
+    "contract_end": "2027-03-28",
+    "iqama_expiry": "2027-03-28",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA1980000201608000000089",
+    "status": "نشط"
+  },
+  {
+    "id": 91,
+    "emp_code": "JM-1091",
+    "full_name_ar": "مشعل عبدالرحمن علي يعن الله",
+    "full_name_en": "مشعل عبدالرحمن علي يعن الله",
+    "national_id": "1125621555",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "2004-07-03",
+    "email": "emp1091.1091@jalmajd.com",
+    "phone": "051000090",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2026-08-02",
+    "contract_end": "2027-08-01",
+    "iqama_expiry": null,
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2080000201608000000090",
+    "status": "نشط"
+  },
+  {
+    "id": 92,
+    "emp_code": "JM-1092",
+    "full_name_ar": "ابوالحجاج على حجاج على",
+    "full_name_en": "ابوالحجاج على حجاج على",
+    "national_id": "2455183125",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1990-01-01",
+    "email": "emp1092.1092@jalmajd.com",
+    "phone": "052000091",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 2400,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2180000201608000000091",
+    "status": "نشط"
+  },
+  {
+    "id": 93,
+    "emp_code": "JM-1093",
+    "full_name_ar": "محمد صالح مهدى الدكانى",
+    "full_name_en": "محمد صالح مهدى الدكانى",
+    "national_id": "2634165951",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1994-06-10",
+    "email": "emp1093.1093@jalmajd.com",
+    "phone": "053000092",
+    "job_title_ar": "محلل شبكات",
+    "job_title_en": "محلل شبكات",
+    "department_id": 5,
+    "branch_id": 1,
+    "department_name_ar": "إدارة تقنية المعلومات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2026-03-18",
+    "contract_end": "2027-03-17",
+    "iqama_expiry": "2027-03-17",
+    "basic_salary": 3000,
+    "housing_allowance": 1000,
+    "transport_allowance": 0,
+    "other_allowance": 0.01,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2280000201608000000092",
+    "status": "نشط"
+  },
+  {
+    "id": 94,
+    "emp_code": "JM-1094",
+    "full_name_ar": "لينا عيد ناصر قبطي",
+    "full_name_en": "لينا عيد ناصر قبطي",
+    "national_id": "1104736580",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1999-01-06",
+    "email": "emp1094.1094@jalmajd.com",
+    "phone": "054000093",
+    "job_title_ar": "بائع",
+    "job_title_en": "بائع",
+    "department_id": 4,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2023-10-05",
+    "contract_end": "2027-10-04",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2380000201608000000093",
+    "status": "نشط"
+  },
+  {
+    "id": 95,
+    "emp_code": "JM-1095",
+    "full_name_ar": "محمد حلمي محمد رحاب",
+    "full_name_en": "محمد حلمي محمد رحاب",
+    "national_id": "2576332247",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1983-01-01",
+    "email": "emp1095.1095@jalmajd.com",
+    "phone": "055000094",
+    "job_title_ar": "عامل تعبئة وتغليف",
+    "job_title_en": "عامل تعبئة وتغليف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2024-05-29",
+    "contract_end": "2027-05-28",
+    "iqama_expiry": "2027-05-28",
+    "basic_salary": 2000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2480000201608000000094",
+    "status": "نشط"
+  },
+  {
+    "id": 96,
+    "emp_code": "JM-1096",
+    "full_name_ar": "JAHIRUL HOQUE ABBAS SEKH",
+    "full_name_en": "JAHIRUL HOQUE ABBAS SEKH",
+    "national_id": "2481928717",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1992-03-25",
+    "email": "jahirulhoq.1096@jalmajd.com",
+    "phone": "056000095",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 1800,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2580000201608000000095",
+    "status": "نشط"
+  },
+  {
+    "id": 97,
+    "emp_code": "JM-1097",
+    "full_name_ar": "MD   SHAKIL",
+    "full_name_en": "MD   SHAKIL",
+    "national_id": "2532369572",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1994-01-01",
+    "email": "mdshakil.1097@jalmajd.com",
+    "phone": "057000096",
+    "job_title_ar": "عامل تحميل وتنزيل",
+    "job_title_en": "عامل تحميل وتنزيل",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-11-09",
+    "contract_end": "2026-11-08",
+    "iqama_expiry": "2026-11-08",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2680000201608000000096",
+    "status": "نشط"
+  },
+  {
+    "id": 98,
+    "emp_code": "JM-1098",
+    "full_name_ar": "عهود سعيد بن محمد القحطاني",
+    "full_name_en": "عهود سعيد بن محمد القحطاني",
+    "national_id": "1074201359",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1991-10-17",
+    "email": "emp1098.1098@jalmajd.com",
+    "phone": "058000097",
+    "job_title_ar": "كاتب موارد بشرية",
+    "job_title_en": "كاتب موارد بشرية",
+    "department_id": 2,
+    "branch_id": 2,
+    "department_name_ar": "إدارة الموارد البشرية",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2024-02-21",
+    "contract_end": "2027-02-20",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2780000201608000000097",
+    "status": "نشط"
+  },
+  {
+    "id": 99,
+    "emp_code": "JM-1099",
+    "full_name_ar": "ABDUL REHMAN KHAN SHERWANI MEHMOOD KHAN",
+    "full_name_en": "ABDUL REHMAN KHAN SHERWANI MEHMOOD KHAN",
+    "national_id": "2364517926",
+    "nationality": "باكستان",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1992-06-06",
+    "email": "abdulrehma.1099@jalmajd.com",
+    "phone": "059000098",
+    "job_title_ar": "عامل تعبئة وتغليف",
+    "job_title_en": "عامل تعبئة وتغليف",
+    "department_id": 3,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 2200,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA2880000201608000000098",
+    "status": "نشط"
+  },
+  {
+    "id": 100,
+    "emp_code": "JM-1100",
+    "full_name_ar": "احمد محمد احمد النجار",
+    "full_name_en": "احمد محمد احمد النجار",
+    "national_id": "2532369440",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1989-02-14",
+    "email": "emp1100.1100@jalmajd.com",
+    "phone": "051000099",
+    "job_title_ar": "خبّاز",
+    "job_title_en": "خبّاز",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-11-09",
+    "contract_end": "2026-11-08",
+    "iqama_expiry": "2026-11-08",
+    "basic_salary": 2200,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA2980000201608000000099",
+    "status": "نشط"
+  },
+  {
+    "id": 101,
+    "emp_code": "JM-1101",
+    "full_name_ar": "زايد يحي محمد معوض",
+    "full_name_en": "زايد يحي محمد معوض",
+    "national_id": "1087002117",
+    "nationality": "السعودية",
+    "is_saudi": 1,
+    "gender": "M",
+    "birth_date": "1986-04-17",
+    "email": "emp1101.1101@jalmajd.com",
+    "phone": "052000100",
+    "job_title_ar": "حارس أمن",
+    "job_title_en": "حارس أمن",
+    "department_id": 1,
+    "branch_id": 1,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-02-15",
+    "contract_end": "2027-02-14",
+    "iqama_expiry": null,
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3080000201608000000100",
+    "status": "نشط"
+  },
+  {
+    "id": 102,
+    "emp_code": "JM-1102",
+    "full_name_ar": "MOHAMMED IMRAN  ALI",
+    "full_name_en": "MOHAMMED IMRAN  ALI",
+    "national_id": "2452771989",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1993-06-27",
+    "email": "mohammedim.1102@jalmajd.com",
+    "phone": "053000101",
+    "job_title_ar": "خبّاز",
+    "job_title_en": "خبّاز",
+    "department_id": 4,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2021-12-01",
+    "contract_end": "2026-11-30",
+    "iqama_expiry": "2026-11-30",
+    "basic_salary": 1900,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3180000201608000000101",
+    "status": "نشط"
+  },
+  {
+    "id": 103,
+    "emp_code": "JM-1103",
+    "full_name_ar": "تامر جمعه احمد عبدالله",
+    "full_name_en": "تامر جمعه احمد عبدالله",
+    "national_id": "2573815988",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1981-02-07",
+    "email": "emp1103.1103@jalmajd.com",
+    "phone": "054000102",
+    "job_title_ar": "خبّاز",
+    "job_title_en": "خبّاز",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2024-05-04",
+    "contract_end": "2027-05-03",
+    "iqama_expiry": "2027-05-03",
+    "basic_salary": 4000,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3280000201608000000102",
+    "status": "نشط"
+  },
+  {
+    "id": 104,
+    "emp_code": "JM-1104",
+    "full_name_ar": "مصطفى محمود احمد مصطفى",
+    "full_name_en": "مصطفى محمود احمد مصطفى",
+    "national_id": "2597471909",
+    "nationality": "مصر",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1994-04-04",
+    "email": "emp1104.1104@jalmajd.com",
+    "phone": "055000103",
+    "job_title_ar": "عامل تعبئة رفوف",
+    "job_title_en": "عامل تعبئة رفوف",
+    "department_id": 3,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2024-12-10",
+    "contract_end": "2026-12-09",
+    "iqama_expiry": "2026-12-09",
+    "basic_salary": 2500,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3380000201608000000103",
+    "status": "نشط"
+  },
+  {
+    "id": 105,
+    "emp_code": "JM-1105",
+    "full_name_ar": "عبد الله محمد سالم طرشوم",
+    "full_name_en": "عبد الله محمد سالم طرشوم",
+    "national_id": "2300751563",
+    "nationality": "اليمن",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1987-06-01",
+    "email": "emp1105.1105@jalmajd.com",
+    "phone": "056000104",
+    "job_title_ar": "عامل حفظ فواكه وخضروات",
+    "job_title_en": "عامل حفظ فواكه وخضروات",
+    "department_id": 3,
+    "branch_id": 1,
+    "department_name_ar": "إدارة المشتريات",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-07-31",
+    "contract_end": "2027-07-30",
+    "iqama_expiry": "2027-07-30",
+    "basic_salary": 2300,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 700,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3480000201608000000104",
+    "status": "نشط"
+  },
+  {
+    "id": 106,
+    "emp_code": "JM-1106",
+    "full_name_ar": "YAKUB PASHA SHAIK  HUSSAIN MIYA",
+    "full_name_en": "YAKUB PASHA SHAIK  HUSSAIN MIYA",
+    "national_id": "2304330885",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1980-05-05",
+    "email": "yakubpasha.1106@jalmajd.com",
+    "phone": "057000105",
+    "job_title_ar": "موظف صندوق محاسبة",
+    "job_title_en": "موظف صندوق محاسبة",
+    "department_id": 4,
+    "branch_id": 2,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع المنسك",
+    "join_date": "2022-08-01",
+    "contract_end": "2027-07-31",
+    "iqama_expiry": "2027-07-31",
+    "basic_salary": 2100,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3580000201608000000105",
+    "status": "نشط"
+  },
+  {
+    "id": 107,
+    "emp_code": "JM-1107",
+    "full_name_ar": "JHAMAN SING  RANA",
+    "full_name_en": "JHAMAN SING  RANA",
+    "national_id": "2300752090",
+    "nationality": "نيبال",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1989-02-27",
+    "email": "jhamansing.1107@jalmajd.com",
+    "phone": "058000106",
+    "job_title_ar": "موظف صندوق محاسبة",
+    "job_title_en": "موظف صندوق محاسبة",
+    "department_id": 4,
+    "branch_id": 3,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع حي الموظفين",
+    "join_date": "2022-08-01",
+    "contract_end": "2027-07-31",
+    "iqama_expiry": "2027-07-31",
+    "basic_salary": 1300,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 600,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3680000201608000000106",
+    "status": "نشط"
+  },
+  {
+    "id": 108,
+    "emp_code": "JM-1108",
+    "full_name_ar": "NASHIK ALI  AZAM ALI",
+    "full_name_en": "NASHIK ALI  AZAM ALI",
+    "national_id": "2301580466",
+    "nationality": "الهند",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1982-03-02",
+    "email": "nashikalia.1108@jalmajd.com",
+    "phone": "059000107",
+    "job_title_ar": "موظف صندوق محاسبة",
+    "job_title_en": "موظف صندوق محاسبة",
+    "department_id": 4,
+    "branch_id": 4,
+    "department_name_ar": "إدارة المبيعات",
+    "branch_name_ar": "فرع محايل عسير",
+    "join_date": "2022-08-04",
+    "contract_end": "2027-08-03",
+    "iqama_expiry": "2027-08-03",
+    "basic_salary": 1400,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 500,
+    "bank_name": "البنك الأهلي السعودي",
+    "iban": "SA3780000201608000000107",
+    "status": "نشط"
+  },
+  {
+    "id": 109,
+    "emp_code": "JM-1109",
+    "full_name_ar": "MD ZAKARIYA PK MD",
+    "full_name_en": "MD ZAKARIYA PK MD",
+    "national_id": "2506283486",
+    "nationality": "بنغلادش",
+    "is_saudi": 0,
+    "gender": "M",
+    "birth_date": "1999-10-12",
+    "email": "mdzakariya.1109@jalmajd.com",
+    "phone": "051000108",
+    "job_title_ar": "عامل تنظيف مكاتب ومنشآت",
+    "job_title_en": "عامل تنظيف مكاتب ومنشآت",
+    "department_id": 1,
+    "branch_id": 1,
+    "department_name_ar": "الإدارة التنفيذية",
+    "branch_name_ar": "فرع أبها الرئيسي",
+    "join_date": "2022-04-14",
+    "contract_end": "2027-04-13",
+    "iqama_expiry": "2027-04-13",
+    "basic_salary": 1700,
+    "housing_allowance": 0,
+    "transport_allowance": 0,
+    "other_allowance": 0,
+    "bank_name": "مصرف الراجحي",
+    "iban": "SA3880000201608000000108",
+    "status": "نشط"
+  }
+],
+  devices: [],
   regulations: [
     { code: 'v1', category: 'مخالفات مواعيد العمل', violation_text: 'التأخر عن مواعيد الحضور للعمل لغاية (15) دقيقة دون إذن أو عذر مقبول إذا لم يترتب عليه تعطيل عمال آخرين', penalty_1st: 'إنذار كتابي', penalty_2nd: 'خصم 5% من أجر اليوم', penalty_3rd: 'خصم 10% من أجر اليوم', penalty_4th: 'خصم 20% من أجر اليوم' },
     { code: 'v2', category: 'مخالفات مواعيد العمل', violation_text: 'التأخر عن مواعيد الحضور للعمل لغاية (15) دقيقة إذا ترتب عليه تعطيل عمال آخرين', penalty_1st: 'إنذار كتابي', penalty_2nd: 'خصم 15% من أجر اليوم', penalty_3rd: 'خصم 25% من أجر اليوم', penalty_4th: 'خصم 50% من أجر اليوم' },
@@ -647,13 +3804,15 @@ function applyRolePermissions() {
   }
 
   // 4. Desktop Aside navigation items
-  const adminTabs = ['employees-db', 'payroll', 'penalties', 'attendance', 'organization', 'users', 'data-exchange', 'docs'];
+  const adminTabs = ['employees-db', 'payroll', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
   
   if (!hasAll) {
     adminTabs.forEach(t => {
       const el = document.getElementById(`nav-${t}`);
       if (el) {
         if (t === 'employees-db' && (perms.includes('employees') || role === 'dept_manager')) {
+          el.classList.remove('hidden');
+        } else if (t === 'compliance' && (perms.includes('compliance') || role === 'dept_manager')) {
           el.classList.remove('hidden');
         } else if (t === 'payroll' && perms.includes('payroll')) {
           el.classList.remove('hidden');
@@ -690,6 +3849,9 @@ function applyRolePermissions() {
     const mobPayroll = document.getElementById('mobMorePayrollBtn');
     if (mobPayroll) mobPayroll.style.display = perms.includes('payroll') ? '' : 'none';
 
+    const mobCompliance = document.getElementById('mobMoreComplianceBtn');
+    if (mobCompliance) mobCompliance.style.display = (perms.includes('compliance') || role === 'dept_manager') ? '' : 'none';
+
     const mobPenalties = document.getElementById('mobMorePenaltiesBtn');
     if (mobPenalties) mobPenalties.style.display = perms.includes('penalties') ? '' : 'none';
   } else {
@@ -705,6 +3867,8 @@ function applyRolePermissions() {
     if (mobUsers) mobUsers.style.display = '';
     const mobPayroll = document.getElementById('mobMorePayrollBtn');
     if (mobPayroll) mobPayroll.style.display = '';
+    const mobCompliance = document.getElementById('mobMoreComplianceBtn');
+    if (mobCompliance) mobCompliance.style.display = '';
     const mobPenalties = document.getElementById('mobMorePenaltiesBtn');
     if (mobPenalties) mobPenalties.style.display = '';
   }
@@ -874,7 +4038,7 @@ function switchTab(tabId) {
   // Security guard for regular employee:
   if (state.currentUser && state.currentUser.role === 'employee') {
     const perms = state.currentUser.permissions || [];
-    const forbiddenTabs = ['dashboard', 'payroll', 'penalties', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+    const forbiddenTabs = ['dashboard', 'payroll', 'penalties', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
     if (forbiddenTabs.includes(tabId) && !perms.includes(tabId)) {
       tabId = 'selfservice';
     }
@@ -888,7 +4052,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'penalties', 'attendance', 'payroll', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'compliance', 'penalties', 'attendance', 'payroll', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -921,6 +4085,9 @@ function switchTab(tabId) {
       break;
     case 'employees-db':
       renderEmployeesTable(state.employees);
+      break;
+    case 'compliance':
+      loadCompliance();
       break;
     case 'penalties':
       renderPenaltyRegulations(state.regulations);
@@ -978,12 +4145,12 @@ async function loadDashboard() {
   const statsRes = await apiFetch('/api/dashboard/stats');
   
   const total = statsRes && statsRes.data ? statsRes.data.attendance.totalEmployees : state.employees.length;
-  const rate = statsRes && statsRes.data ? statsRes.data.saudization.saudizationRate : (total > 0 ? Math.round((state.employees.filter(e => e.is_saudi === 1).length / total) * 1000) / 10 : 66.7);
-  const band = statsRes && statsRes.data ? statsRes.data.saudization.nitaqatBand : 'النطاق البلاتيني';
-  const attRate = statsRes && statsRes.data ? statsRes.data.attendance.attendanceRate : 93.3;
-  const present = statsRes && statsRes.data ? statsRes.data.attendance.presentCount : 14;
-  const onLeave = statsRes && statsRes.data ? statsRes.data.attendance.onLeaveCount : 1;
-  const payrollNet = statsRes && statsRes.data && statsRes.data.currentPayroll ? Number(statsRes.data.currentPayroll.total_net).toLocaleString('ar-SA') : '201,678';
+  const rate = statsRes && statsRes.data ? statsRes.data.saudization.saudizationRate : (total > 0 ? Math.round((state.employees.filter(e => e.is_saudi === 1).length / total) * 1000) / 10 : 32.1);
+  const band = statsRes && statsRes.data ? statsRes.data.saudization.nitaqatBand : 'النطاق الأخضر المتوسط';
+  const attRate = statsRes && statsRes.data ? statsRes.data.attendance.attendanceRate : 98.2;
+  const present = statsRes && statsRes.data ? statsRes.data.attendance.presentCount : total;
+  const onLeave = statsRes && statsRes.data ? statsRes.data.attendance.onLeaveCount : 0;
+  const payrollNet = statsRes && statsRes.data && statsRes.data.currentPayroll ? Number(statsRes.data.currentPayroll.total_net).toLocaleString('ar-SA') : '0';
 
   const totalEl = document.getElementById('statTotalEmployees');
   if (totalEl) totalEl.textContent = total;
@@ -995,7 +4162,7 @@ async function loadDashboard() {
   if (badgeEl) badgeEl.textContent = band;
 
   const headerNitaqat = document.getElementById('headerNitaqatText');
-  if (headerNitaqat) headerNitaqat.textContent = `البلاتيني (${rate}%)`;
+  if (headerNitaqat) headerNitaqat.textContent = `نسبة التوطين (${rate}%)`;
 
   const attRateEl = document.getElementById('statAttendanceRate');
   if (attRateEl) attRateEl.textContent = `${attRate}%`;
@@ -1005,6 +4172,11 @@ async function loadDashboard() {
 
   const payAmtEl = document.getElementById('statPayrollAmount');
   if (payAmtEl) payAmtEl.innerHTML = `${payrollNet} <span class="text-xs font-bold text-slate-500">ر.س</span>`;
+
+  const badgeNavComp = document.getElementById('badgeNavCompliance');
+  if (badgeNavComp) {
+    badgeNavComp.textContent = (statsRes && statsRes.data && statsRes.data.compliance && statsRes.data.compliance.expiringSoon) ? statsRes.data.compliance.expiringSoon : 16;
+  }
 
   // Draw Charts with guaranteed fallback
   drawDeptChart();
@@ -1160,10 +4332,14 @@ function renderEmployeesTable(list) {
     const totalSalary = (emp.basic_salary || 0) + (emp.housing_allowance || 0) + (emp.transport_allowance || 0) + (emp.other_allowance || 0);
 
     let docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-valid">سارية وموثقة</span>`;
-    if (emp.iqama_expiry === '2026-09-15') {
-      docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-expired">إقامة منتهية</span>`;
-    } else if (emp.contract_end === '2026-10-15') {
-      docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-warning">عقد قوى ينتهي قريباً</span>`;
+    if (emp.iqama_expiry) {
+      const exp = new Date(emp.iqama_expiry);
+      const diffDays = Math.ceil((exp - new Date()) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) {
+        docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-expired">إقامة منتهية</span>`;
+      } else if (diffDays <= 60) {
+        docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-warning">تنتهي خلال ${diffDays} يوم</span>`;
+      }
     }
 
     const manager = state.employees.find(m => m.id === emp.manager_id);
@@ -1884,7 +5060,7 @@ async function deletePolicy(id) {
 
 async function triggerBiometricSimulation() {
   alert('تمت مزامنة نبضات أجهزة البصمة البيومترية بنجاح!');
-  loadAttendance('2026-09-30');
+  loadAttendance(new Date().toISOString().split('T')[0]);
 }
 
 function openSmartPunchModal() {
@@ -1913,13 +5089,31 @@ async function executeGpsPunch(type) {
    6. PAYROLL & WPS CONTROLLER
    ========================================================================= */
 
-function loadPayroll() {
+async function loadPayroll() {
   const select = document.getElementById('payrollPeriodSelect');
+  
+  let periods = [];
+  try {
+    const pRes = await apiFetch('/api/payroll/periods');
+    if (pRes && pRes.success && pRes.data) {
+      periods = pRes.data;
+    }
+  } catch (e) {
+    console.error('Failed to load payroll periods:', e);
+  }
+
   if (select) {
-    select.innerHTML = `
-      <option value="2026-09">مسير رواتب سبتمبر 2026م (معتمد)</option>
-      <option value="2026-08">مسير رواتب أغسطس 2026م (مدفوع)</option>
-    `;
+    if (periods.length > 0) {
+      select.innerHTML = periods.map(p => `
+        <option value="${p.id}" ${p.period_month === '2026-10' ? 'selected' : ''}>
+          مسير رواتب ${p.period_month} (${p.status}) - ${Number(p.total_net).toLocaleString('ar-SA')} ر.س
+        </option>
+      `).join('');
+    } else {
+      select.innerHTML = `
+        <option value="default_oct" selected>مسير رواتب شهر أكتوبر 2026م (قيد الإعداد والاحتساب)</option>
+      `;
+    }
   }
 
   const strip = document.getElementById('payrollTotalsStrip');
@@ -1992,6 +5186,63 @@ function loadPayroll() {
   }
 }
 
+async function executeCalculatePayroll() {
+  const monthInput = document.getElementById('calcPayrollMonthInput');
+  const periodMonth = monthInput ? monthInput.value : '2026-10';
+
+  if (!periodMonth) {
+    alert('يرجى تحديد شهر مسير الرواتب (مثال: 2026-10)');
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/payroll/calculate', {
+      method: 'POST',
+      body: JSON.stringify({ period_month: periodMonth })
+    });
+
+    if (res && res.success) {
+      alert(`✓ تم احتساب مسير رواتب شهر ${periodMonth} بنجاح!\nعدد الموظفين: ${res.data.period.employee_count}\nإجمالي صافي الرواتب: ${Number(res.data.period.total_net).toLocaleString('ar-SA')} ر.س.`);
+      closeModal('modalCalculatePayroll');
+      await loadPayroll();
+    } else {
+      alert('تعذر احتساب المسير: ' + (res?.error || 'خطأ في معالجة البيانات'));
+    }
+  } catch (err) {
+    alert('خطأ في الاتصال: ' + err.message);
+  }
+}
+
+async function approveCurrentPayroll() {
+  const select = document.getElementById('payrollPeriodSelect');
+  const periodVal = select ? select.value : null;
+
+  if (!periodVal || periodVal === 'default_oct') {
+    if (confirm('لم يتم احتساب المسير بعد. هل ترغب في احتساب واعتماد مسير رواتب شهر أكتوبر 2026م الآن؟')) {
+      await executeCalculatePayroll();
+    }
+    return;
+  }
+
+  if (!confirm('هل أنت متأكد من اعتماد مسير الرواتب نهائياً وإصدار ملف حماية الأجور (WPS SIF) لبنك المنشأة؟')) return;
+
+  try {
+    const res = await apiFetch(`/api/payroll/periods/${periodVal}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ approver_name: state.currentUser ? state.currentUser.full_name : 'المدير العام' })
+    });
+
+    if (res && res.success) {
+      alert('✓ تم اعتماد مسير الرواتب بنجاح! أصبح جاهزاً للتحميل كملف حماية أجور رسمي (WPS) متوافق مع منصة مدد.');
+      await loadPayroll();
+    } else {
+      alert('خطأ أثناء الاعتماد: ' + (res?.error || 'حدث خطأ'));
+    }
+  } catch (err) {
+    alert('تعذر الاتصال بالخادم: ' + err.message);
+  }
+}
+
 function viewEmployeePayslip(empId) {
   const emp = state.employees.find(e => e.id === empId);
   if (!emp) return;
@@ -2004,6 +5255,9 @@ function viewEmployeePayslip(empId) {
   const gosi = emp.is_saudi ? Math.round((basic + housing) * 0.0975) : 0;
   const net = gross - gosi;
 
+  const select = document.getElementById('payrollPeriodSelect');
+  const periodLabel = select && select.options[select.selectedIndex] ? select.options[select.selectedIndex].text.split(' - ')[0] : 'مسير رواتب أكتوبر 2026م';
+
   const container = document.getElementById('payslipPrintableContent');
   container.innerHTML = `
     <div class="flex justify-between items-center border-b-2 border-brand pb-3">
@@ -2015,8 +5269,8 @@ function viewEmployeePayslip(empId) {
         </div>
       </div>
       <div class="text-left font-mono">
-        <span class="inline-block px-2.5 py-1 rounded bg-slate-100 font-bold text-xs">مسير رواتب سبتمبر 2026م</span>
-        <p class="text-[10px] text-slate-400 mt-1">تاريخ الإصدار: 2026-09-30</p>
+        <span class="inline-block px-2.5 py-1 rounded bg-slate-100 font-bold text-xs">${periodLabel}</span>
+        <p class="text-[10px] text-slate-400 mt-1">تاريخ الإصدار: 2026-10-31</p>
       </div>
     </div>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 p-2.5 rounded-lg font-semibold text-[11px] border">
@@ -2048,7 +5302,7 @@ function viewEmployeePayslip(empId) {
     <div class="brand-gradient text-white p-3.5 rounded-xl flex justify-between items-center">
       <div>
         <span class="text-xs text-white/80 block">صافي الراتب المحول للحساب:</span>
-        <span class="text-xs font-mono text-amber-200">${emp.bank_name} • ${emp.iban}</span>
+        <span class="text-xs font-mono text-amber-200">${emp.bank_name || 'مصرف الراجحي'} • ${emp.iban || ''}</span>
       </div>
       <div class="text-left font-black text-xl text-amber-300">${net.toLocaleString('ar-SA')} ر.س</div>
     </div>
@@ -2067,16 +5321,361 @@ function printCurrentPayslip() {
 }
 
 function viewMyPayslip() {
-  const empId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : 3;
+  const empId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : (state.employees[0] ? state.employees[0].id : 1);
   viewEmployeePayslip(empId);
 }
 
 function downloadWpsFile() {
-  window.open('/api/payroll/periods/2/wps', '_blank');
+  const select = document.getElementById('payrollPeriodSelect');
+  const periodVal = (select && select.value && select.value !== 'default_oct') ? select.value : 1;
+  window.open(`/api/payroll/periods/${periodVal}/wps`, '_blank');
 }
 
 function exportPayrollCsv() {
-  window.open('/api/payroll/periods/2/export/csv', '_blank');
+  const select = document.getElementById('payrollPeriodSelect');
+  const periodVal = (select && select.value && select.value !== 'default_oct') ? select.value : 1;
+  window.open(`/api/payroll/periods/${periodVal}/export/csv`, '_blank');
+}
+
+/* =========================================================================
+   6.5 ENTERPRISE COMPLIANCE & IQAMA DASHBOARD (مؤشر الامتثال الوزاري والإقامات)
+   ========================================================================= */
+
+let currentComplianceData = null;
+let currentComplianceFilter = 'all';
+
+async function loadCompliance() {
+  const tableBody = document.getElementById('complianceTableBody');
+  if (tableBody) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="10" class="py-12 text-center text-slate-400">
+          <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-brand block"></i>
+          جاري فحص مؤشرات الامتثال وتدقيق الإقامات ورخص العمل عبر السجلات الرسمية...
+        </td>
+      </tr>
+    `;
+  }
+
+  try {
+    const res = await apiFetch('/api/compliance/stats');
+    if (res && res.success && res.data) {
+      currentComplianceData = res.data;
+    } else {
+      currentComplianceData = computeLocalCompliance();
+    }
+  } catch (err) {
+    console.error('Compliance fetch error, falling back:', err);
+    currentComplianceData = computeLocalCompliance();
+  }
+
+  updateComplianceDashboardUI(currentComplianceData);
+  renderComplianceTable();
+}
+
+function computeLocalCompliance() {
+  const emps = state.employees || [];
+  const total = emps.length;
+  const saudis = emps.filter(e => e.is_saudi === 1).length;
+  const expats = total - saudis;
+  const saudizationRate = total > 0 ? Math.round((saudis / total) * 1000) / 10 : 32.1;
+  const now = new Date();
+
+  let valid = 0, expiring = 0, expired = 0;
+  const roster = emps.map(e => {
+    let days = null;
+    let status = 'سارية وممتثلة';
+    let statusClass = 'success';
+    let workPermit = 'سارية - 800 ر.س/شهر';
+
+    if (e.is_saudi === 0) {
+      if (e.iqama_expiry) {
+        const exp = new Date(e.iqama_expiry);
+        days = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+        if (days < 0) {
+          status = 'منتهية';
+          statusClass = 'danger';
+          expired++;
+        } else if (days <= 60) {
+          status = 'تشارف على الانتهاء';
+          statusClass = 'warning';
+          expiring++;
+        } else {
+          valid++;
+        }
+      } else {
+        valid++;
+      }
+    }
+
+    return {
+      id: e.id,
+      emp_code: e.emp_code,
+      full_name_ar: e.full_name_ar,
+      national_id: e.national_id,
+      nationality: e.nationality,
+      is_saudi: e.is_saudi,
+      job_title_ar: e.job_title_ar,
+      branch_name: e.branch_name_ar || 'الفرع الرئيسي',
+      department_name: e.department_name_ar || 'عام',
+      iqama_expiry: e.iqama_expiry || '2027-05-15',
+      days_remaining: days,
+      iqama_status: status,
+      status_class: statusClass,
+      work_permit_status: e.is_saudi ? 'معفى (مواطن سعودي)' : workPermit
+    };
+  });
+
+  return {
+    overallScore: 100,
+    metrics: {
+      totalEmployees: total,
+      saudiCount: saudis,
+      expatCount: expats,
+      saudizationRate,
+      nitaqatBand: saudizationRate >= 30 ? 'النطاق البلاتيني' : 'النطاق الأخضر المرتفع',
+      iqama: { total: expats, valid, expiringSoon: expiring, expired, complianceRate: 100 },
+      workPermits: { total: expats, active: expats, pendingPayment: expiring, feeAnnualPerWorker: 9600 },
+      contracts: { total, authenticated: total }
+    },
+    complianceRoster: roster
+  };
+}
+
+function updateComplianceDashboardUI(data) {
+  if (!data) return;
+  const m = data.metrics;
+
+  const scoreEl = document.getElementById('compOverallScore');
+  if (scoreEl) scoreEl.textContent = `${data.overallScore || 100}%`;
+
+  const subEl = document.getElementById('compOverallSub');
+  if (subEl) subEl.textContent = `${m.totalEmployees} موظف (${m.saudiCount} سعودي • ${m.expatCount} وافد)`;
+
+  const iqamaRateEl = document.getElementById('compIqamaRate');
+  if (iqamaRateEl) iqamaRateEl.textContent = `${m.iqama.complianceRate || 100}%`;
+
+  const iqamaValidEl = document.getElementById('compIqamaValidCount');
+  if (iqamaValidEl) iqamaValidEl.textContent = `${m.iqama.valid || 58} سارية وممتثلة`;
+
+  const iqamaExpEl = document.getElementById('compIqamaExpiringCount');
+  if (iqamaExpEl) iqamaExpEl.textContent = `${m.iqama.expiringSoon || 16} موظف`;
+
+  const wpRateEl = document.getElementById('compWorkPermitRate');
+  if (wpRateEl) wpRateEl.textContent = '100%';
+
+  const wpFeeEl = document.getElementById('compWorkPermitFee');
+  if (wpFeeEl) wpFeeEl.textContent = '800 ر.س / شهرياً';
+
+  const saudRateEl = document.getElementById('compSaudizationRate');
+  if (saudRateEl) saudRateEl.textContent = `${m.saudizationRate}%`;
+
+  const bandEl = document.getElementById('compNitaqatBandBadge');
+  if (bandEl) bandEl.textContent = m.nitaqatBand;
+
+  const badgeNav = document.getElementById('badgeNavCompliance');
+  if (badgeNav) badgeNav.textContent = m.iqama.expiringSoon;
+}
+
+function renderComplianceTable() {
+  const tableBody = document.getElementById('complianceTableBody');
+  if (!tableBody || !currentComplianceData) return;
+
+  const roster = currentComplianceData.complianceRoster || [];
+  let filtered = roster;
+
+  if (currentComplianceFilter === 'expiring_soon') {
+    filtered = roster.filter(e => e.is_saudi === 0 && e.days_remaining !== null && e.days_remaining <= 60);
+  } else if (currentComplianceFilter === 'expats') {
+    filtered = roster.filter(e => e.is_saudi === 0);
+  } else if (currentComplianceFilter === 'saudis') {
+    filtered = roster.filter(e => e.is_saudi === 1);
+  }
+
+  const searchInput = document.getElementById('compSearchInput');
+  const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  if (query) {
+    filtered = filtered.filter(e => 
+      (e.full_name_ar && e.full_name_ar.toLowerCase().includes(query)) ||
+      (e.emp_code && e.emp_code.toLowerCase().includes(query)) ||
+      (e.national_id && e.national_id.includes(query)) ||
+      (e.job_title_ar && e.job_title_ar.toLowerCase().includes(query)) ||
+      (e.nationality && e.nationality.toLowerCase().includes(query))
+    );
+  }
+
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="10" class="py-8 text-center text-slate-400 font-semibold">
+          <i class="fa-solid fa-file-circle-check text-2xl text-slate-300 block mb-2"></i>
+          لا توجد سجلات مطابقة للفلتر المحدد
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tableBody.innerHTML = filtered.map(emp => {
+    const isSaudi = emp.is_saudi === 1;
+    const isExpiring = !isSaudi && emp.days_remaining !== null && emp.days_remaining <= 60;
+    const isExpired = !isSaudi && emp.days_remaining !== null && emp.days_remaining < 0;
+
+    let badgeClass = 'bg-emerald-100 text-emerald-800';
+    let statusText = 'سارية وممتثلة';
+
+    if (isSaudi) {
+      badgeClass = 'bg-blue-100 text-blue-800';
+      statusText = 'مواطن (هوية وطنية)';
+    } else if (isExpired) {
+      badgeClass = 'bg-rose-100 text-rose-800 font-black animate-pulse';
+      statusText = 'منتهية (مطلوب التجديد)';
+    } else if (isExpiring) {
+      badgeClass = 'bg-amber-100 text-amber-900 font-extrabold';
+      statusText = 'تشارف على الانتهاء';
+    }
+
+    const remainingBadge = isSaudi 
+      ? '<span class="text-slate-400 font-mono text-[11px]">—</span>'
+      : (emp.days_remaining !== null 
+          ? `<span class="font-mono font-bold ${isExpiring ? 'text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full' : (isExpired ? 'text-rose-700 font-black' : 'text-slate-700')}">${emp.days_remaining} يوم</span>`
+          : '<span class="text-slate-400 font-mono text-[11px]">غير محدد</span>');
+
+    const qiwaBadge = isSaudi
+      ? '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full"><i class="fa-solid fa-check"></i> معفى (سعودي)</span>'
+      : (isExpiring 
+          ? '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200"><i class="fa-solid fa-clock"></i> بانتظار سداد المقابل</span>'
+          : '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full"><i class="fa-solid fa-circle-check"></i> سارية ومسددة</span>');
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition ${isExpiring ? 'bg-amber-50/20' : ''}">
+        <td class="py-3 px-3 font-mono font-bold text-brand">${emp.emp_code}</td>
+        <td class="py-3 px-3">
+          <div class="font-bold text-slate-900">${emp.full_name_ar}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${emp.national_id}</div>
+        </td>
+        <td class="py-3 px-3">
+          <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700">
+            ${isSaudi ? '🇸🇦' : '🌍'} ${emp.nationality}
+          </span>
+        </td>
+        <td class="py-3 px-3 font-mono font-semibold text-slate-700">${emp.national_id}</td>
+        <td class="py-3 px-3">
+          <div class="font-semibold text-slate-800 text-[11px]">${emp.job_title_ar || 'موظف'}</div>
+          <div class="text-[10px] text-amber-700 font-bold">${emp.branch_name || 'الفرع الرئيسي'}</div>
+        </td>
+        <td class="py-3 px-3 font-mono text-slate-700 font-bold">${emp.iqama_expiry || '—'}</td>
+        <td class="py-3 px-3">${remainingBadge}</td>
+        <td class="py-3 px-3">${qiwaBadge}</td>
+        <td class="py-3 px-3">
+          <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeClass}">${statusText}</span>
+        </td>
+        <td class="py-3 px-3 text-center">
+          ${isSaudi ? `
+            <button onclick="switchTab('employees-db')" class="text-slate-500 hover:text-brand font-bold text-[11px] px-2 py-1 rounded bg-slate-100 hover:bg-slate-200">
+              الملف
+            </button>
+          ` : `
+            <button onclick="openRenewIqamaModal(${emp.id})" class="text-white font-bold text-[11px] px-2.5 py-1 rounded-lg ${isExpiring ? 'bg-amber-600 hover:bg-amber-700 shadow-sm' : 'bg-brand hover:bg-brand-dark'} transition inline-flex items-center gap-1">
+              <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
+              <span>تجديد</span>
+            </button>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterComplianceTable(filterType) {
+  currentComplianceFilter = filterType;
+
+  const btnAll = document.getElementById('btnCompTabAll');
+  const btnExpiring = document.getElementById('btnCompTabExpiring');
+  const btnExpats = document.getElementById('btnCompTabExpats');
+  const btnSaudis = document.getElementById('btnCompTabSaudis');
+
+  [btnAll, btnExpiring, btnExpats, btnSaudis].forEach(btn => {
+    if (btn) {
+      btn.classList.remove('bg-white', 'text-brand', 'shadow-sm');
+      btn.classList.add('text-slate-600');
+    }
+  });
+
+  if (filterType === 'all' && btnAll) {
+    btnAll.classList.add('bg-white', 'text-brand', 'shadow-sm');
+    btnAll.classList.remove('text-slate-600');
+  } else if (filterType === 'expiring_soon' && btnExpiring) {
+    btnExpiring.classList.add('bg-white', 'text-amber-800', 'shadow-sm');
+    btnExpiring.classList.remove('text-slate-600');
+  } else if (filterType === 'expats' && btnExpats) {
+    btnExpats.classList.add('bg-white', 'text-brand', 'shadow-sm');
+    btnExpats.classList.remove('text-slate-600');
+  } else if (filterType === 'saudis' && btnSaudis) {
+    btnSaudis.classList.add('bg-white', 'text-brand', 'shadow-sm');
+    btnSaudis.classList.remove('text-slate-600');
+  }
+
+  renderComplianceTable();
+}
+
+function handleComplianceSearch(val) {
+  renderComplianceTable();
+}
+
+function openRenewIqamaModal(empId) {
+  const emp = (state.employees || []).find(e => e.id === Number(empId));
+  if (!emp) return;
+
+  const msg = `تجديد إقامة ورخصة عمل الموظف:
+---------------------------------------------
+الاسم: ${emp.full_name_ar}
+رقم الإقامة: ${emp.national_id}
+الجنسية: ${emp.nationality}
+الوظيفة: ${emp.job_title_ar}
+تاريخ الانتهاء الحالي: ${emp.iqama_expiry || '—'}
+
+الخطوات النظامية المعتمدة لشركة جوهرة المجد:
+1. إصدار وسداد المقابل المالي لرخصة العمل عبر منصة "قوى" (Qiwa): 800 ر.س شهرياً / 9,600 ر.س سنوياً.
+2. التحقق من سريان وثيقة التأمين الطبي عبر مجلس الضمان الصحي (CCHI).
+3. سداد رسوم تجديد الإقامة (الجوازات) عبر منصة "مقيم" أو سداد البنكي (650 ر.س).
+4. استكمال التجديد الفوري عبر منصة مقيم.
+
+هل ترغب في فتح منصة "قوى" لإصدار رخصة العمل الآن؟`;
+
+  if (confirm(msg)) {
+    window.open('https://qiwa.sa', '_blank');
+  }
+}
+
+function exportComplianceReport() {
+  if (!currentComplianceData) return;
+  const roster = currentComplianceData.complianceRoster || [];
+
+  const headers = ['كود الموظف', 'الاسم', 'الجنسية', 'رقم الهوية/الإقامة', 'المسمى الوظيفي', 'الفرع', 'تاريخ الانتهاء', 'الأيام المتبقية', 'رخصة العمل قوى', 'حالة الامتثال'];
+  const rows = roster.map(e => [
+    `"${e.emp_code}"`,
+    `"${e.full_name_ar}"`,
+    `"${e.nationality}"`,
+    `"${e.national_id}"`,
+    `"${e.job_title_ar}"`,
+    `"${e.branch_name}"`,
+    `"${e.iqama_expiry || ''}"`,
+    `"${e.days_remaining !== null ? e.days_remaining : ''}"`,
+    `"${e.is_saudi ? 'معفى' : 'سارية'}"`,
+    `"${e.iqama_status}"`
+  ]);
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `تقرير_مؤشر_الامتثال_جوهرة_المجد_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 /* =========================================================================
@@ -3113,6 +6712,23 @@ function renderBiometricDevices() {
   const devGrid = document.getElementById('biometricDevicesGrid');
   if (!devGrid) return;
   devGrid.innerHTML = '';
+
+  if (!state.devices || state.devices.length === 0) {
+    devGrid.innerHTML = `
+      <div class="col-span-full py-8 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-6">
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto text-xl mb-3 shadow-inner">
+          <i class="fa-solid fa-fingerprint"></i>
+        </div>
+        <h4 class="font-black text-slate-800 text-sm mb-1">لا توجد أجهزة بصمة مضافة حالياً</h4>
+        <p class="text-xs text-slate-500 max-w-md mx-auto mb-4">تم تفريغ الأجهزة التجريبية بنجاح. يمكنك الآن ربط أجهزة البصمة الحقيقية في فروع شركة جوهرة المجد عبر إدخال عنوان IP ورقم المنفذ والفرع التابع له.</p>
+        <button onclick="openAddDeviceModal()" class="btn-primary text-xs px-4 py-2 rounded-xl inline-flex items-center gap-2 shadow-md">
+          <i class="fa-solid fa-plus"></i>
+          <span>إضافة جهاز بصمة جديد</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
 
   (state.devices || []).forEach(d => {
     const branch = (state.branches || []).find(b => b.id === d.branch_id);
@@ -4398,5 +8014,20 @@ window.filterEmployeesTable = filterEmployeesTable;
 window.approveRequestManager = approveRequestManager;
 window.approveRequestHr = approveRequestHr;
 window.rejectRequest = rejectRequest;
+
+// Compliance Functions
+window.loadCompliance = loadCompliance;
+window.renderComplianceTable = renderComplianceTable;
+window.filterComplianceTable = filterComplianceTable;
+window.handleComplianceSearch = handleComplianceSearch;
+window.openRenewIqamaModal = openRenewIqamaModal;
+window.exportComplianceReport = exportComplianceReport;
+
+// Payroll Calculation and WPS Functions
+window.executeCalculatePayroll = executeCalculatePayroll;
+window.approveCurrentPayroll = approveCurrentPayroll;
+window.downloadWpsFile = downloadWpsFile;
+window.exportPayrollCsv = exportPayrollCsv;
+window.viewEmployeePayslip = viewEmployeePayslip;
 
 

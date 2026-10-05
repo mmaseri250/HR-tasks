@@ -485,6 +485,16 @@ app.get('/api/employees/metrics/saudization', (req, res) => {
   }
 });
 
+// Enterprise Compliance & Iqama / Work Permits Dashboard API
+app.get('/api/compliance/stats', (req, res) => {
+  try {
+    const compliance = employeesModule.getComplianceMetrics();
+    res.json({ success: true, data: compliance });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/employees/:id', (req, res) => {
   try {
     const emp = employeesModule.getEmployeeById(req.params.id);
