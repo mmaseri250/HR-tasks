@@ -96,9 +96,30 @@ assert.strictEqual(hrStep.hr_approver_name, 'مدير عام الموارد ال
 assert(hrStep.hr_approved_at !== null, 'يجب توثيق وقت اعتماد الموارد البشرية');
 console.log('✓ نجح: دورة سير الموافقات المكتملة (تقديم ➔ موافقة المدير ➔ اعتماد HR)');
 
+// 6. Disciplinary Penalty Issuance and Deletion Test
+const penaltiesModule = require('../server/modules/penalties');
+const testPenalty = penaltiesModule.issuePenaltyDecision({
+  emp_id: testEmp.id,
+  violation_code: 'v1',
+  repetition_level: 'المرة الأولى',
+  incident_date: '2026-10-05',
+  investigation_details: 'مخالفة تأخر تجريبية للتحقق من إمكانية الإصدار والحذف',
+  issued_by: 'إدارة الموارد البشرية'
+});
+assert(testPenalty && testPenalty.id, 'يجب إصدار القرار الجزائي بنجاح');
+assert.strictEqual(testPenalty.emp_id, testEmp.id);
+console.log(`✓ نجح: إصدار قرار جزائي رسمي بنجاح (${testPenalty.decision_no})`);
+
+// Test Deleting the Disciplinary Decision
+const deleteResult = penaltiesModule.deleteIssuedPenalty(testPenalty.id);
+assert(deleteResult && deleteResult.success, 'يجب حذف القرار الجزائي بنجاح');
+const checkDeleted = penaltiesModule.getIssuedPenaltyById(testPenalty.id);
+assert(!checkDeleted, 'يجب ألا يكون القرار الجزائي موجوداً في قاعدة البيانات بعد حذفه');
+console.log(`✓ نجح: حذف القرار الجزائي (${testPenalty.decision_no}) بنجاح والتأكد من إزالته بالكامل`);
+
 // Cleanup test records and re-seed to ensure pristine database state
 db.run('DELETE FROM requests WHERE id = ?', [testReq.id]);
 employeesModule.deleteEmployee(testEmp.id);
 seedDatabase();
 
-console.log('--- اكتملت اختبارات السياسات والإدارات وسير الموافقات بنجاح 100% ---\n');
+console.log('--- اكتملت اختبارات السياسات والإدارات والجزاءات وسير الموافقات بنجاح 100% ---\n');

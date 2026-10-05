@@ -418,6 +418,15 @@ app.post('/api/penalties/issue', (req, res) => {
   }
 });
 
+app.delete('/api/penalties/issued/:id', (req, res) => {
+  try {
+    const result = penaltiesModule.deleteIssuedPenalty(req.params.id);
+    res.json({ success: true, message: 'تم حذف القرار الجزائي بنجاح', data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/penalties/issued/:id/print', (req, res) => {
   try {
     const data = penaltiesModule.generatePenaltyFormPrintData(req.params.id);

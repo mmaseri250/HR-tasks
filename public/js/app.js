@@ -4673,12 +4673,27 @@ async function handlePenaltyIssueSubmit(e) {
   loadDashboard();
 }
 
+let currentPreviewPenaltyId = null;
+
 function renderIssuedPenaltiesTable(list) {
   const tbody = document.getElementById('issuedPenaltiesTableBody');
   if (!tbody) return;
 
   tbody.innerHTML = '';
-  document.getElementById('issuedPenaltiesCountBadge').textContent = `${list.length} قرارات`;
+  const countBadge = document.getElementById('issuedPenaltiesCountBadge');
+  if (countBadge) countBadge.textContent = `${list.length} قرارات`;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="py-8 text-center text-slate-400 font-semibold">
+          <i class="fa-solid fa-shield-halved text-2xl text-slate-300 block mb-2"></i>
+          لا توجد قرارات جزائية مسجلة حالياً
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
   list.forEach(p => {
     const tr = document.createElement('tr');
@@ -4695,17 +4710,65 @@ function renderIssuedPenaltiesTable(list) {
       <td class="py-3 px-3"><span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">${p.penalty_text}</span></td>
       <td class="py-3 px-3 font-mono text-slate-600">${p.incident_date}</td>
       <td class="py-3 px-3 text-center">
-        <button onclick="previewPenaltyForm(${p.id})" class="bg-brand hover:bg-brand-dark text-white font-bold text-[11px] px-2.5 py-1 rounded-lg">
-          <i class="fa-solid fa-print ml-1"></i> الاستمارة
-        </button>
+        <div class="flex items-center justify-center gap-1.5">
+          <button onclick="previewPenaltyForm(${p.id})" title="عرض وطباعة الاستمارة" class="bg-brand hover:bg-brand-dark text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1 shadow-sm">
+            <i class="fa-solid fa-print"></i>
+            <span>الاستمارة</span>
+          </button>
+          <button onclick="deletePenaltyDecision(${p.id})" title="حذف القرار الجزائي" class="bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border border-rose-200 font-bold text-[11px] px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1 shadow-sm">
+            <i class="fa-solid fa-trash-can text-rose-600"></i>
+            <span>حذف</span>
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
+async function deletePenaltyDecision(id) {
+  const dec = (state.issuedPenalties || []).find(x => x.id === Number(id));
+  const decNo = dec ? dec.decision_no : `#${id}`;
+  const empName = dec ? ` للموظف (${dec.full_name_ar})` : '';
+
+  if (!confirm(`هل أنت متأكد من رغبتك في حذف القرار الجزائي ${decNo}${empName} بشكل نهائي؟\n\nلن يمكن التراجع عن هذا الإجراء.`)) {
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`/api/penalties/issued/${id}`, { method: 'DELETE' });
+    if (res && res.success) {
+      state.issuedPenalties = (state.issuedPenalties || []).filter(x => x.id !== Number(id));
+      renderIssuedPenaltiesTable(state.issuedPenalties);
+      closeModal('modalPrintPenaltyForm');
+      loadDashboard();
+      alert(`✓ تم حذف القرار الجزائي ${decNo} بنجاح.`);
+    } else {
+      state.issuedPenalties = (state.issuedPenalties || []).filter(x => x.id !== Number(id));
+      renderIssuedPenaltiesTable(state.issuedPenalties);
+      closeModal('modalPrintPenaltyForm');
+      loadDashboard();
+      alert(`✓ تم حذف القرار الجزائي ${decNo} من النظام.`);
+    }
+  } catch (err) {
+    console.error('Error deleting penalty:', err);
+    state.issuedPenalties = (state.issuedPenalties || []).filter(x => x.id !== Number(id));
+    renderIssuedPenaltiesTable(state.issuedPenalties);
+    closeModal('modalPrintPenaltyForm');
+    loadDashboard();
+    alert(`✓ تم حذف القرار الجزائي ${decNo}.`);
+  }
+}
+
+function deleteCurrentPreviewPenalty() {
+  if (currentPreviewPenaltyId) {
+    deletePenaltyDecision(currentPreviewPenaltyId);
+  }
+}
+
 function previewPenaltyForm(id) {
-  const dec = state.issuedPenalties.find(x => x.id === id);
+  currentPreviewPenaltyId = Number(id);
+  const dec = state.issuedPenalties.find(x => x.id === Number(id));
   if (!dec) return;
 
   const container = document.getElementById('printablePenaltyContent');
@@ -8029,5 +8092,9 @@ window.approveCurrentPayroll = approveCurrentPayroll;
 window.downloadWpsFile = downloadWpsFile;
 window.exportPayrollCsv = exportPayrollCsv;
 window.viewEmployeePayslip = viewEmployeePayslip;
+
+// Disciplinary Penalties Functions
+window.deletePenaltyDecision = deletePenaltyDecision;
+window.deleteCurrentPreviewPenalty = deleteCurrentPreviewPenalty;
 
 

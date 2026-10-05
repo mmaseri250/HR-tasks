@@ -144,11 +144,20 @@ function generatePenaltyFormPrintData(id) {
   };
 }
 
+function deleteIssuedPenalty(id) {
+  const penalty = getIssuedPenaltyById(id);
+  if (!penalty) throw new Error('القرار الجزائي غير موجود');
+
+  run('DELETE FROM penalties_issued WHERE id = ?', [id]);
+  return { success: true, deletedPenalty: penalty };
+}
+
 module.exports = {
   getAllPenaltyRegulations,
   getRegulationByCode,
   getAllIssuedPenalties,
   getIssuedPenaltyById,
   issuePenaltyDecision,
+  deleteIssuedPenalty,
   generatePenaltyFormPrintData
 };
