@@ -180,19 +180,29 @@ function getExportDataset(type, filters = {}) {
 }
 
 /**
- * Generate Excel (.xlsx) buffer
+ * Generate Excel (.xlsx) buffer with executive styling and RTL support
  */
 function exportToExcel(type, filters = {}) {
   const dataset = getExportDataset(type, filters);
+  const now = new Date();
+  const dateFormatted = now.toLocaleDateString('ar-SA', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const timeFormatted = now.toLocaleTimeString('ar-SA', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
   // Prepare header rows with company title
   const sheetData = [];
-  sheetData.push([COMPANY_NAME]);
-  sheetData.push([dataset.title]);
-  sheetData.push([`تاريخ الاستخراج: ${new Date().toLocaleDateString('ar-SA')} - نظام موارد بشرية جوهرة المجد`]);
-  sheetData.push([]); // blank line
+  sheetData.push([`🏢 ${COMPANY_NAME}`]);
+  sheetData.push([`📊 ${dataset.title} - تقرير رسمي معتمد للإدارة العليا`]);
+  sheetData.push([`📅 تاريخ الإنشاء: ${dateFormatted} (${timeFormatted}) | 💻 النظام: نظام جوهرة المجد لإدارة الموارد البشرية (HRMS)`]);
+  sheetData.push([]); // blank line for separation
 
-  // Column header row
+  // Column header row (Row 5, 0-indexed row 4)
   const headerLabels = dataset.columns.map(c => c.label);
   sheetData.push(headerLabels);
 
@@ -200,22 +210,69 @@ function exportToExcel(type, filters = {}) {
   for (const item of dataset.rows) {
     const row = dataset.columns.map(c => {
       const val = item[c.key];
-      return val !== undefined && val !== null ? val : '';
+      if (val === undefined || val === null) return '';
+      // Retain numeric types for currency/numbers so Excel treats them as numbers
+      if (typeof val === 'number') return val;
+      return String(val).trim();
     });
     sheetData.push(row);
   }
 
   const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-  // Column widths
-  ws['!cols'] = dataset.columns.map(c => ({ wch: c.width || 18 }));
+  const numCols = dataset.columns.length;
+  const lastColLetter = XLSX.utils.encode_col(numCols - 1);
+  const totalRows = sheetData.length;
+
+  // 1. Executive Top Header Merges (Rows 1, 2, 3 spanning all columns)
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: numCols - 1 } },
+    { s: { r: 2, c: 0 }, e: { r: 2, c: numCols - 1 } }
+  ];
+
+  // 2. Right-to-Left (RTL) Layout for Arabic Display
+  ws['!views'] = [{ rightToLeft: true, RTL: true }];
+
+  // 3. Freeze Panes: Freeze header rows above data (Row 5 is header, freeze at row 5)
+  ws['!freeze'] = { xSplit: 0, ySplit: 5 };
+
+  // 4. Auto-Filter on Column Headers Row (Row 5 down to end of data)
+  ws['!autofilter'] = { ref: `A5:${lastColLetter}${Math.max(5, totalRows)}` };
+
+  // 5. Dynamic Auto-Fit Column Widths
+  ws['!cols'] = dataset.columns.map((col, colIdx) => {
+    let maxLen = col.label ? col.label.length * 1.5 : 12;
+    for (const item of dataset.rows) {
+      const val = item[col.key];
+      if (val !== undefined && val !== null) {
+        const strVal = String(val);
+        const len = strVal.length * (/[^\u0000-\u007f]/.test(strVal) ? 1.4 : 1.0);
+        if (len > maxLen) maxLen = len;
+      }
+    }
+    const computedWidth = Math.max(Math.ceil(maxLen) + 4, col.width || 14);
+    return { wch: computedWidth };
+  });
+
+  const sheetNames = {
+    employees: 'بيانات الموظفين',
+    attendance: 'الحضور والانصراف',
+    leaves: 'سجل الإجازات',
+    tasks: 'سجل المهام',
+    penalties: 'القرارات الجزائية',
+    payroll: 'مسير الرواتب',
+    permissions: 'طلبات الاستئذان',
+    reports: 'مؤشرات الامتثال'
+  };
+  const sheetName = sheetNames[type] || 'البيانات الرسمية';
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'البيانات الرسمية');
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
   return {
     buffer: XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }),
-    filename: `${type}_jawharat_al_majd_${new Date().toISOString().split('T')[0]}.xlsx`
+    filename: `${type}_jawharat_al_majd_${now.toISOString().split('T')[0]}.xlsx`
   };
 }
 

@@ -105,17 +105,42 @@ function createTask(data) {
     due_date,
     priority = 'متوسطة',
     progress_percent = 0,
-    status = 'جديدة'
+    status = 'جديدة',
+    attachments = ''
   } = data;
 
-  if (!title || !assigned_to || !start_date || !due_date) {
-    throw new Error('بيانات المهمة غير مكتملة (العنوان، الموظف المكلف، تاريخ البداية، تاريخ الاستحقاق)');
+  const cleanTitle = (title || '').trim();
+  if (!cleanTitle) {
+    throw new Error('يرجى إدخال عنوان المهمة بشكل صحيح');
+  }
+
+  if (!assigned_to) {
+    throw new Error('يرجى اختيار الموظف المكلف بالمهمة');
   }
 
   const emp = get('SELECT id, full_name_ar FROM employees WHERE id = ?', [assigned_to]);
   if (!emp) {
-    throw new Error('الموظف المكلف غير موجود');
+    throw new Error('الموظف المكلف المحدد غير موجود بقاعدة البيانات');
   }
+
+  if (!start_date || !due_date) {
+    throw new Error('يرجى تحديد تاريخ البداية وتاريخ الاستحقاق للمهمة');
+  }
+
+  if (due_date < start_date) {
+    throw new Error('تاريخ الاستحقاق يجب ألا يكون سابقاً لتاريخ بداية المهمة');
+  }
+
+  // Safely resolve assigned_by to prevent SQLite FOREIGN KEY constraint failures
+  let validAssignedBy = null;
+  if (assigned_by) {
+    const assigner = get('SELECT id FROM employees WHERE id = ?', [assigned_by]);
+    if (assigner) {
+      validAssignedBy = assigner.id;
+    }
+  }
+
+  const cleanAttachments = typeof attachments === 'string' ? attachments.trim() : (attachments ? JSON.stringify(attachments) : '');
 
   const year = new Date().getFullYear();
   const countRow = get('SELECT COUNT(*) AS total FROM tasks');
@@ -123,7 +148,11 @@ function createTask(data) {
   const task_no = `TSK-${year}-${seq}`;
 
   const todayStr = new Date().toISOString().split('T')[0];
-  let finalStatus = status;
+  let finalStatus = status || 'جديدة';
+  let initialProgress = Number(progress_percent) || 0;
+  if (finalStatus === 'مكتملة' && initialProgress === 0) {
+    initialProgress = 100;
+  }
   if (finalStatus !== 'مكتملة' && due_date < todayStr) {
     finalStatus = 'متأخرة';
   }
@@ -131,14 +160,14 @@ function createTask(data) {
   const sql = `
     INSERT INTO tasks (
       task_no, title, description, assigned_to, assigned_by, assigned_by_name,
-      start_date, due_date, priority, progress_percent, status, manager_approval,
-      created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', datetime('now'), datetime('now'))
+      start_date, due_date, priority, progress_percent, status, attachments,
+      manager_approval, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', datetime('now'), datetime('now'))
   `;
 
   const result = run(sql, [
-    task_no, title, description, assigned_to, assigned_by, assigned_by_name,
-    start_date, due_date, priority, Number(progress_percent) || 0, finalStatus
+    task_no, cleanTitle, description || '', Number(assigned_to), validAssignedBy, assigned_by_name || 'مدير النظام',
+    start_date, due_date, priority || 'متوسطة', initialProgress, finalStatus, cleanAttachments
   ]);
 
   return getTaskById(result.lastInsertRowid);
@@ -176,6 +205,8 @@ function updateTask(id, data) {
     status = 'متأخرة';
   }
 
+  const attachmentsVal = data.attachments !== undefined ? (typeof data.attachments === 'string' ? data.attachments.trim() : JSON.stringify(data.attachments)) : existing.attachments;
+
   const sql = `
     UPDATE tasks SET
       title = ?,
@@ -186,6 +217,7 @@ function updateTask(id, data) {
       priority = ?,
       progress_percent = ?,
       status = ?,
+      attachments = ?,
       manager_comment = ?,
       hr_comment = ?,
       completed_at = ?,
@@ -194,7 +226,7 @@ function updateTask(id, data) {
   `;
 
   run(sql, [
-    data.title !== undefined ? data.title : existing.title,
+    data.title !== undefined ? data.title.trim() : existing.title,
     data.description !== undefined ? data.description : existing.description,
     data.assigned_to !== undefined ? Number(data.assigned_to) : existing.assigned_to,
     data.start_date || existing.start_date,
@@ -202,6 +234,7 @@ function updateTask(id, data) {
     data.priority || existing.priority,
     progress,
     status,
+    attachmentsVal,
     data.manager_comment !== undefined ? data.manager_comment : existing.manager_comment,
     data.hr_comment !== undefined ? data.hr_comment : existing.hr_comment,
     completedAt,

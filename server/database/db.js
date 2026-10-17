@@ -354,6 +354,7 @@ function initSchema() {
       priority TEXT NOT NULL DEFAULT 'متوسطة',
       progress_percent INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'جديدة',
+      attachments TEXT,
       manager_approval TEXT DEFAULT 'معلق',
       manager_comment TEXT,
       hr_comment TEXT,
@@ -399,6 +400,9 @@ function initSchema() {
   } catch (e) {}
   try {
     db.exec('ALTER TABLE attendance_policies ADD COLUMN min_hours REAL DEFAULT 3.0;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;');
   } catch (e) {}
 }
 

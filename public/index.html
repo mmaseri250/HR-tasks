@@ -305,13 +305,12 @@
             <div class="flex justify-between items-start">
               <div>
                 <div class="flex items-center gap-1.5">
-                  <p class="text-xs font-bold text-slate-400">مؤشر الامتثال والتوطين</p>
-                  <span class="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded-full">قوى ومقيم</span>
+                  <p class="text-xs font-bold text-slate-400">مؤشر الامتثال النظامي</p>
+                  <span class="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded-full">الإقامات ورخص العمل</span>
                 </div>
                 <h3 id="statComplianceRate" class="text-3xl font-black text-emerald-700 mt-2">100%</h3>
                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                  <span id="statNitaqatBadge" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">النطاق البلاتيني</span>
-                  <span id="statSaudizationRateBadge" class="text-[10px] text-slate-500 font-bold">توطين 32.1% (35 سعودي)</span>
+                  <span id="statComplianceSub" class="text-[10px] text-slate-500 font-bold">إقامات سارية وممتثلة بالكامل</span>
                 </div>
               </div>
               <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
@@ -439,102 +438,250 @@
            ===================================================================== -->
       <section id="view-employees-db" class="space-y-6 hidden">
         
-        <div class="card-elevated p-6 space-y-4">
+        <!-- Enterprise Header Banner -->
+        <div class="card-elevated p-6 space-y-5" style="border-top: 4px solid #8B0000;">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
-              <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-database text-brand"></i> قاعدة بيانات الموظفين المركزية
-              </h2>
-              <p class="text-xs text-slate-500 mt-1">سجل رقمي متكامل يشمل بيانات الموظفين، الرواتب، الوثائق، مع دعم الاستيراد والتصدير الفوري بصيغ Excel و CSV و JSON.</p>
+              <div class="flex items-center gap-2.5">
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl text-white shadow-md" style="background: linear-gradient(135deg, #8B0000 0%, #5a0000 100%);">
+                  <i class="fa-solid fa-users-gear"></i>
+                </div>
+                <div>
+                  <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                    قاعدة بيانات الموظفين المركزية
+                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full" style="background-color: rgba(200, 155, 60, 0.15); color: #8f6a1e; border: 1px solid rgba(200, 155, 60, 0.3);">منظومة HCM المؤسسية</span>
+                  </h2>
+                  <p class="text-xs text-slate-500 mt-0.5">إدارة متطورة لكافة سجلات الموظفين، العقود، الرواتب، الأرصدة، والوثائق الرسمية لشركة جوهرة المجد.</p>
+                </div>
+              </div>
             </div>
+            
             <div class="flex items-center gap-2 flex-wrap">
-              <button onclick="openModal('modalAddEmployee')" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-                <i class="fa-solid fa-user-plus"></i> إضافة موظف
+              <button onclick="openAddEmployeeModal()" class="text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2" style="background: linear-gradient(135deg, #8B0000 0%, #700C14 100%);">
+                <i class="fa-solid fa-user-plus text-amber-300"></i> إضافة موظف جديد
               </button>
-              <button onclick="exportData('employees', 'excel')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <button onclick="exportData('employees', 'excel')" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5">
                 <i class="fa-solid fa-file-excel"></i> تصدير Excel
               </button>
-              <button onclick="exportData('employees', 'word')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <button onclick="exportData('employees', 'word')" class="bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5">
                 <i class="fa-solid fa-file-word"></i> تصدير Word
               </button>
-              <button onclick="printTable('employeesTable')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <button onclick="printTable('employeesTable')" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5">
                 <i class="fa-solid fa-print"></i> طباعة PDF
               </button>
-              <button onclick="exportEmployees('json')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-                <i class="fa-solid fa-code"></i> JSON
-              </button>
-              <button onclick="openModal('modalImportEmployees')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <button onclick="openModal('modalImportEmployees')" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
                 <i class="fa-solid fa-file-import"></i> استيراد موظفين
               </button>
             </div>
           </div>
 
-          <!-- Search & Filter Controls -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          <!-- 6 Smart Top KPI Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <!-- 1. Total Employees -->
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div class="flex justify-between items-center text-xs font-bold text-slate-500">
+                <span>إجمالي الموظفين</span>
+                <span class="w-6 h-6 rounded-lg flex items-center justify-center text-xs text-white" style="background-color: #8B0000;"><i class="fa-solid fa-users"></i></span>
+              </div>
+              <h3 id="empKpiTotal" class="text-2xl font-black text-slate-900">0</h3>
+              <p class="text-[10px] text-slate-500 font-semibold">كافة القوى العاملة</p>
+            </div>
+
+            <!-- 2. Active Employees -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-1">
+              <div class="flex justify-between items-center text-xs font-bold text-emerald-800">
+                <span>على رأس العمل</span>
+                <span class="w-6 h-6 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-user-check"></i></span>
+              </div>
+              <h3 id="empKpiActive" class="text-2xl font-black text-emerald-800">0</h3>
+              <p class="text-[10px] text-emerald-700 font-semibold" id="empKpiActivePercent">100% نشط</p>
+            </div>
+
+            <!-- 3. Expiring / Expired Docs -->
+            <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1">
+              <div class="flex justify-between items-center text-xs font-bold text-amber-800">
+                <span>تجديدات مستحقة</span>
+                <span class="w-6 h-6 rounded-lg bg-amber-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-triangle-exclamation"></i></span>
+              </div>
+              <h3 id="empKpiExpiring" class="text-2xl font-black text-amber-800">0</h3>
+              <p class="text-[10px] text-amber-700 font-semibold">وثائق قاربت الانتهاء</p>
+            </div>
+
+            <!-- 4. Probation Period -->
+            <div class="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-1">
+              <div class="flex justify-between items-center text-xs font-bold text-indigo-800">
+                <span>في فترة التجربة</span>
+                <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-user-clock"></i></span>
+              </div>
+              <h3 id="empKpiProbation" class="text-2xl font-black text-indigo-800">0</h3>
+              <p class="text-[10px] text-indigo-600 font-semibold">أقل من 90 يوم خدمة</p>
+            </div>
+
+            <!-- 5. Saudi Citizens -->
+            <div class="p-3.5 rounded-2xl bg-teal-50/60 border border-teal-200 space-y-1">
+              <div class="flex justify-between items-center text-xs font-bold text-teal-800">
+                <span>مواطنون سعوديون</span>
+                <span class="w-6 h-6 rounded-lg bg-teal-700 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-id-card"></i></span>
+              </div>
+              <h3 id="empKpiSaudi" class="text-2xl font-black text-teal-800">0</h3>
+              <p class="text-[10px] text-teal-700 font-semibold">هوية وطنية</p>
+            </div>
+
+            <!-- 6. Expatriates -->
+            <div class="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-200 space-y-1">
+              <div class="flex justify-between items-center text-xs font-bold text-blue-800">
+                <span>موظفون مقيمون</span>
+                <span class="w-6 h-6 rounded-lg bg-blue-700 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-passport"></i></span>
+              </div>
+              <h3 id="empKpiExpat" class="text-2xl font-black text-blue-800">0</h3>
+              <p class="text-[10px] text-blue-700 font-semibold">إقامة نظامية</p>
+            </div>
+          </div>
+
+          <!-- Advanced Multi-Field Search & 7 Filter Controls -->
+          <div class="space-y-3 pt-2">
+            <!-- Search Bar -->
             <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">بحث سريع:</label>
               <div class="relative">
-                <input type="text" id="empSearchInput" oninput="filterEmployeesTable()" placeholder="ابحث بالاسم أو الرقم أو الهوية..." class="w-full text-xs rounded-xl border border-slate-300 py-2 pr-9 pl-3 focus:outline-none focus:ring-2 focus:ring-brand">
-                <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="empSearchInput" oninput="filterEmployeesTable()" placeholder="بحث فوري متعدد الحقول: الاسم بالعربي أو الإنجليزي، الرقم الوظيفي، رقم الجوال، البريد الإلكتروني، الهوية أو الإقامة..." class="w-full text-xs rounded-xl border border-slate-300 py-2.5 pr-10 pl-4 focus:outline-none focus:ring-2 focus:ring-[#8B0000] bg-white font-medium shadow-sm">
+                <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-xs"></i>
               </div>
             </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">تصفية حسب الإدارة:</label>
-              <select id="empDeptFilter" onchange="filterEmployeesTable()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand">
-                <option value="">جميع الإدارات</option>
-              </select>
+            <!-- 7 Filter Dropdowns -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">الفرع:</label>
+                <select id="empBranchFilter" onchange="filterEmployeesTable()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                  <option value="">جميع الفروع</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">الإدارة:</label>
+                <select id="empDeptFilter" onchange="filterEmployeesTable()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                  <option value="">جميع الإدارات</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">المسمى الوظيفي:</label>
+                <select id="empJobTitleFilter" onchange="filterEmployeesTable()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                  <option value="">جميع المسميات</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">الجنسية:</label>
+                <select id="empNationalityFilter" onchange="filterEmployeesTable()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                  <option value="">الكل (سعودي ومقيم)</option>
+                  <option value="1">سعودي فقط</option>
+                  <option value="0">مقيم فقط</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">الحالة الوظيفية:</label>
+                <select id="empStatusFilter" onchange="filterEmployeesTable()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                  <option value="">جميع الحالات</option>
+                  <option value="نشط">نشط</option>
+                  <option value="في إجازة">في إجازة</option>
+                  <option value="مستقيل">مستقيل</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">نوع العقد:</label>
+                <select id="empContractTypeFilter" onchange="filterEmployeesTable()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                  <option value="">جميع العقود</option>
+                  <option value="محدد المدة">محدد المدة</option>
+                  <option value="غير محدد المدة">غير محدد المدة</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">نطاق الراتب:</label>
+                <select id="empSalaryRangeFilter" onchange="filterEmployeesTable()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#8B0000]">
+                  <option value="">كافة الرواتب</option>
+                  <option value="under5k">أقل من 5,000 ر.س</option>
+                  <option value="5k_10k">5,000 - 10,000 ر.س</option>
+                  <option value="10k_20k">10,000 - 20,000 ر.س</option>
+                  <option value="above20k">أكثر من 20,000 ر.س</option>
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">تصفية حسب الفرع:</label>
-              <select id="empBranchFilter" onchange="filterEmployeesTable()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand">
-                <option value="">جميع الفروع</option>
-              </select>
-            </div>
+            <!-- Toolbar: Results Counter & Dual View Mode Switcher -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-slate-100 text-xs">
+              <div class="flex items-center gap-2">
+                <span id="empResultsCount" class="font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl">عرض 0 موظف</span>
+                <button type="button" onclick="resetEmployeeFilters()" class="text-rose-600 hover:text-rose-800 font-bold text-[11px] flex items-center gap-1 transition">
+                  <i class="fa-solid fa-arrow-rotate-left"></i> إعادة تعيين الفلاتر
+                </button>
+              </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">تصفية حسب الجنسية:</label>
-              <select id="empNationalityFilter" onchange="filterEmployeesTable()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand">
-                <option value="">الكل (سعودي ومقيم)</option>
-                <option value="1">سعودي فقط</option>
-                <option value="0">مقيم فقط</option>
-              </select>
-            </div>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1 text-[11px] text-slate-600 font-bold">
+                  <span>عرض في الصفحة:</span>
+                  <select id="empPageSizeSelect" onchange="onEmpPageSizeChange()" class="rounded-lg border border-slate-300 py-1 px-2 bg-white text-xs">
+                    <option value="15">15</option>
+                    <option value="30">30</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="all">الكل</option>
+                  </select>
+                </div>
 
-            <div>
-              <label class="block text-xs font-bold text-slate-600 mb-1">الحالة الوظيفية:</label>
-              <select id="empStatusFilter" onchange="filterEmployeesTable()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-brand">
-                <option value="">جميع الحالات</option>
-                <option value="نشط">نشط</option>
-                <option value="في إجازة">في إجازة</option>
-                <option value="مستقيل">مستقيل</option>
-              </select>
+                <!-- Dual View Switcher Buttons -->
+                <div class="inline-flex rounded-xl p-1 bg-slate-100 border border-slate-200">
+                  <button type="button" id="btnViewModeTable" onclick="switchEmpViewMode('table')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-white shadow-sm" style="background-color: #8B0000;">
+                    <i class="fa-solid fa-table-list"></i> جدول ذكي
+                  </button>
+                  <button type="button" id="btnViewModeCards" onclick="switchEmpViewMode('cards')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+                    <i class="fa-solid fa-grip"></i> بطاقات حديثة
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Master Employees Table -->
-        <div class="card-elevated overflow-hidden">
+        <!-- 1. Smart Table View Container -->
+        <div id="empTableViewContainer" class="card-elevated overflow-hidden shadow-sm">
           <div class="overflow-x-auto">
-            <table id="attendanceTable" class="w-full text-xs text-right">
-              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+            <table id="employeesTable" class="w-full text-xs text-right border-collapse">
+              <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
                 <tr>
                   <th class="py-3 px-3">الرقم</th>
-                  <th class="py-3 px-3">الموظف</th>
+                  <th class="py-3 px-3">الموظف والبيانات</th>
                   <th class="py-3 px-3">الهوية / الإقامة</th>
-                  <th class="py-3 px-3">المسمى والقسم</th>
-                  <th class="py-3 px-3">الجنسية</th>
-                  <th class="py-3 px-3">الأساسي</th>
+                  <th class="py-3 px-3">الوظيفة والإدارة والفرع</th>
+                  <th class="py-3 px-3">المدير المباشر</th>
+                  <th class="py-3 px-3">الراتب الأساسي</th>
                   <th class="py-3 px-3">إجمالي الراتب</th>
                   <th class="py-3 px-3">حالة الوثيقة</th>
-                  <th class="py-3 px-3 text-center">الإجراءات</th>
+                  <th class="py-3 px-3 text-center">إجراءات سريعة</th>
                 </tr>
               </thead>
               <tbody id="employeesTableBody" class="divide-y divide-slate-100">
-                <!-- Loaded via JS -->
+                <!-- Loaded dynamically via JS -->
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- 2. Modern Cards Grid View Container -->
+        <div id="empCardsViewContainer" class="hidden">
+          <div id="employeesCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Loaded dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div id="empPaginationBar" class="flex flex-col sm:flex-row justify-between items-center gap-3 p-4 bg-white rounded-2xl border border-slate-200 text-xs shadow-sm">
+          <div id="empPaginationInfo" class="font-bold text-slate-600">صفحة 1 من 1</div>
+          <div id="empPaginationButtons" class="flex items-center gap-1">
+            <!-- Injected via JS -->
           </div>
         </div>
 
@@ -745,7 +892,7 @@
               <button onclick="printTable('tasksTable')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-sm">
                 <i class="fa-solid fa-print"></i> طباعة PDF
               </button>
-              <button onclick="openModal('modalCreateTask')" class="brand-gradient text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <button onclick="openCreateTaskModal()" class="brand-gradient text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> إنشاء مهمة جديدة
               </button>
             </div>
@@ -999,19 +1146,19 @@
               </div>
             </div>
 
-            <!-- Contracts & Saudization -->
+            <!-- Action Required & Renewals Due -->
             <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-sm">
               <div class="flex justify-between items-center text-xs font-bold text-slate-500">
-                <span>توثيق العقود والتوطين</span>
-                <span class="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-file-signature"></i></span>
+                <span>تجديدات مستحقة (إقامات ورخص)</span>
+                <span class="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-clock-rotate-left"></i></span>
               </div>
               <div class="flex items-baseline gap-2">
-                <h3 id="compSaudizationRate" class="text-3xl font-black text-slate-800">32.1%</h3>
-                <span id="compNitaqatBandBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">النطاق البلاتيني</span>
+                <h3 id="compActionsDueCount" class="text-3xl font-black text-slate-800">0</h3>
+                <span id="compActionsDueBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">ممتثل</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
-                <span>عقود موثقة بقوى:</span>
-                <span class="font-bold text-emerald-700">109 / 109 (100%)</span>
+                <span>الإجراء المطلوب:</span>
+                <span id="compActionsDueSub" class="font-bold text-slate-700">سداد وتجديد عبر قوى ومقيم</span>
               </div>
             </div>
 
@@ -3104,21 +3251,23 @@
       </div>
 
       <form id="createTaskForm" onsubmit="handleCreateTaskSubmit(event)" class="space-y-4 text-xs">
+        <div id="taskFormAlert" class="hidden text-xs p-3 rounded-xl font-bold"></div>
+
         <div>
           <label class="block font-bold text-slate-700 mb-1">عنوان المهمة: *</label>
-          <input type="text" id="taskFormTitle" required placeholder="مثال: إعداد تقرير الجرد الشهري لفرع محايل عسير" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          <input type="text" id="taskFormTitle" required placeholder="مثال: إعداد تقرير الجرد الشهري لفرع محايل عسير" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">الموظف المكلف: *</label>
-            <select id="taskFormEmpId" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 bg-white">
+            <select id="taskFormEmpId" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-brand">
               <option value="">-- اختر الموظف --</option>
             </select>
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">درجة الأولوية: *</label>
-            <select id="taskFormPriority" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold bg-white">
+            <select id="taskFormPriority" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold bg-white focus:outline-none focus:ring-2 focus:ring-brand">
               <option value="متوسطة">متوسطة</option>
               <option value="عاجلة">عاجلة (قصوى)</option>
               <option value="عالية">عالية</option>
@@ -3127,25 +3276,41 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">تاريخ البداية: *</label>
-            <input type="date" id="taskFormStartDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold font-mono">
+            <input type="date" id="taskFormStartDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold font-mono focus:outline-none focus:ring-2 focus:ring-brand">
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">تاريخ الاستحقاق (التسليم): *</label>
-            <input type="date" id="taskFormDueDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold font-mono">
+            <input type="date" id="taskFormDueDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold font-mono focus:outline-none focus:ring-2 focus:ring-brand">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">حالة المهمة: *</label>
+            <select id="taskFormStatus" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold bg-white focus:outline-none focus:ring-2 focus:ring-brand">
+              <option value="جديدة">جديدة</option>
+              <option value="قيد التنفيذ">قيد التنفيذ</option>
+              <option value="مكتملة">مكتملة</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">المرفقات أو روابط الملفات والمستندات:</label>
+          <div class="relative">
+            <input type="text" id="taskFormAttachments" placeholder="مثال: رابط ملف المخرجات، مستند المواصفات، أو اسم المرفق..." class="w-full rounded-xl border border-slate-300 py-2 pr-9 pl-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand">
+            <i class="fa-solid fa-paperclip absolute right-3 top-2.5 text-slate-400"></i>
           </div>
         </div>
 
         <div>
           <label class="block font-bold text-slate-700 mb-1">تفاصيل ومخرجات المهمة:</label>
-          <textarea id="taskFormDescription" rows="3" placeholder="وصف تفصيلي للمهمة، النتائج المتوقعة، أو معايير القبول..." class="w-full rounded-xl border border-slate-300 p-2.5"></textarea>
+          <textarea id="taskFormDescription" rows="3" placeholder="وصف تفصيلي للمهمة، النتائج المتوقعة، أو معايير القبول..." class="w-full rounded-xl border border-slate-300 p-2.5 focus:outline-none focus:ring-2 focus:ring-brand"></textarea>
         </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t">
-          <button type="button" onclick="closeModal('modalCreateTask')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center gap-2">
+          <button type="button" onclick="closeModal('modalCreateTask')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">إلغاء</button>
+          <button type="submit" id="btnSubmitTaskForm" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center gap-2 shadow transition">
             <i class="fa-solid fa-plus"></i> إسناد المهمة
           </button>
         </div>
@@ -3281,6 +3446,383 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: 360° COMPREHENSIVE EMPLOYEE PROFILE (الملف الشامل للموظف - 11 تبويب)
+       ========================================================================= -->
+  <div id="modalEmployee360" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 max-h-[92vh] overflow-y-auto space-y-5 shadow-2xl border border-slate-200">
+      
+      <!-- Top Modal Header Banner -->
+      <div class="rounded-2xl p-4 sm:p-5 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-md" style="background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%); border-right: 6px solid #C89B3C;">
+        <div class="flex items-center gap-3.5">
+          <div id="emp360AvatarCircle" class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black text-amber-300 shadow border-2 border-white/30" style="background-color: rgba(255, 255, 255, 0.15);">
+            <!-- Initials -->
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 id="emp360FullNameAr" class="text-lg sm:text-xl font-black">--</h3>
+              <span id="emp360CodeBadge" class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-white/20 text-amber-200 border border-white/20">--</span>
+              <span id="emp360StatusBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">نشط</span>
+            </div>
+            <p id="emp360JobAndDept" class="text-xs text-white/90 font-medium mt-1">--</p>
+            <p id="emp360BranchAndManager" class="text-[11px] text-amber-300/90 font-medium mt-0.5">--</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 self-end md:self-auto">
+          <button type="button" onclick="printEmployee360Profile()" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-900 bg-amber-400 hover:bg-amber-300 transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-print"></i> طباعة الملف (PDF)
+          </button>
+          <button type="button" onclick="openEmployeeBadgeCard(current360EmpId)" class="px-3 py-2 rounded-xl text-xs font-bold text-white bg-white/20 hover:bg-white/30 transition flex items-center gap-1.5 border border-white/20">
+            <i class="fa-solid fa-id-badge text-amber-300"></i> بطاقة العمل
+          </button>
+          <button type="button" onclick="closeModal('modalEmployee360')" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 11 Tabs Navigation Bar (Scrollable) -->
+      <div class="border-b border-slate-200 flex gap-1 overflow-x-auto text-xs font-bold pb-1 no-scrollbar">
+        <button type="button" onclick="switch360Tab('personal')" id="tabBtn360Personal" class="px-3 py-2 rounded-xl whitespace-nowrap transition emp-tab-btn-active">
+          <i class="fa-solid fa-user ml-1"></i> البيانات الشخصية
+        </button>
+        <button type="button" onclick="switch360Tab('contract')" id="tabBtn360Contract" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-file-contract ml-1"></i> العقد والوظيفة
+        </button>
+        <button type="button" onclick="switch360Tab('salary')" id="tabBtn360Salary" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-money-bill-wave ml-1"></i> الرواتب والبدلات
+        </button>
+        <button type="button" onclick="switch360Tab('documents')" id="tabBtn360Documents" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-id-card ml-1"></i> الوثائق الرسمية
+        </button>
+        <button type="button" onclick="switch360Tab('qualifications')" id="tabBtn360Qualifications" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-graduation-cap ml-1"></i> المؤهلات
+        </button>
+        <button type="button" onclick="switch360Tab('experience')" id="tabBtn360Experience" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-briefcase ml-1"></i> الخبرات السابقة
+        </button>
+        <button type="button" onclick="switch360Tab('leaves')" id="tabBtn360Leaves" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-calendar-check ml-1"></i> الإجازات والأرصدة
+        </button>
+        <button type="button" onclick="switch360Tab('penalties')" id="tabBtn360Penalties" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-scale-unbalanced ml-1"></i> الجزاءات والمخالفات
+        </button>
+        <button type="button" onclick="switch360Tab('attendance')" id="tabBtn360Attendance" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-clock ml-1"></i> الحضور والانصراف
+        </button>
+        <button type="button" onclick="switch360Tab('assets')" id="tabBtn360Assets" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-laptop-file ml-1"></i> العُهد والأصول
+        </button>
+        <button type="button" onclick="switch360Tab('loans')" id="tabBtn360Loans" class="px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition">
+          <i class="fa-solid fa-hand-holding-dollar ml-1"></i> السلف والقروض
+        </button>
+      </div>
+
+      <!-- Tab 1: Personal Info -->
+      <div id="tabContent360Personal" class="space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الاسم الرباعي بالعربي:</span>
+            <span id="p360NameAr" class="font-black text-slate-800 text-sm mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الاسم بالإنجليزي:</span>
+            <span id="p360NameEn" class="font-bold text-slate-800 mt-0.5 block font-mono">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">رقم الهوية الوطنية / الإقامة:</span>
+            <span id="p360NationalId" class="font-mono font-bold text-slate-900 mt-0.5 block text-sm">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الجنسية:</span>
+            <span id="p360Nationality" class="font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الجنس:</span>
+            <span id="p360Gender" class="font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">تاريخ الميلاد:</span>
+            <span id="p360BirthDate" class="font-mono font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">رقم الجوال الشخصي:</span>
+            <span id="p360Phone" class="font-mono font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">البريد الإلكتروني الرسمي:</span>
+            <span id="p360Email" class="font-mono font-bold text-brand mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الحالة الاجتماعية:</span>
+            <span id="p360MaritalStatus" class="font-bold text-slate-800 mt-0.5 block">متزوج / مقيم بالمملكة</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Contract & Position -->
+      <div id="tabContent360Contract" class="space-y-4 text-xs hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">تاريخ المباشرة:</span>
+            <span id="c360JoinDate" class="font-mono font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">نوع العقد:</span>
+            <span id="c360ContractType" class="font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">تاريخ نهاية العقد:</span>
+            <span id="c360ContractEnd" class="font-mono font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الإدارة / القسم:</span>
+            <span id="c360Department" class="font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الفرع:</span>
+            <span id="c360Branch" class="font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">المدير المباشر:</span>
+            <span id="c360DirectManager" class="font-bold text-amber-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">المسمى الوظيفي:</span>
+            <span id="c360JobTitle" class="font-black text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">سياسة الدوام والورديات:</span>
+            <span id="c360Policy" class="font-bold text-slate-800 mt-0.5 block">دوام رسمي (8 ساعات)</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">حالة فترة التجربة:</span>
+            <span id="c360ProbationStatus" class="font-bold text-emerald-700 mt-0.5 block">تم اجتياز فترة التجربة بنجاح</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Salary & Allowances -->
+      <div id="tabContent360Salary" class="space-y-4 text-xs hidden">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+            <span class="text-slate-500 block text-[11px] font-bold">الراتب الأساسي</span>
+            <span id="s360Basic" class="font-mono font-black text-slate-900 text-base mt-1 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+            <span class="text-slate-500 block text-[11px] font-bold">بدل السكن</span>
+            <span id="s360Housing" class="font-mono font-black text-slate-900 text-base mt-1 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+            <span class="text-slate-500 block text-[11px] font-bold">بدل النقل</span>
+            <span id="s360Transport" class="font-mono font-black text-slate-900 text-base mt-1 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+            <span class="text-slate-500 block text-[11px] font-bold">بدلات أخرى</span>
+            <span id="s360Other" class="font-mono font-black text-slate-900 text-base mt-1 block">--</span>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div>
+            <span class="text-amber-800 text-[11px] font-bold block">إجمالي الراتب الشهري المستحق:</span>
+            <span id="s360Gross" class="font-mono text-2xl font-black text-slate-900 mt-0.5 block">--</span>
+          </div>
+          <div class="text-left font-mono">
+            <span class="text-slate-500 text-[11px] font-bold block">استقطاع التأمينات (GOSI):</span>
+            <span id="s360GosiDeduction" class="text-xs font-bold text-rose-600 block">--</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">اسم البنك المعتمد:</span>
+            <span id="s360BankName" class="font-bold text-slate-800 mt-0.5 block">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <span class="text-slate-400 block text-[11px] font-bold">الآيبان البنكي (IBAN):</span>
+            <span id="s360Iban" class="font-mono font-bold text-slate-800 mt-0.5 block select-all">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Official Documents -->
+      <div id="tabContent360Documents" class="space-y-4 text-xs hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700">الهوية / الإقامة</span>
+              <span id="d360IqamaBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">سارية</span>
+            </div>
+            <p id="d360IqamaExpiry" class="font-mono font-bold text-slate-900 text-sm mt-1">--</p>
+            <p id="d360IqamaDays" class="text-[10px] text-slate-500 font-medium">--</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700">جواز السفر</span>
+              <span id="d360PassportBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">ساري</span>
+            </div>
+            <p id="d360PassportExpiry" class="font-mono font-bold text-slate-900 text-sm mt-1">--</p>
+            <p class="text-[10px] text-slate-500 font-medium">وثيقة سفر معتمدة</p>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-slate-700">التأمين الطبي (مجلس الضمان)</span>
+              <span id="d360InsuranceBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">نشط</span>
+            </div>
+            <p id="d360InsuranceExpiry" class="font-mono font-bold text-slate-900 text-sm mt-1">--</p>
+            <p class="text-[10px] text-slate-500 font-medium">فئة معتمدة (شركة التعاونية / بوبا)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Qualifications -->
+      <div id="tabContent360Qualifications" class="space-y-4 text-xs hidden">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap text-amber-600"></i> المؤهل العلمي والشهادات</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div>
+              <span class="text-slate-400 block text-[11px] font-bold">الدرجة العلمية:</span>
+              <span id="q360Degree" class="font-bold text-slate-800 text-xs">بكالوريوس / دبلوم مهني معتمد</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[11px] font-bold">التخصص:</span>
+              <span id="q360Major" class="font-bold text-slate-800 text-xs">حسب المسمى الوظيفي المعتمد</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 6: Experience -->
+      <div id="tabContent360Experience" class="space-y-4 text-xs hidden">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-briefcase text-blue-600"></i> سجل الخبرات العملية وسنوات الخدمة</h4>
+          <p id="exp360ServiceYears" class="text-slate-700 font-bold leading-relaxed pt-1">--</p>
+        </div>
+      </div>
+
+      <!-- Tab 7: Leaves & Balances -->
+      <div id="tabContent360Leaves" class="space-y-4 text-xs hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-center">
+            <span class="text-teal-800 block text-[11px] font-bold">رصيد الإجازات السنوية الحالي</span>
+            <span id="l360Balance" class="font-mono text-2xl font-black text-teal-900 mt-1 block">-- يوم</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+            <span class="text-slate-500 block text-[11px] font-bold">معدل الاستحقاق السنوي</span>
+            <span id="l360AccrualRate" class="font-mono text-xl font-bold text-slate-800 mt-1 block">21 / 30 يوم</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+            <span class="text-slate-500 block text-[11px] font-bold">الأيام المستهلكة</span>
+            <span id="l360Used" class="font-mono text-xl font-bold text-slate-800 mt-1 block">0 يوم</span>
+          </div>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-xl border text-[11px] text-slate-600">
+          <i class="fa-solid fa-info-circle text-teal-600 ml-1"></i> يتم احتساب رصيد الإجازة تلقائياً بنظام الاستحقاق اليومي طبقاً لنظام العمل السعودي (21 يوماً للخدمة أقل من 5 سنوات، و 30 يوماً للخدمة أكثر من 5 سنوات).
+        </div>
+      </div>
+
+      <!-- Tab 8: Penalties & Violations -->
+      <div id="tabContent360Penalties" class="space-y-4 text-xs hidden">
+        <div id="pen360ListContainer" class="space-y-2">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Tab 9: Attendance & Punctuality -->
+      <div id="tabContent360Attendance" class="space-y-4 text-xs hidden">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-blue-600"></i> مسار وسجل الحضور والانضباط</h4>
+          <p id="att360SummaryText" class="text-slate-600 leading-relaxed">سجل الحضور والبصمة الحيوية منتظم ومسجل على أجهزة البصمة المعتمدة التابعة للفرع.</p>
+        </div>
+      </div>
+
+      <!-- Tab 10: Assets & Custody -->
+      <div id="tabContent360Assets" class="space-y-4 text-xs hidden">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-boxes-packing text-amber-700"></i> العُهد والأصول المسلمة للموظف</h4>
+          <p class="text-slate-600 text-xs">كافة أدوات العمل، بطاقة الدخول الذكية، والبريد الإلكتروني المؤسسي مسجلة باسم الموظف بعهدة رسمية.</p>
+        </div>
+      </div>
+
+      <!-- Tab 11: Loans & Advances -->
+      <div id="tabContent360Loans" class="space-y-4 text-xs hidden">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5"><i class="fa-solid fa-hand-holding-dollar text-emerald-700"></i> السلف والالتزامات المالية</h4>
+          <p class="text-slate-600 text-xs">لا توجد سلف أو استقطاعات مالية معلقة على الموظف حالياً، والسجل المالي مبرأ بالكامل.</p>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex justify-between items-center pt-3 border-t border-slate-200 text-xs">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="editEmployee(current360EmpId)" class="px-4 py-2 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الموظف
+          </button>
+          <button type="button" onclick="previewSalaryCertificateForEmp(current360EmpId)" class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-certificate"></i> شهادة تعريف بالراتب
+          </button>
+        </div>
+        <button type="button" onclick="closeModal('modalEmployee360')" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold transition">
+          إغلاق
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: PRINTABLE EMPLOYEE BADGE CARD (بطاقة عمل الموظف المعتمدة)
+       ========================================================================= -->
+  <div id="modalEmployeeBadgeCard" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-200 text-center">
+      
+      <!-- Card Container for printing -->
+      <div id="employeeBadgeCardPrintable" class="p-6 rounded-2xl text-white space-y-4 shadow-lg relative overflow-hidden" style="background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%); border: 2px solid #C89B3C;">
+        <div class="flex justify-between items-center border-b border-white/20 pb-2">
+          <div class="text-right">
+            <h5 class="text-xs font-black text-amber-300">شركة جوهرة المجد</h5>
+            <p class="text-[9px] text-white/80 font-bold">للتجارة والمقاولات</p>
+          </div>
+          <span class="text-[9px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full">بطاقة موظف</span>
+        </div>
+
+        <div class="w-20 h-20 mx-auto rounded-full bg-white/20 border-2 border-amber-300 flex items-center justify-center text-3xl text-amber-300 shadow">
+          <i class="fa-solid fa-user-tie"></i>
+        </div>
+
+        <div>
+          <h4 id="badgeCardName" class="text-base font-black">--</h4>
+          <p id="badgeCardJob" class="text-xs text-amber-200 font-bold mt-0.5">--</p>
+          <p id="badgeCardDept" class="text-[11px] text-white/80 mt-0.5">--</p>
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-white/10 border border-white/20 text-xs font-mono font-bold flex justify-between items-center">
+          <span class="text-white/70 text-[10px]">الرقم الوظيفي:</span>
+          <span id="badgeCardCode" class="text-amber-300">--</span>
+        </div>
+
+        <div class="text-[10px] text-white/70 border-t border-white/20 pt-2 flex justify-between items-center">
+          <span>هاتف الطوارئ: 0500000000</span>
+          <span>jalmajd.com</span>
+        </div>
+      </div>
+
+      <div class="flex justify-center gap-2 pt-2 border-t">
+        <button type="button" onclick="printBadgeCardElement()" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 flex items-center gap-2 shadow">
+          <i class="fa-solid fa-print"></i> طباعة البطاقة
+        </button>
+        <button type="button" onclick="closeModal('modalEmployeeBadgeCard')" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200">
+          إلغاء
+        </button>
+      </div>
+
     </div>
   </div>
 

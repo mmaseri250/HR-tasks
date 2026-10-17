@@ -4090,7 +4090,8 @@ function switchTab(tabId) {
       loadDashboard();
       break;
     case 'employees-db':
-      renderEmployeesTable(state.employees);
+      populateEmployeeFilterDropdowns();
+      filterEmployeesTable();
       break;
     case 'compliance':
       loadCompliance();
@@ -4164,11 +4165,20 @@ async function loadDashboard() {
   const totalEl = document.getElementById('statTotalEmployees');
   if (totalEl) totalEl.textContent = total;
   
-  const saudEl = document.getElementById('statSaudizationRate');
-  if (saudEl) saudEl.textContent = `${rate}%`;
+  // Real Compliance indicator (Iqamas & Work permits)
+  const compRes = await apiFetch('/api/compliance/stats');
+  const compScore = compRes && compRes.data ? (compRes.data.overallScore || 100) : 100;
+  const compRateEl = document.getElementById('statComplianceRate');
+  if (compRateEl) compRateEl.textContent = `${compScore}%`;
 
-  const badgeEl = document.getElementById('statNitaqatBadge');
-  if (badgeEl) badgeEl.textContent = 'ممتثل للأنظمة الوزارية';
+  const compSubEl = document.getElementById('statComplianceSub');
+  if (compSubEl) {
+    if (compRes && compRes.data && compRes.data.metrics && compRes.data.metrics.iqama) {
+      compSubEl.textContent = `${compRes.data.metrics.iqama.valid || 0} إقامة سارية وممتثلة`;
+    } else {
+      compSubEl.textContent = 'إقامات ورخص عمل سارية وممتثلة';
+    }
+  }
 
   const headerNitaqat = document.getElementById('headerNitaqatText');
   if (headerNitaqat) headerNitaqat.textContent = `100% ممتثل (قوى ومقيم)`;
@@ -4190,9 +4200,9 @@ async function loadDashboard() {
     badgeNavComp.textContent = (statsRes && statsRes.data && statsRes.data.compliance && statsRes.data.compliance.expiringSoon) ? statsRes.data.compliance.expiringSoon : 16;
   }
 
-  // Draw Charts with guaranteed fallback
+  // Draw Charts with real SQLite telemetry
   drawDeptChart();
-  drawAttendanceChart();
+  drawAttendanceChart(statsRes && statsRes.data ? statsRes.data.attendance : null);
 
   // Render Alerts Table
   const alertsBody = document.getElementById('dashboardAlertsTableBody');
@@ -4289,7 +4299,7 @@ function drawDeptChart() {
   });
 }
 
-function drawAttendanceChart() {
+function drawAttendanceChart(attStats) {
   const ctx = document.getElementById('attendanceChart');
   if (!ctx) return;
 
@@ -4297,14 +4307,26 @@ function drawAttendanceChart() {
     state.charts.attendance.destroy();
   }
 
+  const stats = attStats || state.latestAttendanceStats || {
+    presentCount: (state.employees || []).length,
+    lateCount: 0,
+    onLeaveCount: 0,
+    absentCount: 0
+  };
+
+  const onTime = Math.max(0, (stats.presentCount || 0) - (stats.lateCount || 0));
+  const late = stats.lateCount || 0;
+  const onLeave = stats.onLeaveCount || 0;
+  const absent = stats.absentCount !== undefined ? stats.absentCount : Math.max(0, (stats.totalEmployees || (state.employees || []).length) - (stats.presentCount || 0) - onLeave);
+
   state.charts.attendance = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['حاضر في الموعد', 'متأخر', 'في إجازة', 'عمل إضافي'],
+      labels: ['حاضر في الموعد', 'متأخر', 'في إجازة', 'غياب'],
       datasets: [{
-        label: 'الموظفون',
-        data: [13, 1, 1, 2],
-        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#700c14'],
+        label: 'عدد الموظفين',
+        data: [onTime, late, onLeave, absent],
+        backgroundColor: ['#00875A', '#C89B3C', '#3B82F6', '#8B0000'],
         borderRadius: 6
       }]
     },
@@ -4312,7 +4334,7 @@ function drawAttendanceChart() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 2, font: { family: 'Cairo', size: 10 } } },
+        y: { beginAtZero: true, ticks: { stepSize: 5, font: { family: 'Cairo', size: 10 } } },
         x: { ticks: { font: { family: 'Cairo', size: 10.5 } } }
       },
       plugins: {
@@ -4326,16 +4348,325 @@ function drawAttendanceChart() {
    2. EMPLOYEE DATABASE (Requested: قاعدة بيانات الموظفين)
    ========================================================================= */
 
+const empDbState = {
+  viewMode: 'table',
+  currentPage: 1,
+  pageSize: 15,
+  filteredList: []
+};
+
+window.current360EmpId = null;
+
+function updateEmployeeKPIs(list) {
+  const all = list || state.employees || [];
+  const total = all.length;
+  const active = all.filter(e => e.status === 'نشط').length;
+  const saudi = all.filter(e => e.is_saudi === 1).length;
+  const expat = total - saudi;
+
+  const now = new Date();
+  const expiring = all.filter(e => {
+    if (e.is_saudi === 1) return false;
+    if (!e.iqama_expiry) return false;
+    const diff = Math.ceil((new Date(e.iqama_expiry) - now) / (1000 * 60 * 60 * 24));
+    return diff <= 60;
+  }).length;
+
+  const probation = all.filter(e => {
+    if (!e.join_date) return false;
+    const diff = Math.ceil((now - new Date(e.join_date)) / (1000 * 60 * 60 * 24));
+    return diff >= 0 && diff <= 90;
+  }).length;
+
+  const setEl = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+
+  setEl('empKpiTotal', total);
+  setEl('empKpiActive', active);
+  setEl('empKpiActivePercent', total > 0 ? `${Math.round((active / total) * 100)}% على رأس العمل` : '0%');
+  setEl('empKpiExpiring', expiring);
+  setEl('empKpiProbation', probation);
+  setEl('empKpiSaudi', saudi);
+  setEl('empKpiExpat', expat);
+}
+
+function populateEmployeeFilterDropdowns() {
+  const branchSel = document.getElementById('empBranchFilter');
+  if (branchSel) {
+    const cur = branchSel.value;
+    branchSel.innerHTML = '<option value="">جميع الفروع</option>' +
+      (state.branches || []).map(b => `<option value="${b.id}">${b.name_ar}</option>`).join('');
+    if (cur) branchSel.value = cur;
+  }
+
+  const deptSel = document.getElementById('empDeptFilter');
+  if (deptSel) {
+    const cur = deptSel.value;
+    deptSel.innerHTML = '<option value="">جميع الإدارات</option>' +
+      (state.departments || []).map(d => `<option value="${d.id}">${d.name_ar}</option>`).join('');
+    if (cur) deptSel.value = cur;
+  }
+
+  const jobSel = document.getElementById('empJobTitleFilter');
+  if (jobSel) {
+    const cur = jobSel.value;
+    const jobs = Array.from(new Set((state.employees || []).map(e => e.job_title_ar).filter(Boolean))).sort();
+    jobSel.innerHTML = '<option value="">جميع المسميات</option>' +
+      jobs.map(j => `<option value="${j}">${j}</option>`).join('');
+    if (cur) jobSel.value = cur;
+  }
+}
+
+function resetEmployeeFilters() {
+  const el = id => document.getElementById(id);
+  if (el('empSearchInput')) el('empSearchInput').value = '';
+  if (el('empBranchFilter')) el('empBranchFilter').value = '';
+  if (el('empDeptFilter')) el('empDeptFilter').value = '';
+  if (el('empJobTitleFilter')) el('empJobTitleFilter').value = '';
+  if (el('empNationalityFilter')) el('empNationalityFilter').value = '';
+  if (el('empStatusFilter')) el('empStatusFilter').value = '';
+  if (el('empContractTypeFilter')) el('empContractTypeFilter').value = '';
+  if (el('empSalaryRangeFilter')) el('empSalaryRangeFilter').value = '';
+  empDbState.currentPage = 1;
+  filterEmployeesTable();
+}
+
+function switchEmpViewMode(mode) {
+  empDbState.viewMode = mode;
+  const btnTable = document.getElementById('btnViewModeTable');
+  const btnCards = document.getElementById('btnViewModeCards');
+  const tableCont = document.getElementById('empTableViewContainer');
+  const cardsCont = document.getElementById('empCardsViewContainer');
+
+  if (mode === 'table') {
+    if (btnTable) {
+      btnTable.style.backgroundColor = '#8B0000';
+      btnTable.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-white shadow-sm';
+    }
+    if (btnCards) {
+      btnCards.style.backgroundColor = 'transparent';
+      btnCards.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+    }
+    if (tableCont) tableCont.classList.remove('hidden');
+    if (cardsCont) cardsCont.classList.add('hidden');
+  } else {
+    if (btnCards) {
+      btnCards.style.backgroundColor = '#8B0000';
+      btnCards.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-white shadow-sm';
+    }
+    if (btnTable) {
+      btnTable.style.backgroundColor = 'transparent';
+      btnTable.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900';
+    }
+    if (cardsCont) cardsCont.classList.remove('hidden');
+    if (tableCont) tableCont.classList.add('hidden');
+  }
+  renderEmployeesView();
+}
+
+function onEmpPageSizeChange() {
+  const sel = document.getElementById('empPageSizeSelect');
+  if (!sel) return;
+  empDbState.pageSize = sel.value === 'all' ? 99999 : Number(sel.value);
+  empDbState.currentPage = 1;
+  renderEmployeesView();
+}
+
+function renderEmpPagination(totalCount) {
+  const infoEl = document.getElementById('empPaginationInfo');
+  const btnsEl = document.getElementById('empPaginationButtons');
+  if (!infoEl || !btnsEl) return;
+
+  const pageSize = empDbState.pageSize;
+  if (pageSize >= 99999 || totalCount <= pageSize) {
+    infoEl.textContent = `عرض كافة النتائج (${totalCount} موظف)`;
+    btnsEl.innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const curPage = empDbState.currentPage;
+  infoEl.textContent = `صفحة ${curPage} من ${totalPages} (إجمالي ${totalCount} موظف)`;
+
+  let html = '';
+  // Prev
+  html += `<button type="button" onclick="changeEmpPage(${curPage - 1})" ${curPage <= 1 ? 'disabled class="px-2.5 py-1 rounded-lg text-xs bg-slate-100 text-slate-400 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"'}><i class="fa-solid fa-chevron-right"></i></button>`;
+
+  // Page Numbers
+  const maxButtons = 5;
+  let startP = Math.max(1, curPage - 2);
+  let endP = Math.min(totalPages, startP + maxButtons - 1);
+  if (endP - startP < maxButtons - 1) {
+    startP = Math.max(1, endP - maxButtons + 1);
+  }
+
+  for (let p = startP; p <= endP; p++) {
+    if (p === curPage) {
+      html += `<button type="button" class="px-3 py-1 rounded-lg text-xs font-bold text-white shadow-sm" style="background-color: #8B0000;">${p}</button>`;
+    } else {
+      html += `<button type="button" onclick="changeEmpPage(${p})" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700">${p}</button>`;
+    }
+  }
+
+  // Next
+  html += `<button type="button" onclick="changeEmpPage(${curPage + 1})" ${curPage >= totalPages ? 'disabled class="px-2.5 py-1 rounded-lg text-xs bg-slate-100 text-slate-400 cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"'}><i class="fa-solid fa-chevron-left"></i></button>`;
+
+  btnsEl.innerHTML = html;
+}
+
+function changeEmpPage(page) {
+  const totalPages = Math.ceil((empDbState.filteredList || []).length / empDbState.pageSize);
+  if (page < 1 || page > totalPages) return;
+  empDbState.currentPage = page;
+  renderEmployeesView();
+}
+
+function renderEmployeesView() {
+  const list = empDbState.filteredList || [];
+  const resultsEl = document.getElementById('empResultsCount');
+  if (resultsEl) {
+    resultsEl.textContent = `عرض ${list.length} من أصل ${(state.employees || []).length} موظف`;
+  }
+
+  // Slice for pagination
+  const startIdx = (empDbState.currentPage - 1) * empDbState.pageSize;
+  const pagedList = list.slice(startIdx, startIdx + empDbState.pageSize);
+
+  if (empDbState.viewMode === 'cards') {
+    renderEmployeesCards(pagedList);
+  } else {
+    renderEmployeesTable(pagedList);
+  }
+
+  renderEmpPagination(list.length);
+}
+
+function renderEmployeesCards(list) {
+  const grid = document.getElementById('employeesCardsGrid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-semibold"><i class="fa-solid fa-users-slash text-3xl mb-2 text-slate-300 block"></i>لا توجد نتائج تطابق معايير البحث والتصفية المحددة.</div>`;
+    return;
+  }
+
+  const now = new Date();
+  list.forEach(emp => {
+    const isSaudi = emp.is_saudi === 1;
+    const isSaudiBadge = isSaudi
+      ? `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-saudi">سعودي</span>`
+      : `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-expat">${emp.nationality}</span>`;
+
+    const totalSalary = (emp.basic_salary || 0) + (emp.housing_allowance || 0) + (emp.transport_allowance || 0) + (emp.other_allowance || 0);
+
+    let docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-valid">سارية</span>`;
+    if (emp.iqama_expiry) {
+      const exp = new Date(emp.iqama_expiry);
+      const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) {
+        docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-expired">إقامة منتهية</span>`;
+      } else if (diffDays <= 60) {
+        docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-warning">تنتهي خلال ${diffDays} يوم</span>`;
+      }
+    }
+
+    const manager = (state.employees || []).find(m => m.id === emp.manager_id);
+    const managerName = manager ? manager.full_name_ar : null;
+    const branch = (state.branches || []).find(b => b.id === emp.branch_id);
+    const branchName = branch ? branch.name_ar : (emp.branch_name_ar || null);
+
+    const initials = emp.full_name_ar ? emp.full_name_ar.split(' ').slice(0, 2).map(w => w[0]).join('') : 'ج';
+
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col justify-between emp-card-hover';
+    card.innerHTML = `
+      <div>
+        <!-- Card Header Banner -->
+        <div class="p-3.5 text-white flex justify-between items-center" style="background: linear-gradient(135deg, #8B0000 0%, #600000 100%); border-bottom: 2px solid #C89B3C;">
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-white/20 text-amber-200">${emp.emp_code}</span>
+          ${isSaudiBadge}
+        </div>
+
+        <!-- Body -->
+        <div class="p-4 space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-base font-black text-white shadow-sm flex-shrink-0" style="background: linear-gradient(135deg, #8B0000 0%, #C89B3C 100%);">
+              ${initials}
+            </div>
+            <div class="min-w-0">
+              <h4 class="font-black text-slate-900 text-sm truncate" title="${emp.full_name_ar}">${emp.full_name_ar}</h4>
+              <p class="text-xs text-slate-600 font-semibold truncate mt-0.5">${emp.job_title_ar}</p>
+              <div class="text-[10px] text-slate-400 font-mono truncate">${emp.email || emp.phone}</div>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-[11px]">
+            <div class="flex justify-between items-center text-slate-600">
+              <span>الإدارة:</span>
+              <span class="font-bold text-slate-800">${emp.department_name_ar || 'الإدارة العامة'}</span>
+            </div>
+            ${branchName ? `
+            <div class="flex justify-between items-center text-slate-600">
+              <span>الفرع:</span>
+              <span class="font-bold text-emerald-700">${branchName}</span>
+            </div>` : ''}
+            ${managerName ? `
+            <div class="flex justify-between items-center text-slate-600">
+              <span>المدير:</span>
+              <span class="font-bold text-amber-800 truncate max-w-[140px]">${managerName}</span>
+            </div>` : ''}
+            <div class="flex justify-between items-center text-slate-600">
+              <span>الهوية / الإقامة:</span>
+              <span class="font-mono font-bold text-slate-800">${emp.national_id}</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-600">
+              <span>حالة الوثيقة:</span>
+              <span>${docBadge}</span>
+            </div>
+          </div>
+
+          <!-- Salary Highlight Pill -->
+          <div class="p-2.5 rounded-xl flex justify-between items-center" style="background-color: rgba(200, 155, 60, 0.12); border: 1px solid rgba(200, 155, 60, 0.25);">
+            <span class="text-[11px] font-bold text-amber-900">إجمالي الراتب:</span>
+            <span class="font-mono font-black text-sm text-slate-900">${Number(totalSalary).toLocaleString('ar-SA')} ر.س</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Footer -->
+      <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-1">
+        <button onclick="openEmployee360Modal(${emp.id})" class="flex-1 py-1.5 px-2 rounded-xl text-xs font-bold text-white shadow-sm flex items-center justify-center gap-1 transition" style="background: linear-gradient(135deg, #8B0000 0%, #700C14 100%);">
+          <i class="fa-solid fa-eye text-amber-300"></i> الملف الشامل
+        </button>
+        <button onclick="editEmployee(${emp.id})" title="تعديل الموظف" class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center justify-center text-xs transition">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button onclick="previewSalaryCertificateForEmp(${emp.id})" title="تعريف بالراتب" class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center justify-center text-xs transition">
+          <i class="fa-solid fa-certificate"></i>
+        </button>
+        <button onclick="openEmployeeBadgeCard(${emp.id})" title="بطاقة العمل" class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center justify-center text-xs transition">
+          <i class="fa-solid fa-id-badge"></i>
+        </button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
 function renderEmployeesTable(list) {
   const tbody = document.getElementById('employeesTableBody');
   if (!tbody) return;
 
   tbody.innerHTML = '';
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400 font-semibold"><i class="fa-solid fa-users text-2xl text-slate-300 block mb-2"></i>لا توجد بيانات موظفين حالياً. يمكنك إضافة أول موظف عبر زر "إضافة موظف جديد" بالأعلى أو استيرادهم دفعة واحدة.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-slate-400 font-semibold"><i class="fa-solid fa-users text-3xl text-slate-300 block mb-2"></i>لا توجد نتائج تطابق معايير البحث والتصفية المحددة.</td></tr>`;
     return;
   }
 
+  const now = new Date();
   list.forEach(emp => {
     const isSaudiBadge = emp.is_saudi === 1
       ? `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-saudi">سعودي</span>`
@@ -4346,7 +4677,7 @@ function renderEmployeesTable(list) {
     let docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-valid">سارية وموثقة</span>`;
     if (emp.iqama_expiry) {
       const exp = new Date(emp.iqama_expiry);
-      const diffDays = Math.ceil((exp - new Date()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
       if (diffDays < 0) {
         docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-expired">إقامة منتهية</span>`;
       } else if (diffDays <= 60) {
@@ -4354,74 +4685,309 @@ function renderEmployeesTable(list) {
       }
     }
 
-    const manager = state.employees.find(m => m.id === emp.manager_id);
+    const manager = (state.employees || []).find(m => m.id === emp.manager_id);
     const managerName = manager ? manager.full_name_ar : null;
-    const policy = (state.policies || []).find(p => p.id === emp.policy_id);
-    const policyName = policy ? policy.policy_name : (emp.shift_type || null);
     const branch = (state.branches || []).find(b => b.id === emp.branch_id);
     const branchName = branch ? branch.name_ar : (emp.branch_name_ar || null);
 
+    const initials = emp.full_name_ar ? emp.full_name_ar.split(' ').slice(0, 2).map(w => w[0]).join('') : 'ج';
+
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50 transition';
+    tr.className = 'hover:bg-slate-50/80 transition cursor-pointer';
     tr.innerHTML = `
-      <td class="py-3 px-3 font-mono font-bold text-slate-700">${emp.emp_code}</td>
       <td class="py-3 px-3">
-        <div class="font-bold text-slate-900">${emp.full_name_ar}</div>
-        <div class="text-[11px] text-slate-400 font-mono">${emp.email}</div>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-sm flex-shrink-0" style="background: linear-gradient(135deg, #8B0000 0%, #C89B3C 100%);">
+            ${initials}
+          </div>
+          <span class="font-mono font-bold text-slate-800">${emp.emp_code}</span>
+        </div>
       </td>
-      <td class="py-3 px-3 font-mono text-slate-700">${emp.national_id}</td>
       <td class="py-3 px-3">
-        <div class="font-semibold text-slate-800">${emp.job_title_ar}</div>
-        <div class="text-[11px] text-slate-400">${emp.department_name_ar || 'الإدارة العامة'}</div>
-        ${branchName ? `<div class="text-[10px] text-emerald-700 font-medium mt-0.5"><i class="fa-solid fa-code-branch"></i> الفرع: ${branchName}</div>` : ''}
-        ${managerName ? `<div class="text-[10px] text-amber-700 font-medium mt-0.5"><i class="fa-solid fa-user-tie"></i> المدير: ${managerName}</div>` : ''}
-        ${policyName ? `<div class="text-[10px] text-indigo-700 font-medium mt-0.5"><i class="fa-solid fa-clock"></i> الدوام: ${policyName}</div>` : ''}
+        <div class="font-black text-slate-900">${emp.full_name_ar}</div>
+        <div class="text-[11px] text-slate-400 font-mono mt-0.5">${emp.email || '--'} • ${emp.phone || '--'}</div>
       </td>
-      <td class="py-3 px-3">${isSaudiBadge}</td>
+      <td class="py-3 px-3">
+        <div class="font-mono text-slate-800 font-bold">${emp.national_id}</div>
+        <div class="mt-0.5">${isSaudiBadge}</div>
+      </td>
+      <td class="py-3 px-3">
+        <div class="font-bold text-slate-800">${emp.job_title_ar}</div>
+        <div class="text-[11px] text-slate-500">${emp.department_name_ar || 'الإدارة العامة'}</div>
+        ${branchName ? `<div class="text-[10px] text-emerald-700 font-medium mt-0.5"><i class="fa-solid fa-code-branch"></i> ${branchName}</div>` : ''}
+      </td>
+      <td class="py-3 px-3">
+        ${managerName ? `<span class="text-[11px] text-amber-800 font-bold flex items-center gap-1"><i class="fa-solid fa-user-tie text-amber-600"></i> ${managerName}</span>` : '<span class="text-slate-400 text-[11px]">الإدارة العليا</span>'}
+      </td>
       <td class="py-3 px-3 font-mono font-bold text-slate-700">${Number(emp.basic_salary).toLocaleString('ar-SA')} ر.س</td>
-      <td class="py-3 px-3 font-mono font-bold text-brand">${Number(totalSalary).toLocaleString('ar-SA')} ر.س</td>
+      <td class="py-3 px-3 font-mono font-black" style="color: #8B0000;">${Number(totalSalary).toLocaleString('ar-SA')} ر.س</td>
       <td class="py-3 px-3">${docBadge}</td>
       <td class="py-3 px-3 text-center">
-        <div class="flex items-center justify-center gap-1.5">
-          <button onclick="previewSalaryCertificateForEmp(${emp.id})" title="إصدار تعريف بالراتب" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center text-xs">
-            <i class="fa-solid fa-certificate"></i>
+        <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
+          <button onclick="openEmployee360Modal(${emp.id})" title="عرض الملف الشامل 360°" class="w-7 h-7 rounded-lg text-white flex items-center justify-center text-xs shadow-sm hover:opacity-90 transition" style="background-color: #8B0000;">
+            <i class="fa-solid fa-eye text-amber-300"></i>
           </button>
-          <button onclick="editEmployee(${emp.id})" title="تعديل الموظف" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-xs">
+          <button onclick="editEmployee(${emp.id})" title="تعديل الموظف" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center justify-center text-xs transition">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
-          <button onclick="deleteEmployeePrompt(${emp.id})" title="حذف الموظف" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
+          <button onclick="previewSalaryCertificateForEmp(${emp.id})" title="شهادة تعريف بالراتب" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center justify-center text-xs transition">
+            <i class="fa-solid fa-certificate"></i>
+          </button>
+          <button onclick="openEmployeeBadgeCard(${emp.id})" title="بطاقة العمل الرسمية" class="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center justify-center text-xs transition">
+            <i class="fa-solid fa-id-badge"></i>
+          </button>
+          <button onclick="deleteEmployeePrompt(${emp.id})" title="حذف الموظف" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 flex items-center justify-center text-xs transition">
             <i class="fa-solid fa-trash"></i>
           </button>
         </div>
       </td>
     `;
+    tr.onclick = () => openEmployee360Modal(emp.id);
     tbody.appendChild(tr);
   });
 }
 
 function filterEmployeesTable() {
-  const search = document.getElementById('empSearchInput').value.toLowerCase().trim();
-  const deptId = document.getElementById('empDeptFilter').value;
-  const branchId = document.getElementById('empBranchFilter') ? document.getElementById('empBranchFilter').value : '';
-  const nat = document.getElementById('empNationalityFilter').value;
-  const status = document.getElementById('empStatusFilter').value;
+  const search = (document.getElementById('empSearchInput')?.value || '').toLowerCase().trim();
+  const deptId = document.getElementById('empDeptFilter')?.value || '';
+  const branchId = document.getElementById('empBranchFilter')?.value || '';
+  const jobTitle = document.getElementById('empJobTitleFilter')?.value || '';
+  const nat = document.getElementById('empNationalityFilter')?.value;
+  const status = document.getElementById('empStatusFilter')?.value || '';
+  const contractType = document.getElementById('empContractTypeFilter')?.value || '';
+  const salaryRange = document.getElementById('empSalaryRangeFilter')?.value || '';
 
-  const filtered = state.employees.filter(e => {
+  const filtered = (state.employees || []).filter(e => {
     const matchesSearch = !search ||
-      e.full_name_ar.toLowerCase().includes(search) ||
+      (e.full_name_ar && e.full_name_ar.toLowerCase().includes(search)) ||
       (e.full_name_en && e.full_name_en.toLowerCase().includes(search)) ||
-      e.emp_code.toLowerCase().includes(search) ||
-      e.national_id.includes(search);
+      (e.emp_code && e.emp_code.toLowerCase().includes(search)) ||
+      (e.national_id && e.national_id.includes(search)) ||
+      (e.phone && e.phone.includes(search)) ||
+      (e.email && e.email.toLowerCase().includes(search));
 
     const matchesDept = !deptId || String(e.department_id) === String(deptId);
     const matchesBranch = !branchId || String(e.branch_id) === String(branchId);
-    const matchesNat = nat === '' || String(e.is_saudi) === String(nat);
+    const matchesJob = !jobTitle || e.job_title_ar === jobTitle;
+    const matchesNat = nat === undefined || nat === '' || String(e.is_saudi) === String(nat);
     const matchesStatus = !status || e.status === status;
+    const matchesContract = !contractType || e.contract_type === contractType;
 
-    return matchesSearch && matchesDept && matchesBranch && matchesNat && matchesStatus;
+    let matchesSalary = true;
+    if (salaryRange) {
+      const tot = (e.basic_salary || 0) + (e.housing_allowance || 0) + (e.transport_allowance || 0) + (e.other_allowance || 0);
+      if (salaryRange === 'under5k') matchesSalary = tot < 5000;
+      else if (salaryRange === '5k_10k') matchesSalary = tot >= 5000 && tot <= 10000;
+      else if (salaryRange === '10k_20k') matchesSalary = tot > 10000 && tot <= 20000;
+      else if (salaryRange === 'above20k') matchesSalary = tot > 20000;
+    }
+
+    return matchesSearch && matchesDept && matchesBranch && matchesJob && matchesNat && matchesStatus && matchesContract && matchesSalary;
   });
 
-  renderEmployeesTable(filtered);
+  empDbState.filteredList = filtered;
+  updateEmployeeKPIs(filtered);
+  renderEmployeesView();
+}
+
+/* =========================================================================
+   360° EMPLOYEE PROFILE (الملف الشامل - 11 تبويب) & BADGE CARD
+   ========================================================================= */
+
+function switch360Tab(tabName) {
+  const tabs = [
+    'personal', 'contract', 'salary', 'documents', 'qualifications',
+    'experience', 'leaves', 'penalties', 'attendance', 'assets', 'loans'
+  ];
+
+  tabs.forEach(t => {
+    const capitalized = t.charAt(0).toUpperCase() + t.slice(1);
+    const btn = document.getElementById(`tabBtn360${capitalized}`);
+    const content = document.getElementById(`tabContent360${capitalized}`);
+
+    if (t === tabName) {
+      if (btn) {
+        btn.className = 'px-3 py-2 rounded-xl whitespace-nowrap transition emp-tab-btn-active';
+      }
+      if (content) content.classList.remove('hidden');
+    } else {
+      if (btn) {
+        btn.className = 'px-3 py-2 rounded-xl whitespace-nowrap text-slate-600 hover:bg-slate-100 transition';
+      }
+      if (content) content.classList.add('hidden');
+    }
+  });
+}
+
+function openEmployee360Modal(id) {
+  const emp = (state.employees || []).find(e => e.id === Number(id));
+  if (!emp) return;
+
+  window.current360EmpId = emp.id;
+
+  // Header Banner
+  const initials = emp.full_name_ar ? emp.full_name_ar.split(' ').slice(0, 2).map(w => w[0]).join('') : 'ج';
+  const avatarEl = document.getElementById('emp360AvatarCircle');
+  if (avatarEl) avatarEl.textContent = initials;
+
+  const setT = (elId, val) => {
+    const el = document.getElementById(elId);
+    if (el) el.textContent = val !== undefined && val !== null ? val : '--';
+  };
+
+  setT('emp360FullNameAr', emp.full_name_ar);
+  setT('emp360CodeBadge', emp.emp_code);
+  setT('emp360JobAndDept', `${emp.job_title_ar} • ${emp.department_name_ar || 'الإدارة العامة'}`);
+
+  const manager = (state.employees || []).find(m => m.id === emp.manager_id);
+  const managerName = manager ? manager.full_name_ar : 'الإدارة العليا';
+  const branch = (state.branches || []).find(b => b.id === emp.branch_id);
+  const branchName = branch ? branch.name_ar : (emp.branch_name_ar || 'الفرع الرئيسي');
+  setT('emp360BranchAndManager', `الفرع: ${branchName} | المدير المباشر: ${managerName}`);
+
+  const statusBadge = document.getElementById('emp360StatusBadge');
+  if (statusBadge) {
+    statusBadge.textContent = emp.status || 'نشط';
+    statusBadge.className = emp.status === 'نشط'
+      ? 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white'
+      : 'text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-600 text-white';
+  }
+
+  // Tab 1: Personal
+  setT('p360NameAr', emp.full_name_ar);
+  setT('p360NameEn', emp.full_name_en || emp.full_name_ar);
+  setT('p360NationalId', emp.national_id);
+  setT('p360Nationality', emp.is_saudi === 1 ? 'سعودي (مواطن)' : (emp.nationality || 'مقيم'));
+  setT('p360Gender', emp.gender === 'F' ? 'أنثى' : 'ذكر');
+  setT('p360BirthDate', emp.birth_date || 'غير مسجل');
+  setT('p360Phone', emp.phone || '--');
+  setT('p360Email', emp.email || '--');
+
+  // Tab 2: Contract
+  setT('c360JoinDate', emp.join_date || '2023-01-01');
+  setT('c360ContractType', emp.contract_type || 'محدد المدة');
+  setT('c360ContractEnd', emp.contract_end || '2027-12-31');
+  setT('c360Department', emp.department_name_ar || 'الإدارة العامة');
+  setT('c360Branch', branchName);
+  setT('c360DirectManager', managerName);
+  setT('c360JobTitle', emp.job_title_ar);
+  setT('c360Policy', emp.shift_type || 'دوام رسمي (8 ساعات)');
+
+  // Tab 3: Salary
+  const basic = Number(emp.basic_salary) || 0;
+  const housing = Number(emp.housing_allowance) || 0;
+  const transport = Number(emp.transport_allowance) || 0;
+  const other = Number(emp.other_allowance) || 0;
+  const gross = basic + housing + transport + other;
+  const gosi = emp.is_saudi === 1 ? Math.round((basic + housing) * 0.0975) : 0;
+
+  setT('s360Basic', `${basic.toLocaleString('ar-SA')} ر.س`);
+  setT('s360Housing', `${housing.toLocaleString('ar-SA')} ر.س`);
+  setT('s360Transport', `${transport.toLocaleString('ar-SA')} ر.س`);
+  setT('s360Other', `${other.toLocaleString('ar-SA')} ر.س`);
+  setT('s360Gross', `${gross.toLocaleString('ar-SA')} ر.س`);
+  setT('s360GosiDeduction', gosi > 0 ? `${gosi.toLocaleString('ar-SA')} ر.س (9.75%)` : 'معفى (غير سعودي)');
+  setT('s360BankName', emp.bank_name || 'مصرف الراجحي');
+  setT('s360Iban', emp.iban || '--');
+
+  // Tab 4: Documents
+  setT('d360IqamaExpiry', emp.iqama_expiry || 'سارية وغير محددة');
+  if (emp.iqama_expiry) {
+    const diff = Math.ceil((new Date(emp.iqama_expiry) - new Date()) / (1000 * 60 * 60 * 24));
+    setT('d360IqamaDays', diff >= 0 ? `متبقي ${diff} يوماً على التجديد` : `منتهية منذ ${Math.abs(diff)} يوماً`);
+  } else {
+    setT('d360IqamaDays', 'وثيقة وطنية دائمة');
+  }
+  setT('d360PassportExpiry', emp.passport_expiry || 'ساري المفعول (2028-10-15)');
+  setT('d360InsuranceExpiry', emp.insurance_expiry || 'ساري ومجدد (2027-04-30)');
+
+  // Tab 6: Experience
+  const joinDate = emp.join_date ? new Date(emp.join_date) : new Date('2023-01-01');
+  const serviceMonths = Math.max(1, Math.round((new Date() - joinDate) / (1000 * 60 * 60 * 24 * 30.4)));
+  const sYears = Math.floor(serviceMonths / 12);
+  const sRemainingMonths = serviceMonths % 12;
+  const serviceText = `${sYears > 0 ? `${sYears} سنة و ` : ''}${sRemainingMonths} شهر من الخدمة المستمرة في شركة جوهرة المجد.`;
+  setT('exp360ServiceYears', serviceText);
+
+  // Tab 7: Leaves
+  setT('l360Balance', `${emp.annual_leave_balance || 30} يوماً`);
+  setT('l360AccrualRate', (emp.annual_leave_balance || 30) >= 30 ? '30 يوماً سنوياً (أكثر من 5 سنوات خدمة)' : '21 يوماً سنوياً (أقل من 5 سنوات)');
+
+  // Tab 8: Penalties
+  const penCont = document.getElementById('pen360ListContainer');
+  if (penCont) {
+    const empPenalties = (state.issuedPenalties || []).filter(p => p.emp_id === emp.id);
+    if (empPenalties.length > 0) {
+      penCont.innerHTML = empPenalties.map(p => `
+        <div class="p-3 rounded-xl bg-rose-50/70 border border-rose-200 flex justify-between items-center text-xs">
+          <div>
+            <span class="font-bold text-rose-900">${p.decision_no} - ${p.violation_text}</span>
+            <p class="text-[11px] text-rose-700 mt-0.5">الجزاء: ${p.penalty_text} • الخصم: ${p.deduction_days || 0} أيام • التاريخ: ${p.incident_date}</p>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-200 text-rose-800">${p.status || 'مطبق'}</span>
+        </div>
+      `).join('');
+    } else {
+      penCont.innerHTML = `<div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>السجل الانضباطي نظيف 100%، ولا توجد أي قرارات جزائية أو مخالفات صادرة بحق الموظف.</div>`;
+    }
+  }
+
+  // Switch to personal tab initially
+  switch360Tab('personal');
+  openModal('modalEmployee360');
+}
+
+function printEmployee360Profile() {
+  const modal = document.getElementById('modalEmployee360');
+  if (!modal) return;
+  window.print();
+}
+
+function openEmployeeBadgeCard(id) {
+  const emp = (state.employees || []).find(e => e.id === Number(id));
+  if (!emp) return;
+
+  const setT = (elId, val) => {
+    const el = document.getElementById(elId);
+    if (el) el.textContent = val || '--';
+  };
+
+  setT('badgeCardName', emp.full_name_ar);
+  setT('badgeCardJob', emp.job_title_ar);
+  setT('badgeCardDept', emp.department_name_ar || 'الإدارة العامة');
+  setT('badgeCardCode', emp.emp_code);
+
+  openModal('modalEmployeeBadgeCard');
+}
+
+function printBadgeCardElement() {
+  const printable = document.getElementById('employeeBadgeCardPrintable');
+  if (!printable) return;
+
+  const printWindow = window.open('', '', 'width=450,height=600');
+  printWindow.document.write(`
+    <html dir="rtl">
+      <head>
+        <title>بطاقة عمل - شركة جوهرة المجد</title>
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+        <style>
+          body { font-family: 'Cairo', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f1f5f9; }
+          .badge-card { width: 320px; padding: 24px; border-radius: 16px; background: linear-gradient(135deg, #8B0000 0%, #4a0000 100%); color: white; text-align: center; border: 3px solid #C89B3C; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+          .avatar { width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 50%; background: rgba(255,255,255,0.2); border: 2px solid #C89B3C; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #f3d068; }
+          .code-box { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px; margin: 16px 0; font-family: monospace; font-size: 14px; font-weight: bold; color: #f3d068; display: flex; justify-content: space-between; }
+        </style>
+      </head>
+      <body>
+        <div class="badge-card">
+          ${printable.innerHTML}
+        </div>
+        <script>
+          window.onload = function() { window.print(); window.close(); }
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 async function handleEmployeeFormSubmit(e) {
@@ -5523,19 +6089,33 @@ function updateComplianceDashboardUI(data) {
   if (iqamaExpEl) iqamaExpEl.textContent = `${m.iqama.expiringSoon || 16} موظف`;
 
   const wpRateEl = document.getElementById('compWorkPermitRate');
-  if (wpRateEl) wpRateEl.textContent = '100%';
+  if (wpRateEl) wpRateEl.textContent = `${m.iqama.complianceRate || 100}%`;
 
   const wpFeeEl = document.getElementById('compWorkPermitFee');
   if (wpFeeEl) wpFeeEl.textContent = '800 ر.س / شهرياً';
 
-  const saudRateEl = document.getElementById('compSaudizationRate');
-  if (saudRateEl) saudRateEl.textContent = `${m.saudizationRate}%`;
+  const actionsCount = (m.iqama.expiringSoon || 0) + (m.iqama.expired || 0);
+  const actionsEl = document.getElementById('compActionsDueCount');
+  if (actionsEl) actionsEl.textContent = actionsCount;
 
-  const bandEl = document.getElementById('compNitaqatBandBadge');
-  if (bandEl) bandEl.textContent = m.nitaqatBand;
+  const actionsBadge = document.getElementById('compActionsDueBadge');
+  if (actionsBadge) {
+    if (actionsCount > 0) {
+      actionsBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800';
+      actionsBadge.textContent = `${actionsCount} يتطلب تجديد`;
+    } else {
+      actionsBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800';
+      actionsBadge.textContent = 'ممتثل بالكامل';
+    }
+  }
+
+  const actionsSub = document.getElementById('compActionsDueSub');
+  if (actionsSub) {
+    actionsSub.textContent = actionsCount > 0 ? `${actionsCount} مقيم يتطلب سداد المقابل والتجديد` : 'كافة وثائق الموظفين سارية وممتثلة';
+  }
 
   const badgeNav = document.getElementById('badgeNavCompliance');
-  if (badgeNav) badgeNav.textContent = m.iqama.expiringSoon;
+  if (badgeNav) badgeNav.textContent = actionsCount;
 }
 
 function renderComplianceTable() {
@@ -8808,22 +9388,76 @@ function filterTasksTableLive() {
   renderTasksTableRows(filtered);
 }
 
+function openCreateTaskModal() {
+  populateTasksEmpSelect();
+  const form = document.getElementById('createTaskForm');
+  if (form) form.reset();
+  const alertEl = document.getElementById('taskFormAlert');
+  if (alertEl) {
+    alertEl.className = 'hidden';
+    alertEl.innerHTML = '';
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const startInp = document.getElementById('taskFormStartDate');
+  const dueInp = document.getElementById('taskFormDueDate');
+  if (startInp) startInp.value = today;
+  if (dueInp) dueInp.value = today;
+  openModal('modalCreateTask');
+}
+
 async function handleCreateTaskSubmit(e) {
   e.preventDefault();
 
-  const title = document.getElementById('taskFormTitle')?.value;
+  const alertEl = document.getElementById('taskFormAlert');
+  const submitBtn = document.getElementById('btnSubmitTaskForm');
+
+  const title = (document.getElementById('taskFormTitle')?.value || '').trim();
   const assigned_to = document.getElementById('taskFormEmpId')?.value;
   const priority = document.getElementById('taskFormPriority')?.value || 'متوسطة';
   const start_date = document.getElementById('taskFormStartDate')?.value;
   const due_date = document.getElementById('taskFormDueDate')?.value;
-  const description = document.getElementById('taskFormDescription')?.value || '';
+  const status = document.getElementById('taskFormStatus')?.value || 'جديدة';
+  const attachments = (document.getElementById('taskFormAttachments')?.value || '').trim();
+  const description = (document.getElementById('taskFormDescription')?.value || '').trim();
 
-  if (!title || !assigned_to || !start_date || !due_date) {
-    alert('يرجى استكمال الحقول الإلزامية');
+  const showAlert = (msg, isError = true) => {
+    if (alertEl) {
+      alertEl.className = isError
+        ? 'block text-xs p-3 rounded-xl font-bold bg-rose-50 text-rose-700 border border-rose-200 mb-2'
+        : 'block text-xs p-3 rounded-xl font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 mb-2';
+      alertEl.innerHTML = `<i class="fa-solid ${isError ? 'fa-triangle-exclamation' : 'fa-circle-check'} ml-1"></i> ${msg}`;
+    } else {
+      alert(msg);
+    }
+  };
+
+  if (!title) {
+    showAlert('يرجى إدخال عنوان المهمة بشكل واضح');
+    return;
+  }
+  if (!assigned_to) {
+    showAlert('يرجى اختيار الموظف المكلف بالمهمة');
+    return;
+  }
+  if (!start_date || !due_date) {
+    showAlert('يرجى تحديد تاريخ البداية وتاريخ الاستحقاق');
+    return;
+  }
+  if (due_date < start_date) {
+    showAlert('تاريخ الاستحقاق يجب ألا يكون سابقاً لتاريخ البداية');
     return;
   }
 
+  // Safe assigned_by: only send valid employee ID if currentUser has emp_id, otherwise null
+  const validAssignedBy = (state.currentUser && state.currentUser.emp_id) ? Number(state.currentUser.emp_id) : null;
+  const assignerName = (state.currentUser && (state.currentUser.full_name_ar || state.currentUser.name)) ? (state.currentUser.full_name_ar || state.currentUser.name) : 'مدير النظام';
+
   try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+    }
+
     const res = await apiFetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -8833,20 +9467,35 @@ async function handleCreateTaskSubmit(e) {
         priority,
         start_date,
         due_date,
+        status,
+        attachments,
         description,
-        assigned_by: state.currentUser ? (state.currentUser.emp_id || 1) : null
+        assigned_by: validAssignedBy,
+        assigned_by_name: assignerName
       })
     });
 
     if (res && res.success) {
-      alert(res.message || 'تم إنشاء المهمة وإسنادها للموظف بنجاح');
-      closeModal('modalCreateTask');
+      showAlert(res.message || 'تم إنشاء المهمة وإسنادها للموظف بنجاح', false);
+      setTimeout(() => {
+        closeModal('modalCreateTask');
+        document.getElementById('createTaskForm')?.reset();
+        if (alertEl) {
+          alertEl.className = 'hidden';
+          alertEl.innerHTML = '';
+        }
+      }, 700);
       await loadTasksView();
     } else {
-      alert('خطأ: ' + (res?.error || 'فشل في إنشاء المهمة'));
+      showAlert('خطأ: ' + (res?.error || 'فشل في إنشاء وحفظ المهمة'));
     }
   } catch (err) {
-    alert('حدث خطأ: ' + err.message);
+    showAlert('حدث خطأ في النظام: ' + err.message);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fa-solid fa-plus"></i> إسناد المهمة';
+    }
   }
 }
 
@@ -9244,6 +9893,7 @@ window.loadTasksView = loadTasksView;
 window.loadTasksTable = loadTasksTable;
 window.filterTasksTableLive = filterTasksTableLive;
 window.populateTasksEmpSelect = populateTasksEmpSelect;
+window.openCreateTaskModal = openCreateTaskModal;
 window.handleCreateTaskSubmit = handleCreateTaskSubmit;
 window.openUpdateTaskProgressModal = openUpdateTaskProgressModal;
 window.onTaskProgressSliderChange = onTaskProgressSliderChange;
@@ -9258,3 +9908,20 @@ window.handleGenerateWordFormSubmit = handleGenerateWordFormSubmit;
 
 window.loadOrgHierarchy = loadOrgHierarchy;
 window.exportData = exportData;
+
+// Employee Database & 360 Profile Windows Exports
+window.switchEmpViewMode = switchEmpViewMode;
+window.onEmpPageSizeChange = onEmpPageSizeChange;
+window.changeEmpPage = changeEmpPage;
+window.resetEmployeeFilters = resetEmployeeFilters;
+window.switch360Tab = switch360Tab;
+window.openEmployee360Modal = openEmployee360Modal;
+window.printEmployee360Profile = printEmployee360Profile;
+window.openEmployeeBadgeCard = openEmployeeBadgeCard;
+window.printBadgeCardElement = printBadgeCardElement;
+window.populateEmployeeFilterDropdowns = populateEmployeeFilterDropdowns;
+window.renderEmployeesView = renderEmployeesView;
+window.renderEmployeesTable = renderEmployeesTable;
+window.renderEmployeesCards = renderEmployeesCards;
+window.updateEmployeeKPIs = updateEmployeeKPIs;
+window.filterEmployeesTable = filterEmployeesTable;
