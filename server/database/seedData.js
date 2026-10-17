@@ -1,5 +1,7 @@
-// server/database/seedData.js
+// server/database/seedData.js - Official Seed Database for Jawharat Al-Majd Co.
 const { db, get, query, run } = require('./db');
+const fs = require('fs');
+const path = require('path');
 
 function seedDatabase() {
   // Update or insert company settings with exact name: "شركة جوهرة المجد"
@@ -48,7 +50,7 @@ function seedDatabase() {
   run(`DELETE FROM departments`);
   const departments = [
     { code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager: 'الرئيس التنفيذي', budget: 500000, loc: 'مقر أبها - الطابق الإداري' },
-    { code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager: 'مدير الموارد البشرية', budget: 250000, loc: 'مقر أبها - مبنى الإدارة' },
+    { code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager: 'هاني عبدالرحمن القحطاني', budget: 250000, loc: 'مقر أبها - مبنى الإدارة' },
     { code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager: 'مدير المشتريات', budget: 350000, loc: 'مقر أبها - قسم المشتريات' },
     { code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager: 'مدير المبيعات', budget: 400000, loc: 'مقر أبها - الإدارة التجارية' },
     { code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager: 'مدير تقنية المعلومات', budget: 300000, loc: 'مقر أبها - مركز العمليات الرقمية' },
@@ -81,105 +83,221 @@ function seedDatabase() {
   // 4. Biometric Devices: Purge demo devices (Hardware ready for real registration)
   run(`DELETE FROM biometric_devices`);
 
-  // 5. Purge requests, penalties, logs, and seed official employees from Excel
+  // 5. Attendance & Shift Policies (سياسات الدوام - تطبيق السياستين المعتمدتين فقط)
+  run(`DELETE FROM attendance_policies`);
+  const policies = [
+    {
+      policy_name: 'سياسة الإدارة',
+      shift_type: 'دوام صباحي',
+      start_time: '08:00',
+      end_time: '16:00',
+      grace_period_mins: 15,
+      daily_hours: 8.0,
+      work_days: 'السبت إلى الخميس',
+      flexible_hours: 0,
+      overtime_allowed: 0,
+      min_hours: 3.0,
+      notes: 'أيام العمل: السبت إلى الخميس، وقت الدوام: 08:00 صباحاً إلى 04:00 مساءً. لا يتم احتساب أي ساعات إضافية.'
+    },
+    {
+      policy_name: 'سياسة الدوام المرن',
+      shift_type: 'دوام مرن',
+      start_time: '00:00',
+      end_time: '23:59',
+      grace_period_mins: 0,
+      daily_hours: 8.0,
+      work_days: 'السبت إلى الخميس',
+      flexible_hours: 1,
+      overtime_allowed: 0,
+      min_hours: 3.0,
+      notes: 'المطلوب إكمال 8 ساعات عمل يومياً بدون وقت دخول أو خروج محدد. الحد الأدنى لاحتساب يوم العمل 3 ساعات فعلية. لا يتم احتساب أي ساعات إضافية.'
+    }
+  ];
+
+  for (const p of policies) {
+    run(`
+      INSERT INTO attendance_policies (
+        policy_name, shift_type, start_time, end_time, grace_period_mins,
+        daily_hours, work_days, flexible_hours, overtime_allowed, min_hours, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [p.policy_name, p.shift_type, p.start_time, p.end_time, p.grace_period_mins, p.daily_hours, p.work_days, p.flexible_hours, p.overtime_allowed, p.min_hours, p.notes]);
+  }
+
+  // 6. Purge existing operational and demo records
   run(`DELETE FROM employees`);
   run(`DELETE FROM requests`);
+  run(`DELETE FROM leaves`);
+  run(`DELETE FROM leave_balances`);
+  run(`DELETE FROM leave_balance_adjustments`);
+  run(`DELETE FROM tasks`);
   run(`DELETE FROM penalties_issued`);
   run(`DELETE FROM attendance_logs`);
   run(`DELETE FROM attendance_daily_summary`);
   run(`DELETE FROM payroll_items`);
   run(`DELETE FROM payroll_periods`);
 
-  // Seed all 109 official employees of Jawharat Al-Majd
+  // 7. Seed all 109 official employees of Jawharat Al-Majd directly from Excel files
   seedEmployees();
 
-  // 6. Attendance & Shift Policies (سياسات الدوام)
-  const policyCount = get('SELECT COUNT(*) AS count FROM attendance_policies').count;
-  if (policyCount === 0) {
-    const defaultPolicies = [
-      {
-        policy_name: 'سياسة دوام المقر الرئيسي المعتمد (سيتي بارك)',
-        shift_type: 'دوام صباحي',
-        start_time: '08:00',
-        end_time: '16:00',
-        grace_period_mins: 15,
-        daily_hours: 8.0,
-        work_days: 'الأحد إلى الخميس',
-        flexible_hours: 0,
-        overtime_allowed: 1,
-        notes: 'الدوام الرسمي المعتمد للإدارة العامة بمقر مول سيتي بارك في أبها. تحسب ساعات التأخير بعد 08:15 صباحاً وفق لائحة الجزاءات.'
-      },
-      {
-        policy_name: 'سياسة دوام الفرق الفنية والتقنية (دوام مرن)',
-        shift_type: 'دوام مرن',
-        start_time: '07:30',
-        end_time: '15:30',
-        grace_period_mins: 30,
-        daily_hours: 8.0,
-        work_days: 'الأحد إلى الخميس',
-        flexible_hours: 1,
-        overtime_allowed: 1,
-        notes: 'حضور مرن بين 07:30 و 09:30 صباحاً مع إكمال 8 ساعات عمل يومية، مخصص لمهندسي البرمجيات والأنظمة.'
-      },
-      {
-        policy_name: 'سياسة دوام العمليات والمشاريع الميدانية',
-        shift_type: 'دوام ميداني',
-        start_time: '09:00',
-        end_time: '17:00',
-        grace_period_mins: 15,
-        daily_hours: 8.0,
-        work_days: 'الأحد إلى الخميس',
-        flexible_hours: 0,
-        overtime_allowed: 1,
-        notes: 'خاص بفرق العمليات والتشغيل وإشراف المواقع والمشاريع الخارجية.'
-      }
-    ];
-
-    for (const p of defaultPolicies) {
-      run(`
-        INSERT INTO attendance_policies (policy_name, shift_type, start_time, end_time, grace_period_mins, daily_hours, work_days, flexible_hours, overtime_allowed, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [p.policy_name, p.shift_type, p.start_time, p.end_time, p.grace_period_mins, p.daily_hours, p.work_days, p.flexible_hours, p.overtime_allowed, p.notes]);
-    }
-  }
-
-  // 7. Seed Disciplinary Regulations (50 clauses from Desktop اكواد المخالفات.xlsx)
+  // 8. Seed Disciplinary Regulations (50 clauses from Desktop لائحة الجزاءات)
   seedPenaltyRegulations();
 }
 
 function seedEmployees() {
-  const fs = require('fs');
-  const path = require('path');
   const empsFile = path.join(__dirname, 'officialEmployees.json');
   if (!fs.existsSync(empsFile)) return;
 
   const employees = JSON.parse(fs.readFileSync(empsFile, 'utf8'));
 
-  const depts = query('SELECT id, code FROM departments');
+  const depts = query('SELECT id, code, name_ar FROM departments');
   const deptMap = {};
-  depts.forEach(d => deptMap[d.code] = d.id);
+  depts.forEach(d => {
+    deptMap[d.code] = d.id;
+  });
 
-  const brs = query('SELECT id, code FROM branches ORDER BY id ASC');
+  const brs = query('SELECT id, code, name_ar FROM branches');
+  const brMap = {};
+  brs.forEach(b => {
+    brMap[b.code] = b.id;
+  });
 
+  const pols = query('SELECT id, policy_name, shift_type FROM attendance_policies');
+  const mgmtPolicyId = pols.find(p => p.policy_name === 'سياسة الإدارة')?.id || (pols[0]?.id || 1);
+  const flexPolicyId = pols.find(p => p.policy_name === 'سياسة الدوام المرن')?.id || (pols[1]?.id || 2);
+
+  // Helper to resolve department ID
+  function resolveDeptId(emp) {
+    const sec = emp.section_name || '';
+    const dept = emp.department_name || '';
+
+    if (sec.includes('موارد') || sec.includes('HR')) {
+      return deptMap['HR'];
+    }
+    if (sec.includes('مشتريات') || sec.includes('مستودع') || sec.includes('خزنة')) {
+      return deptMap['PROC'];
+    }
+    if (sec.includes('تقنية') || sec.includes('معلومات') || sec.includes('IT')) {
+      return deptMap['IT'];
+    }
+    if (sec.includes('تسويق')) {
+      return deptMap['MKT'];
+    }
+    if (
+      sec.includes('صالة') || sec.includes('صاله') || sec.includes('سوق') ||
+      sec.includes('مخبز') || sec.includes('خضار') || sec.includes('محطة') ||
+      sec.includes('بوفيه') || sec.includes('بسطة') || sec.includes('اجبان')
+    ) {
+      return deptMap['SALES'];
+    }
+    return deptMap['EXEC'];
+  }
+
+  // Helper to resolve branch ID
+  function resolveBranchId(emp) {
+    const dept = emp.department_name || '';
+    if (dept.includes('المنسك')) return brMap['BR-MANSAK-02'];
+    if (dept.includes('حي الموظفين') || dept.includes('الموظفين')) return brMap['BR-MUWADAF-03'];
+    if (dept.includes('محايل')) return brMap['BR-MUHAYIL-04'];
+    return brMap['BR-ABHA-01'];
+  }
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+
+  // 1. Insert employees
   for (const emp of employees) {
-    const deptId = deptMap[emp.dept_code] || (depts.length ? depts[0].id : null);
-    const branchId = brs.length ? brs[(emp.branch_idx - 1) % brs.length].id : null;
+    const deptId = resolveDeptId(emp);
+    const branchId = resolveBranchId(emp);
+    const policyId = (emp.section_name || '').includes('تقنية') ? flexPolicyId : mgmtPolicyId;
+    const shiftType = policyId === flexPolicyId ? 'دوام مرن' : 'دوام صباحي';
 
     run(`
       INSERT INTO employees (
         emp_code, full_name_ar, full_name_en, national_id, nationality,
-        is_saudi, gender, birth_date, email, phone, department_id, branch_id,
+        is_saudi, gender, email, phone, department_id, branch_id,
         job_title_ar, job_title_en, grade_level, basic_salary, housing_allowance,
         transport_allowance, other_allowance, bank_name, bank_code, iban,
-        annual_leave_balance, shift_type, join_date, contract_start, contract_end, iqama_expiry, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        annual_leave_balance, shift_type, policy_id, join_date, status, role
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      emp.emp_code, emp.full_name_ar, emp.full_name_en, emp.national_id, emp.nationality,
-      emp.is_saudi, emp.gender, emp.birth_date, emp.email, emp.phone, deptId, branchId,
-      emp.job_title_ar, emp.job_title_en, 'P-1', emp.basic_salary, emp.housing_allowance,
-      emp.transport_allowance, emp.other_allowance, emp.bank_name, emp.bank_code, emp.iban,
-      30, 'دوام صباحي', emp.join_date, emp.contract_start, emp.contract_end, emp.iqama_expiry, 'نشط'
+      emp.emp_code,
+      emp.full_name_ar,
+      emp.full_name_en || emp.full_name_ar,
+      emp.national_id,
+      emp.nationality,
+      emp.is_saudi,
+      emp.gender || 'M',
+      emp.email,
+      emp.phone,
+      deptId,
+      branchId,
+      emp.job_title_ar,
+      emp.job_title_en || emp.job_title_ar,
+      'P-1',
+      emp.basic_salary || 0,
+      emp.housing_allowance || 0,
+      emp.transport_allowance || 0,
+      emp.other_allowance || 0,
+      'مصرف الراجحي',
+      'RJHI',
+      emp.iban || '',
+      emp.leave_balance || 0,
+      shiftType,
+      policyId,
+      emp.join_date || '2023-01-01',
+      'نشط',
+      'employee'
     ]);
+  }
+
+  // 2. Map Direct Managers
+  const insertedEmployees = query('SELECT id, emp_code, department_id, branch_id, job_title_ar, full_name_ar FROM employees');
+  const hrManager = insertedEmployees.find(e => e.emp_code === 'JM-1041'); // هاني عبدالرحمن صالح القحطاني
+  const cityParkSupervisor = insertedEmployees.find(e => e.emp_code === 'JM-1020'); // هاني علي شامي عسيري
+  const muwadafSupervisor = insertedEmployees.find(e => e.emp_code === 'JM-1097'); // علي سعد حسين البشري
+
+  const hrManagerId = hrManager ? hrManager.id : null;
+  const cityParkSupId = cityParkSupervisor ? cityParkSupervisor.id : hrManagerId;
+  const muwadafSupId = muwadafSupervisor ? muwadafSupervisor.id : hrManagerId;
+
+  for (const emp of insertedEmployees) {
+    if (emp.emp_code === 'JM-1041') {
+      // HR Manager reports to Executive / General Manager
+      run('UPDATE employees SET manager_id = NULL WHERE id = ?', [emp.id]);
+    } else if (emp.emp_code === 'JM-1020' || emp.emp_code === 'JM-1097' || emp.emp_code === 'JM-1043' || emp.emp_code === 'JM-1068' || emp.emp_code === 'JM-1073' || emp.emp_code === 'JM-1007') {
+      // Supervisors report directly to HR Manager
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [hrManagerId, emp.id]);
+    } else if (emp.emp_code === 'JM-1001' || emp.emp_code === 'JM-1053' || emp.emp_code === 'JM-1103') {
+      // HR Officers report to HR Manager
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [hrManagerId, emp.id]);
+    } else if (emp.branch_id === brMap['BR-MUWADAF-03']) {
+      // Staff in Hay Al-Muwadhafeen report to muwadafSupervisor
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [muwadafSupId, emp.id]);
+    } else if (emp.branch_id === brMap['BR-ABHA-01']) {
+      // Staff in Abha / City Park report to cityParkSupervisor
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [cityParkSupId, emp.id]);
+    } else {
+      // Other branches report to HR Manager by default
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [hrManagerId, emp.id]);
+    }
+  }
+
+  // 3. Initialize Leave Balances and calculate daily entitlement based on service years
+  for (const emp of employees) {
+    const dbEmp = get('SELECT id, join_date, annual_leave_balance FROM employees WHERE emp_code = ?', [emp.emp_code]);
+    if (!dbEmp) continue;
+
+    const joinDate = new Date(dbEmp.join_date);
+    const serviceYears = Math.max(0, (now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+    const annualRate = serviceYears > 5 ? 30 : 21;
+    const baseBal = Number(emp.leave_balance) || 0;
+
+    run(`
+      INSERT INTO leave_balances (
+        emp_id, base_balance, accrual_rate_annual, accrued_days, used_days,
+        manual_adjustment, current_balance, last_accrual_date, updated_at
+      ) VALUES (?, ?, ?, 0, 0, 0, ?, ?, datetime('now'))
+    `, [dbEmp.id, baseBal, annualRate, baseBal, todayStr]);
   }
 }
 
@@ -255,70 +373,8 @@ function seedPenaltyRegulations() {
   }
 }
 
-function seedIssuedPenalties() {
-  const sampleDecisions = [
-    {
-      decision_no: 'DEC-2026-0012',
-      emp_id: 4, // Mohammed Al-Otaibi
-      violation_code: 'v1',
-      violation_text: 'التأخر عن مواعيد الحضور للعمل لغاية (15) دقيقة دون إذن أو عذر مقبول إذا لم يترتب عليه تعطيل عمال آخرين',
-      category: 'مخالفات مواعيد العمل',
-      repetition_level: 'المرة الأولى',
-      penalty_text: 'إنذار كتابي رسمي',
-      deduction_type: 'إنذار كتابي',
-      deduction_days: 0,
-      incident_date: '2026-09-25',
-      investigation_details: 'تأخر الموظف عن بدء الدوام الصباحي بمقدار 12 دقيقة دون إشعار مسبق. تمت مساءلته وتوجيه إنذار كتابي أول.',
-      status: 'معتمد ومطبق',
-      issued_by: 'خالد سعد الشهراني (مدير الموارد البشرية)'
-    },
-    {
-      decision_no: 'DEC-2026-0013',
-      emp_id: 14, // Kamal Eldin Morsi
-      violation_code: 'v11',
-      violation_text: 'الغياب دون إذن كتابي أو عذر مقبول لمدة يوم خلال السنة العقدية الواحدة',
-      category: 'مخالفات مواعيد العمل',
-      repetition_level: 'المرة الأولى',
-      penalty_text: 'خصم أجر نصف يوم من الراتب',
-      deduction_type: 'خصم راتب',
-      deduction_days: 0.5,
-      incident_date: '2026-09-22',
-      investigation_details: 'تغيب الموظف عن العمل يوم 22 سبتمبر دون تقديم عذر طبي أو إجازة معتمدة. تقرر حسم نصف يوم وفق اللائحة.',
-      status: 'معتمد ومطبق',
-      issued_by: 'خالد سعد الشهراني (مدير الموارد البشرية)'
-    },
-    {
-      decision_no: 'DEC-2026-0014',
-      emp_id: 11, // Omar Bashir
-      violation_code: 'v23',
-      violation_text: 'عدم وضع أدوات الإصلاح والصيانة في أماكنها المخصصة',
-      category: 'مخالفات السلوك والعمل',
-      repetition_level: 'المرة الأولى',
-      penalty_text: 'إنذار كتابي رسمي',
-      deduction_type: 'إنذار كتابي',
-      deduction_days: 0,
-      incident_date: '2026-09-18',
-      investigation_details: 'ترك معدات الفحص اللوجستي خارج مستودع المستلزمات مما عرضها للتلف الجزئي.',
-      status: 'معتمد ومطبق',
-      issued_by: 'عبدالرحمن علي عسيري (مدير العمليات)'
-    }
-  ];
-
-  for (const dec of sampleDecisions) {
-    run(`
-      INSERT INTO penalties_issued (
-        decision_no, emp_id, violation_code, violation_text, category,
-        repetition_level, penalty_text, deduction_type, deduction_days,
-        incident_date, investigation_details, status, issued_by, issued_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '-5 days'))
-    `, [
-      dec.decision_no, dec.emp_id, dec.violation_code, dec.violation_text, dec.category,
-      dec.repetition_level, dec.penalty_text, dec.deduction_type, dec.deduction_days,
-      dec.incident_date, dec.investigation_details, dec.status, dec.issued_by
-    ]);
-  }
-}
-
 module.exports = {
-  seedDatabase
+  seedDatabase,
+  seedEmployees,
+  seedPenaltyRegulations
 };

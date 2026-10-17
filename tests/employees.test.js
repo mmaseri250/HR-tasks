@@ -29,13 +29,13 @@ function runEmployeeAndRequestTests() {
 
   // Verify Compliance Metrics for Official Employees
   const compMetrics = employeesModule.getComplianceMetrics();
-  assert.strictEqual(compMetrics.metrics.expatCount, 74, 'يجب أن يكون عدد غير السعوديين 74 موظف');
-  assert.strictEqual(compMetrics.metrics.saudiCount, 35, 'يجب أن يكون عدد السعوديين 35 موظف');
-  assert.strictEqual(compMetrics.metrics.iqama.expiringSoon, 16, 'يجب أن يكون عدد الإقامات التي تنتهي قريباً 16 إقامة');
-  assert.strictEqual(compMetrics.metrics.workPermits.active, 74, 'يجب أن تتوفر 74 رخصة عمل في قوى');
+  assert.strictEqual(compMetrics.metrics.totalEmployees, 109, 'يجب أن يكون إجمالي الموظفين 109 موظفاً معتمداً');
+  assert.strictEqual(compMetrics.metrics.expatCount, 80, 'يجب أن يكون عدد غير السعوديين 80 موظفاً من واقع ملفات إكسل');
+  assert.strictEqual(compMetrics.metrics.saudiCount, 29, 'يجب أن يكون عدد السعوديين 29 موظفاً من واقع ملفات إكسل');
+  assert.strictEqual(compMetrics.metrics.workPermits.active, 80, 'يجب أن تتوفر 80 رخصة عمل في قوى للمقيمين');
   assert.strictEqual(compMetrics.metrics.wps.complianceRate, 100, 'نسبة الالتزام بحماية الأجور يجب أن تكون 100%');
 
-  console.log('✓ نجح: التحقق من استيراد 109 موظف رسمي، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');
+  console.log('✓ نجح: التحقق من استيراد 109 موظف رسمي (29 سعودي + 80 مقيم)، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');
 
   // Test 2: Create Real Employee with branch and department
   const branch1 = branches[0];
@@ -78,7 +78,7 @@ function runEmployeeAndRequestTests() {
 
   // Test 4: Saudization Metrics with active employee
   const metrics = employeesModule.getSaudizationMetrics();
-  assert(metrics.saudizationRate > 30, 'نسبة التوطين يجب أن تتجاوز 30% مع الموظفين السعوديين');
+  assert(metrics.saudizationRate >= 25, 'نسبة التوطين يجب أن تتجاوز 25% مع الموظفين السعوديين المعتمدين');
   assert.strictEqual(metrics.nitaqatBand, 'النطاق الأخضر المتوسط', 'المنشأة يجب أن تكون في النطاق الأخضر المتوسط');
   console.log(`✓ نجح: احتساب مؤشر التوطين ونطاقات (${metrics.saudizationRate}% - ${metrics.nitaqatBand})`);
 

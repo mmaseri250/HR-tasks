@@ -444,6 +444,42 @@ function getComplianceMetrics() {
   };
 }
 
+function getOrgHierarchy() {
+  const allEmps = query(`
+    SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.manager_id,
+           e.phone, e.email,
+           d.name_ar AS department_name, b.name_ar AS branch_name
+    FROM employees e
+    LEFT JOIN departments d ON e.department_id = d.id
+    LEFT JOIN branches b ON e.branch_id = b.id
+    WHERE e.status = 'نشط'
+    ORDER BY e.id ASC
+  `);
+
+  const empMap = {};
+  allEmps.forEach(e => {
+    empMap[e.id] = { ...e, subordinates: [] };
+  });
+
+  const roots = [];
+
+  allEmps.forEach(e => {
+    if (e.manager_id && empMap[e.manager_id] && e.manager_id !== e.id) {
+      empMap[e.manager_id].subordinates.push(empMap[e.id]);
+    } else {
+      roots.push(empMap[e.id]);
+    }
+  });
+
+  return {
+    roots,
+    tree: roots,
+    allEmployees: allEmps,
+    flat: allEmps,
+    totalCount: allEmps.length
+  };
+}
+
 module.exports = {
   getAllEmployees,
   getEmployeeById,
@@ -452,5 +488,7 @@ module.exports = {
   deleteEmployee,
   getDocumentExpiryAlerts,
   getSaudizationMetrics,
-  getComplianceMetrics
+  getComplianceMetrics,
+  getOrgHierarchy
 };
+

@@ -58,14 +58,13 @@ function calculateMonthlyPayroll(periodMonth) {
       WHERE emp_id = ? AND date LIKE ?
     `, [emp.id, `${periodMonth}%`]);
 
-    const otHours = attStats ? Number(attStats.total_ot_hours) : 0;
+    const otHours = 0; // Strictly prohibited per company attendance policies
     const delayMin = attStats ? Number(attStats.total_delay_min) : 0;
     const absenceDays = attStats ? Number(attStats.absence_days) : 0;
 
-    // Overtime: Saudi Labor Law Article 107
-    // Overtime Hourly Rate = (Basic Salary / 240) * 1.5
+    // Overtime: Strictly 0 as per company policy instructions
     const hourlyRate = basic / 240;
-    const overtimePay = Math.round(hourlyRate * otHours * 1.5 * 100) / 100;
+    const overtimePay = 0;
 
     const bonusPay = 0;
     const gross = basic + housing + transport + other + overtimePay + bonusPay;

@@ -14,6 +14,10 @@ const requestsModule = require('./modules/requests');
 const biometricModule = require('./modules/biometricSimulator');
 const usersModule = require('./modules/users');
 const penaltiesModule = require('./modules/penalties');
+const leavesModule = require('./modules/leaves');
+const tasksModule = require('./modules/tasks');
+const formsGenerator = require('./modules/formsGenerator');
+const exportService = require('./modules/exportService');
 
 // Initialize Seed Data
 seedDatabase();
@@ -969,6 +973,240 @@ app.get('/api/templates/:type', (req, res) => {
     return res.send(template);
   }
   res.status(404).send('Template not found');
+});
+
+/* =========================================================================
+   10. LEAVES MANAGEMENT ROUTES (إدارة الإجازات وسير الموافقات)
+   ========================================================================= */
+
+app.get('/api/leaves/balances', (req, res) => {
+  try {
+    const balances = leavesModule.getAllLeaveBalances();
+    res.json({ success: true, data: balances });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/leaves/balances/:empId', (req, res) => {
+  try {
+    const balance = leavesModule.getEmployeeLeaveBalance(req.params.empId);
+    res.json({ success: true, data: balance });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/leaves/adjust-balance', (req, res) => {
+  try {
+    const { emp_id, adjustment_days, reason, adjusted_by } = req.body;
+    const updated = leavesModule.adjustLeaveBalance(emp_id, adjustment_days, reason, adjusted_by);
+    res.json({ success: true, message: 'تم تعديل وتحديث رصيد الإجازة بنجاح وتوثيقه في سجل التدقيق', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/leaves/adjustments', (req, res) => {
+  try {
+    const logs = leavesModule.getBalanceAdjustments(req.query.emp_id);
+    res.json({ success: true, data: logs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/leaves/kpis', (req, res) => {
+  try {
+    const kpis = leavesModule.getLeavesKPIs();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/leaves', (req, res) => {
+  try {
+    const leaves = leavesModule.getAllLeaves(req.query);
+    res.json({ success: true, data: leaves });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/leaves', (req, res) => {
+  try {
+    const newLeave = leavesModule.submitLeaveRequest(req.body);
+    res.status(201).json({ success: true, message: 'تم إرسال طلب الإجازة للمدير المباشر بنجاح', data: newLeave });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/leaves/:id', (req, res) => {
+  try {
+    const leave = leavesModule.getLeaveById(req.params.id);
+    if (!leave) return res.status(404).json({ success: false, error: 'طلب الإجازة غير موجود' });
+    res.json({ success: true, data: leave });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/leaves/:id/approve', (req, res) => {
+  try {
+    const { action, role, comment, approverName } = req.body;
+    const updated = leavesModule.approveLeave(req.params.id, action, role, comment, approverName);
+    res.json({ success: true, message: 'تم تحديث حالة طلب الإجازة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/leaves/:id', (req, res) => {
+  try {
+    leavesModule.deleteLeave(req.params.id);
+    res.json({ success: true, message: 'تم حذف طلب الإجازة بنجاح' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   11. TASKS MANAGEMENT ROUTES (نظام المهام المستقل ولوحة المديرين)
+   ========================================================================= */
+
+app.get('/api/tasks/dashboard', (req, res) => {
+  try {
+    const dashboard = tasksModule.getTasksDashboardMetrics(req.query);
+    res.json({ success: true, data: dashboard });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/tasks', (req, res) => {
+  try {
+    const tasks = tasksModule.getAllTasks(req.query);
+    res.json({ success: true, data: tasks });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/tasks', (req, res) => {
+  try {
+    const task = tasksModule.createTask(req.body);
+    res.status(201).json({ success: true, message: 'تم إنشاء المهمة وإسنادها للموظف بنجاح', data: task });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/tasks/:id', (req, res) => {
+  try {
+    const task = tasksModule.getTaskById(req.params.id);
+    if (!task) return res.status(404).json({ success: false, error: 'المهمة غير موجودة' });
+    res.json({ success: true, data: task });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/tasks/:id', (req, res) => {
+  try {
+    const updated = tasksModule.updateTask(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث بيانات ونسبة إنجاز المهمة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/tasks/:id/approve', (req, res) => {
+  try {
+    const { action, role, comment } = req.body;
+    const updated = tasksModule.approveTask(req.params.id, action, role, comment);
+    res.json({ success: true, message: 'تم اتخاذ الإجراء على المهمة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/tasks/:id', (req, res) => {
+  try {
+    tasksModule.deleteTask(req.params.id);
+    res.json({ success: true, message: 'تم حذف المهمة بنجاح' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   12. ORGANIZATIONAL HIERARCHY & DIRECT MANAGERS
+   ========================================================================= */
+
+app.get('/api/employees/hierarchy', (req, res) => {
+  try {
+    const hierarchy = employeesModule.getOrgHierarchy();
+    res.json({ success: true, data: hierarchy });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   13. HR WORD FORMS GENERATOR (نماذج Word الرسمية الـ 6)
+   ========================================================================= */
+
+app.get('/api/forms/word/:formType', async (req, res) => {
+  try {
+    const { formType } = req.params;
+    const empId = req.query.emp_id;
+    if (!empId) {
+      return res.status(400).json({ success: false, error: 'يرجى تحديد الموظف لاستخراج النموذج' });
+    }
+
+    const { buffer, filename } = await formsGenerator.generateWordForm(formType, empId, req.query);
+    const encodedFilename = encodeURIComponent(filename);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   14. UNIVERSAL EXPORT ROUTES (Excel .xlsx & Word .docx)
+   ========================================================================= */
+
+app.get('/api/export/excel', (req, res) => {
+  try {
+    const type = req.query.type || 'employees';
+    const { buffer, filename } = exportService.exportToExcel(type, req.query);
+    const encodedFilename = encodeURIComponent(filename);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/export/word', async (req, res) => {
+  try {
+    const type = req.query.type || 'employees';
+    const { buffer, filename } = await exportService.exportToWord(type, req.query);
+    const encodedFilename = encodeURIComponent(filename);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Fallback to SPA

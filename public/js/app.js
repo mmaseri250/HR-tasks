@@ -4052,7 +4052,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'compliance', 'penalties', 'attendance', 'payroll', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -4110,6 +4110,19 @@ function switchTab(tabId) {
       break;
     case 'users':
       renderUsersTable();
+      break;
+    case 'leaves':
+      loadLeavesView();
+      break;
+    case 'tasks':
+      loadTasksView();
+      break;
+    case 'forms':
+      populateFormsEmpSelect();
+      break;
+    case 'organization':
+      renderOrganization();
+      loadOrgHierarchy();
       break;
   }
 }
@@ -8098,3 +8111,1162 @@ window.deletePenaltyDecision = deletePenaltyDecision;
 window.deleteCurrentPreviewPenalty = deleteCurrentPreviewPenalty;
 
 
+
+
+/* =========================================================================
+   11. LEAVE MANAGEMENT & APPROVAL WORKFLOW (إدارة الإجازات وسير الموافقات)
+   ========================================================================= */
+
+const leaveState = {
+  currentSubTab: 'requests',
+  leaves: [],
+  balances: [],
+  adjustments: []
+};
+
+function switchLeaveSubTab(tab) {
+  leaveState.currentSubTab = tab;
+  
+  const subViews = {
+    'requests': document.getElementById('subViewLeaveRequests'),
+    'balances': document.getElementById('subViewLeaveBalances'),
+    'adjustments': document.getElementById('subViewLeaveAdjustments')
+  };
+
+  const btnRequests = document.getElementById('tabBtnLeaveRequests');
+  const btnBalances = document.getElementById('tabBtnLeaveBalances');
+  const btnAdjustments = document.getElementById('tabBtnLeaveAdjustments');
+
+  Object.keys(subViews).forEach(k => {
+    if (subViews[k]) {
+      if (k === tab) subViews[k].classList.remove('hidden');
+      else subViews[k].classList.add('hidden');
+    }
+  });
+
+  const activeClasses = ['border-b-2', 'border-brand', 'text-brand', 'font-black'];
+  const inactiveClasses = ['text-slate-500', 'font-bold'];
+
+  [btnRequests, btnBalances, btnAdjustments].forEach(btn => {
+    if (btn) {
+      btn.classList.remove(...activeClasses);
+      btn.classList.add(...inactiveClasses);
+    }
+  });
+
+  if (tab === 'requests' && btnRequests) {
+    btnRequests.classList.add(...activeClasses);
+    btnRequests.classList.remove(...inactiveClasses);
+    loadLeavesTable();
+  } else if (tab === 'balances' && btnBalances) {
+    btnBalances.classList.add(...activeClasses);
+    btnBalances.classList.remove(...inactiveClasses);
+    loadLeaveBalancesTable();
+  } else if (tab === 'adjustments' && btnAdjustments) {
+    btnAdjustments.classList.add(...activeClasses);
+    btnAdjustments.classList.remove(...inactiveClasses);
+    loadLeaveAdjustmentsTable();
+  }
+}
+
+async function loadLeavesView() {
+  try {
+    // 1. Fetch KPIs
+    const kpiRes = await safeFetch('/api/leaves/kpis');
+    if (kpiRes && kpiRes.success && kpiRes.data) {
+      const d = kpiRes.data;
+      if (document.getElementById('statLeavesTotal')) document.getElementById('statLeavesTotal').textContent = d.total || 0;
+      if (document.getElementById('statLeavesPendingManager')) document.getElementById('statLeavesPendingManager').textContent = d.pendingManager || 0;
+      if (document.getElementById('statLeavesPendingHR')) document.getElementById('statLeavesPendingHR').textContent = d.pendingHR || 0;
+      if (document.getElementById('statLeavesApproved')) document.getElementById('statLeavesApproved').textContent = d.approved || 0;
+      if (document.getElementById('statLeavesApprovedDays')) document.getElementById('statLeavesApprovedDays').textContent = (d.approvedDays || 0) + ' يوم';
+    }
+
+    // 2. Populate employee dropdowns
+    populateLeaveEmpSelects();
+
+    // 3. Load active subview
+    if (leaveState.currentSubTab === 'requests') {
+      await loadLeavesTable();
+    } else if (leaveState.currentSubTab === 'balances') {
+      await loadLeaveBalancesTable();
+    } else {
+      await loadLeaveAdjustmentsTable();
+    }
+  } catch (err) {
+    console.error('Error loading leaves view:', err);
+  }
+}
+
+async function loadLeavesTable() {
+  const tbody = document.getElementById('leavesTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="10" class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري تحميل سجلات الإجازات...</td></tr>';
+
+  try {
+    const statusFilter = document.getElementById('filterLeaveStatus') ? document.getElementById('filterLeaveStatus').value : '';
+    const typeFilter = document.getElementById('filterLeaveType') ? document.getElementById('filterLeaveType').value : '';
+
+    let url = '/api/leaves';
+    const params = [];
+    if (statusFilter) params.push(`status=${encodeURIComponent(statusFilter)}`);
+    if (typeFilter) params.push(`leave_type=${encodeURIComponent(typeFilter)}`);
+    if (params.length) url += '?' + params.join('&');
+
+    const res = await safeFetch(url);
+    if (!res || !res.success || !res.data) {
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center p-6 text-slate-400">لا توجد طلبات إجازة مسجلة</td></tr>';
+      return;
+    }
+
+    leaveState.leaves = res.data;
+    renderLeavesTableRows(res.data);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="10" class="text-center p-6 text-rose-500 font-bold">فشل في تحميل الإجازات: ${err.message}</td></tr>`;
+  }
+}
+
+function renderLeavesTableRows(leaves) {
+  const tbody = document.getElementById('leavesTableBody');
+  if (!tbody) return;
+
+  if (!leaves || leaves.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center p-6 text-slate-400 font-bold">لا توجد طلبات إجازة مطابقة لخيارات البحث</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = leaves.map(l => {
+    let statusBadge = '';
+    if (l.status === 'معتمد نهائياً') {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-circle-check"></i> معتمد نهائياً</span>';
+    } else if (l.status.includes('بانتظار موافقة المدير')) {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-clock"></i> بانتظار المدير المباشر</span>';
+    } else if (l.status.includes('بانتظار اعتماد الموارد')) {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-user-tie"></i> بانتظار الموارد البشرية</span>';
+    } else if (l.status.includes('مرفوض')) {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-circle-xmark"></i> مرفوض</span>';
+    } else {
+      statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">${l.status}</span>`;
+    }
+
+    let actions = `<div class="flex items-center justify-center gap-1">`;
+
+    // Action buttons based on status
+    if (l.status.includes('بانتظار موافقة المدير')) {
+      actions += `
+        <button onclick="approveLeave(${l.id}, 'approve', 'manager')" title="موافقة المدير المباشر" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-check"></i> موافقة مدير
+        </button>
+        <button onclick="approveLeave(${l.id}, 'reject', 'manager')" title="رفض الطلب" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-xmark"></i> رفض
+        </button>`;
+    } else if (l.status.includes('بانتظار اعتماد الموارد')) {
+      actions += `
+        <button onclick="approveLeave(${l.id}, 'approve', 'hr')" title="اعتماد نهائي HR" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-signature"></i> اعتماد HR
+        </button>
+        <button onclick="approveLeave(${l.id}, 'reject', 'hr')" title="رفض الطلب" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-xmark"></i> رفض
+        </button>`;
+    }
+
+    // Word form generation & delete buttons
+    const safeReason = (l.reason || '').replace(/'/g, "\\'");
+    actions += `
+      <button onclick="openFormModal('leave_request', 'نموذج طلب إجازة', ${l.emp_id}, { startDate: '${l.start_date}', endDate: '${l.end_date}', days: ${l.days_count}, reason: '${safeReason}' })" title="توليد مستند Word رسمي (.docx)" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-xs transition">
+        <i class="fa-solid fa-file-word"></i>
+      </button>
+      <button onclick="deleteLeave(${l.id})" title="حذف طلب الإجازة" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs transition">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>`;
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition">
+        <td class="p-3 font-mono font-bold text-slate-800">${l.request_no}</td>
+        <td class="p-3">
+          <div class="font-bold text-slate-900">${l.full_name_ar}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${l.emp_code}</div>
+        </td>
+        <td class="p-3">
+          <div class="text-slate-800 font-semibold">${l.department_name || '-'}</div>
+          <div class="text-[10px] text-slate-400">${l.branch_name || '-'}</div>
+        </td>
+        <td class="p-3 font-semibold text-teal-800">${l.leave_type}</td>
+        <td class="p-3 font-mono">${l.start_date}</td>
+        <td class="p-3 font-mono">${l.end_date}</td>
+        <td class="p-3 font-bold font-mono text-slate-900">${l.days_count} يوم</td>
+        <td class="p-3 text-slate-600">${l.manager_name || 'إدارة عليا'}</td>
+        <td class="p-3">${statusBadge}</td>
+        <td class="p-3 text-center">${actions}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterLeavesTableLive() {
+  const term = (document.getElementById('searchLeavesInput')?.value || '').trim().toLowerCase();
+  if (!term) {
+    renderLeavesTableRows(leaveState.leaves);
+    return;
+  }
+  const filtered = leaveState.leaves.filter(l => 
+    (l.request_no && l.request_no.toLowerCase().includes(term)) ||
+    (l.full_name_ar && l.full_name_ar.toLowerCase().includes(term)) ||
+    (l.emp_code && l.emp_code.toLowerCase().includes(term)) ||
+    (l.leave_type && l.leave_type.toLowerCase().includes(term))
+  );
+  renderLeavesTableRows(filtered);
+}
+
+async function loadLeaveBalancesTable() {
+  const tbody = document.getElementById('leaveBalancesTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="11" class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري احتساب أرصدة الإجازات والاستحقاق اليومي...</td></tr>';
+
+  try {
+    const res = await safeFetch('/api/leaves/balances');
+    if (!res || !res.success || !res.data) {
+      tbody.innerHTML = '<tr><td colspan="11" class="text-center p-6 text-slate-400">لا توجد بيانات أرصدة</td></tr>';
+      return;
+    }
+
+    leaveState.balances = res.data;
+
+    tbody.innerHTML = res.data.map(b => {
+      const entitlementBadge = b.annual_entitlement === 30 
+        ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">30 يوماً (> 5 سنوات)</span>'
+        : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">21 يوماً (≤ 5 سنوات)</span>';
+
+      return `
+        <tr class="hover:bg-slate-50/80 transition">
+          <td class="p-3 font-mono font-bold text-slate-800">${b.emp_code}</td>
+          <td class="p-3 font-bold text-slate-900">${b.full_name_ar}</td>
+          <td class="p-3 font-mono text-slate-600">${b.join_date || '-'}</td>
+          <td class="p-3 font-bold text-slate-700">${b.service_years} سنة</td>
+          <td class="p-3">${entitlementBadge}</td>
+          <td class="p-3 font-mono text-slate-500">${b.daily_accrual_rate} يوم/يوم</td>
+          <td class="p-3 font-mono font-bold text-slate-700">${b.base_balance}</td>
+          <td class="p-3 font-mono font-bold text-teal-700">+${b.accrued_days}</td>
+          <td class="p-3 font-mono font-bold text-rose-600">-${b.used_days}</td>
+          <td class="p-3">
+            <span class="px-2.5 py-1 rounded-xl text-xs font-mono font-black ${b.current_balance >= 10 ? 'bg-emerald-100 text-emerald-800' : (b.current_balance >= 0 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')}">
+              ${b.current_balance} يوم
+            </span>
+          </td>
+          <td class="p-3 text-center">
+            <button onclick="openAdjustLeaveModal(${b.emp_id})" class="px-2.5 py-1 rounded-lg bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-[11px] transition flex items-center gap-1 mx-auto">
+              <i class="fa-solid fa-sliders"></i> تعديل (HR)
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="11" class="text-center p-6 text-rose-500 font-bold">فشل في تحميل أرصدة الإجازات: ${err.message}</td></tr>`;
+  }
+}
+
+async function loadLeaveAdjustmentsTable() {
+  const tbody = document.getElementById('leaveAdjustmentsTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="7" class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري تحميل سجل تدقيق التعديلات...</td></tr>';
+
+  try {
+    const res = await safeFetch('/api/leaves/adjustments');
+    if (!res || !res.success || !res.data || res.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center p-6 text-slate-400 font-bold">لا توجد تسويات يدوية مسجلة حتى الآن</td></tr>';
+      return;
+    }
+
+    leaveState.adjustments = res.data;
+
+    tbody.innerHTML = res.data.map(a => `
+      <tr class="hover:bg-slate-50 transition">
+        <td class="p-3">
+          <div class="font-bold text-slate-900">${a.full_name_ar}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${a.emp_code}</div>
+        </td>
+        <td class="p-3 font-semibold text-slate-700">${a.adjusted_by_name || 'إدارة الموارد البشرية'}</td>
+        <td class="p-3 font-mono font-black ${a.days_adjusted >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+          ${a.days_adjusted >= 0 ? '+' : ''}${a.days_adjusted} يوم
+        </td>
+        <td class="p-3 font-mono text-slate-500">${a.balance_before} يوم</td>
+        <td class="p-3 font-mono font-bold text-slate-800">${a.balance_after} يوم</td>
+        <td class="p-3 text-slate-700 text-xs">${a.reason}</td>
+        <td class="p-3 font-mono text-slate-500 text-[11px]">${a.created_at}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-rose-500 font-bold">فشل في تحميل سجل التدقيق: ${err.message}</td></tr>`;
+  }
+}
+
+function populateLeaveEmpSelects() {
+  const leaveEmpSel = document.getElementById('leaveFormEmpId');
+  const leaveSubSel = document.getElementById('leaveFormSubstitute');
+  const adjustEmpSel = document.getElementById('adjustLeaveEmpId');
+
+  const employees = state.employees || [];
+  const optionsHtml = '<option value="">-- اختر الموظف --</option>' + 
+    employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
+
+  if (leaveEmpSel) leaveEmpSel.innerHTML = optionsHtml;
+  if (leaveSubSel) leaveSubSel.innerHTML = '<option value="">-- اختياري --</option>' + employees.map(e => `<option value="${e.id}">${e.full_name_ar}</option>`).join('');
+  if (adjustEmpSel) adjustEmpSel.innerHTML = optionsHtml;
+
+  // Set default dates for leave form
+  const today = new Date().toISOString().split('T')[0];
+  const startInp = document.getElementById('leaveFormStartDate');
+  const endInp = document.getElementById('leaveFormEndDate');
+  if (startInp && !startInp.value) startInp.value = today;
+  if (endInp && !endInp.value) endInp.value = today;
+  calculateLeaveDays();
+}
+
+async function onLeaveEmpChanged(empId) {
+  if (!empId) {
+    if (document.getElementById('leaveFormCurrentBalanceText')) document.getElementById('leaveFormCurrentBalanceText').textContent = '--';
+    return;
+  }
+
+  try {
+    const res = await safeFetch(`/api/leaves/balances?emp_id=${empId}`);
+    if (res && res.success && res.data) {
+      const b = res.data;
+      if (document.getElementById('leaveFormCurrentBalanceText')) {
+        document.getElementById('leaveFormCurrentBalanceText').textContent = b.current_balance;
+      }
+      if (document.getElementById('leaveFormDailyRateText')) {
+        document.getElementById('leaveFormDailyRateText').textContent = `الاستحقاق: ${b.annual_entitlement} يوماً سنوياً (${b.daily_accrual_rate} يوم/يوم) | سنوات الخدمة: ${b.service_years} سنة`;
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching employee leave balance:', err);
+  }
+}
+
+function calculateLeaveDays() {
+  const startVal = document.getElementById('leaveFormStartDate')?.value;
+  const endVal = document.getElementById('leaveFormEndDate')?.value;
+  const daysInp = document.getElementById('leaveFormDays');
+  if (!daysInp) return;
+
+  if (!startVal || !endVal) {
+    daysInp.value = 1;
+    return;
+  }
+
+  const d1 = new Date(startVal);
+  const d2 = new Date(endVal);
+  const diffTime = d2.getTime() - d1.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 3600 * 24)) + 1;
+  daysInp.value = Math.max(1, diffDays);
+}
+
+async function handleNewLeaveSubmit(e) {
+  e.preventDefault();
+
+  const emp_id = document.getElementById('leaveFormEmpId')?.value;
+  const leave_type = document.getElementById('leaveFormType')?.value;
+  const start_date = document.getElementById('leaveFormStartDate')?.value;
+  const end_date = document.getElementById('leaveFormEndDate')?.value;
+  const days_count = Number(document.getElementById('leaveFormDays')?.value) || 1;
+  const substitute_emp_id = document.getElementById('leaveFormSubstitute')?.value || null;
+  const reason = document.getElementById('leaveFormReason')?.value || '';
+
+  if (!emp_id || !start_date || !end_date) {
+    alert('يرجى استكمال الحقول الإلزامية');
+    return;
+  }
+
+  try {
+    const res = await safeFetch('/api/leaves', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emp_id: Number(emp_id),
+        leave_type,
+        start_date,
+        end_date,
+        days_count,
+        substitute_emp_id: substitute_emp_id ? Number(substitute_emp_id) : null,
+        reason
+      })
+    });
+
+    if (res && res.success) {
+      alert(res.message || 'تم تقديم طلب الإجازة بنجاح وإحالته للمدير المباشر');
+      closeModal('modalNewLeaveRequest');
+      await loadLeavesView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في حفظ طلب الإجازة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تقديم الطلب: ' + err.message);
+  }
+}
+
+async function approveLeave(id, action, role) {
+  const actionText = action === 'approve' ? (role === 'manager' ? 'موافقة المدير المباشر' : 'اعتماد نهائي من الموارد البشرية') : 'رفض الطلب';
+  const comment = prompt(`يرجى كتابة ملاحظات القرار (${actionText}):`, action === 'approve' ? 'موافق وفق السياسة المعتمدة' : 'نعتذر عن عدم الموافقة لظروف العمل');
+  if (comment === null) return;
+
+  try {
+    const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'المدير المسؤول';
+    const res = await safeFetch(`/api/leaves/${id}/approve`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, role, comment, approverName })
+    });
+
+    if (res && res.success) {
+      alert(res.message || 'تم تحديث حالة طلب الإجازة بنجاح');
+      await loadLeavesView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في تحديث الطلب'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء معالجة الطلب: ' + err.message);
+  }
+}
+
+async function deleteLeave(id) {
+  if (!confirm('هل أنت متأكد من رغبتك في حذف طلب الإجازة هذا؟')) return;
+
+  try {
+    const res = await safeFetch(`/api/leaves/${id}`, { method: 'DELETE' });
+    if (res && res.success) {
+      alert('تم حذف طلب الإجازة بنجاح');
+      await loadLeavesView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في حذف طلب الإجازة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+
+function openAdjustLeaveModal(empId) {
+  populateLeaveEmpSelects();
+  const sel = document.getElementById('adjustLeaveEmpId');
+  if (sel && empId) {
+    sel.value = empId;
+    onAdjustLeaveEmpChanged(empId);
+  }
+  openModal('modalAdjustLeaveBalance');
+}
+
+async function onAdjustLeaveEmpChanged(empId) {
+  const infoBox = document.getElementById('adjustLeaveEmpInfo');
+  if (!infoBox) return;
+
+  if (!empId) {
+    infoBox.innerHTML = 'يرجى اختيار الموظف لعرض تفاصيل رصيده واستحقاقه.';
+    return;
+  }
+
+  try {
+    const res = await safeFetch(`/api/leaves/balances?emp_id=${empId}`);
+    if (res && res.success && res.data) {
+      const b = res.data;
+      infoBox.innerHTML = `
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+          <div class="bg-white p-2 rounded-lg border">
+            <span class="block text-[10px] text-slate-400">سنوات الخدمة</span>
+            <span class="font-bold text-slate-800">${b.service_years} سنة</span>
+          </div>
+          <div class="bg-white p-2 rounded-lg border">
+            <span class="block text-[10px] text-slate-400">الاستحقاق السنوي</span>
+            <span class="font-bold text-purple-700">${b.annual_entitlement} يوم</span>
+          </div>
+          <div class="bg-white p-2 rounded-lg border">
+            <span class="block text-[10px] text-slate-400">المعدل اليومي</span>
+            <span class="font-bold text-slate-800 font-mono">${b.daily_accrual_rate}</span>
+          </div>
+          <div class="bg-teal-50 p-2 rounded-lg border border-teal-200">
+            <span class="block text-[10px] text-teal-700">الرصيد الفعلي الحالي</span>
+            <span class="font-black text-teal-900 font-mono text-sm">${b.current_balance} يوم</span>
+          </div>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('Error fetching balance for adjustment:', err);
+  }
+}
+
+async function handleAdjustLeaveSubmit(e) {
+  e.preventDefault();
+
+  const emp_id = document.getElementById('adjustLeaveEmpId')?.value;
+  const adjType = document.getElementById('adjustLeaveType')?.value;
+  const daysVal = Number(document.getElementById('adjustLeaveDays')?.value);
+  const reason = document.getElementById('adjustLeaveReason')?.value || '';
+
+  if (!emp_id || !daysVal || !reason.trim()) {
+    alert('يرجى تعبئة كافة الحقول بما فيها المبرر النظامي الإلزامي');
+    return;
+  }
+
+  const days_adjusted = adjType === 'deduct' ? -Math.abs(daysVal) : Math.abs(daysVal);
+  const adjusted_by_name = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'مسؤول الموارد البشرية';
+
+  try {
+    const res = await safeFetch('/api/leaves/adjust-balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emp_id: Number(emp_id),
+        days_adjusted,
+        reason,
+        adjusted_by_name
+      })
+    });
+
+    if (res && res.success) {
+      alert(res.message || 'تمت تسوية وتوثيق رصيد الموظف بنجاح في سجل التدقيق');
+      closeModal('modalAdjustLeaveBalance');
+      await loadLeavesView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في تسوية الرصيد'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ التسوية: ' + err.message);
+  }
+}
+
+
+/* =========================================================================
+   12. TASKS MANAGEMENT SYSTEM (نظام المهام والمتابعة الإدارية)
+   ========================================================================= */
+
+const taskState = {
+  tasks: []
+};
+
+async function loadTasksView() {
+  try {
+    // 1. Fetch dashboard metrics
+    const dashRes = await safeFetch('/api/tasks/dashboard');
+    if (dashRes && dashRes.success && dashRes.data) {
+      const d = dashRes.data;
+      if (document.getElementById('statTasksTotal')) document.getElementById('statTasksTotal').textContent = d.total || 0;
+      if (document.getElementById('statTasksOpen')) document.getElementById('statTasksOpen').textContent = d.open || 0;
+      if (document.getElementById('statTasksCompleted')) document.getElementById('statTasksCompleted').textContent = d.completed || 0;
+      if (document.getElementById('statTasksOverdue')) document.getElementById('statTasksOverdue').textContent = d.overdue || 0;
+      if (document.getElementById('statTasksCompletionRate')) document.getElementById('statTasksCompletionRate').textContent = (d.completionRate || 0) + '%';
+    }
+
+    // 2. Populate employee dropdown in create task modal
+    populateTasksEmpSelect();
+
+    // 3. Load tasks table
+    await loadTasksTable();
+  } catch (err) {
+    console.error('Error loading tasks view:', err);
+  }
+}
+
+function populateTasksEmpSelect() {
+  const sel = document.getElementById('taskFormEmpId');
+  if (!sel) return;
+
+  const employees = state.employees || [];
+  sel.innerHTML = '<option value="">-- اختر الموظف --</option>' + 
+    employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
+
+  const today = new Date().toISOString().split('T')[0];
+  const startInp = document.getElementById('taskFormStartDate');
+  const dueInp = document.getElementById('taskFormDueDate');
+  if (startInp && !startInp.value) startInp.value = today;
+  if (dueInp && !dueInp.value) dueInp.value = today;
+}
+
+async function loadTasksTable() {
+  const tbody = document.getElementById('tasksTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="9" class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري تحميل المهام...</td></tr>';
+
+  try {
+    const statusFilter = document.getElementById('filterTaskStatus') ? document.getElementById('filterTaskStatus').value : '';
+    const priorityFilter = document.getElementById('filterTaskPriority') ? document.getElementById('filterTaskPriority').value : '';
+
+    let url = '/api/tasks';
+    const params = [];
+    if (statusFilter) params.push(`status=${encodeURIComponent(statusFilter)}`);
+    if (priorityFilter) params.push(`priority=${encodeURIComponent(priorityFilter)}`);
+    if (params.length) url += '?' + params.join('&');
+
+    const res = await safeFetch(url);
+    if (!res || !res.success || !res.data) {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center p-6 text-slate-400">لا توجد مهام مسجلة</td></tr>';
+      return;
+    }
+
+    taskState.tasks = res.data;
+    renderTasksTableRows(res.data);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center p-6 text-rose-500 font-bold">فشل في تحميل المهام: ${err.message}</td></tr>`;
+  }
+}
+
+function renderTasksTableRows(tasks) {
+  const tbody = document.getElementById('tasksTableBody');
+  if (!tbody) return;
+
+  if (!tasks || tasks.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center p-6 text-slate-400 font-bold">لا توجد مهام مطابقة لخيارات البحث</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = tasks.map(t => {
+    // Priority badge
+    let priorityBadge = '';
+    if (t.priority === 'عاجلة') {
+      priorityBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800">عاجلة (قصوى)</span>';
+    } else if (t.priority === 'عالية') {
+      priorityBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">عالية</span>';
+    } else if (t.priority === 'متوسطة') {
+      priorityBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">متوسطة</span>';
+    } else {
+      priorityBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">منخفضة</span>';
+    }
+
+    // Status badge
+    let statusBadge = '';
+    if (t.status === 'مكتملة') {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-circle-check"></i> مكتملة</span>';
+    } else if (t.status === 'متأخرة') {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-triangle-exclamation"></i> متأخرة</span>';
+    } else if (t.status === 'بانتظار الاعتماد') {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-clock"></i> بانتظار الاعتماد</span>';
+    } else if (t.status === 'قيد التنفيذ') {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-spinner fa-spin"></i> قيد التنفيذ</span>';
+    } else {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">جديدة</span>';
+    }
+
+    // Progress bar
+    const prog = t.progress_percentage || 0;
+    const progColor = prog >= 100 ? 'bg-emerald-600' : (prog >= 50 ? 'bg-brand' : 'bg-amber-500');
+
+    // Actions
+    let actions = `<div class="flex items-center justify-center gap-1">
+      <button onclick="openUpdateTaskProgressModal(${t.id})" title="تحديث نسبة الإنجاز والحالة" class="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[10px] flex items-center gap-1 transition">
+        <i class="fa-solid fa-pen-ruler"></i> تحديث (${prog}%)
+      </button>`;
+
+    if (t.status === 'بانتظار الاعتماد') {
+      actions += `
+        <button onclick="approveTask(${t.id}, 'approve', 'manager')" title="اعتماد إنجاز المهمة" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-check-double"></i> اعتماد
+        </button>`;
+    }
+
+    actions += `
+      <button onclick="deleteTask(${t.id})" title="حذف المهمة" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs transition">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>`;
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition">
+        <td class="p-3 font-mono font-bold text-slate-800">${t.task_no}</td>
+        <td class="p-3">
+          <div class="font-bold text-slate-900">${t.title}</div>
+          ${t.description ? `<div class="text-[10px] text-slate-500 line-clamp-1">${t.description}</div>` : ''}
+        </td>
+        <td class="p-3">
+          <div class="font-bold text-slate-800">${t.assigned_to_name}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${t.assigned_to_code}</div>
+        </td>
+        <td class="p-3 font-mono text-slate-600">${t.start_date}</td>
+        <td class="p-3 font-mono font-bold text-slate-800">${t.due_date}</td>
+        <td class="p-3">${priorityBadge}</td>
+        <td class="p-3">
+          <div class="w-28 space-y-1">
+            <div class="flex justify-between text-[10px] font-mono font-bold text-slate-600">
+              <span>${prog}%</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="${progColor} h-1.5 rounded-full transition-all duration-300" style="width: ${prog}%"></div>
+            </div>
+          </div>
+        </td>
+        <td class="p-3">${statusBadge}</td>
+        <td class="p-3 text-center">${actions}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterTasksTableLive() {
+  const term = (document.getElementById('searchTasksInput')?.value || '').trim().toLowerCase();
+  if (!term) {
+    renderTasksTableRows(taskState.tasks);
+    return;
+  }
+  const filtered = taskState.tasks.filter(t => 
+    (t.task_no && t.task_no.toLowerCase().includes(term)) ||
+    (t.title && t.title.toLowerCase().includes(term)) ||
+    (t.assigned_to_name && t.assigned_to_name.toLowerCase().includes(term)) ||
+    (t.assigned_to_code && t.assigned_to_code.toLowerCase().includes(term))
+  );
+  renderTasksTableRows(filtered);
+}
+
+async function handleCreateTaskSubmit(e) {
+  e.preventDefault();
+
+  const title = document.getElementById('taskFormTitle')?.value;
+  const assigned_to = document.getElementById('taskFormEmpId')?.value;
+  const priority = document.getElementById('taskFormPriority')?.value || 'متوسطة';
+  const start_date = document.getElementById('taskFormStartDate')?.value;
+  const due_date = document.getElementById('taskFormDueDate')?.value;
+  const description = document.getElementById('taskFormDescription')?.value || '';
+
+  if (!title || !assigned_to || !start_date || !due_date) {
+    alert('يرجى استكمال الحقول الإلزامية');
+    return;
+  }
+
+  try {
+    const res = await safeFetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        assigned_to: Number(assigned_to),
+        priority,
+        start_date,
+        due_date,
+        description,
+        assigned_by: state.currentUser ? (state.currentUser.emp_id || 1) : null
+      })
+    });
+
+    if (res && res.success) {
+      alert(res.message || 'تم إنشاء المهمة وإسنادها للموظف بنجاح');
+      closeModal('modalCreateTask');
+      await loadTasksView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في إنشاء المهمة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+
+function openUpdateTaskProgressModal(taskId) {
+  const t = taskState.tasks.find(x => x.id === taskId);
+  if (!t) return;
+
+  if (document.getElementById('updateTaskId')) document.getElementById('updateTaskId').value = t.id;
+  if (document.getElementById('updateTaskTitleDisplay')) document.getElementById('updateTaskTitleDisplay').textContent = `[${t.task_no}] ${t.title} (${t.assigned_to_name})`;
+  if (document.getElementById('updateTaskProgressRange')) document.getElementById('updateTaskProgressRange').value = t.progress_percentage || 0;
+  if (document.getElementById('updateTaskProgressLabel')) document.getElementById('updateTaskProgressLabel').textContent = (t.progress_percentage || 0) + '%';
+  if (document.getElementById('updateTaskStatus')) document.getElementById('updateTaskStatus').value = t.status || 'قيد التنفيذ';
+
+  openModal('modalUpdateTaskProgress');
+}
+
+function onTaskProgressSliderChange(val) {
+  if (document.getElementById('updateTaskProgressLabel')) {
+    document.getElementById('updateTaskProgressLabel').textContent = val + '%';
+  }
+  const statusSelect = document.getElementById('updateTaskStatus');
+  if (statusSelect) {
+    if (Number(val) === 100) {
+      statusSelect.value = 'بانتظار الاعتماد';
+    } else if (Number(val) > 0 && statusSelect.value === 'جديدة') {
+      statusSelect.value = 'قيد التنفيذ';
+    }
+  }
+}
+
+async function handleUpdateTaskSubmit(e) {
+  e.preventDefault();
+
+  const id = document.getElementById('updateTaskId')?.value;
+  const progress_percentage = Number(document.getElementById('updateTaskProgressRange')?.value) || 0;
+  const status = document.getElementById('updateTaskStatus')?.value;
+
+  if (!id) return;
+
+  try {
+    const res = await safeFetch(`/api/tasks/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ progress_percentage, status })
+    });
+
+    if (res && res.success) {
+      alert(res.message || 'تم تحديث نسبة الإنجاز بنجاح');
+      closeModal('modalUpdateTaskProgress');
+      await loadTasksView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في تحديث المهمة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+
+async function approveTask(id, action, role) {
+  const comment = prompt('ملاحظات اعتماد إنجاز المهمة:', 'معتمد ومطابق للمعايير المطلوبة');
+  if (comment === null) return;
+
+  try {
+    const res = await safeFetch(`/api/tasks/${id}/approve`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, role, comment })
+    });
+
+    if (res && res.success) {
+      alert(res.message || 'تم اعتماد المهمة بنجاح');
+      await loadTasksView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في اعتماد المهمة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+
+async function deleteTask(id) {
+  if (!confirm('هل أنت متأكد من رغبتك في حذف هذه المهمة؟')) return;
+
+  try {
+    const res = await safeFetch(`/api/tasks/${id}`, { method: 'DELETE' });
+    if (res && res.success) {
+      alert('تم حذف المهمة بنجاح');
+      await loadTasksView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في حذف المهمة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+
+
+/* =========================================================================
+   13. HR WORD FORMS GENERATOR (نماذج Word الرسمية الـ 6)
+   ========================================================================= */
+
+function populateFormsEmpSelect() {
+  const sel = document.getElementById('wordFormEmpId');
+  if (!sel) return;
+
+  const employees = state.employees || [];
+  sel.innerHTML = '<option value="">-- اختر الموظف --</option>' + 
+    employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
+}
+
+function openFormModal(formType, title, empId = null, extra = {}) {
+  populateFormsEmpSelect();
+
+  if (document.getElementById('wordFormTypeVal')) document.getElementById('wordFormTypeVal').value = formType;
+  if (document.getElementById('wordFormModalTitle')) {
+    document.getElementById('wordFormModalTitle').innerHTML = `<i class="fa-solid fa-file-word text-blue-600"></i> ${title} (.docx)`;
+  }
+
+  // Adjust field labels based on form type
+  const numLabel = document.getElementById('wordFormNumericLabel');
+  const dirLabel = document.getElementById('wordFormDirectedLabel');
+  const dirCol = document.getElementById('wordFormDirectedCol');
+  const datesRow = document.getElementById('wordFormDatesRow');
+  const numVal = document.getElementById('wordFormNumericVal');
+  const dirVal = document.getElementById('wordFormDirectedTo');
+  const notesVal = document.getElementById('wordFormNotes');
+
+  const today = new Date().toISOString().split('T')[0];
+  if (document.getElementById('wordFormStartDate')) document.getElementById('wordFormStartDate').value = extra.startDate || today;
+  if (document.getElementById('wordFormEndDate')) document.getElementById('wordFormEndDate').value = extra.endDate || today;
+
+  if (formType === 'loan_advance') {
+    if (numLabel) numLabel.textContent = 'مبلغ السلفة المطلوب (SAR): *';
+    if (dirLabel) dirLabel.textContent = 'خطة التقسيط الشهري (أشهر):';
+    if (dirCol) dirCol.classList.remove('hidden');
+    if (datesRow) datesRow.classList.add('hidden');
+    if (numVal) numVal.value = extra.amount || 3000;
+    if (dirVal) dirVal.value = extra.installments || '3 أشهر';
+  } else if (formType === 'salary_cert') {
+    if (datesRow) datesRow.classList.add('hidden');
+    if (numLabel) numLabel.textContent = 'الراتب المعتمد (تلقائي):';
+    if (dirLabel) dirLabel.textContent = 'الجهة الموجه إليها الخطاب: *';
+    if (dirCol) dirCol.classList.remove('hidden');
+    if (dirVal) dirVal.value = extra.directedTo || 'مصرف الراجحي';
+  } else if (formType === 'permission_request') {
+    if (datesRow) datesRow.classList.remove('hidden');
+    if (numLabel) numLabel.textContent = 'عدد ساعات الاستئذان (ساعة):';
+    if (dirLabel) dirLabel.textContent = 'طبيعة الخروج:';
+    if (dirCol) dirCol.classList.remove('hidden');
+    if (numVal) numVal.value = extra.hours || 2;
+    if (dirVal) dirVal.value = extra.reason || 'مراجعة طبية رسمية';
+  } else if (formType === 'mission_request') {
+    if (datesRow) datesRow.classList.remove('hidden');
+    if (numLabel) numLabel.textContent = 'مدة المهمة (يوم):';
+    if (dirLabel) dirLabel.textContent = 'وجهة المهمة ومقر التكليف: *';
+    if (dirCol) dirCol.classList.remove('hidden');
+    if (numVal) numVal.value = extra.days || 2;
+    if (dirVal) dirVal.value = extra.destination || 'فرع محايل عسير';
+  } else if (formType === 'return_from_leave') {
+    if (datesRow) datesRow.classList.remove('hidden');
+    if (numLabel) numLabel.textContent = 'مدة الإجازة المنتهية (يوم):';
+    if (dirLabel) dirLabel.textContent = 'القسم والفرع:';
+    if (dirCol) dirCol.classList.remove('hidden');
+    if (numVal) numVal.value = extra.days || 5;
+  } else {
+    // leave_request
+    if (datesRow) datesRow.classList.remove('hidden');
+    if (numLabel) numLabel.textContent = 'عدد الأيام (يوم):';
+    if (dirLabel) dirLabel.textContent = 'الموظف البديل:';
+    if (dirCol) dirCol.classList.remove('hidden');
+    if (numVal) numVal.value = extra.days || 5;
+    if (dirVal) dirVal.value = extra.substitute || '';
+  }
+
+  if (notesVal) notesVal.value = extra.reason || '';
+
+  const sel = document.getElementById('wordFormEmpId');
+  if (sel && empId) {
+    sel.value = empId;
+    onWordFormEmpChanged(empId);
+  }
+
+  openModal('modalGenerateWordForm');
+}
+
+function onWordFormEmpChanged(empId) {
+  const preview = document.getElementById('wordFormEmpPreview');
+  if (!preview) return;
+
+  if (!empId) {
+    preview.innerHTML = 'يرجى اختيار الموظف لتعبئة بياناته الرسمية في النموذج.';
+    return;
+  }
+
+  const emp = (state.employees || []).find(e => e.id === Number(empId));
+  if (!emp) return;
+
+  preview.innerHTML = `
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+      <div class="bg-white p-2 rounded-lg border">
+        <span class="block text-[10px] text-slate-400">الرقم الوظيفي</span>
+        <span class="font-bold text-slate-800 font-mono">${emp.emp_code}</span>
+      </div>
+      <div class="bg-white p-2 rounded-lg border">
+        <span class="block text-[10px] text-slate-400">المسمى الوظيفي</span>
+        <span class="font-bold text-slate-800">${emp.job_title_ar || '-'}</span>
+      </div>
+      <div class="bg-white p-2 rounded-lg border">
+        <span class="block text-[10px] text-slate-400">الإدارة والفرع</span>
+        <span class="font-bold text-slate-800">${emp.department_name || '-'}</span>
+      </div>
+      <div class="bg-blue-50 p-2 rounded-lg border border-blue-200">
+        <span class="block text-[10px] text-blue-700">الراتب الأساسي</span>
+        <span class="font-black text-blue-900 font-mono">${emp.basic_salary} SAR</span>
+      </div>
+    </div>
+  `;
+}
+
+function handleGenerateWordFormSubmit(e) {
+  e.preventDefault();
+
+  const formType = document.getElementById('wordFormTypeVal')?.value || 'leave_request';
+  const empId = document.getElementById('wordFormEmpId')?.value;
+  if (!empId) {
+    alert('يرجى اختيار الموظف لاستخراج النموذج');
+    return;
+  }
+
+  const startDate = document.getElementById('wordFormStartDate')?.value || '';
+  const endDate = document.getElementById('wordFormEndDate')?.value || '';
+  const numVal = document.getElementById('wordFormNumericVal')?.value || '';
+  const directedTo = document.getElementById('wordFormDirectedTo')?.value || '';
+  const notes = document.getElementById('wordFormNotes')?.value || '';
+
+  const params = new URLSearchParams({
+    emp_id: empId,
+    start_date: startDate,
+    end_date: endDate,
+    days: numVal,
+    amount: numVal,
+    hours: numVal,
+    destination: directedTo,
+    directed_to: directedTo,
+    substitute_name: directedTo,
+    notes: notes,
+    reason: notes
+  });
+
+  const url = `/api/forms/word/${formType}?${params.toString()}`;
+  window.open(url, '_blank');
+  closeModal('modalGenerateWordForm');
+}
+
+
+/* =========================================================================
+   14. ORGANIZATIONAL HIERARCHY (الهيكل الإداري وسلسلة المديرين المباشرين)
+   ========================================================================= */
+
+async function loadOrgHierarchy() {
+  const container = document.getElementById('orgHierarchyContainer');
+  if (!container) return;
+
+  container.innerHTML = '<div class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري بناء الهيكل الإداري وسلسلة المديرين...</div>';
+
+  try {
+    const res = await safeFetch('/api/employees/hierarchy');
+    if (!res || !res.success || !res.data) {
+      container.innerHTML = '<div class="text-center p-6 text-slate-400">لا توجد بيانات هيكل إداري</div>';
+      return;
+    }
+
+    const { tree, flat } = res.data;
+
+    let html = `
+      <div class="space-y-6">
+        <!-- Top Level Card: Executive Management -->
+        <div class="p-4 bg-white rounded-2xl border-2 border-brand shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-brand text-white flex items-center justify-center text-xl shadow">
+              <i class="fa-solid fa-crown"></i>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full">الإدارة العليا والمدير العام</span>
+              <h4 class="text-base font-black text-slate-900 mt-0.5">شركة جوهرة المجد للتجارة (المركز الرئيسي - أبها)</h4>
+              <p class="text-xs text-slate-500">إجمالي القوى العاملة الفعلية: ${flat.length} موظفاً معتمداً</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">
+              <i class="fa-solid fa-route text-brand ml-1"></i> مسار الموافقات: موظف ➔ مدير مباشر ➔ HR
+            </span>
+          </div>
+        </div>
+
+        <!-- Tree Nodes Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    `;
+
+    tree.forEach(node => {
+      const subCount = node.subordinates ? node.subordinates.length : 0;
+      html += `
+        <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3 hover:border-brand transition">
+          <div class="flex justify-between items-start">
+            <div class="flex items-center gap-2.5">
+              <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-sm">
+                <i class="fa-solid fa-user-tie text-brand"></i>
+              </div>
+              <div>
+                <h5 class="font-bold text-slate-900 text-xs">${node.full_name_ar}</h5>
+                <span class="text-[10px] text-slate-400 font-mono">${node.emp_code} - ${node.job_title_ar || ''}</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand/10 text-brand">
+              ${subCount} مرؤوس
+            </span>
+          </div>
+
+          <div class="text-[11px] text-slate-500 flex items-center gap-1.5 pt-2 border-t">
+            <i class="fa-solid fa-sitemap text-amber-600"></i>
+            <span>${node.department_name || 'إدارة عامة'} | ${node.branch_name || 'فرع أبها الرئيسي'}</span>
+          </div>
+
+          ${subCount > 0 ? `
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5 max-h-40 overflow-y-auto">
+              <span class="block text-[10px] font-bold text-slate-400">فريق العمل التابع مباشرة:</span>
+              ${node.subordinates.map(sub => `
+                <div class="flex justify-between items-center text-[11px] p-1 bg-white rounded-lg border border-slate-100">
+                  <span class="font-semibold text-slate-800">${sub.full_name_ar}</span>
+                  <span class="font-mono text-[10px] text-slate-400">${sub.emp_code}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<div class="text-[10px] text-slate-400 italic">لا يوجد موظفون مباشرون مسندون حالياً</div>'}
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div class="text-center p-6 text-rose-500 font-bold">فشل في تحميل الهيكل الإداري: ${err.message}</div>`;
+  }
+}
+
+
+/* =========================================================================
+   15. UNIVERSAL EXPORT SERVICE (تصدير لكافة الأقسام بصيغ Excel, Word, PDF)
+   ========================================================================= */
+
+function exportData(type, format) {
+  if (format === 'excel') {
+    window.open(`/api/export/excel?type=${encodeURIComponent(type)}`, '_blank');
+  } else if (format === 'word') {
+    window.open(`/api/export/word?type=${encodeURIComponent(type)}`, '_blank');
+  } else if (format === 'pdf') {
+    // Map type to table ID for printing
+    const tableMap = {
+      'employees': 'employeesTable',
+      'attendance': 'attendanceTable',
+      'leaves': 'leavesTable',
+      'tasks': 'tasksTable',
+      'penalties': 'issuedPenaltiesTable',
+      'payroll': 'payrollItemsTableBody',
+      'permissions': 'essRequestsTableBody',
+      'reports': 'complianceSummaryTable'
+    };
+    const tableId = tableMap[type] || 'employeesTable';
+    printTable(tableId);
+  }
+}
+
+// Global window mappings for all HTML event handlers
+window.switchLeaveSubTab = switchLeaveSubTab;
+window.loadLeavesView = loadLeavesView;
+window.loadLeavesTable = loadLeavesTable;
+window.filterLeavesTableLive = filterLeavesTableLive;
+window.loadLeaveBalancesTable = loadLeaveBalancesTable;
+window.loadLeaveAdjustmentsTable = loadLeaveAdjustmentsTable;
+window.populateLeaveEmpSelects = populateLeaveEmpSelects;
+window.onLeaveEmpChanged = onLeaveEmpChanged;
+window.calculateLeaveDays = calculateLeaveDays;
+window.handleNewLeaveSubmit = handleNewLeaveSubmit;
+window.approveLeave = approveLeave;
+window.deleteLeave = deleteLeave;
+window.openAdjustLeaveModal = openAdjustLeaveModal;
+window.onAdjustLeaveEmpChanged = onAdjustLeaveEmpChanged;
+window.handleAdjustLeaveSubmit = handleAdjustLeaveSubmit;
+
+window.loadTasksView = loadTasksView;
+window.loadTasksTable = loadTasksTable;
+window.filterTasksTableLive = filterTasksTableLive;
+window.populateTasksEmpSelect = populateTasksEmpSelect;
+window.handleCreateTaskSubmit = handleCreateTaskSubmit;
+window.openUpdateTaskProgressModal = openUpdateTaskProgressModal;
+window.onTaskProgressSliderChange = onTaskProgressSliderChange;
+window.handleUpdateTaskSubmit = handleUpdateTaskSubmit;
+window.approveTask = approveTask;
+window.deleteTask = deleteTask;
+
+window.populateFormsEmpSelect = populateFormsEmpSelect;
+window.openFormModal = openFormModal;
+window.onWordFormEmpChanged = onWordFormEmpChanged;
+window.handleGenerateWordFormSubmit = handleGenerateWordFormSubmit;
+
+window.loadOrgHierarchy = loadOrgHierarchy;
+window.exportData = exportData;

@@ -1,0 +1,321 @@
+// server/modules/exportService.js - Export to Excel (.xlsx) and Word (.docx) for all main pages
+const XLSX = require('xlsx');
+const docx = require('docx');
+const {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  AlignmentType,
+  BorderStyle,
+  ShadingType
+} = docx;
+
+const { query, get } = require('../database/db');
+const employeesModule = require('./employees');
+const attendanceModule = require('./attendance');
+const leavesModule = require('./leaves');
+const tasksModule = require('./tasks');
+const penaltiesModule = require('./penalties');
+const payrollModule = require('./payroll');
+const requestsModule = require('./requests');
+
+const COMPANY_NAME = 'شركة جوهرة المجد للتجارة والمقاولات';
+const BRAND_PRIMARY = '700C14';
+const BRAND_BG = 'F4F6F8';
+
+/**
+ * Fetch raw data and column definitions for a given entity type
+ */
+function getExportDataset(type, filters = {}) {
+  let title = '';
+  let columns = [];
+  let rows = [];
+
+  switch (type) {
+    case 'employees':
+      title = 'سجل بيانات موظفي شركة جوهرة المجد';
+      columns = [
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'الاسم الرباعي', width: 28 },
+        { key: 'national_id', label: 'رقم الهوية / الإقامة', width: 18 },
+        { key: 'nationality', label: 'الجنسية', width: 14 },
+        { key: 'department_name_ar', label: 'الإدارة', width: 18 },
+        { key: 'branch_name_ar', label: 'الفرع', width: 18 },
+        { key: 'job_title_ar', label: 'المسمى الوظيفي', width: 20 },
+        { key: 'phone', label: 'رقم الجوال', width: 15 },
+        { key: 'email', label: 'البريد الإلكتروني', width: 25 },
+        { key: 'join_date', label: 'تاريخ المباشرة', width: 14 },
+        { key: 'annual_leave_balance', label: 'رصيد الإجازات', width: 14 },
+        { key: 'total_salary', label: 'إجمالي الراتب', width: 14 }
+      ];
+      const emps = employeesModule.getAllEmployees(filters);
+      rows = emps.map(e => ({
+        ...e,
+        total_salary: (e.basic_salary || 0) + (e.housing_allowance || 0) + (e.transport_allowance || 0) + (e.other_allowance || 0)
+      }));
+      break;
+
+    case 'attendance':
+      title = 'سجل الحضور والانصراف والبصمة اليومية';
+      columns = [
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'اسم الموظف', width: 26 },
+        { key: 'date', label: 'التاريخ', width: 14 },
+        { key: 'check_in', label: 'وقت الدخول', width: 20 },
+        { key: 'check_out', label: 'وقت الخروج', width: 20 },
+        { key: 'work_hours', label: 'ساعات العمل', width: 14 },
+        { key: 'delay_minutes', label: 'التأخير (دقيقة)', width: 15 },
+        { key: 'status', label: 'الحالة', width: 16 }
+      ];
+      const attDate = filters.date || new Date().toISOString().split('T')[0];
+      rows = attendanceModule.getDailyAttendance(attDate);
+      break;
+
+    case 'leaves':
+      title = 'سجل طلبات وأرصدة الإجازات';
+      columns = [
+        { key: 'request_no', label: 'رقم الطلب', width: 16 },
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'اسم الموظف', width: 26 },
+        { key: 'leave_type', label: 'نوع الإجازة', width: 16 },
+        { key: 'start_date', label: 'من تاريخ', width: 14 },
+        { key: 'end_date', label: 'إلى تاريخ', width: 14 },
+        { key: 'days_count', label: 'عدد الأيام', width: 12 },
+        { key: 'status', label: 'حالة الطلب', width: 24 }
+      ];
+      rows = leavesModule.getAllLeaves(filters);
+      break;
+
+    case 'permissions':
+      title = 'سجل طلبات الاستئذان والخروج المؤقت';
+      columns = [
+        { key: 'request_no', label: 'رقم الطلب', width: 16 },
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'اسم الموظف', width: 26 },
+        { key: 'start_date', label: 'التاريخ', width: 14 },
+        { key: 'days_count', label: 'ساعات الاستئذان', width: 15 },
+        { key: 'reason', label: 'السبب', width: 30 },
+        { key: 'status', label: 'الحالة', width: 22 }
+      ];
+      rows = requestsModule.getAllRequests({ ...filters, request_type: 'استئذان' });
+      break;
+
+    case 'tasks':
+      title = 'سجل المهام الإدارية والميدانية';
+      columns = [
+        { key: 'task_no', label: 'رقم المهمة', width: 16 },
+        { key: 'title', label: 'عنوان المهمة', width: 28 },
+        { key: 'assigned_to_name', label: 'الموظف المكلف', width: 26 },
+        { key: 'start_date', label: 'تاريخ البداية', width: 14 },
+        { key: 'due_date', label: 'تاريخ الاستحقاق', width: 14 },
+        { key: 'priority', label: 'الأولوية', width: 12 },
+        { key: 'progress_percent', label: 'نسبة الإنجاز', width: 14 },
+        { key: 'status', label: 'الحالة', width: 16 }
+      ];
+      rows = tasksModule.getAllTasks(filters).map(t => ({
+        ...t,
+        progress_percent: `${t.progress_percent}%`
+      }));
+      break;
+
+    case 'penalties':
+      title = 'سجل القرارات الجزائية والمخالفات الصادرة';
+      columns = [
+        { key: 'decision_no', label: 'رقم القرار', width: 18 },
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'اسم الموظف', width: 26 },
+        { key: 'violation_text', label: 'المخالفة', width: 36 },
+        { key: 'penalty_text', label: 'الجزاء الموقع', width: 24 },
+        { key: 'deduction_days', label: 'أيام الخصم', width: 12 },
+        { key: 'incident_date', label: 'تاريخ الواقعة', width: 14 },
+        { key: 'status', label: 'حالة القرار', width: 16 }
+      ];
+      rows = penaltiesModule.getAllIssuedPenalties();
+      break;
+
+    case 'payroll':
+      title = 'مسير الرواتب وحماية الأجور';
+      columns = [
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'اسم الموظف', width: 26 },
+        { key: 'basic_salary', label: 'الأساسي', width: 14 },
+        { key: 'housing_allowance', label: 'بدل السكن', width: 14 },
+        { key: 'transport_allowance', label: 'بدل النقل', width: 14 },
+        { key: 'other_allowance', label: 'بدلات أخرى', width: 14 },
+        { key: 'gross_salary', label: 'إجمالي الراتب', width: 16 },
+        { key: 'gosi_employee_share', label: 'تأمينات الموظف', width: 14 },
+        { key: 'total_deductions', label: 'مجموع الخصومات', width: 15 },
+        { key: 'net_salary', label: 'صافي الراتب', width: 16 }
+      ];
+      const lastPeriod = get('SELECT id FROM payroll_periods ORDER BY period_month DESC LIMIT 1');
+      if (lastPeriod) {
+        rows = payrollModule.getPayrollItems(lastPeriod.id);
+      } else {
+        rows = [];
+      }
+      break;
+
+    case 'reports':
+    default:
+      title = 'تقرير مؤشرات الامتثال الإداري والمؤسسي';
+      columns = [
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'اسم الموظف', width: 26 },
+        { key: 'nationality', label: 'الجنسية', width: 14 },
+        { key: 'iqama_status', label: 'حالة الإقامة', width: 24 },
+        { key: 'work_permit_status', label: 'رخصة العمل (قوى)', width: 24 },
+        { key: 'days_remaining', label: 'الأيام المتبقية', width: 16 }
+      ];
+      const comp = employeesModule.getComplianceMetrics();
+      rows = comp.roster || [];
+      break;
+  }
+
+  return { title, columns, rows };
+}
+
+/**
+ * Generate Excel (.xlsx) buffer
+ */
+function exportToExcel(type, filters = {}) {
+  const dataset = getExportDataset(type, filters);
+
+  // Prepare header rows with company title
+  const sheetData = [];
+  sheetData.push([COMPANY_NAME]);
+  sheetData.push([dataset.title]);
+  sheetData.push([`تاريخ الاستخراج: ${new Date().toLocaleDateString('ar-SA')} - نظام موارد بشرية جوهرة المجد`]);
+  sheetData.push([]); // blank line
+
+  // Column header row
+  const headerLabels = dataset.columns.map(c => c.label);
+  sheetData.push(headerLabels);
+
+  // Data rows
+  for (const item of dataset.rows) {
+    const row = dataset.columns.map(c => {
+      const val = item[c.key];
+      return val !== undefined && val !== null ? val : '';
+    });
+    sheetData.push(row);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  // Column widths
+  ws['!cols'] = dataset.columns.map(c => ({ wch: c.width || 18 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'البيانات الرسمية');
+
+  return {
+    buffer: XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }),
+    filename: `${type}_jawharat_al_majd_${new Date().toISOString().split('T')[0]}.xlsx`
+  };
+}
+
+/**
+ * Generate Word (.docx) Table buffer
+ */
+async function exportToWord(type, filters = {}) {
+  const dataset = getExportDataset(type, filters);
+
+  const border = { style: BorderStyle.SINGLE, size: 4, color: 'CCCCCC' };
+  const borders = { top: border, bottom: border, left: border, right: border, insideHorizontal: border, insideVertical: border };
+
+  // Header row
+  const headerRow = new TableRow({
+    shading: { fill: BRAND_PRIMARY, type: ShadingType.SOLID, color: 'auto' },
+    children: dataset.columns.map(c => new TableCell({
+      margins: { top: 80, bottom: 80, left: 80, right: 80 },
+      children: [
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({ text: c.label, font: 'Arial', size: 16, bold: true, color: 'FFFFFF' })
+          ]
+        })
+      ]
+    }))
+  });
+
+  // Data rows (take up to 120 rows for clean docx display)
+  const dataRows = dataset.rows.slice(0, 120).map((r, rIdx) => new TableRow({
+    shading: rIdx % 2 === 1 ? { fill: BRAND_BG, type: ShadingType.SOLID, color: 'auto' } : undefined,
+    children: dataset.columns.map(c => new TableCell({
+      margins: { top: 60, bottom: 60, left: 60, right: 60 },
+      children: [
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({ text: String(r[c.key] !== undefined && r[c.key] !== null ? r[c.key] : ''), font: 'Arial', size: 14 })
+          ]
+        })
+      ]
+    }))
+  }));
+
+  const table = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders,
+    rows: [headerRow, ...dataRows]
+  });
+
+  const doc = new Document({
+    sections: [{
+      properties: {
+        rtl: true,
+        page: {
+          margin: { top: 720, bottom: 720, left: 720, right: 720 }
+        }
+      },
+      children: [
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 100 },
+          children: [
+            new TextRun({ text: COMPANY_NAME, font: 'Arial', size: 28, bold: true, color: BRAND_PRIMARY })
+          ]
+        }),
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 100 },
+          children: [
+            new TextRun({ text: dataset.title, font: 'Arial', size: 22, bold: true, color: '333333' })
+          ]
+        }),
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 200 },
+          children: [
+            new TextRun({ text: `تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')} | إجمالي السجلات: ${dataset.rows.length}`, font: 'Arial', size: 14, color: '777777' })
+          ]
+        }),
+        table,
+        new Paragraph({
+          spacing: { before: 200 },
+          children: [
+            new TextRun({ text: 'تم استخراج هذا المستند رسمياً من نظام الموارد البشرية لشركة جوهرة المجد.', font: 'Arial', size: 14, italic: true, color: '888888' })
+          ]
+        })
+      ]
+    }]
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  return {
+    buffer,
+    filename: `${type}_jawharat_al_majd_${new Date().toISOString().split('T')[0]}.docx`
+  };
+}
+
+module.exports = {
+  getExportDataset,
+  exportToExcel,
+  exportToWord
+};

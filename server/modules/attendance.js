@@ -41,7 +41,7 @@ function recordPunch(data) {
     throw new Error('رقم الموظف ونوع البصمة مطلوبان');
   }
 
-  const emp = get('SELECT id, emp_code, full_name_ar, shift_type FROM employees WHERE id = ?', [emp_id]);
+  const emp = get('SELECT id, emp_code, full_name_ar, shift_type, policy_id FROM employees WHERE id = ?', [emp_id]);
   if (!emp) {
     throw new Error('الموظف غير موجود');
   }
@@ -70,24 +70,44 @@ function recordPunch(data) {
     verification_method, latitude, longitude, isWithinGeofence, raw_data
   ]);
 
-  // 2. Update or Insert Daily Summary
+  // 2. Fetch employee policy to enforce exact policy rules
+  const isFlexShift = emp.shift_type === 'flexible' || emp.shift_type === 'دوام مرن';
+  const policy = emp.policy_id
+    ? get('SELECT * FROM attendance_policies WHERE id = ?', [emp.policy_id])
+    : get('SELECT * FROM attendance_policies WHERE shift_type = ? OR shift_type = ? OR flexible_hours = ? LIMIT 1', [
+        emp.shift_type || 'دوام صباحي',
+        isFlexShift ? 'دوام مرن' : 'دوام صباحي',
+        isFlexShift ? 1 : 0
+      ]);
+
+  const isFlexible = isFlexShift || (policy && policy.flexible_hours === 1);
+
+  // 3. Update or Insert Daily Summary
   let summary = get('SELECT * FROM attendance_daily_summary WHERE emp_id = ? AND date = ?', [emp_id, dateStr]);
 
   const [hours, minutes] = timeStr.split(':').map(Number);
   const punchDecimalHours = hours + (minutes / 60);
 
   if (punch_type === 'CHECK_IN') {
-    // Scheduled start is 08:00 AM. Grace period is 15 minutes (08:15).
-    const scheduledStart = 8.0;
-    const gracePeriodHours = 8.25; // 08:15 AM
     let delayMinutes = 0;
+    let status = 'حاضر';
+    let note = 'حضور في الموعد';
 
-    if (punchDecimalHours > gracePeriodHours) {
-      delayMinutes = Math.round((punchDecimalHours - scheduledStart) * 60);
+    if (isFlexible) {
+      // Flexible policy: no fixed in time, must complete 8 hours daily
+      delayMinutes = 0;
+      status = 'حاضر';
+      note = 'حضور دوام مرن';
+    } else {
+      // Management policy: Saturday to Thursday, 08:00 to 16:00. Grace period: 15 mins.
+      const scheduledStart = 8.0;
+      const gracePeriodHours = 8.25; // 08:15 AM
+      if (punchDecimalHours > gracePeriodHours) {
+        delayMinutes = Math.round((punchDecimalHours - scheduledStart) * 60);
+        status = 'متأخر';
+        note = `تأخير صباحي ${delayMinutes} دقيقة`;
+      }
     }
-
-    const status = delayMinutes > 0 ? 'متأخر' : 'حاضر';
-    const note = delayMinutes > 0 ? `تأخير صباحي ${delayMinutes} دقيقة` : 'حضور في الموعد';
 
     if (!summary) {
       run(`
@@ -97,7 +117,6 @@ function recordPunch(data) {
         ) VALUES (?, ?, ?, NULL, 0, 8.0, ?, 0, 0, ?, ?)
       `, [emp_id, dateStr, pTime, delayMinutes, status, note]);
     } else {
-      // Keep earliest check_in if already exists
       const existingIn = summary.check_in ? summary.check_in : pTime;
       run(`
         UPDATE attendance_daily_summary
@@ -114,10 +133,12 @@ function recordPunch(data) {
         ) VALUES (?, ?, NULL, ?, 0, 8.0, 0, 0, 0, 'حاضر', 'تسجيل خروج فقط')
       `, [emp_id, dateStr, pTime]);
     } else {
-      // Calculate work hours and overtime
       let workHours = 0;
-      let overtimeHours = 0;
       let earlyDepartureMinutes = 0;
+      const overtimeHours = 0; // Strictly NO overtime calculation or accrual
+
+      let note = summary.notes || '';
+      let status = summary.status || 'حاضر';
 
       if (summary.check_in) {
         const inTimeStr = summary.check_in.split(' ')[1] || '08:00:00';
@@ -128,13 +149,27 @@ function recordPunch(data) {
         const totalHours = Math.max(0, outDecimal - inDecimal);
         workHours = Math.round(totalHours * 10) / 10;
 
-        // Shift standard end is 16:00 (4:00 PM)
-        const scheduledEnd = 16.0;
-        if (outDecimal < scheduledEnd) {
-          earlyDepartureMinutes = Math.round((scheduledEnd - outDecimal) * 60);
-        } else if (outDecimal > scheduledEnd + 0.5) {
-          // Overtime if worked more than 30 mins after scheduled end
-          overtimeHours = Math.round((outDecimal - scheduledEnd) * 10) / 10;
+        if (isFlexible) {
+          // Flexible policy: must complete 8 hours, minimum 3 hours to be counted
+          if (workHours < 3.0) {
+            status = 'غير مستوفٍ للحد الأدنى';
+            note = `ساعات العمل الفعلية (${workHours} ساعة) أقل من الحد الأدنى المقرر (3 ساعات)`;
+          } else if (workHours < 8.0) {
+            status = 'نقص ساعات';
+            note = `تم إكمال ${workHours} ساعة من أصل 8 ساعات مطلوبة`;
+          } else {
+            status = 'مستوفٍ';
+            note = `تم إكمال ساعات العمل اليومية (${workHours} ساعة) بنجاح`;
+          }
+        } else {
+          // Management policy: ends at 16:00
+          const scheduledEnd = 16.0;
+          if (outDecimal < scheduledEnd) {
+            earlyDepartureMinutes = Math.round((scheduledEnd - outDecimal) * 60);
+            note = `انصراف مبكر ${earlyDepartureMinutes} دقيقة`;
+          } else {
+            note = 'انصراف بعد اكتمال دوام الإدارة';
+          }
         }
       }
 
@@ -143,17 +178,11 @@ function recordPunch(data) {
         SET check_out = ?,
             work_hours = ?,
             early_departure_minutes = ?,
-            overtime_hours = ?,
-            notes = CASE
-              WHEN ? > 0 THEN 'عمل إضافي ' || ? || ' ساعات'
-              WHEN ? > 0 THEN 'انصراف مبكر ' || ? || ' دقيقة'
-              ELSE notes
-            END
+            overtime_hours = 0,
+            status = ?,
+            notes = ?
         WHERE id = ?
-      `, [
-        pTime, workHours, earlyDepartureMinutes, overtimeHours,
-        overtimeHours, overtimeHours, earlyDepartureMinutes, earlyDepartureMinutes, summary.id
-      ]);
+      `, [pTime, workHours, earlyDepartureMinutes, status, note, summary.id]);
     }
   }
 

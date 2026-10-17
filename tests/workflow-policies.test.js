@@ -9,8 +9,8 @@ console.log('--- تشغيل اختبارات سياسات الدوام، الإ�
 
 // 1. Attendance Policies Test
 const policies = db.query('SELECT * FROM attendance_policies WHERE is_active = 1');
-assert(policies.length >= 3, 'يجب أن تتوفر 3 سياسات دوام افتراضية على الأقل');
-console.log(`✓ نجح: تم استرجاع ${policies.length} سياسات دوام معتمدة (دوام صباحي، مرن، وميداني)`);
+assert(policies.length >= 2, 'يجب أن تتوفر سياستا الدوام المعتمدتان (سياسة الإدارة والدوام المرن)');
+console.log(`✓ نجح: تم استرجاع ${policies.length} سياسات دوام معتمدة (سياسة الإدارة وسياسة الدوام المرن)`);
 
 const testPolicy = db.run(`
   INSERT INTO attendance_policies (policy_name, shift_type, start_time, end_time, grace_period_mins, daily_hours, work_days, flexible_hours, overtime_allowed, notes)

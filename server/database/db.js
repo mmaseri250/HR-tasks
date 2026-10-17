@@ -276,13 +276,98 @@ function initSchema() {
       end_time TEXT DEFAULT '16:00',
       grace_period_mins INTEGER DEFAULT 15,
       daily_hours REAL DEFAULT 8.0,
-      work_days TEXT DEFAULT 'الأحد إلى الخميس',
+      work_days TEXT DEFAULT 'السبت إلى الخميس',
       flexible_hours INTEGER DEFAULT 0,
-      overtime_allowed INTEGER DEFAULT 1,
+      overtime_allowed INTEGER DEFAULT 0,
+      min_hours REAL DEFAULT 3.0,
       notes TEXT,
       is_active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- Dedicated Leave Management System (إدارة الإجازات وسير الموافقات)
+    CREATE TABLE IF NOT EXISTS leaves (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_no TEXT UNIQUE NOT NULL,
+      emp_id INTEGER NOT NULL,
+      leave_type TEXT NOT NULL DEFAULT 'إجازة سنوية',
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      days_count REAL NOT NULL,
+      reason TEXT,
+      substitute_emp_id INTEGER,
+      attachment TEXT,
+      status TEXT DEFAULT 'معلق بانتظار موافقة المدير المباشر',
+      manager_id INTEGER,
+      manager_status TEXT DEFAULT 'معلق',
+      manager_comment TEXT,
+      manager_action_at TEXT,
+      hr_status TEXT DEFAULT 'معلق',
+      hr_comment TEXT,
+      hr_action_at TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE,
+      FOREIGN KEY (manager_id) REFERENCES employees(id) ON DELETE SET NULL,
+      FOREIGN KEY (substitute_emp_id) REFERENCES employees(id) ON DELETE SET NULL
+    );
+
+    -- Daily Accrual and Leave Balances (أرصدة الإجازات والاستحقاق اليومي)
+    CREATE TABLE IF NOT EXISTS leave_balances (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      emp_id INTEGER UNIQUE NOT NULL,
+      base_balance REAL NOT NULL DEFAULT 0,
+      accrual_rate_annual REAL NOT NULL DEFAULT 21,
+      accrued_days REAL NOT NULL DEFAULT 0,
+      used_days REAL NOT NULL DEFAULT 0,
+      manual_adjustment REAL NOT NULL DEFAULT 0,
+      current_balance REAL NOT NULL DEFAULT 0,
+      last_accrual_date TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+
+    -- Leave Balance Audit Log (سجل تعديلات أرصدة الإجازات - صلاحية الموارد البشرية فقط)
+    CREATE TABLE IF NOT EXISTS leave_balance_adjustments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      emp_id INTEGER NOT NULL,
+      adjusted_by TEXT NOT NULL,
+      adjustment_days REAL NOT NULL,
+      balance_before REAL NOT NULL,
+      balance_after REAL NOT NULL,
+      reason TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+
+    -- Independent Tasks System (نظام المهام المستقل)
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_no TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      assigned_to INTEGER NOT NULL,
+      assigned_by INTEGER,
+      assigned_by_name TEXT,
+      start_date TEXT NOT NULL,
+      due_date TEXT NOT NULL,
+      priority TEXT NOT NULL DEFAULT 'متوسطة',
+      progress_percent INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'جديدة',
+      manager_approval TEXT DEFAULT 'معلق',
+      manager_comment TEXT,
+      hr_comment TEXT,
+      completed_at TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (assigned_to) REFERENCES employees(id) ON DELETE CASCADE,
+      FOREIGN KEY (assigned_by) REFERENCES employees(id) ON DELETE SET NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_leaves_emp ON leaves(emp_id);
+    CREATE INDEX IF NOT EXISTS idx_leaves_status ON leaves(status);
+    CREATE INDEX IF NOT EXISTS idx_tasks_emp ON tasks(assigned_to);
+    CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
   `);
 
   try {
@@ -311,6 +396,9 @@ function initSchema() {
   } catch (e) {}
   try {
     db.exec('ALTER TABLE biometric_devices ADD COLUMN branch_id INTEGER;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE attendance_policies ADD COLUMN min_hours REAL DEFAULT 3.0;');
   } catch (e) {}
 }
 
