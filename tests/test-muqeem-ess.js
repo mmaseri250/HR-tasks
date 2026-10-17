@@ -10,18 +10,18 @@ async function runMuqeemAndEssTests() {
   // Test 1: getMuqeemReport()
   const report = muqeemModule.getMuqeemReport({});
   assert.ok(report, 'Report should be returned');
-  assert.strictEqual(report.summary.totalResidents, 100, 'Should have exactly 100 residents');
-  assert.strictEqual(report.summary.insideKsa, 92, 'Should have 92 inside KSA');
-  assert.strictEqual(report.summary.outsideKsa, 8, 'Should have 8 outside KSA');
-  assert.strictEqual(report.summary.totalMonthlyFees, 73600, 'Monthly Qiwa fees should be 73,600 SAR (92 * 800)');
-  console.log('✓ نجح: التحقق من إجمالي مقيمي جوهرة المجد (100 مقيم: 92 داخل المملكة و 8 بالخارج، ورسوم قوى 73,600 ر.س/شهر)');
+  assert.strictEqual(report.summary.totalResidents, 80, 'Should have exactly 80 residents matching employee database');
+  assert.strictEqual(report.summary.insideKsa, 73, 'Should have 73 inside KSA');
+  assert.strictEqual(report.summary.outsideKsa, 7, 'Should have 7 outside KSA');
+  assert.strictEqual(report.summary.totalMonthlyFees, 58400, 'Monthly Qiwa fees should be 58,400 SAR (73 * 800)');
+  console.log('✓ نجح: التحقق من إجمالي مقيمي جوهرة المجد المطابقين لقاعدة بيانات الموظفين (80 مقيم: 73 داخل المملكة و 7 بالخارج، ورسوم قوى 58,400 ر.س/شهر)');
 
   // Test 2: Filter inside vs outside
   const reportInside = muqeemModule.getMuqeemReport({ status: 'inside' });
-  assert.strictEqual(reportInside.residents.length, 92, 'Inside filter should return 92 residents');
+  assert.strictEqual(reportInside.residents.length, 73, 'Inside filter should return 73 residents');
 
   const reportOutside = muqeemModule.getMuqeemReport({ status: 'outside' });
-  assert.strictEqual(reportOutside.residents.length, 8, 'Outside filter should return 8 residents');
+  assert.strictEqual(reportOutside.residents.length, 7, 'Outside filter should return 7 residents');
   console.log('✓ نجح: تصفية المقيمين داخل السعودية وخارج السعودية بدقة');
 
   // Test 3: Add new resident, toggle location, update, delete

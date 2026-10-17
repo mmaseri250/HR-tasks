@@ -446,6 +446,12 @@ function seedMuqeemResidentsFromExcel() {
     const wb = xlsx.readFile(excelPath);
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = xlsx.utils.sheet_to_json(ws);
+
+    // Retrieve active expat employees from employee database
+    const expatEmps = db.prepare('SELECT national_id, full_name_ar, gender, nationality, job_title_ar, iqama_expiry, passport_expiry FROM employees WHERE is_saudi = 0').all();
+    const expatMap = new Map();
+    expatEmps.forEach(e => expatMap.set(String(e.national_id).trim(), e));
+
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO muqeem_residents (
         iqama_number, full_name, gender, nationality, occupation,
@@ -455,9 +461,11 @@ function seedMuqeemResidentsFromExcel() {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
+    // Only insert rows that match the employee database!
     for (const row of data) {
       const iqama = String(row['رقم الاقامة'] || '').trim();
-      if (!iqama) continue;
+      if (!iqama || !expatMap.has(iqama)) continue;
+
       stmt.run(
         iqama,
         String(row['الاسم'] || '').trim(),
@@ -474,6 +482,31 @@ function seedMuqeemResidentsFromExcel() {
         String(row['رقم صاحب العمل'] || '7013999755').trim()
       );
     }
+
+    // Ensure any expat employee in employees not in Excel (like JM-1003) is also added
+    for (const [natId, emp] of expatMap.entries()) {
+      const exists = db.prepare('SELECT id FROM muqeem_residents WHERE iqama_number = ?').get(natId);
+      if (!exists) {
+        stmt.run(
+          natId,
+          emp.full_name_ar,
+          emp.gender || 'ذكر',
+          emp.nationality || 'مصري',
+          emp.job_title_ar || 'موظف',
+          `A${natId.substring(0, 8)}`,
+          emp.passport_expiry || '2028-09-15',
+          '2021-09-21',
+          emp.iqama_expiry || '2026-09-21',
+          '1448-03-10',
+          '1992-05-14',
+          0,
+          '7013999755'
+        );
+      }
+    }
+
+    // Delete any resident not in the company's employee database
+    db.prepare('DELETE FROM muqeem_residents WHERE iqama_number NOT IN (SELECT national_id FROM employees WHERE is_saudi = 0)').run();
   } catch (err) {
     console.error('Could not auto-seed muqeem residents:', err.message);
   }

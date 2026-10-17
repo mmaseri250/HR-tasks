@@ -187,7 +187,7 @@
         <button onclick="switchTab('compliance')" id="nav-compliance" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-shield-halved w-5 text-center text-base text-emerald-600"></i>
           <span class="flex-1 text-right">مؤشر الامتثال والإقامات</span>
-          <span id="badgeNavCompliance" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 font-mono">77</span>
+          <span id="badgeNavCompliance" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 font-mono" title="61 إقامة منتهية تتطلب التجديد">61</span>
         </button>
 
         <!-- 3. Disciplinary Penalties (Requested Desktop Items) -->
@@ -1125,21 +1125,21 @@
             <!-- 1. Total Residents -->
             <div class="card-elevated p-3.5 text-center border-t-4 border-[#8B0000]">
               <span class="text-[11px] font-bold text-slate-500 block mb-1">إجمالي المقيمين</span>
-              <h3 id="muqKpiTotal" class="text-2xl font-black font-mono text-slate-800">100</h3>
-              <span class="text-[10px] text-slate-400 font-semibold">ملف مقيم الرسمي</span>
+              <h3 id="muqKpiTotal" class="text-2xl font-black font-mono text-slate-800">80</h3>
+              <span class="text-[10px] text-slate-400 font-semibold">مطابق لقاعدة الموظفين</span>
             </div>
 
             <!-- 2. Inside KSA -->
             <div class="card-elevated p-3.5 text-center border-t-4 border-emerald-600">
               <span class="text-[11px] font-bold text-slate-500 block mb-1">داخل السعودية</span>
-              <h3 id="muqKpiInside" class="text-2xl font-black font-mono text-emerald-700">92</h3>
+              <h3 id="muqKpiInside" class="text-2xl font-black font-mono text-emerald-700">73</h3>
               <span class="text-[10px] text-emerald-600 font-bold">على رأس العمل</span>
             </div>
 
             <!-- 3. Outside KSA -->
             <div class="card-elevated p-3.5 text-center border-t-4 border-blue-600">
               <span class="text-[11px] font-bold text-slate-500 block mb-1">خارج السعودية</span>
-              <h3 id="muqKpiOutside" class="text-2xl font-black font-mono text-blue-700">8</h3>
+              <h3 id="muqKpiOutside" class="text-2xl font-black font-mono text-blue-700">7</h3>
               <span class="text-[10px] text-blue-600 font-bold">تأشيرة خروج وعودة</span>
             </div>
 
@@ -1153,21 +1153,21 @@
             <!-- 5. Expiring Soon -->
             <div class="card-elevated p-3.5 text-center border-t-4 border-amber-500">
               <span class="text-[11px] font-bold text-slate-500 block mb-1">تشارف على الانتهاء</span>
-              <h3 id="muqKpiExpiring" class="text-2xl font-black font-mono text-amber-700">17</h3>
+              <h3 id="muqKpiExpiring" class="text-2xl font-black font-mono text-amber-700">16</h3>
               <span class="text-[10px] text-amber-700 font-bold">خلال 60 يوماً</span>
             </div>
 
             <!-- 6. Expired -->
             <div class="card-elevated p-3.5 text-center border-t-4 border-rose-600">
               <span class="text-[11px] font-bold text-slate-500 block mb-1">منتهية (تتطلب تجديد)</span>
-              <h3 id="muqKpiExpired" class="text-2xl font-black font-mono text-rose-700">80</h3>
+              <h3 id="muqKpiExpired" class="text-2xl font-black font-mono text-rose-700">61</h3>
               <span class="text-[10px] text-rose-600 font-bold">سداد الرسوم وتجديد</span>
             </div>
 
             <!-- 7. Monthly Qiwa Fees -->
             <div class="card-elevated p-3.5 text-center border-t-4 border-purple-600">
               <span class="text-[11px] font-bold text-slate-500 block mb-1">المقابل المالي (شهرياً)</span>
-              <h3 id="muqKpiFees" class="text-xl font-black font-mono text-purple-800">73,600 ر.س</h3>
+              <h3 id="muqKpiFees" class="text-xl font-black font-mono text-purple-800">58,400 ر.س</h3>
               <span class="text-[10px] text-slate-500">800 ر.س / عامل داخل المملكة</span>
             </div>
 
@@ -1180,7 +1180,7 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </div>
               <div>
-                <span class="font-black text-amber-950 block">بيانات تقرير مقيم مستوردة بالكامل من ملف: "المقيمين النشطين10_5_2026.xlsx"</span>
+                <span class="font-black text-amber-950 block">بيانات تقرير مقيم مطابقة لموظفي الشركة الوافدين في قاعدة البيانات (80 مقيماً نشطاً)</span>
                 <span class="text-[11px] text-amber-800">يمكنك تعديل أي مقيم، تغيير حالة التواجد (داخل / خارج السعودية)، أو إضافة مقيمين جدد مع احتساب فوري للمؤشرات ورخص العمل.</span>
               </div>
             </div>
@@ -1198,22 +1198,22 @@
               <!-- Filter Tabs -->
               <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold overflow-x-auto max-w-full">
                 <button onclick="filterMuqeem('all')" id="btnMuqFilterAll" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm">
-                  الكل (<span id="countMuqAll">100</span>)
+                  الكل (<span id="countMuqAll">80</span>)
                 </button>
                 <button onclick="filterMuqeem('inside_ksa')" id="btnMuqFilterInside" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
-                  داخل السعودية (<span id="countMuqInside">92</span>)
+                  داخل السعودية (<span id="countMuqInside">73</span>)
                 </button>
                 <button onclick="filterMuqeem('outside_ksa')" id="btnMuqFilterOutside" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
-                  خارج السعودية (<span id="countMuqOutside">8</span>)
+                  خارج السعودية (<span id="countMuqOutside">7</span>)
                 </button>
                 <button onclick="filterMuqeem('expiring_soon')" id="btnMuqFilterExpiring" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
-                  تشارف على الانتهاء (<span id="countMuqExpiring">17</span>)
+                  تشارف على الانتهاء (<span id="countMuqExpiring">16</span>)
                 </button>
                 <button onclick="filterMuqeem('valid')" id="btnMuqFilterValid" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
                   سارية (<span id="countMuqValid">3</span>)
                 </button>
                 <button onclick="filterMuqeem('expired')" id="btnMuqFilterExpired" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
-                  منتهية (<span id="countMuqExpired">80</span>)
+                  منتهية (<span id="countMuqExpired">61</span>)
                 </button>
               </div>
 
@@ -1253,7 +1253,7 @@
                 <i class="fa-solid fa-shield-halved text-emerald-600"></i>
                 نظام مقيم المتكامل: يتم احتساب مؤشرات رخص العمل والاقامات بناء على البيانات الرسمية المستوردة لشركة جوهرة المجد.
               </span>
-              <span id="muqTableCountLabel" class="font-bold text-slate-700">عرض 100 مقيم</span>
+              <span id="muqTableCountLabel" class="font-bold text-slate-700">عرض 80 مقيماً</span>
             </div>
 
           </div>

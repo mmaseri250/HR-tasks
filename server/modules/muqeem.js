@@ -264,9 +264,13 @@ function syncFromExcel() {
   let inserted = 0;
   let updated = 0;
 
+  const expatEmps = query('SELECT national_id, full_name_ar, gender, nationality, job_title_ar, iqama_expiry, passport_expiry FROM employees WHERE is_saudi = 0');
+  const expatMap = new Map();
+  expatEmps.forEach(e => expatMap.set(String(e.national_id).trim(), e));
+
   for (const row of data) {
     const iqama = String(row['رقم الاقامة'] || '').trim();
-    if (!iqama) continue;
+    if (!iqama || !expatMap.has(iqama)) continue;
 
     const fullName = String(row['الاسم'] || '').trim();
     const gender = String(row['الجنس'] || 'ذكر').trim();
@@ -317,7 +321,11 @@ function syncFromExcel() {
     syncEmployeeExpiry(iqama, iqamaExpiryGregorian, passportExpiry);
   }
 
-  return { success: true, message: `تمت مزامنة بيانات مقيم بنجاح: ${inserted} جديد، ${updated} محدث`, count: data.length };
+  // Delete any resident not in the company's active employee database
+  run('DELETE FROM muqeem_residents WHERE iqama_number NOT IN (SELECT national_id FROM employees WHERE is_saudi = 0)');
+
+  const finalCount = get('SELECT count(*) as cnt FROM muqeem_residents').cnt;
+  return { success: true, message: `تمت مزامنة بيانات مقيم بنجاح: ${inserted} جديد، ${updated} محدث (المطابق للموظفين: ${finalCount})`, count: finalCount };
 }
 
 module.exports = {
