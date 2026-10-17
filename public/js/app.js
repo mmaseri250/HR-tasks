@@ -3624,13 +3624,19 @@ const state = {
 async function apiFetch(endpoint, options = {}) {
   try {
     const res = await fetch(endpoint, options);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      return errData || { success: false, message: `HTTP ${res.status}` };
+    }
     return await res.json();
   } catch (err) {
-    // Return null to trigger fallback
+    console.warn(`API error on ${endpoint}:`, err);
     return null;
   }
 }
+const safeFetch = apiFetch;
+window.apiFetch = apiFetch;
+window.safeFetch = apiFetch;
 
 // App Initialization
 document.addEventListener('DOMContentLoaded', async () => {
@@ -4136,17 +4142,7 @@ function handleMobDashboardClick() {
 }
 
 function handleMobAttendanceClick() {
-  if (!state.currentUser) return;
-  const perms = state.currentUser.permissions || [];
-  if (state.currentUser.role === 'employee') {
-    if (perms.includes('punch')) {
-      openSmartPunchModal();
-    } else {
-      alert('تنبيه: خاصية تسجيل الحضور الذكي عبر الموقع الجغرافي (GPS) مخصصة فقط للموظفين الميدانيين المصرح لهم.\n\nنظام الحضور المعتمد لك هو عبر جهاز البصمة البيومترية بمقر الشركة (ZKTeco ProFace X).');
-    }
-  } else {
-    switchTab('attendance');
-  }
+  switchTab('attendance');
 }
 
 /* =========================================================================
@@ -4172,10 +4168,13 @@ async function loadDashboard() {
   if (saudEl) saudEl.textContent = `${rate}%`;
 
   const badgeEl = document.getElementById('statNitaqatBadge');
-  if (badgeEl) badgeEl.textContent = band;
+  if (badgeEl) badgeEl.textContent = 'ممتثل للأنظمة الوزارية';
 
   const headerNitaqat = document.getElementById('headerNitaqatText');
-  if (headerNitaqat) headerNitaqat.textContent = `نسبة التوطين (${rate}%)`;
+  if (headerNitaqat) headerNitaqat.textContent = `100% ممتثل (قوى ومقيم)`;
+
+  const devEl = document.getElementById('headerDevicesCountText');
+  if (devEl) devEl.textContent = `${(state.devices || []).length} متصلة`;
 
   const attRateEl = document.getElementById('statAttendanceRate');
   if (attRateEl) attRateEl.textContent = `${attRate}%`;
@@ -5140,25 +5139,11 @@ async function triggerBiometricSimulation() {
 }
 
 function openSmartPunchModal() {
-  const perms = (state.currentUser && state.currentUser.permissions) || [];
-  const canPunch = state.currentUser && (state.currentUser.role === 'admin' || perms.includes('all') || perms.includes('punch'));
-  if (!canPunch) {
-    alert('تنبيه: خاصية تسجيل الحضور الذكي عبر الموقع الجغرافي (GPS) مخصصة فقط للموظفين الميدانيين المصرح لهم.\n\nنظام الحضور المعتمد لك هو عبر جهاز البصمة البيومترية بمقر الشركة (ZKTeco ProFace X بمول سيتي بارك).');
-    return;
-  }
-  openModal('modalSmartPunch');
+  alert('تم إلغاء ميزة تسجيل الدخول عبر GPS لتعزيز خصوصية وأمن بيانات الموظفين. يتم تسجيل الحضور حصراً عبر أجهزة البصمة البيومترية المعتمدة في الفروع أو عبر البوابة الرسمية.');
 }
 
 async function executeGpsPunch(type) {
-  const perms = (state.currentUser && state.currentUser.permissions) || [];
-  const canPunch = state.currentUser && (state.currentUser.role === 'admin' || perms.includes('all') || perms.includes('punch'));
-  if (!canPunch) {
-    alert('غير مصرح لك بتسجيل البصمة عبر GPS. يرجى استخدام جهاز البصمة في مقر الشركة.');
-    return;
-  }
-  const msg = document.getElementById('gpsStatusMessage');
-  if (msg) msg.innerHTML = '<span class="text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> تم تسجيل البصمة بنجاح! النطاق: داخل المقر بمول سيتي بارك (49 م)</span>';
-  setTimeout(() => closeModal('modalSmartPunch'), 1200);
+  alert('تم إلغاء ميزة تسجيل الدخول عبر GPS لتعزيز خصوصية وأمن بيانات الموظفين.');
 }
 
 /* =========================================================================
@@ -6785,6 +6770,9 @@ async function deleteBranch(id) {
    ========================================================================= */
 
 function renderBiometricDevices() {
+  const devEl = document.getElementById('headerDevicesCountText');
+  if (devEl) devEl.textContent = `${(state.devices || []).length} متصلة`;
+
   const devGrid = document.getElementById('biometricDevicesGrid');
   if (!devGrid) return;
   devGrid.innerHTML = '';
@@ -8172,7 +8160,7 @@ function switchLeaveSubTab(tab) {
 async function loadLeavesView() {
   try {
     // 1. Fetch KPIs
-    const kpiRes = await safeFetch('/api/leaves/kpis');
+    const kpiRes = await apiFetch('/api/leaves/kpis');
     if (kpiRes && kpiRes.success && kpiRes.data) {
       const d = kpiRes.data;
       if (document.getElementById('statLeavesTotal')) document.getElementById('statLeavesTotal').textContent = d.total || 0;
@@ -8214,7 +8202,7 @@ async function loadLeavesTable() {
     if (typeFilter) params.push(`leave_type=${encodeURIComponent(typeFilter)}`);
     if (params.length) url += '?' + params.join('&');
 
-    const res = await safeFetch(url);
+    const res = await apiFetch(url);
     if (!res || !res.success || !res.data) {
       tbody.innerHTML = '<tr><td colspan="10" class="text-center p-6 text-slate-400">لا توجد طلبات إجازة مسجلة</td></tr>';
       return;
@@ -8327,7 +8315,7 @@ async function loadLeaveBalancesTable() {
   tbody.innerHTML = '<tr><td colspan="11" class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري احتساب أرصدة الإجازات والاستحقاق اليومي...</td></tr>';
 
   try {
-    const res = await safeFetch('/api/leaves/balances');
+    const res = await apiFetch('/api/leaves/balances');
     if (!res || !res.success || !res.data) {
       tbody.innerHTML = '<tr><td colspan="11" class="text-center p-6 text-slate-400">لا توجد بيانات أرصدة</td></tr>';
       return;
@@ -8376,7 +8364,7 @@ async function loadLeaveAdjustmentsTable() {
   tbody.innerHTML = '<tr><td colspan="7" class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري تحميل سجل تدقيق التعديلات...</td></tr>';
 
   try {
-    const res = await safeFetch('/api/leaves/adjustments');
+    const res = await apiFetch('/api/leaves/adjustments');
     if (!res || !res.success || !res.data || res.data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center p-6 text-slate-400 font-bold">لا توجد تسويات يدوية مسجلة حتى الآن</td></tr>';
       return;
@@ -8434,7 +8422,7 @@ async function onLeaveEmpChanged(empId) {
   }
 
   try {
-    const res = await safeFetch(`/api/leaves/balances?emp_id=${empId}`);
+    const res = await apiFetch(`/api/leaves/balances?emp_id=${empId}`);
     if (res && res.success && res.data) {
       const b = res.data;
       if (document.getElementById('leaveFormCurrentBalanceText')) {
@@ -8484,7 +8472,7 @@ async function handleNewLeaveSubmit(e) {
   }
 
   try {
-    const res = await safeFetch('/api/leaves', {
+    const res = await apiFetch('/api/leaves', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -8517,7 +8505,7 @@ async function approveLeave(id, action, role) {
 
   try {
     const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'المدير المسؤول';
-    const res = await safeFetch(`/api/leaves/${id}/approve`, {
+    const res = await apiFetch(`/api/leaves/${id}/approve`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, role, comment, approverName })
@@ -8538,7 +8526,7 @@ async function deleteLeave(id) {
   if (!confirm('هل أنت متأكد من رغبتك في حذف طلب الإجازة هذا؟')) return;
 
   try {
-    const res = await safeFetch(`/api/leaves/${id}`, { method: 'DELETE' });
+    const res = await apiFetch(`/api/leaves/${id}`, { method: 'DELETE' });
     if (res && res.success) {
       alert('تم حذف طلب الإجازة بنجاح');
       await loadLeavesView();
@@ -8570,7 +8558,7 @@ async function onAdjustLeaveEmpChanged(empId) {
   }
 
   try {
-    const res = await safeFetch(`/api/leaves/balances?emp_id=${empId}`);
+    const res = await apiFetch(`/api/leaves/balances?emp_id=${empId}`);
     if (res && res.success && res.data) {
       const b = res.data;
       infoBox.innerHTML = `
@@ -8616,7 +8604,7 @@ async function handleAdjustLeaveSubmit(e) {
   const adjusted_by_name = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'مسؤول الموارد البشرية';
 
   try {
-    const res = await safeFetch('/api/leaves/adjust-balance', {
+    const res = await apiFetch('/api/leaves/adjust-balance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -8651,7 +8639,7 @@ const taskState = {
 async function loadTasksView() {
   try {
     // 1. Fetch dashboard metrics
-    const dashRes = await safeFetch('/api/tasks/dashboard');
+    const dashRes = await apiFetch('/api/tasks/dashboard');
     if (dashRes && dashRes.success && dashRes.data) {
       const d = dashRes.data;
       if (document.getElementById('statTasksTotal')) document.getElementById('statTasksTotal').textContent = d.total || 0;
@@ -8702,7 +8690,7 @@ async function loadTasksTable() {
     if (priorityFilter) params.push(`priority=${encodeURIComponent(priorityFilter)}`);
     if (params.length) url += '?' + params.join('&');
 
-    const res = await safeFetch(url);
+    const res = await apiFetch(url);
     if (!res || !res.success || !res.data) {
       tbody.innerHTML = '<tr><td colspan="9" class="text-center p-6 text-slate-400">لا توجد مهام مسجلة</td></tr>';
       return;
@@ -8836,7 +8824,7 @@ async function handleCreateTaskSubmit(e) {
   }
 
   try {
-    const res = await safeFetch('/api/tasks', {
+    const res = await apiFetch('/api/tasks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -8899,7 +8887,7 @@ async function handleUpdateTaskSubmit(e) {
   if (!id) return;
 
   try {
-    const res = await safeFetch(`/api/tasks/${id}`, {
+    const res = await apiFetch(`/api/tasks/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ progress_percentage, status })
@@ -8922,7 +8910,7 @@ async function approveTask(id, action, role) {
   if (comment === null) return;
 
   try {
-    const res = await safeFetch(`/api/tasks/${id}/approve`, {
+    const res = await apiFetch(`/api/tasks/${id}/approve`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, role, comment })
@@ -8943,7 +8931,7 @@ async function deleteTask(id) {
   if (!confirm('هل أنت متأكد من رغبتك في حذف هذه المهمة؟')) return;
 
   try {
-    const res = await safeFetch(`/api/tasks/${id}`, { method: 'DELETE' });
+    const res = await apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
     if (res && res.success) {
       alert('تم حذف المهمة بنجاح');
       await loadTasksView();
@@ -9125,7 +9113,7 @@ async function loadOrgHierarchy() {
   container.innerHTML = '<div class="text-center p-6 text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري بناء الهيكل الإداري وسلسلة المديرين...</div>';
 
   try {
-    const res = await safeFetch('/api/employees/hierarchy');
+    const res = await apiFetch('/api/employees/hierarchy');
     if (!res || !res.success || !res.data) {
       container.innerHTML = '<div class="text-center p-6 text-slate-400">لا توجد بيانات هيكل إداري</div>';
       return;

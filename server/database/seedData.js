@@ -39,22 +39,27 @@ function seedDatabase() {
       updated_at = datetime('now')
   `);
 
-  // 1. Users System: Keep ONLY admin user
+  // 1. Users System: Admin and HR Manager users
   run(`DELETE FROM users`);
   run(`
     INSERT INTO users (id, username, password, full_name, email, role, permissions, emp_id, is_active)
-    VALUES (1, 'admin', 'Jj123', 'مدير النظام (Admin)', 'admin@jalmajd.com', 'admin', '["all"]', NULL, 1)
+    VALUES 
+    (1, 'admin', 'Jj123', 'مدير النظام (Admin)', 'admin@jalmajd.com', 'admin', '["all"]', NULL, 1),
+    (2, 'abdulmalik', 'Hr123', 'عبدالملك سعيد القحطاني', 'abdulmalik.saeed@jalmajd.com', 'hr', '["all"]', NULL, 1)
   `);
 
-  // 2. Departments: Seed exact 6 departments requested
+  // 2. Departments: Seed all departments from the official organizational statement
   run(`DELETE FROM departments`);
   const departments = [
-    { code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager: 'الرئيس التنفيذي', budget: 500000, loc: 'مقر أبها - الطابق الإداري' },
-    { code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager: 'هاني عبدالرحمن القحطاني', budget: 250000, loc: 'مقر أبها - مبنى الإدارة' },
-    { code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager: 'مدير المشتريات', budget: 350000, loc: 'مقر أبها - قسم المشتريات' },
-    { code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager: 'مدير المبيعات', budget: 400000, loc: 'مقر أبها - الإدارة التجارية' },
-    { code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager: 'مدير تقنية المعلومات', budget: 300000, loc: 'مقر أبها - مركز العمليات الرقمية' },
-    { code: 'MKT', name_ar: 'ادارة التسويق', name_en: 'Marketing Department', manager: 'مدير التسويق', budget: 200000, loc: 'مقر أبها - الجناح الإعلامي' }
+    { code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager: 'صالح سعيد القحطاني', budget: 500000, loc: 'مقر أبها - الطابق الإداري' },
+    { code: 'ENG', name_ar: 'الادارة الهندسية', name_en: 'Engineering Department', manager: 'فارس عبدالرحمن القحطاني', budget: 350000, loc: 'مقر أبها - قسم المشاريع' },
+    { code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager: 'عبدالملك سعيد القحطاني', budget: 250000, loc: 'مقر أبها - مبنى الإدارة' },
+    { code: 'FIN', name_ar: 'الادارة المالية', name_en: 'Finance Department', manager: 'هاني عبدالرحمن القحطاني', budget: 300000, loc: 'مقر أبها - الإدارة المالية' },
+    { code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager: 'هاني عبدالله عبدالكريم', budget: 350000, loc: 'مقر أبها - قسم المشتريات' },
+    { code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager: 'مشرف المبيعات', budget: 400000, loc: 'مقر أبها - الإدارة التجارية' },
+    { code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager: 'محمد شكيل', budget: 300000, loc: 'مقر أبها - مركز العمليات الرقمية' },
+    { code: 'MKT', name_ar: 'ادارة التسويق', name_en: 'Marketing Department', manager: 'مشرف التسويق', budget: 200000, loc: 'مقر أبها - الجناح الإعلامي' },
+    { code: 'TAQEEB', name_ar: 'التعقيب', name_en: 'Government Relations', manager: 'عبدالعزيز سعيد مفرح', budget: 150000, loc: 'مقر أبها - العلاقات الحكومية' }
   ];
 
   for (const dept of departments) {
@@ -169,32 +174,42 @@ function seedEmployees() {
   function resolveDeptId(emp) {
     const sec = emp.section_name || '';
     const dept = emp.department_name || '';
+    const job = emp.job_title_ar || '';
 
-    if (sec.includes('موارد') || sec.includes('HR')) {
-      return deptMap['HR'];
+    if (dept.includes('هندس') || sec.includes('هندس') || job.includes('مهندس') || job.includes('مشاريع')) {
+      return deptMap['ENG'] || deptMap['EXEC'];
     }
-    if (sec.includes('مشتريات') || sec.includes('مستودع') || sec.includes('خزنة')) {
-      return deptMap['PROC'];
+    if (dept.includes('مالي') || sec.includes('مالي') || job.includes('محاسب') || job.includes('المالي') || sec.includes('خزنة')) {
+      return deptMap['FIN'] || deptMap['EXEC'];
     }
-    if (sec.includes('تقنية') || sec.includes('معلومات') || sec.includes('IT')) {
-      return deptMap['IT'];
+    if (dept.includes('موارد') || sec.includes('موارد') || job.includes('موارد') || sec.includes('HR')) {
+      return deptMap['HR'] || deptMap['EXEC'];
     }
-    if (sec.includes('تسويق')) {
-      return deptMap['MKT'];
+    if (dept.includes('تعقيب') || sec.includes('تعقيب') || job.includes('معقب')) {
+      return deptMap['TAQEEB'] || deptMap['EXEC'];
+    }
+    if (sec.includes('تقنية') || sec.includes('شبكات') || sec.includes('حاسب') || job.includes('شبكات') || job.includes('تقنية') || sec.includes('IT')) {
+      return deptMap['IT'] || deptMap['EXEC'];
+    }
+    if (sec.includes('مشتريات') || sec.includes('مستودع') || job.includes('مشتريات') || job.includes('فرز')) {
+      return deptMap['PROC'] || deptMap['EXEC'];
+    }
+    if (sec.includes('تسويق') || job.includes('تسويق')) {
+      return deptMap['MKT'] || deptMap['EXEC'];
     }
     if (
       sec.includes('صالة') || sec.includes('صاله') || sec.includes('سوق') ||
       sec.includes('مخبز') || sec.includes('خضار') || sec.includes('محطة') ||
       sec.includes('بوفيه') || sec.includes('بسطة') || sec.includes('اجبان')
     ) {
-      return deptMap['SALES'];
+      return deptMap['SALES'] || deptMap['EXEC'];
     }
     return deptMap['EXEC'];
   }
 
   // Helper to resolve branch ID
   function resolveBranchId(emp) {
-    const dept = emp.department_name || '';
+    const dept = (emp.department_name || '') + ' ' + (emp.section_name || '');
     if (dept.includes('المنسك')) return brMap['BR-MANSAK-02'];
     if (dept.includes('حي الموظفين') || dept.includes('الموظفين')) return brMap['BR-MUWADAF-03'];
     if (dept.includes('محايل')) return brMap['BR-MUHAYIL-04'];
@@ -250,34 +265,48 @@ function seedEmployees() {
     ]);
   }
 
-  // 2. Map Direct Managers
+  // 2. Map Direct Managers according to the official organizational statement
   const insertedEmployees = query('SELECT id, emp_code, department_id, branch_id, job_title_ar, full_name_ar FROM employees');
-  const hrManager = insertedEmployees.find(e => e.emp_code === 'JM-1041'); // هاني عبدالرحمن صالح القحطاني
-  const cityParkSupervisor = insertedEmployees.find(e => e.emp_code === 'JM-1020'); // هاني علي شامي عسيري
-  const muwadafSupervisor = insertedEmployees.find(e => e.emp_code === 'JM-1097'); // علي سعد حسين البشري
+  const chairman = insertedEmployees.find(e => e.emp_code === 'JM-0001');
+  const viceChairman = insertedEmployees.find(e => e.emp_code === 'JM-0002');
+  const generalManager = insertedEmployees.find(e => e.emp_code === 'JM-0003');
+  const projectsManager = insertedEmployees.find(e => e.emp_code === 'JM-0004');
+  const hrManager = insertedEmployees.find(e => e.emp_code === 'JM-1000'); // عبدالملك سعيد القحطاني
+  const financeManager = insertedEmployees.find(e => e.emp_code === 'JM-1041'); // هاني عبدالرحمن صالح القحطاني
 
   const hrManagerId = hrManager ? hrManager.id : null;
-  const cityParkSupId = cityParkSupervisor ? cityParkSupervisor.id : hrManagerId;
-  const muwadafSupId = muwadafSupervisor ? muwadafSupervisor.id : hrManagerId;
+  const gmId = generalManager ? generalManager.id : null;
+  const vcId = viceChairman ? viceChairman.id : null;
+  const chId = chairman ? chairman.id : null;
+  const projId = projectsManager ? projectsManager.id : gmId;
+  const finId = financeManager ? financeManager.id : gmId;
+
+  // Link user 'abdulmalik' to his employee id in users table
+  if (hrManagerId) {
+    run('UPDATE users SET emp_id = ? WHERE username = ?', [hrManagerId, 'abdulmalik']);
+  }
 
   for (const emp of insertedEmployees) {
-    if (emp.emp_code === 'JM-1041') {
-      // HR Manager reports to Executive / General Manager
+    if (emp.emp_code === 'JM-0001') {
+      // Chairman has no direct manager
       run('UPDATE employees SET manager_id = NULL WHERE id = ?', [emp.id]);
-    } else if (emp.emp_code === 'JM-1020' || emp.emp_code === 'JM-1097' || emp.emp_code === 'JM-1043' || emp.emp_code === 'JM-1068' || emp.emp_code === 'JM-1073' || emp.emp_code === 'JM-1007') {
-      // Supervisors report directly to HR Manager
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [hrManagerId, emp.id]);
-    } else if (emp.emp_code === 'JM-1001' || emp.emp_code === 'JM-1053' || emp.emp_code === 'JM-1103') {
-      // HR Officers report to HR Manager
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [hrManagerId, emp.id]);
-    } else if (emp.branch_id === brMap['BR-MUWADAF-03']) {
-      // Staff in Hay Al-Muwadhafeen report to muwadafSupervisor
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [muwadafSupId, emp.id]);
-    } else if (emp.branch_id === brMap['BR-ABHA-01']) {
-      // Staff in Abha / City Park report to cityParkSupervisor
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [cityParkSupId, emp.id]);
+    } else if (emp.emp_code === 'JM-0002') {
+      // Vice Chairman reports to Chairman
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [chId, emp.id]);
+    } else if (emp.emp_code === 'JM-0003') {
+      // General Manager reports to Vice Chairman
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [vcId, emp.id]);
+    } else if (emp.emp_code === 'JM-0004' || emp.emp_code === 'JM-1041' || emp.emp_code === 'JM-1000') {
+      // Executive Directors report to General Manager
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [gmId, emp.id]);
+    } else if (emp.emp_code === 'JM-1071') {
+      // Civil Engineer reports to Projects Manager
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [projId, emp.id]);
+    } else if (emp.emp_code === 'JM-1003' || emp.emp_code === 'JM-1002') {
+      // Accountants report to Finance Manager
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [finId, emp.id]);
     } else {
-      // Other branches report to HR Manager by default
+      // All other staff across the company report directly to HR Manager Abdulmalik Saeed Al-Qahtani
       run('UPDATE employees SET manager_id = ? WHERE id = ?', [hrManagerId, emp.id]);
     }
   }

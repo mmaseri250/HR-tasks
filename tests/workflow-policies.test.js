@@ -23,7 +23,7 @@ console.log('✓ نجح: إنشاء وحذف سياسة دوام مفتوحة ا
 
 // 2. Departments Management Test
 const depts = db.query('SELECT * FROM departments');
-assert.strictEqual(depts.length, 6, 'يجب أن تتوفر 6 إدارات أساسية معتمدة');
+assert.strictEqual(depts.length, 9, 'يجب أن تتوفر 9 إدارات أساسية معتمدة وفق البيان التنظيمي');
 console.log(`✓ نجح: ربط الإدارات بعدد ${depts.length} إدارة مع مدراء الإدارات`);
 
 // 3. Branches Management Test

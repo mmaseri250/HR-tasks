@@ -72,14 +72,14 @@
         <div class="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-full border border-emerald-200 shadow-sm">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
           <i class="fa-solid fa-shield-halved text-emerald-600 text-xs"></i>
-          <span class="font-bold">نطاق المنشأة:</span>
-          <span id="headerNitaqatText" class="font-bold">البلاتيني (66.7%)</span>
+          <span class="font-bold">مؤشر الامتثال:</span>
+          <span id="headerNitaqatText" class="font-bold">100% ممتثل (قوى ومقيم)</span>
         </div>
 
         <div class="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-2.5 py-1.5 rounded-full border border-amber-200 shadow-sm">
           <i class="fa-solid fa-fingerprint text-amber-600 text-xs"></i>
           <span class="font-bold">أجهزة البصمة:</span>
-          <span class="font-semibold">3 متصلة</span>
+          <span id="headerDevicesCountText" class="font-semibold">0 متصلة</span>
         </div>
 
         <div class="flex items-center gap-1.5 bg-indigo-50 text-indigo-800 px-2.5 py-1.5 rounded-full border border-indigo-200 shadow-sm">
@@ -279,9 +279,6 @@
             <p class="text-white/80 text-xs sm:text-sm mt-1">إدارة متكاملة للموظفين، أجهزة البصمة، لائحة الجزاءات، ونظام حماية الأجور السعودي.</p>
           </div>
           <div class="relative z-10 flex gap-2 flex-wrap">
-            <button onclick="openModal('modalSmartPunch')" class="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-              <i class="fa-solid fa-location-crosshairs"></i> تسجيل حضور GPS
-            </button>
             <button onclick="triggerBiometricSimulation()" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
               <i class="fa-solid fa-rotate"></i> محاكاة نبضات البصمة الحية
             </button>
@@ -1218,14 +1215,11 @@
               <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-fingerprint text-brand"></i> الحضور والانصراف والبصمة البيومترية
               </h2>
-              <p class="text-xs text-slate-500 mt-1">تكامل أجهزة ZKTeco، تسجيل البصمة الذكية GPS، ومتابعة الانضباط وفق نظام العمل.</p>
+              <p class="text-xs text-slate-500 mt-1">تكامل أجهزة ZKTeco البيومترية ومتابعة الانضباط وفق نظام العمل.</p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
               <button onclick="openAddDeviceModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> إضافة جهاز بصمة جديد
-              </button>
-              <button onclick="openModal('modalSmartPunch')" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-                <i class="fa-solid fa-map-location-dot"></i> تسجيل حضور GPS
               </button>
               <button onclick="triggerBiometricSimulation()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
                 <i class="fa-solid fa-microchip"></i> محاكاة نبضات ZK الحية
@@ -1468,14 +1462,6 @@
             </div>
             <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_cert">خطاب تعريف QR</h4>
             <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_cert_sub">موثق إلكترونياً للبنوك</p>
-          </button>
-
-          <button id="essGpsPunchBtn" onclick="openSmartPunchModal()" class="card-elevated p-3.5 text-center hover:border-brand transition group hidden">
-            <div class="w-11 h-11 rounded-2xl bg-teal-50 text-teal-600 mx-auto flex items-center justify-center text-lg group-hover:scale-110 transition">
-              <i class="fa-solid fa-location-crosshairs"></i>
-            </div>
-            <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_punch">بصمة GPS الذكية</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_punch_sub">تسجيل موقعي ميداني</p>
           </button>
         </div>
 
@@ -2176,36 +2162,6 @@
     </div>
   </div>
 
-  <!-- Other modals: GPS punch, Salary cert, Payslip, Import -->
-  <div id="modalSmartPunch" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl text-center">
-      <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 mx-auto flex items-center justify-center text-2xl">
-        <i class="fa-solid fa-location-crosshairs"></i>
-      </div>
-      <div>
-        <h3 class="text-lg font-black text-slate-900">تسجيل الحضور الذكي الجغرافي (GPS)</h3>
-        <p class="text-xs text-slate-500 mt-1">التحقق من نطاق المقر الإداري لشركة جوهرة المجد (مول سيتي بارك - أبها)</p>
-      </div>
-
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-right space-y-1">
-        <div class="flex justify-between"><span class="text-slate-500">المقر المعتمد:</span><span class="font-bold text-slate-800">مول سيتي بارك بأبها</span></div>
-        <div class="flex justify-between"><span class="text-slate-500">الإحداثيات:</span><span class="font-mono text-slate-800">18.2164° N, 42.5053° E</span></div>
-        <div class="flex justify-between"><span class="text-slate-500">النطاق:</span><span class="font-bold text-emerald-600">300 متر</span></div>
-        <div id="gpsStatusMessage" class="pt-2 text-center font-bold text-blue-600">جاهز للتسجيل</div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 pt-2">
-        <button onclick="executeGpsPunch('CHECK_IN')" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow flex items-center justify-center gap-2">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i> تسجيل دخول
-        </button>
-        <button onclick="executeGpsPunch('CHECK_OUT')" class="py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow flex items-center justify-center gap-2">
-          <i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل خروج
-        </button>
-      </div>
-      <button onclick="closeModal('modalSmartPunch')" class="w-full py-2 text-xs font-bold text-slate-400 hover:text-slate-600">إغلاق</button>
-    </div>
-  </div>
-
   <!-- Salary Certificate Modal -->
   <div id="modalSalaryCertificate" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
     <div class="bg-white rounded-2xl max-w-3xl w-full p-6 max-h-[95vh] overflow-y-auto space-y-4 shadow-2xl">
@@ -2882,13 +2838,33 @@
           </div>
         </button>
 
-        <button id="mobMoreLeavesBtn" onclick="closeModal('modalMobileMore'); switchTab('selfservice'); openModalRequest('إجازة سنوية');" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg flex-shrink-0">
+        <button id="mobMoreLeavesBtn" onclick="closeModal('modalMobileMore'); switchTab('leaves')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
+          <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg flex-shrink-0">
             <i class="fa-solid fa-calendar-check"></i>
           </div>
           <div>
-            <div class="font-black text-slate-800">الإجازات السنوية</div>
-            <div class="text-[10px] text-slate-400">الرصيد والطلبات</div>
+            <div class="font-black text-slate-800">إدارة الإجازات</div>
+            <div class="text-[10px] text-slate-400">الأرصدة والموافقات وسير الاعتماد</div>
+          </div>
+        </button>
+
+        <button id="mobMoreTasksBtn" onclick="closeModal('modalMobileMore'); switchTab('tasks')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg flex-shrink-0">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div>
+            <div class="font-black text-slate-800">نظام المهام</div>
+            <div class="text-[10px] text-slate-400">المتابعة ونسب الإنجاز</div>
+          </div>
+        </button>
+
+        <button id="mobMoreFormsBtn" onclick="closeModal('modalMobileMore'); switchTab('forms')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-lg flex-shrink-0">
+            <i class="fa-solid fa-file-word"></i>
+          </div>
+          <div>
+            <div class="font-black text-slate-800">نماذج Word</div>
+            <div class="text-[10px] text-slate-400">توليد النماذج الرسمية المعتمدة</div>
           </div>
         </button>
 

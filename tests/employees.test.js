@@ -10,12 +10,12 @@ function runEmployeeAndRequestTests() {
 
   seedDatabase();
 
-  // Test 1: Verify Initial Database State (109 official employees, 0 demo biometric devices)
+  // Test 1: Verify Initial Database State (114 official employees, 0 demo biometric devices)
   const initialEmployees = employeesModule.getAllEmployees();
-  assert.strictEqual(initialEmployees.length, 109, 'يجب أن تحتوي قاعدة البيانات على 109 موظف رسمي من ملف جوهرة المجد');
+  assert.strictEqual(initialEmployees.length, 114, 'يجب أن تحتوي قاعدة البيانات على 114 موظفاً معتمداً (109 من الإكسل + 5 قياديين)');
   
   const depts = db.query('SELECT * FROM departments');
-  assert.strictEqual(depts.length, 6, 'يجب أن تتوفر الإدارات الـ 6 المطلوبة بالكامل');
+  assert.strictEqual(depts.length, 9, 'يجب أن تتوفر الإدارات الـ 9 المعتمدة في البيان التنظيمي');
 
   const branches = db.query('SELECT * FROM branches');
   assert.strictEqual(branches.length, 4, 'يجب أن تتوفر الفروع الـ 4 المطلوبة بالكامل');
@@ -24,18 +24,17 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(devices.length, 0, 'يجب أن تبدأ أجهزة البصمة بـ 0 بعد حذف الأجهزة التجريبية');
 
   const users = db.query('SELECT * FROM users');
-  assert.strictEqual(users.length, 1, 'يجب أن يحتوي النظام على حساب المدير العام فقط (admin)');
-  assert.strictEqual(users[0].username, 'admin', 'اسم مستخدم المدير العام يجب أن يكون admin');
+  assert.strictEqual(users.length, 2, 'يجب أن يحتوي النظام على حساب admin وحساب مدير الموارد البشرية abdulmalik');
 
   // Verify Compliance Metrics for Official Employees
   const compMetrics = employeesModule.getComplianceMetrics();
-  assert.strictEqual(compMetrics.metrics.totalEmployees, 109, 'يجب أن يكون إجمالي الموظفين 109 موظفاً معتمداً');
+  assert.strictEqual(compMetrics.metrics.totalEmployees, 114, 'يجب أن يكون إجمالي الموظفين 114 موظفاً معتمداً');
   assert.strictEqual(compMetrics.metrics.expatCount, 80, 'يجب أن يكون عدد غير السعوديين 80 موظفاً من واقع ملفات إكسل');
-  assert.strictEqual(compMetrics.metrics.saudiCount, 29, 'يجب أن يكون عدد السعوديين 29 موظفاً من واقع ملفات إكسل');
+  assert.strictEqual(compMetrics.metrics.saudiCount, 34, 'يجب أن يكون عدد السعوديين 34 موظفاً');
   assert.strictEqual(compMetrics.metrics.workPermits.active, 80, 'يجب أن تتوفر 80 رخصة عمل في قوى للمقيمين');
   assert.strictEqual(compMetrics.metrics.wps.complianceRate, 100, 'نسبة الالتزام بحماية الأجور يجب أن تكون 100%');
 
-  console.log('✓ نجح: التحقق من استيراد 109 موظف رسمي (29 سعودي + 80 مقيم)، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');
+  console.log('✓ نجح: التحقق من استيراد 114 موظف رسمي (34 سعودي + 80 مقيم)، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');
 
   // Test 2: Create Real Employee with branch and department
   const branch1 = branches[0];
@@ -113,8 +112,8 @@ function runEmployeeAndRequestTests() {
   // Test 8: Delete Employee (Clean up after test)
   employeesModule.deleteEmployee(created.id);
   const remaining = employeesModule.getAllEmployees();
-  assert.strictEqual(remaining.length, 109, 'يجب حذف الموظف التجريبي بنجاح ليبقى في النظام الـ 109 موظف رسمي');
-  console.log('✓ نجح: حذف الموظف وإعادة قاعدة البيانات لحالة الـ 109 موظف رسمي المعتمدين');
+  assert.strictEqual(remaining.length, 114, 'يجب حذف الموظف التجريبي بنجاح ليبقى في النظام الـ 114 موظف رسمي');
+  console.log('✓ نجح: حذف الموظف وإعادة قاعدة البيانات لحالة الـ 114 موظف رسمي المعتمدين');
 
   console.log('--- اكتملت اختبارات شؤون الموظفين والخدمة الذاتية بنجاح 100% ---\n');
 }
