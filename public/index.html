@@ -2459,7 +2459,7 @@
             <select id="userFormRole" required onchange="onUserRoleChanged(this.value)" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
               <option value="employee">موظف (Employee - بوابة الخدمة الذاتية والطلبات فقط)</option>
               <option value="dept_manager">مدير إدارة / مشرف (اعتماد ومتابعة الفريق)</option>
-              <option value="hr_manager">مسؤول موارد بشرية (HR Specialist)</option>
+              <option value="hr_manager">قسم الموارد البشرية (كافة الصلاحيات باستثناء تعديل الحضور والأرصدة والحذف)</option>
               <option value="admin">مدير عام النظام (Super Admin - كامل الصلاحيات)</option>
             </select>
           </div>
@@ -2485,13 +2485,6 @@
               <input type="checkbox" id="perm_payslips" checked class="rounded text-brand focus:ring-brand">
               <span><strong>قسيمة الراتب وخطاب التعريف QR</strong></span>
             </label>
-            <label class="flex items-start gap-2 p-2 rounded-lg bg-amber-50/70 border border-amber-200 hover:bg-amber-100/60 cursor-pointer sm:col-span-2">
-              <input type="checkbox" id="perm_punch" class="mt-0.5 rounded text-brand focus:ring-brand">
-              <div>
-                <span class="font-bold text-slate-900">السماح بتسجيل الحضور الذكي الجغرافي (GPS)</span>
-                <span class="block text-[10px] text-slate-500 font-semibold mt-0.5">مخصص للموظفين الميدانيين أو المصرح لهم فقط. (الافتراضي بدون تحديد: يطبق عليهم جهاز البصمة المكتبي ZKTeco في الشركة).</span>
-              </div>
-            </label>
             <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer">
               <input type="checkbox" id="perm_approvals" class="rounded text-brand focus:ring-brand">
               <span><strong>اعتماد ومراجعة طلبات الموظفين</strong></span>
@@ -2502,7 +2495,7 @@
             </label>
             <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer">
               <input type="checkbox" id="perm_attendance" class="rounded text-brand focus:ring-brand">
-              <span>سجلات الحضور العامة والبصمة</span>
+              <span>سجلات الحضور العامة والبصمة (عرض)</span>
             </label>
             <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer">
               <input type="checkbox" id="perm_penalties" class="rounded text-brand focus:ring-brand">
@@ -2512,10 +2505,29 @@
               <input type="checkbox" id="perm_payroll" class="rounded text-brand focus:ring-brand">
               <span>مسيرات الرواتب وحماية الأجور</span>
             </label>
-            <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer sm:col-span-2">
+            <label class="flex items-center gap-2 p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer">
               <input type="checkbox" id="perm_users" class="rounded text-brand focus:ring-brand">
               <span>إدارة المستخدمين والصلاحيات (Admin)</span>
             </label>
+
+            <!-- Restricted Permissions Section -->
+            <div class="sm:col-span-2 pt-2 border-t border-slate-200 space-y-2">
+              <span class="block text-[10px] font-bold text-rose-700"><i class="fa-solid fa-shield-halved"></i> صلاحيات حساسة (محظورة تماماً على قسم الموارد البشرية):</span>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <label class="flex items-center gap-2 p-1.5 rounded-lg bg-rose-50/50 border border-rose-200 cursor-pointer text-rose-900">
+                  <input type="checkbox" id="perm_edit_attendance" class="rounded text-rose-600 focus:ring-rose-500">
+                  <span>تعديل الحضور والانصراف</span>
+                </label>
+                <label class="flex items-center gap-2 p-1.5 rounded-lg bg-rose-50/50 border border-rose-200 cursor-pointer text-rose-900">
+                  <input type="checkbox" id="perm_edit_balances" class="rounded text-rose-600 focus:ring-rose-500">
+                  <span>تعديل وتسوية الأرصدة</span>
+                </label>
+                <label class="flex items-center gap-2 p-1.5 rounded-lg bg-rose-50/50 border border-rose-200 cursor-pointer text-rose-900">
+                  <input type="checkbox" id="perm_delete" class="rounded text-rose-600 focus:ring-rose-500">
+                  <span>الحذف النهائي للسجلات</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3940,7 +3952,7 @@
           </div>
           <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
             <span class="text-slate-400 block text-[11px] font-bold">الحالة الاجتماعية:</span>
-            <span id="p360MaritalStatus" class="font-bold text-slate-800 mt-0.5 block">متزوج / مقيم بالمملكة</span>
+            <span id="p360MaritalStatus" class="font-bold text-slate-500 mt-0.5 block">غير مسجل</span>
           </div>
         </div>
       </div>

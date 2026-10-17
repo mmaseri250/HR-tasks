@@ -607,11 +607,160 @@ async function handleLoginSubmit(e) {
   }
 }
 
+function canEditAttendance() {
+  if (!state.currentUser) return false;
+  const role = state.currentUser.role;
+  const perms = state.currentUser.permissions || [];
+  return role === 'admin' || perms.includes('all') || perms.includes('edit_attendance');
+}
+
+function canEditBalances() {
+  if (!state.currentUser) return false;
+  const role = state.currentUser.role;
+  const perms = state.currentUser.permissions || [];
+  return role === 'admin' || perms.includes('all') || perms.includes('edit_balances');
+}
+
+function canDelete() {
+  if (!state.currentUser) return false;
+  const role = state.currentUser.role;
+  const perms = state.currentUser.permissions || [];
+  return role === 'admin' || perms.includes('all') || perms.includes('delete');
+}
+
+function printTable(targetId) {
+  let targetEl = document.getElementById(targetId);
+  if (!targetEl) {
+    console.warn(`Table element #${targetId} not found`);
+    return;
+  }
+  
+  let tableEl = targetEl;
+  if (targetEl.tagName.toLowerCase() === 'tbody') {
+    tableEl = targetEl.closest('table') || targetEl;
+  }
+
+  const tableClone = tableEl.cloneNode(true);
+  tableClone.querySelectorAll('button, .actions-col, [title="إجراءات"], [title="الإجراءات"]').forEach(el => el.remove());
+
+  const printWindow = window.open('', '_blank', 'width=1000,height=750');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  const currentDate = new Date().toLocaleDateString('ar-SA', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>طباعة تقرير - شركة جوهرة المجد للمقاولات</title>
+      <style>
+        @page { size: A4 landscape; margin: 15mm; }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          direction: rtl;
+          color: #1e293b;
+          padding: 20px;
+          margin: 0;
+          background: #fff;
+        }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 2px solid #0f766e;
+          padding-bottom: 12px;
+          margin-bottom: 20px;
+        }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-area img { height: 55px; }
+        .company-title { font-size: 16px; font-weight: 900; color: #0f766e; margin: 0; }
+        .company-sub { font-size: 11px; color: #64748b; margin: 2px 0 0 0; }
+        .report-meta { text-align: left; font-size: 11px; color: #475569; }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 11px;
+          margin-top: 10px;
+        }
+        th, td {
+          border: 1px solid #cbd5e1;
+          padding: 8px 10px;
+          text-align: right;
+        }
+        th {
+          background-color: #f1f5f9;
+          font-weight: bold;
+          color: #0f172a;
+        }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .footer {
+          margin-top: 25px;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 10px;
+          display: flex;
+          justify-content: space-between;
+          font-size: 10px;
+          color: #94a3b8;
+        }
+        @media print {
+          body { padding: 0; }
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div class="logo-area">
+          <img src="assets/logo.png" onerror="this.style.display='none'">
+          <div>
+            <h1 class="company-title">شركة جوهرة المجد للمقاولات</h1>
+            <p class="company-sub">نظام إدارة الموارد البشرية والامتثال الحكومي</p>
+          </div>
+        </div>
+        <div class="report-meta">
+          <div><strong>تاريخ الطباعة:</strong> ${currentDate}</div>
+          <div><strong>المرجع:</strong> JM-HRMS-REP-${Date.now().toString().slice(-6)}</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        ${tableClone.outerHTML}
+      </div>
+
+      <div class="footer">
+        <div>تم استخراج هذا التقرير آلياً من نظام موارد بشرية جوهرة المجد - سري ورسمي</div>
+        <div>صفحة 1 من 1</div>
+      </div>
+      <script>
+        window.onload = function() {
+          window.print();
+          setTimeout(function() { window.close(); }, 500);
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+window.printTable = printTable;
+window.canEditAttendance = canEditAttendance;
+window.canEditBalances = canEditBalances;
+window.canDelete = canDelete;
+
 function applyRolePermissions() {
   if (!state.currentUser) return;
   const role = state.currentUser.role;
   const perms = state.currentUser.permissions || [];
   const hasAll = role === 'admin' || perms.includes('all');
+  const isHr = role === 'hr_manager';
 
   // 1. Dashboard Desktop Navigation item
   const navDashboard = document.getElementById('nav-dashboard');
@@ -640,7 +789,7 @@ function applyRolePermissions() {
     }
   }
 
-  // 3. Header Users Button
+  // 3. Header Users Button - only Admin or explicit 'users' permission
   const headerUsers = document.getElementById('headerUsersBtn');
   if (headerUsers) {
     if (hasAll || perms.includes('users')) {
@@ -657,7 +806,10 @@ function applyRolePermissions() {
     adminTabs.forEach(t => {
       const el = document.getElementById(`nav-${t}`);
       if (el) {
-        if (t === 'employees-db' && (perms.includes('employees') || role === 'dept_manager')) {
+        if (isHr && t !== 'users') {
+          // HR Department has access to all operational modules
+          el.classList.remove('hidden');
+        } else if (t === 'employees-db' && (perms.includes('employees') || role === 'dept_manager')) {
           el.classList.remove('hidden');
         } else if (t === 'compliance' && (perms.includes('compliance') || role === 'dept_manager')) {
           el.classList.remove('hidden');
@@ -665,11 +817,13 @@ function applyRolePermissions() {
           el.classList.remove('hidden');
         } else if (t === 'penalties' && perms.includes('penalties')) {
           el.classList.remove('hidden');
-        } else if (t === 'attendance' && (perms.includes('attendance') || perms.includes('punch'))) {
+        } else if (t === 'attendance' && perms.includes('attendance')) {
           el.classList.remove('hidden');
         } else if (t === 'users' && perms.includes('users')) {
           el.classList.remove('hidden');
         } else if (t === 'organization' && (perms.includes('organization') || role === 'dept_manager')) {
+          el.classList.remove('hidden');
+        } else if ((t === 'branches' || t === 'data-exchange' || t === 'docs') && isHr) {
           el.classList.remove('hidden');
         } else {
           el.classList.add('hidden');
@@ -679,12 +833,12 @@ function applyRolePermissions() {
 
     // Mobile Bottom Nav customization
     const mobEmp = document.getElementById('mobNavEmployees');
-    if (mobEmp) mobEmp.style.display = (perms.includes('employees') || role === 'dept_manager') ? '' : 'none';
+    if (mobEmp) mobEmp.style.display = (isHr || perms.includes('employees') || role === 'dept_manager') ? '' : 'none';
     
     const mobAtt = document.getElementById('mobNavAttendance');
     if (mobAtt) {
       if (role === 'employee') {
-        mobAtt.style.display = perms.includes('punch') ? '' : 'none';
+        mobAtt.style.display = 'none';
       } else {
         mobAtt.style.display = '';
       }
@@ -694,13 +848,13 @@ function applyRolePermissions() {
     if (mobUsers) mobUsers.style.display = perms.includes('users') ? '' : 'none';
 
     const mobPayroll = document.getElementById('mobMorePayrollBtn');
-    if (mobPayroll) mobPayroll.style.display = perms.includes('payroll') ? '' : 'none';
+    if (mobPayroll) mobPayroll.style.display = (isHr || perms.includes('payroll')) ? '' : 'none';
 
     const mobCompliance = document.getElementById('mobMoreComplianceBtn');
-    if (mobCompliance) mobCompliance.style.display = (perms.includes('compliance') || role === 'dept_manager') ? '' : 'none';
+    if (mobCompliance) mobCompliance.style.display = (isHr || perms.includes('compliance') || role === 'dept_manager') ? '' : 'none';
 
     const mobPenalties = document.getElementById('mobMorePenaltiesBtn');
-    if (mobPenalties) mobPenalties.style.display = perms.includes('penalties') ? '' : 'none';
+    if (mobPenalties) mobPenalties.style.display = (isHr || perms.includes('penalties')) ? '' : 'none';
   } else {
     adminTabs.forEach(t => {
       const el = document.getElementById(`nav-${t}`);
@@ -734,14 +888,10 @@ function applyRolePermissions() {
     if (mobDashboardBtn) mobDashboardBtn.setAttribute('data-tab', 'dashboard');
   }
 
-  // 6. ESS GPS Smart Punch quick action visibility (restricted by default)
+  // 6. ESS GPS Smart Punch completely disabled
   const essGpsPunchBtn = document.getElementById('essGpsPunchBtn');
   if (essGpsPunchBtn) {
-    if (hasAll || perms.includes('punch')) {
-      essGpsPunchBtn.classList.remove('hidden');
-    } else {
-      essGpsPunchBtn.classList.add('hidden');
-    }
+    essGpsPunchBtn.classList.add('hidden');
   }
 }
 
@@ -915,8 +1065,16 @@ function switchTab(tabId) {
     if (tabId === 'employees-db' && !perms.includes('employees')) {
       tabId = 'selfservice';
     }
-    if (tabId === 'attendance' && !perms.includes('attendance') && !perms.includes('punch')) {
+    if (tabId === 'attendance' && !perms.includes('attendance')) {
       tabId = 'selfservice';
+    }
+  }
+
+  // Security guard for HR Department (users tab restricted to admin):
+  if (state.currentUser && state.currentUser.role === 'hr_manager') {
+    const perms = state.currentUser.permissions || [];
+    if (tabId === 'users' && !perms.includes('users')) {
+      tabId = 'dashboard';
     }
   }
 
@@ -1737,6 +1895,7 @@ function openEmployee360Modal(id) {
   setT('p360BirthDate', emp.birth_date ? emp.birth_date : 'غير مسجل');
   setT('p360Phone', emp.phone ? emp.phone : 'غير متوفر');
   setT('p360Email', emp.email ? emp.email : 'غير مسجل');
+  setT('p360MaritalStatus', emp.marital_status ? emp.marital_status : 'غير مسجل');
 
   // Tab 2: Contract
   setT('c360JoinDate', emp.join_date ? emp.join_date : 'غير متوفر');
@@ -2006,6 +2165,10 @@ function editEmployee(id) {
 }
 
 function deleteEmployeePrompt(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية الحذف النهائي للموظفين مقيدة ومخصصة لمدير النظام العام (Super Admin) فقط.');
+    return;
+  }
   if (!confirm('هل أنت متأكد من رغبتك في حذف هذا الموظف؟')) return;
   state.employees = state.employees.filter(e => e.id !== id);
   apiFetch(`/api/employees/${id}`, { method: 'DELETE' });
@@ -2216,6 +2379,10 @@ function renderIssuedPenaltiesTable(list) {
 }
 
 async function deletePenaltyDecision(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية حذف القرارات الجزائية مقيدة ومخصصة للمدير العام للنظام (Super Admin) فقط.');
+    return;
+  }
   const dec = (state.issuedPenalties || []).find(x => x.id === Number(id));
   const decNo = dec ? dec.decision_no : `#${id}`;
   const empName = dec ? ` للموظف (${dec.full_name_ar})` : '';
@@ -2456,9 +2623,11 @@ function renderPolicies() {
             <button onclick="openAddPolicyModal(${p.id})" title="تعديل السياسة" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-xs">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
+            ${canDelete() ? `
             <button onclick="deletePolicy(${p.id})" title="حذف السياسة" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
               <i class="fa-solid fa-trash"></i>
             </button>
+            ` : ''}
           </div>
         </div>
 
@@ -2599,6 +2768,10 @@ async function handlePolicyFormSubmit(e) {
 }
 
 async function deletePolicy(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية حذف سياسات الدوام مقيدة ومخصصة لمدير النظام العام فقط.');
+    return;
+  }
   if (!confirm('هل أنت متأكد من حذف سياسة الدوام هذه؟')) return;
   state.policies = (state.policies || []).filter(p => p.id !== Number(id));
   await apiFetch(`/api/policies/${id}`, { method: 'DELETE' });
@@ -2998,9 +3171,11 @@ function renderMuqeemTable(list) {
             <button onclick="toggleMuqeemLocation(${r.id}, ${isOutside ? 0 : 1})" title="${isOutside ? 'تحويل إلى داخل السعودية' : 'تحويل إلى خارج السعودية'}" class="px-2 py-1 rounded-lg ${isOutside ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'} font-bold flex items-center gap-1 text-[11px] transition">
               <i class="fa-solid ${isOutside ? 'fa-plane-arrival' : 'fa-plane-departure'}"></i> ${isOutside ? 'دخول' : 'خروج'}
             </button>
+            ${canDelete() ? `
             <button onclick="deleteMuqeemResident(${r.id})" title="حذف المقيم" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold flex items-center gap-1 text-[11px] transition">
               <i class="fa-solid fa-trash"></i>
             </button>
+            ` : ''}
           </div>
         </td>
       </tr>
@@ -3176,6 +3351,10 @@ async function handleMuqeemResidentSubmit(e) {
 }
 
 async function deleteMuqeemResident(id) {
+  if (!canDelete()) {
+    showToast('عذراً، صلاحية حذف المقيمين مقيدة ومخصصة للمدير العام فقط.', 'error');
+    return;
+  }
   if (!confirm('هل أنت متأكد من رغبتك في حذف هذا المقيم من تقرير مقيم؟')) return;
   try {
     const res = await apiFetch(`/api/compliance/muqeem/${id}`, { method: 'DELETE' });
@@ -4576,9 +4755,11 @@ function renderOrganization() {
             <button onclick="openAddDepartmentModal(${d.id})" title="تعديل الإدارة" class="w-6 h-6 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-[11px]">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
+            ${canDelete() ? `
             <button onclick="deleteDepartment(${d.id})" title="حذف الإدارة" class="w-6 h-6 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-[11px]">
               <i class="fa-solid fa-trash"></i>
             </button>
+            ` : ''}
           </div>
         </div>
         <div>
@@ -4684,6 +4865,10 @@ async function handleDepartmentFormSubmit(e) {
 }
 
 async function deleteDepartment(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية حذف الإدارات مقيدة ومخصصة لمدير النظام العام فقط.');
+    return;
+  }
   if (!confirm('هل أنت متأكد من حذف هذه الإدارة؟\nملاحظة: تأكد من عدم وجود موظفين مرتبطين بهذه الإدارة.')) return;
   state.departments = state.departments.filter(d => d.id !== Number(id));
   await apiFetch(`/api/departments/${id}`, { method: 'DELETE' });
@@ -4721,9 +4906,11 @@ function renderBranches() {
             <button onclick="openAddBranchModal(${b.id})" title="تعديل الفرع" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-xs transition">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
+            ${canDelete() ? `
             <button onclick="deleteBranch(${b.id})" title="حذف الفرع" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs transition">
               <i class="fa-solid fa-trash"></i>
             </button>
+            ` : ''}
           </div>
         </div>
 
@@ -4859,6 +5046,10 @@ async function handleBranchFormSubmit(e) {
 }
 
 async function deleteBranch(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية حذف الفروع مقيدة ومخصصة لمدير النظام العام فقط.');
+    return;
+  }
   if (!confirm('هل أنت متأكد من حذف هذا الفرع؟\nملاحظة: تأكد من عدم ارتباط موظفين أو أجهزة بصمة به.')) return;
   state.branches = (state.branches || []).filter(b => b.id !== Number(id));
   await apiFetch(`/api/branches/${id}`, { method: 'DELETE' });
@@ -5127,13 +5318,15 @@ function onEmployeeUserLinkSelected(empId) {
 function onUserRoleChanged(role) {
   const reqCheck = document.getElementById('perm_requests');
   const payCheck = document.getElementById('perm_payslips');
-  const punchCheck = document.getElementById('perm_punch');
   const appCheck = document.getElementById('perm_approvals');
   const empCheck = document.getElementById('perm_employees');
   const attCheck = document.getElementById('perm_attendance');
   const penCheck = document.getElementById('perm_penalties');
   const salCheck = document.getElementById('perm_payroll');
   const userCheck = document.getElementById('perm_users');
+  const editAttCheck = document.getElementById('perm_edit_attendance');
+  const editBalCheck = document.getElementById('perm_edit_balances');
+  const delCheck = document.getElementById('perm_delete');
 
   if (role === 'admin') {
     toggleAllPermissions(true);
@@ -5141,22 +5334,35 @@ function onUserRoleChanged(role) {
     toggleAllPermissions(false);
     if (reqCheck) reqCheck.checked = true;
     if (payCheck) payCheck.checked = true;
-    if (punchCheck) punchCheck.checked = false; // GPS punch restricted by default (ZKTeco device is standard)
   } else if (role === 'dept_manager') {
     toggleAllPermissions(false);
     if (reqCheck) reqCheck.checked = true;
     if (payCheck) payCheck.checked = true;
     if (appCheck) appCheck.checked = true;
     if (attCheck) attCheck.checked = true;
-    if (punchCheck) punchCheck.checked = false;
   } else if (role === 'hr_manager') {
-    toggleAllPermissions(true);
-    if (userCheck) userCheck.checked = false;
+    // قسم الموارد البشرية: كافة الصلاحيات متاحة باستثناء تعديل الحضور والأرصدة والحذف
+    toggleAllPermissions(false);
+    if (reqCheck) reqCheck.checked = true;
+    if (payCheck) payCheck.checked = true;
+    if (appCheck) appCheck.checked = true;
+    if (empCheck) empCheck.checked = true;
+    if (attCheck) attCheck.checked = true;
+    if (penCheck) penCheck.checked = true;
+    if (salCheck) salCheck.checked = true;
+    if (userCheck) userCheck.checked = false; // إدارة المستخدمين مقتصرة على الأدمن
+    if (editAttCheck) editAttCheck.checked = false; // محظور على قسم الموارد البشرية
+    if (editBalCheck) editBalCheck.checked = false; // محظور على قسم الموارد البشرية
+    if (delCheck) delCheck.checked = false; // محظور على قسم الموارد البشرية
   }
 }
 
 function toggleAllPermissions(checked) {
-  const perms = ['requests', 'payslips', 'punch', 'approvals', 'employees', 'attendance', 'penalties', 'payroll', 'users'];
+  const perms = [
+    'requests', 'payslips', 'approvals', 'employees',
+    'attendance', 'penalties', 'payroll', 'users',
+    'edit_attendance', 'edit_balances', 'delete'
+  ];
   perms.forEach(p => {
     const el = document.getElementById(`perm_${p}`);
     if (el) el.checked = checked;
@@ -5224,7 +5430,11 @@ function editUserAccount(userId) {
 
   const perms = Array.isArray(user.permissions) ? user.permissions : [];
   const isSuper = user.role === 'admin' || perms.includes('all');
-  const permKeys = ['requests', 'payslips', 'punch', 'approvals', 'employees', 'attendance', 'penalties', 'payroll', 'users'];
+  const permKeys = [
+    'requests', 'payslips', 'approvals', 'employees',
+    'attendance', 'penalties', 'payroll', 'users',
+    'edit_attendance', 'edit_balances', 'delete'
+  ];
 
   permKeys.forEach(k => {
     const chk = document.getElementById(`perm_${k}`);
@@ -5254,7 +5464,11 @@ async function handleAddUserSubmit(e) {
   }
 
   const perms = [];
-  const permKeys = ['requests', 'payslips', 'punch', 'approvals', 'employees', 'attendance', 'penalties', 'payroll', 'users'];
+  const permKeys = [
+    'requests', 'payslips', 'approvals', 'employees',
+    'attendance', 'penalties', 'payroll', 'users',
+    'edit_attendance', 'edit_balances', 'delete'
+  ];
   permKeys.forEach(k => {
     const chk = document.getElementById(`perm_${k}`);
     if (chk && chk.checked) perms.push(k);
@@ -5333,13 +5547,15 @@ function renderUsersTable() {
       all: 'كامل الصلاحيات',
       requests: 'الخدمة الذاتية',
       payslips: 'قسائم الرواتب',
-      punch: 'بصمة GPS',
       approvals: 'الاعتمادات',
       employees: 'قاعدة الموظفين',
       attendance: 'الحضور والبصمة',
       penalties: 'لائحة الجزاءات',
       payroll: 'مسيرات الرواتب',
-      users: 'إدارة المستخدمين'
+      users: 'إدارة المستخدمين',
+      edit_attendance: 'تعديل الحضور',
+      edit_balances: 'تعديل الأرصدة',
+      delete: 'الحذف النهائي'
     };
 
     let permsBadges = perms.map(p => `<span class="inline-block text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold">${permLabels[p] || p}</span>`).join(' ');
@@ -5359,7 +5575,7 @@ function renderUsersTable() {
             <button onclick="editUserAccount(${u.id})" class="text-blue-600 hover:text-blue-800 font-bold text-xs px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 transition shadow-sm" title="تعديل الصلاحيات والحساب">
               <i class="fa-solid fa-user-pen"></i> تعديل الصلاحيات
             </button>
-            ${u.username === 'admin' ? '' : `
+            ${(u.username === 'admin' || !canDelete()) ? '' : `
               <button onclick="deleteUserAccount(${u.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 transition" title="حذف المستخدم">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
@@ -5372,6 +5588,10 @@ function renderUsersTable() {
 }
 
 async function deleteUserAccount(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية حذف المستخدمين مقيدة ومخصصة لمدير النظام العام (Super Admin) فقط.');
+    return;
+  }
   if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
   await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
   state.users = state.users.filter(u => u.id !== id);
@@ -5389,6 +5609,10 @@ function executeImportEmployees() {
 }
 
 function executeImportAttendance() {
+  if (!canEditAttendance()) {
+    alert('عذراً، صلاحية استيراد وتعديل سجلات الحضور والانصراف مقيدة ومخصصة لمدير النظام العام فقط.');
+    return;
+  }
   alert('تم استيراد سجلات البصمة بنجاح');
   closeModal('modalImportAttendance');
 }
@@ -6385,9 +6609,11 @@ function renderLeavesTableRows(leaves) {
       <button onclick="openFormModal('leave_request', 'نموذج طلب إجازة', ${l.emp_id}, { startDate: '${l.start_date}', endDate: '${l.end_date}', days: ${l.days_count}, reason: '${safeReason}' })" title="توليد مستند Word رسمي (.docx)" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center text-xs transition">
         <i class="fa-solid fa-file-word"></i>
       </button>
+      ${canDelete() ? `
       <button onclick="deleteLeave(${l.id})" title="حذف طلب الإجازة" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs transition">
         <i class="fa-solid fa-trash"></i>
       </button>
+      ` : ''}
     </div>`;
 
     return `
@@ -6576,9 +6802,15 @@ function renderLeaveBalancesTable() {
         <td class="p-2.5 px-3 font-mono font-bold text-rose-600 text-center cell-nowrap-ellipsis" title="الإجازات المستهلكة: -${b.used_days} يوم">-${b.used_days} يوم</td>
         <td class="p-2.5 px-3 text-center cell-nowrap-ellipsis bg-emerald-50/40">${balanceBadge}</td>
         <td class="p-2.5 px-3 text-center cell-nowrap-ellipsis">
+          ${canEditBalances() ? `
           <button onclick="openAdjustLeaveModal(${b.emp_id})" class="px-2.5 py-1 rounded-lg bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-[11px] transition inline-flex items-center gap-1 shadow-xs" title="تسوية يدوية للرصيد">
-            <i class="fa-solid fa-sliders"></i> تعديل (HR)
+            <i class="fa-solid fa-sliders"></i> تسوية الرصيد
           </button>
+          ` : `
+          <span class="text-slate-400 text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 border border-slate-200 inline-flex items-center gap-1" title="تعديل وتسوية الأرصدة مقيد ومخصص للإدارة العامة فقط">
+            <i class="fa-solid fa-lock text-[10px]"></i> مقيد
+          </span>
+          `}
         </td>
       </tr>
     `;
@@ -6774,6 +7006,10 @@ async function approveLeave(id, action, role) {
 }
 
 async function deleteLeave(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية حذف طلبات الإجازات مقيدة ومخصصة لمدير النظام العام فقط.');
+    return;
+  }
   if (!confirm('هل أنت متأكد من رغبتك في حذف طلب الإجازة هذا؟')) return;
 
   try {
@@ -6790,6 +7026,10 @@ async function deleteLeave(id) {
 }
 
 function openAdjustLeaveModal(empId) {
+  if (!canEditBalances()) {
+    alert('عذراً، صلاحية تعديل وتسوية أرصدة الإجازات مقيدة ومخصصة للإدارة العليا والمدير العام فقط.');
+    return;
+  }
   populateLeaveEmpSelects();
   const sel = document.getElementById('adjustLeaveEmpId');
   if (sel && empId) {
@@ -6840,6 +7080,10 @@ async function onAdjustLeaveEmpChanged(empId) {
 
 async function handleAdjustLeaveSubmit(e) {
   e.preventDefault();
+  if (!canEditBalances()) {
+    alert('عذراً، صلاحية تعديل وتسوية أرصدة الإجازات مقيدة ومخصصة للإدارة العليا والمدير العام فقط.');
+    return;
+  }
 
   const emp_id = document.getElementById('adjustLeaveEmpId')?.value;
   const adjType = document.getElementById('adjustLeaveType')?.value;
@@ -7022,9 +7266,11 @@ function renderTasksTableRows(tasks) {
     }
 
     actions += `
+      ${canDelete() ? `
       <button onclick="deleteTask(${t.id})" title="حذف المهمة" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs transition">
         <i class="fa-solid fa-trash"></i>
       </button>
+      ` : ''}
     </div>`;
 
     return `
@@ -7262,6 +7508,10 @@ async function approveTask(id, action, role) {
 }
 
 async function deleteTask(id) {
+  if (!canDelete()) {
+    alert('عذراً، صلاحية حذف المهام مقيدة ومخصصة لمدير النظام العام فقط.');
+    return;
+  }
   if (!confirm('هل أنت متأكد من رغبتك في حذف هذه المهمة؟')) return;
 
   try {

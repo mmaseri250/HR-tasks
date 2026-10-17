@@ -17,11 +17,11 @@
     "phone": "",
     "email": "",
     "leave_balance": 0,
-    "basic_salary": 16000,
+    "basic_salary": 0,
     "housing_allowance": 0,
     "transport_allowance": 0,
     "other_allowance": 0,
-    "total_salary": 16000,
+    "total_salary": 0,
     "iban": ""
   },
   {
@@ -42,11 +42,11 @@
     "phone": "",
     "email": "",
     "leave_balance": 0,
-    "basic_salary": 18000,
+    "basic_salary": 0,
     "housing_allowance": 0,
     "transport_allowance": 0,
     "other_allowance": 0,
-    "total_salary": 18000,
+    "total_salary": 0,
     "iban": ""
   },
   {
@@ -67,11 +67,11 @@
     "phone": "",
     "email": "",
     "leave_balance": 0,
-    "basic_salary": 22000,
+    "basic_salary": 0,
     "housing_allowance": 0,
     "transport_allowance": 0,
     "other_allowance": 0,
-    "total_salary": 22000,
+    "total_salary": 0,
     "iban": ""
   },
   {
@@ -92,11 +92,11 @@
     "phone": "",
     "email": "",
     "leave_balance": 0,
-    "basic_salary": 25000,
+    "basic_salary": 0,
     "housing_allowance": 0,
     "transport_allowance": 0,
     "other_allowance": 0,
-    "total_salary": 25000,
+    "total_salary": 0,
     "iban": ""
   },
   {
@@ -117,11 +117,11 @@
     "phone": "",
     "email": "",
     "leave_balance": 0,
-    "basic_salary": 30000,
+    "basic_salary": 0,
     "housing_allowance": 0,
     "transport_allowance": 0,
     "other_allowance": 0,
-    "total_salary": 30000,
+    "total_salary": 0,
     "iban": ""
   },
   {
