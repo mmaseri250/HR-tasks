@@ -59,11 +59,12 @@ body {
 
 /* Brand Helpers */
 .brand-gradient {
-  background: linear-gradient(135deg, #700c14 0%, #4a070d 100%);
+  background: linear-gradient(135deg, #700c14 0%, #4a070d 100%) !important;
 }
 
 .brand-gold-gradient {
-  background: linear-gradient(135deg, #d4af37 0%, #e67e22 100%);
+  background: linear-gradient(135deg, #700c14 0%, #8B0000 50%, #4a070d 100%) !important;
+  color: #ffffff !important;
 }
 
 .card-elevated {
@@ -440,4 +441,100 @@ html[dir="ltr"] #headerLangMenu {
   left: 0;
   right: auto;
 }
+
+/* =========================================================================
+   LEAVE BALANCES TABLE UX & ESS CARD ENHANCEMENTS
+   ========================================================================= */
+.leave-balances-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.leave-balances-table th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: #f8fafc;
+  white-space: nowrap;
+}
+
+.leave-balances-table td, 
+.leave-balances-table th {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.cell-nowrap-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+  html[dir="rtl"] .sticky-col-emp-code {
+    position: sticky;
+    right: 0;
+    z-index: 15;
+    background-color: #ffffff;
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.04);
+  }
+  html[dir="rtl"] .sticky-col-emp-name {
+    position: sticky;
+    right: 80px;
+    z-index: 14;
+    background-color: #ffffff;
+    box-shadow: -2px 0 4px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* ESS Action Grid & Cards */
+.ess-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 1280px) {
+  .ess-actions-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@media (min-width: 768px) and (max-width: 1279px) {
+  .ess-actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+@media (max-width: 639px) {
+  .ess-actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+.ess-action-card {
+  height: 100%;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.125rem 0.75rem;
+  text-align: center;
+  transition: all 0.25s ease-in-out;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.ess-action-card:hover {
+  transform: translateY(-2px);
+  border-color: #8B0000;
+  box-shadow: 0 10px 20px -5px rgba(139, 0, 0, 0.12);
+}
+
+
 

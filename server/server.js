@@ -1154,8 +1154,10 @@ app.get('/api/leaves/balances/:empId', (req, res) => {
 
 app.post('/api/leaves/adjust-balance', (req, res) => {
   try {
-    const { emp_id, adjustment_days, reason, adjusted_by } = req.body;
-    const updated = leavesModule.adjustLeaveBalance(emp_id, adjustment_days, reason, adjusted_by);
+    const { emp_id, adjustment_days, days_adjusted, reason, adjusted_by, adjusted_by_name } = req.body;
+    const days = days_adjusted !== undefined ? days_adjusted : adjustment_days;
+    const by = adjusted_by || adjusted_by_name;
+    const updated = leavesModule.adjustLeaveBalance(emp_id, days, reason, by);
     res.json({ success: true, message: 'تم تعديل وتحديث رصيد الإجازة بنجاح وتوثيقه في سجل التدقيق', data: updated });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

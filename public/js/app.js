@@ -9343,7 +9343,11 @@ const leaveState = {
   currentSubTab: 'requests',
   leaves: [],
   balances: [],
-  adjustments: []
+  adjustments: [],
+  balancesPage: 1,
+  balancesPageSize: 15,
+  balancesSearch: '',
+  balancesFilter: 'all'
 };
 
 function switchLeaveSubTab(tab) {
@@ -9556,39 +9560,170 @@ async function loadLeaveBalancesTable() {
     }
 
     leaveState.balances = res.data;
-
-    tbody.innerHTML = res.data.map(b => {
-      const entitlementBadge = b.annual_entitlement === 30 
-        ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">30 يوماً (> 5 سنوات)</span>'
-        : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">21 يوماً (≤ 5 سنوات)</span>';
-
-      return `
-        <tr class="hover:bg-slate-50/80 transition">
-          <td class="p-3 font-mono font-bold text-slate-800">${b.emp_code}</td>
-          <td class="p-3 font-bold text-slate-900">${b.full_name_ar}</td>
-          <td class="p-3 font-mono text-slate-600">${b.join_date || '-'}</td>
-          <td class="p-3 font-bold text-slate-700">${b.service_years} سنة</td>
-          <td class="p-3">${entitlementBadge}</td>
-          <td class="p-3 font-mono text-slate-500">${b.daily_accrual_rate} يوم/يوم</td>
-          <td class="p-3 font-mono font-bold text-slate-700">${b.base_balance}</td>
-          <td class="p-3 font-mono font-bold text-teal-700">+${b.accrued_days}</td>
-          <td class="p-3 font-mono font-bold text-rose-600">-${b.used_days}</td>
-          <td class="p-3">
-            <span class="px-2.5 py-1 rounded-xl text-xs font-mono font-black ${b.current_balance >= 10 ? 'bg-emerald-100 text-emerald-800' : (b.current_balance >= 0 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')}">
-              ${b.current_balance} يوم
-            </span>
-          </td>
-          <td class="p-3 text-center">
-            <button onclick="openAdjustLeaveModal(${b.emp_id})" class="px-2.5 py-1 rounded-lg bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-[11px] transition flex items-center gap-1 mx-auto">
-              <i class="fa-solid fa-sliders"></i> تعديل (HR)
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+    renderLeaveBalancesTable();
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="11" class="text-center p-6 text-rose-500 font-bold">فشل في تحميل أرصدة الإجازات: ${err.message}</td></tr>`;
   }
+}
+
+function renderLeaveBalancesTable() {
+  const tbody = document.getElementById('leaveBalancesTableBody');
+  const countEl = document.getElementById('leaveBalanceCountSummary');
+  const pagEl = document.getElementById('leaveBalancePaginationControls');
+  if (!tbody) return;
+
+  const allData = leaveState.balances || [];
+  const term = (leaveState.balancesSearch || '').trim().toLowerCase();
+  const filter = leaveState.balancesFilter || 'all';
+
+  // 1. Filtering
+  const filtered = allData.filter(b => {
+    // Search query match
+    if (term) {
+      const matchCode = (b.emp_code || '').toLowerCase().includes(term);
+      const matchName = (b.full_name_ar || '').toLowerCase().includes(term);
+      const matchJob = (b.job_title_ar || '').toLowerCase().includes(term);
+      const matchDept = (b.department_name || '').toLowerCase().includes(term);
+      if (!matchCode && !matchName && !matchJob && !matchDept) return false;
+    }
+
+    // Category filter match
+    const curBal = Number(b.current_balance) || 0;
+    if (filter === 'available') return curBal > 15;
+    if (filter === 'low') return curBal > 0 && curBal <= 15;
+    if (filter === 'zero') return curBal === 0;
+    if (filter === 'negative') return curBal < 0;
+    if (filter === 'entitle_30') return b.annual_entitlement === 30;
+    if (filter === 'entitle_21') return b.annual_entitlement === 21;
+
+    return true;
+  });
+
+  const totalItems = filtered.length;
+  const isAll = leaveState.balancesPageSize === 'all';
+  const pageSize = isAll ? totalItems : (parseInt(leaveState.balancesPageSize) || 15);
+  const totalPages = Math.max(1, Math.ceil(totalItems / (pageSize || 1)));
+
+  if (leaveState.balancesPage > totalPages) leaveState.balancesPage = totalPages;
+  if (leaveState.balancesPage < 1) leaveState.balancesPage = 1;
+
+  const startIndex = isAll ? 0 : (leaveState.balancesPage - 1) * pageSize;
+  const pagedList = isAll ? filtered : filtered.slice(startIndex, startIndex + pageSize);
+
+  // Update Summary label
+  if (countEl) {
+    if (totalItems === 0) {
+      countEl.textContent = 'لا توجد نتائج مطابقة لمعايير البحث';
+    } else {
+      const showingFrom = startIndex + 1;
+      const showingTo = Math.min(startIndex + pagedList.length, totalItems);
+      countEl.innerHTML = `عرض <span class="font-mono text-slate-800 font-black">${showingFrom} - ${showingTo}</span> من إجمالي <span class="font-mono text-brand font-black">${totalItems}</span> موظف ${!isAll ? `(الصفحة ${leaveState.balancesPage} من ${totalPages})` : ''}`;
+    }
+  }
+
+  // Render Pagination Controls
+  if (pagEl) {
+    if (totalPages <= 1 || isAll) {
+      pagEl.innerHTML = '';
+    } else {
+      let pagesHtml = '';
+      pagesHtml += `
+        <button onclick="goToLeaveBalancePage(1)" ${leaveState.balancesPage === 1 ? 'disabled class="px-2 py-1 rounded-lg border border-slate-200 text-slate-300 text-xs cursor-not-allowed"' : 'class="px-2 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs transition"'} title="الصفحة الأولى">
+          <i class="fa-solid fa-angles-right"></i>
+        </button>
+        <button onclick="goToLeaveBalancePage(${leaveState.balancesPage - 1})" ${leaveState.balancesPage <= 1 ? 'disabled class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-300 text-xs cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs transition"'} title="السابق">
+          <i class="fa-solid fa-chevron-right text-[10px]"></i> السابق
+        </button>
+      `;
+
+      const startPage = Math.max(1, leaveState.balancesPage - 2);
+      const endPage = Math.min(totalPages, startPage + 4);
+      for (let p = startPage; p <= endPage; p++) {
+        if (p === leaveState.balancesPage) {
+          pagesHtml += `<span class="px-3 py-1 rounded-lg bg-brand text-white font-mono text-xs font-black shadow-xs">${p}</span>`;
+        } else {
+          pagesHtml += `<button onclick="goToLeaveBalancePage(${p})" class="px-3 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-mono text-xs font-bold transition">${p}</button>`;
+        }
+      }
+
+      pagesHtml += `
+        <button onclick="goToLeaveBalancePage(${leaveState.balancesPage + 1})" ${leaveState.balancesPage >= totalPages ? 'disabled class="px-2.5 py-1 rounded-lg border border-slate-200 text-slate-300 text-xs cursor-not-allowed"' : 'class="px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs transition"'} title="التالي">
+          التالي <i class="fa-solid fa-chevron-left text-[10px]"></i>
+        </button>
+        <button onclick="goToLeaveBalancePage(${totalPages})" ${leaveState.balancesPage === totalPages ? 'disabled class="px-2 py-1 rounded-lg border border-slate-200 text-slate-300 text-xs cursor-not-allowed"' : 'class="px-2 py-1 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs transition"'} title="الصفحة الأخيرة">
+          <i class="fa-solid fa-angles-left"></i>
+        </button>
+      `;
+      pagEl.innerHTML = pagesHtml;
+    }
+  }
+
+  // Render Table Rows
+  if (pagedList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11" class="text-center p-8 text-slate-400 font-bold">لا توجد نتائج مطابقة للمعايير المحددة</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = pagedList.map(b => {
+    const entitlementBadge = b.annual_entitlement === 30 
+      ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 whitespace-nowrap" title="استحقاق 30 يوماً سنوياً (أكثر من 5 سنوات خدمة)">30 يوماً (> 5 سنين)</span>'
+      : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 whitespace-nowrap" title="استحقاق 21 يوماً سنوياً (5 سنوات خدمة أو أقل)">21 يوماً (≤ 5 سنين)</span>';
+
+    const curBal = Number(b.current_balance) || 0;
+    let balanceBadge = '';
+    if (curBal < 0) {
+      balanceBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-mono font-black bg-rose-100 text-rose-800 border border-rose-300 inline-block shadow-xs" title="رصيد سالب: ${curBal} يوم">${curBal} يوم</span>`;
+    } else if (curBal <= 5) {
+      balanceBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-mono font-black bg-amber-100 text-amber-800 border border-amber-300 inline-block shadow-xs" title="رصيد منخفض: ${curBal} يوم">${curBal} يوم</span>`;
+    } else {
+      balanceBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-mono font-black bg-emerald-100 text-emerald-800 border border-emerald-300 inline-block shadow-xs" title="رصيد متاح: ${curBal} يوم">${curBal} يوم</span>`;
+    }
+
+    const openingBadge = `<span class="px-2.5 py-1 rounded-xl text-xs font-mono font-bold bg-slate-100 text-slate-800 border border-slate-200 inline-block" title="الرصيد الافتتاحي المعتمد: ${b.base_balance} يوم">${b.base_balance} يوم</span>`;
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition h-12">
+        <td class="p-2.5 px-3 font-mono font-bold text-slate-800 sticky-col-emp-code text-right cell-nowrap-ellipsis" title="${b.emp_code}">${b.emp_code}</td>
+        <td class="p-2.5 px-3 font-bold text-slate-900 sticky-col-emp-name text-right cell-nowrap-ellipsis max-w-[200px]" title="${b.full_name_ar}">${b.full_name_ar}</td>
+        <td class="p-2.5 px-3 font-mono text-slate-600 text-center cell-nowrap-ellipsis" title="تاريخ المباشرة: ${b.join_date || '-'}">${b.join_date || '-'}</td>
+        <td class="p-2.5 px-3 font-bold text-slate-700 text-center cell-nowrap-ellipsis" title="سنوات الخدمة: ${b.service_years} سنة">${b.service_years} سنة</td>
+        <td class="p-2.5 px-3 text-center cell-nowrap-ellipsis">${entitlementBadge}</td>
+        <td class="p-2.5 px-3 font-mono text-slate-500 text-center cell-nowrap-ellipsis" title="معدل التراكم اليومي: ${b.daily_accrual_rate} يوم لكل يوم عمل">${b.daily_accrual_rate} يوم/يوم</td>
+        <td class="p-2.5 px-3 text-center cell-nowrap-ellipsis bg-slate-50/50">${openingBadge}</td>
+        <td class="p-2.5 px-3 font-mono font-bold text-teal-700 text-center cell-nowrap-ellipsis" title="المستحق المتراكم: +${b.accrued_days} يوم">+${b.accrued_days} يوم</td>
+        <td class="p-2.5 px-3 font-mono font-bold text-rose-600 text-center cell-nowrap-ellipsis" title="الإجازات المستهلكة: -${b.used_days} يوم">-${b.used_days} يوم</td>
+        <td class="p-2.5 px-3 text-center cell-nowrap-ellipsis bg-emerald-50/40">${balanceBadge}</td>
+        <td class="p-2.5 px-3 text-center cell-nowrap-ellipsis">
+          <button onclick="openAdjustLeaveModal(${b.emp_id})" class="px-2.5 py-1 rounded-lg bg-brand/10 hover:bg-brand text-brand hover:text-white font-bold text-[11px] transition inline-flex items-center gap-1 shadow-xs" title="تسوية يدوية للرصيد">
+            <i class="fa-solid fa-sliders"></i> تعديل (HR)
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function onLeaveBalanceSearch(term) {
+  leaveState.balancesSearch = term || '';
+  leaveState.balancesPage = 1;
+  renderLeaveBalancesTable();
+}
+
+function onLeaveBalanceFilterChange(filter) {
+  leaveState.balancesFilter = filter || 'all';
+  leaveState.balancesPage = 1;
+  renderLeaveBalancesTable();
+}
+
+function onLeaveBalancePageSizeChange(size) {
+  leaveState.balancesPageSize = size === 'all' ? 'all' : (parseInt(size) || 15);
+  leaveState.balancesPage = 1;
+  renderLeaveBalancesTable();
+}
+
+function goToLeaveBalancePage(page) {
+  leaveState.balancesPage = page;
+  renderLeaveBalancesTable();
 }
 
 async function loadLeaveAdjustmentsTable() {
@@ -9852,7 +9987,21 @@ async function handleAdjustLeaveSubmit(e) {
     if (res && res.success) {
       alert(res.message || 'تمت تسوية وتوثيق رصيد الموظف بنجاح في سجل التدقيق');
       closeModal('modalAdjustLeaveBalance');
-      await loadLeavesView();
+      
+      // Update in-memory balance without reloading entire view
+      if (res.data && leaveState.balances && leaveState.balances.length > 0) {
+        const targetId = Number(emp_id);
+        const bIdx = leaveState.balances.findIndex(b => Number(b.emp_id) === targetId);
+        if (bIdx !== -1) {
+          leaveState.balances[bIdx] = {
+            ...leaveState.balances[bIdx],
+            current_balance: res.data.current_balance !== undefined ? res.data.current_balance : res.data.balance_after,
+            manual_adjustment: res.data.manual_adjustment !== undefined ? res.data.manual_adjustment : ((leaveState.balances[bIdx].manual_adjustment || 0) + days_adjusted)
+          };
+        }
+      }
+      renderLeaveBalancesTable();
+      loadLeaveAdjustmentsTable();
     } else {
       alert('خطأ: ' + (res?.error || 'فشل في تسوية الرصيد'));
     }
@@ -10597,4 +10746,12 @@ window.exportMuqeemExcel = exportMuqeemExcel;
 window.onEssEmpSelected = onEssEmpSelected;
 window.completeEssTask = completeEssTask;
 window.refreshEssTasks = refreshEssTasks;
+
+// Leave Balances Enhanced UX Handlers
+window.renderLeaveBalancesTable = renderLeaveBalancesTable;
+window.onLeaveBalanceSearch = onLeaveBalanceSearch;
+window.onLeaveBalanceFilterChange = onLeaveBalanceFilterChange;
+window.onLeaveBalancePageSizeChange = onLeaveBalancePageSizeChange;
+window.goToLeaveBalancePage = goToLeaveBalancePage;
+
 

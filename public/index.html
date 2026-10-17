@@ -810,28 +810,61 @@
 
           <!-- Sub View 2: Balances Table -->
           <div id="subViewLeaveBalances" class="p-4 space-y-4 hidden">
-            <div class="flex justify-between items-center flex-wrap gap-2">
-              <p class="text-xs text-slate-500 font-semibold">الأرصدة الأساسية مستوردة من ملفات Excel المعتمدة، مع احتساب يومي تلقائي وفق نظام العمل (خدمة ≤ 5 سنوات: 21 يوم، > 5 سنوات: 30 يوماً).</p>
-              <div class="flex items-center gap-2">
-                <button onclick="openModal('modalAdjustLeaveBalance')" class="bg-brand hover:bg-brand-dark text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
-                  <i class="fa-solid fa-sliders"></i> تعديل رصيد موظف (صلاحية HR)
+            <!-- Balances Top Toolbar -->
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+              <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto">
+                <!-- Search Input -->
+                <div class="relative w-full sm:w-64">
+                  <input type="text" id="leaveBalanceSearchInput" oninput="onLeaveBalanceSearch(this.value)" placeholder="بحث بالاسم أو الرقم الوظيفي..." class="w-full rounded-xl border border-slate-300 py-2 pr-9 pl-3 text-xs focus:ring-2 focus:ring-[#8B0000] font-bold">
+                  <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400 text-xs"></i>
+                </div>
+                <!-- Filter by balance category -->
+                <select id="leaveBalanceFilterStatus" onchange="onLeaveBalanceFilterChange(this.value)" class="rounded-xl border border-slate-300 py-2 px-3 text-xs font-bold text-slate-700 bg-white">
+                  <option value="all">كافة الأرصدة</option>
+                  <option value="available">رصيد متاح (> 15 يوم)</option>
+                  <option value="low">رصيد منخفض (1-15 يوم)</option>
+                  <option value="zero">رصيد صفر (0 يوم)</option>
+                  <option value="negative">رصيد سالب (< 0 يوم)</option>
+                  <option value="entitle_30">استحقاق 30 يوماً</option>
+                  <option value="entitle_21">استحقاق 21 يوماً</option>
+                </select>
+                <!-- Page size selector -->
+                <select id="leaveBalancePageSize" onchange="onLeaveBalancePageSizeChange(this.value)" class="rounded-xl border border-slate-300 py-2 px-2.5 text-xs font-bold text-slate-700 bg-white">
+                  <option value="15">15 موظف / صفحة</option>
+                  <option value="25">25 موظف / صفحة</option>
+                  <option value="50">50 موظف / صفحة</option>
+                  <option value="100">100 موظف / صفحة</option>
+                  <option value="all">عرض الكل</option>
+                </select>
+              </div>
+
+              <div class="flex items-center gap-2 w-full lg:w-auto justify-between lg:justify-end">
+                <button onclick="openModal('modalAdjustLeaveBalance')" class="bg-brand hover:bg-brand-dark text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                  <i class="fa-solid fa-sliders"></i> تسوية وتعديل رصيد موظف (HR)
                 </button>
               </div>
             </div>
-            <div class="overflow-x-auto">
-              <table id="leaveBalancesTable" class="w-full text-right text-xs">
-                <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+
+            <!-- Balances Table Container -->
+            <div class="overflow-x-auto border border-slate-200 rounded-2xl max-h-[580px] overflow-y-auto scrollbar-thin">
+              <table id="leaveBalancesTable" class="leave-balances-table w-full text-right text-xs whitespace-nowrap">
+                <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 sticky top-0 z-20 shadow-xs">
                   <tr>
-                    <th class="p-3">الرقم الوظيفي</th>
-                    <th class="p-3">اسم الموظف</th>
-                    <th class="p-3">تاريخ المباشرة</th>
-                    <th class="p-3">سنوات الخدمة</th>
-                    <th class="p-3">الاستحقاق السنوي</th>
-                    <th class="p-3">المعدل اليومي</th>
-                    <th class="p-3">الرصيد الأساسي (إكسل)</th>
-                    <th class="p-3">المستحق اليومي</th>
-                    <th class="p-3">الأيام المستهلكة</th>
-                    <th class="p-3">الرصيد الفعلي الحالي</th>
+                    <th class="p-3 text-right sticky-col-emp-code">الرقم الوظيفي</th>
+                    <th class="p-3 text-right sticky-col-emp-name">اسم الموظف</th>
+                    <th class="p-3 text-center">تاريخ المباشرة</th>
+                    <th class="p-3 text-center">سنوات الخدمة</th>
+                    <th class="p-3 text-center">الاستحقاق السنوي</th>
+                    <th class="p-3 text-center">المعدل اليومي</th>
+                    <th class="p-3 text-center cursor-help bg-slate-200/70" title="يمثل الرصيد المعتمد للموظف عند بدء تشغيل النظام أو ترحيله من بيانات سابقة">
+                      <span class="inline-flex items-center justify-center gap-1">
+                        الرصيد الافتتاحي للإجازات
+                        <i class="fa-solid fa-circle-info text-slate-500 text-[11px]"></i>
+                      </span>
+                    </th>
+                    <th class="p-3 text-center">المستحق اليومي</th>
+                    <th class="p-3 text-center">الأيام المستهلكة</th>
+                    <th class="p-3 text-center bg-emerald-50/70">الرصيد الفعلي الحالي</th>
                     <th class="p-3 text-center">إجراءات</th>
                   </tr>
                 </thead>
@@ -839,6 +872,16 @@
                   <!-- Loaded via JS -->
                 </tbody>
               </table>
+            </div>
+
+            <!-- Balances Pagination Footer -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
+              <span id="leaveBalanceCountSummary" class="font-bold text-slate-600">
+                عرض 0 من أصل 0 موظف
+              </span>
+              <div id="leaveBalancePaginationControls" class="flex items-center gap-1 font-bold">
+                <!-- Injected via JS -->
+              </div>
             </div>
           </div>
 
@@ -1695,122 +1738,134 @@
            ===================================================================== -->
       <section id="view-selfservice" class="space-y-6 hidden">
         
-        <div class="card-elevated p-6 brand-gold-gradient text-white shadow-md relative overflow-hidden">
+        <!-- Top Banner: Employee Profile & Quick Snapshot -->
+        <div class="p-6 rounded-3xl bg-gradient-to-r from-[#700c14] via-[#8B0000] to-[#50080e] !bg-[#700c14] text-white shadow-xl relative overflow-hidden border border-amber-500/30">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
             <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-black text-white shadow border border-white/30">
+              <div class="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-3xl font-black text-amber-300 shadow border border-white/20">
                 <i class="fa-solid fa-user-astronaut"></i>
               </div>
               <div>
-                <span class="text-xs bg-white/25 px-2.5 py-0.5 rounded-full font-bold">بوابة الخدمة الذاتية للموظفين (ESS)</span>
-                <h2 id="essEmployeeName" class="text-2xl font-black mt-1">سارة عبدالله الشهري</h2>
+                <span class="text-xs bg-white/20 text-amber-200 px-3 py-0.5 rounded-full font-bold border border-white/20">بوابة الخدمة الذاتية للموظفين (ESS)</span>
+                <h2 id="essEmployeeName" class="text-2xl font-black mt-1 text-white">سارة عبدالله الشهري</h2>
                 <p id="essEmployeeTitle" class="text-xs text-white/90">أخصائية موارد بشرية وعلاقات موظفين • شركة جوهرة المجد</p>
-                <div class="mt-2 flex items-center gap-2">
-                  <span class="text-[11px] font-bold text-white/80">عرض ملف الموظف:</span>
-                  <select id="essEmpSelector" onchange="onEssEmpSelected(this.value)" class="rounded-xl border border-white/30 bg-white/20 text-white font-bold text-xs py-1 px-3 focus:outline-none">
+                <div class="mt-2.5 flex items-center gap-2">
+                  <span class="text-[11px] font-bold text-amber-200">عرض ملف الموظف:</span>
+                  <select id="essEmpSelector" onchange="onEssEmpSelected(this.value)" class="rounded-xl border border-amber-400/40 bg-black/40 text-white font-bold text-xs py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400">
                     <!-- Populated dynamically via JS -->
                   </select>
                 </div>
               </div>
             </div>
 
-            <div class="flex items-center gap-3 bg-white/20 backdrop-blur-md p-3 rounded-2xl border border-white/30 text-xs">
-              <div class="text-center px-3 border-l border-white/30">
-                <span class="block text-white/80">رصيد الإجازات السنوي</span>
-                <span id="essLeaveBalance" class="text-xl font-black font-mono">0 يوم</span>
+            <div class="flex items-center gap-3 bg-black/25 backdrop-blur-md p-3.5 rounded-2xl border border-white/20 text-xs">
+              <div class="text-center px-4 border-l border-white/20">
+                <span class="block text-amber-200/90 font-bold mb-0.5">رصيد الإجازات السنوي</span>
+                <span id="essLeaveBalance" class="text-2xl font-black font-mono text-white">0 يوم</span>
               </div>
-              <div class="text-center px-3">
-                <span class="block text-white/80">حالة العقد والوثائق</span>
-                <span class="text-xs font-bold text-emerald-300">سارية وموثقة</span>
+              <div class="text-center px-4">
+                <span class="block text-amber-200/90 font-bold mb-0.5">حالة العقد والوثائق</span>
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-300 bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-400/40">
+                  <i class="fa-solid fa-circle-check text-[10px]"></i> سارية وموثقة
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Quick ESS Actions -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          <button onclick="openModalRequest('إجازة')" class="card-elevated p-3.5 text-center hover:border-brand transition group">
-            <div class="w-11 h-11 rounded-2xl bg-rose-50 text-brand mx-auto flex items-center justify-center text-lg group-hover:scale-110 transition">
+        <!-- Section 1: Quick ESS Actions Grid -->
+        <div class="ess-actions-grid">
+          <!-- 1. طلب إجازة -->
+          <button type="button" onclick="openModalRequest('إجازة')" class="ess-action-card group" title="طلب إجازة: سنوية، مرضية، واضطرارية">
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-700 mx-auto flex items-center justify-center text-xl group-hover:scale-110 transition shadow-xs mb-2">
               <i class="fa-solid fa-calendar-plus"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_leave">طلب إجازة</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_leave_sub">سنوية، مرضية بتقرير، وغيرها</p>
+            <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_leave" title="طلب إجازة">طلب إجازة</h4>
+            <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_leave_sub" title="سنوية، مرضية، واضطرارية">سنوية، مرضية، واضطرارية</p>
           </button>
 
-          <!-- NEW: Business Mission Card -->
-          <button onclick="openModalRequest('مهمة عمل')" class="card-elevated p-3.5 text-center hover:border-brand transition group">
-            <div class="w-11 h-11 rounded-2xl bg-purple-50 text-purple-700 mx-auto flex items-center justify-center text-lg group-hover:scale-110 transition">
+          <!-- 2. طلب مهمة عمل -->
+          <button type="button" onclick="openModalRequest('مهمة عمل')" class="ess-action-card group" title="طلب مهمة عمل: انتداب وتكليف وزيارات فروع">
+            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 mx-auto flex items-center justify-center text-xl group-hover:scale-110 transition shadow-xs mb-2">
               <i class="fa-solid fa-briefcase"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_mission">طلب مهمة عمل</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_mission_sub">انتداب وتكليف وزيارات فروع</p>
+            <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_mission" title="طلب مهمة عمل">طلب مهمة عمل</h4>
+            <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_mission_sub" title="انتداب وتكليف وزيارات فروع">انتداب وتكليف وزيارات فروع</p>
           </button>
 
-          <button onclick="openModalRequest('سلفة مالية')" class="card-elevated p-3.5 text-center hover:border-brand transition group">
-            <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 mx-auto flex items-center justify-center text-lg group-hover:scale-110 transition">
+          <!-- 3. طلب سلفة مالية -->
+          <button type="button" onclick="openModalRequest('سلفة مالية')" class="ess-action-card group" title="طلب سلفة مالية: سلفة على الراتب مستردة">
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 mx-auto flex items-center justify-center text-xl group-hover:scale-110 transition shadow-xs mb-2">
               <i class="fa-solid fa-hand-holding-dollar"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_loan">طلب سلفة مالية</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_loan_sub">سلفة على الراتب مستردة</p>
+            <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_loan" title="طلب سلفة مالية">طلب سلفة مالية</h4>
+            <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_loan_sub" title="سلفة على الراتب مستردة">سلفة على الراتب مستردة</p>
           </button>
 
-          <button onclick="openModalRequest('استئذان')" class="card-elevated p-3.5 text-center hover:border-brand transition group">
-            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center text-lg group-hover:scale-110 transition">
+          <!-- 4. طلب استئذان -->
+          <button type="button" onclick="openModalRequest('استئذان')" class="ess-action-card group" title="طلب استئذان: خروج مؤقت ومراجعة رسمية">
+            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 mx-auto flex items-center justify-center text-xl group-hover:scale-110 transition shadow-xs mb-2">
               <i class="fa-solid fa-door-open"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_perm">طلب استئذان</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_perm_sub">خروج مؤقت ومراجعة رسمية</p>
+            <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_perm" title="طلب استئذان">طلب استئذان</h4>
+            <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_perm_sub" title="خروج مؤقت ومراجعة رسمية">خروج مؤقت ومراجعة رسمية</p>
           </button>
 
-          <button onclick="viewMyPayslip()" class="card-elevated p-3.5 text-center hover:border-brand transition group">
-            <div class="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 mx-auto flex items-center justify-center text-lg group-hover:scale-110 transition">
+          <!-- 5. قسيمة الراتب -->
+          <button type="button" onclick="viewMyPayslip()" class="ess-action-card group" title="قسيمة الراتب: استعراض مفردات راتبي والبدلات">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 mx-auto flex items-center justify-center text-xl group-hover:scale-110 transition shadow-xs mb-2">
               <i class="fa-solid fa-receipt"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_payslip">قسيمة الراتب</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_payslip_sub">استعراض مفردات راتبي</p>
+            <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_payslip" title="قسيمة الراتب">قسيمة الراتب</h4>
+            <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_payslip_sub" title="استعراض مفردات راتبي">استعراض مفردات راتبي</p>
           </button>
 
-          <button onclick="openSalaryCertificateModal()" class="card-elevated p-3.5 text-center hover:border-brand transition group">
-            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center text-lg group-hover:scale-110 transition">
+          <!-- 6. خطاب تعريف QR -->
+          <button type="button" onclick="openSalaryCertificateModal()" class="ess-action-card group" title="خطاب تعريف QR: موثق إلكترونياً للبنوك والجهات">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 mx-auto flex items-center justify-center text-xl group-hover:scale-110 transition shadow-xs mb-2">
               <i class="fa-solid fa-certificate"></i>
             </div>
-            <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_cert">خطاب تعريف QR</h4>
-            <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_cert_sub">موثق إلكترونياً للبنوك</p>
+            <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_cert" title="خطاب تعريف QR">خطاب تعريف QR</h4>
+            <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_cert_sub" title="موثق إلكترونياً للبنوك">موثق إلكترونياً للبنوك</p>
           </button>
-        <!-- =====================================================================
-             ESS SECTION: ASSIGNED TASKS (المهام والتكليفات المسندة إليك)
-             ===================================================================== -->
-        <div class="card-elevated p-6 space-y-4">
+        </div>
+
+        <!-- Section 2: Assigned Tasks to Current Employee -->
+        <div class="card-elevated p-6 space-y-5 w-full">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
             <div>
               <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-list-check" style="color: #8B0000;"></i> المهام والتكليفات المسندة إليك
-                <span id="essTasksBadge" class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full font-mono">0 مهمة</span>
+                <span id="essTasksBadge" class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full font-mono">0 مهمة</span>
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">متابعة وإنجاز كافة المهام والتكليفات المسندة إليك من الإدارة وتحديث نسبة الإنجاز حتى اكتمال المهمة.</p>
+              <p class="text-xs text-slate-500 mt-1">متابعة وإنجاز كافة المهام والتكليفات المسندة إليك من الإدارة وتحديث نسبة الإنجاز حتى اكتمال المهمة.</p>
             </div>
-            <button onclick="refreshEssTasks()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+            <button onclick="refreshEssTasks()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition shadow-xs">
               <i class="fa-solid fa-arrows-rotate"></i> تحديث المهام
             </button>
           </div>
 
-          <!-- 4 KPI counters for employee tasks -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
-              <span class="text-[11px] font-bold text-slate-500 block mb-0.5">إجمالي المهام المسندة</span>
-              <span id="essTasksTotalCount" class="text-xl font-mono font-black text-slate-800">0</span>
+          <!-- 4 Horizontal KPI counters for employee tasks -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <!-- 1. Total Assigned -->
+            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-center flex flex-col justify-center items-center">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">إجمالي المهام المسندة</span>
+              <span id="essTasksTotalCount" class="text-2xl font-mono font-black text-slate-800">0</span>
             </div>
-            <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-200 text-center">
-              <span class="text-[11px] font-bold text-blue-700 block mb-0.5">قيد التنفيذ</span>
-              <span id="essTasksInProgressCount" class="text-xl font-mono font-black text-blue-800">0</span>
+            <!-- 2. In Progress -->
+            <div class="p-3.5 bg-blue-50/80 rounded-2xl border border-blue-200 text-center flex flex-col justify-center items-center">
+              <span class="text-[11px] font-bold text-blue-700 block mb-1">قيد التنفيذ</span>
+              <span id="essTasksInProgressCount" class="text-2xl font-mono font-black text-blue-800">0</span>
             </div>
-            <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200 text-center">
-              <span class="text-[11px] font-bold text-amber-700 block mb-0.5">بانتظار الاعتماد</span>
-              <span id="essTasksPendingCount" class="text-xl font-mono font-black text-amber-800">0</span>
+            <!-- 3. Pending Approval / Overdue -->
+            <div class="p-3.5 bg-amber-50/80 rounded-2xl border border-amber-200 text-center flex flex-col justify-center items-center">
+              <span class="text-[11px] font-bold text-amber-700 block mb-1">بانتظار الاعتماد</span>
+              <span id="essTasksPendingCount" class="text-2xl font-mono font-black text-amber-800">0</span>
             </div>
-            <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center">
-              <span class="text-[11px] font-bold text-emerald-700 block mb-0.5">مهام مكتملة</span>
-              <span id="essTasksCompletedCount" class="text-xl font-mono font-black text-emerald-800">0</span>
+            <!-- 4. Completed -->
+            <div class="p-3.5 bg-emerald-50/80 rounded-2xl border border-emerald-200 text-center flex flex-col justify-center items-center">
+              <span class="text-[11px] font-bold text-emerald-700 block mb-1">مهام مكتملة</span>
+              <span id="essTasksCompletedCount" class="text-2xl font-mono font-black text-emerald-800">0</span>
             </div>
           </div>
 
@@ -1835,28 +1890,28 @@
           </div>
         </div>
 
-        <!-- Requests History Table -->
-        <div class="card-elevated p-6 space-y-4">
-          <div class="flex justify-between items-center">
+        <!-- Section 3: Requests & Approvals Workflow Table -->
+        <div class="card-elevated p-6 space-y-4 w-full">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
               <i class="fa-solid fa-list-check text-brand"></i> متابعة طلباتي ومسار الاعتمادات
             </h3>
             <div class="flex items-center gap-2 flex-wrap">
-              <button onclick="exportData('permissions', 'excel')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <button type="button" onclick="exportData('permissions', 'excel')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-file-excel"></i> تصدير Excel
               </button>
-              <button onclick="exportData('permissions', 'word')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <button type="button" onclick="exportData('permissions', 'word')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-file-word"></i> تصدير Word
               </button>
-              <button onclick="printTable('essRequestsTableBody')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <button type="button" onclick="printTable('essRequestsTableBody')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-print"></i> طباعة PDF
               </button>
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-right">
-              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-right whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
                 <tr>
                   <th class="py-3 px-3">رقم الطلب</th>
                   <th class="py-3 px-3">نوع الطلب</th>
