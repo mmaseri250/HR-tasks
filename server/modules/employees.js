@@ -120,10 +120,10 @@ function createEmployee(data) {
     Number(data.transport_allowance) || 0,
     Number(data.other_allowance) || 0,
     data.gosi_number || '',
-    data.bank_name || 'مصرف الراجحي',
-    data.bank_code || 'RJHI',
+    data.bank_name || '',
+    data.bank_code || '',
     data.iban || '',
-    data.annual_leave_balance !== undefined ? Number(data.annual_leave_balance) : 30,
+    data.annual_leave_balance !== undefined ? Number(data.annual_leave_balance) : 0,
     data.shift_type || 'دوام صباحي',
     data.status || 'نشط',
     data.role || 'employee'

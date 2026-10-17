@@ -60,7 +60,8 @@ function runEmployeeAndRequestTests() {
     transport_allowance: 1500,
     other_allowance: 500,
     bank_name: 'مصرف الراجحي',
-    iban: 'SA448000020160801002001'
+    iban: 'SA448000020160801002001',
+    annual_leave_balance: 30
   };
 
   const created = employeesModule.createEmployee(newEmpData);

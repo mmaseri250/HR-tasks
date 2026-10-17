@@ -73,20 +73,20 @@ function initSchema() {
       emp_code TEXT UNIQUE NOT NULL,
       full_name_ar TEXT NOT NULL,
       full_name_en TEXT NOT NULL,
-      national_id TEXT UNIQUE NOT NULL,
+      national_id TEXT UNIQUE,
       nationality TEXT NOT NULL,
       is_saudi INTEGER NOT NULL DEFAULT 1,
       gender TEXT CHECK(gender IN ('M', 'F')) NOT NULL,
       birth_date TEXT,
-      email TEXT UNIQUE NOT NULL,
-      phone TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
       department_id INTEGER,
       job_title_ar TEXT NOT NULL,
       job_title_en TEXT NOT NULL,
       grade_level TEXT,
       manager_id INTEGER,
       contract_type TEXT DEFAULT 'محدد المدة',
-      join_date TEXT NOT NULL,
+      join_date TEXT,
       contract_start TEXT,
       contract_end TEXT,
       iqama_expiry TEXT,
@@ -97,10 +97,13 @@ function initSchema() {
       transport_allowance REAL NOT NULL DEFAULT 0,
       other_allowance REAL NOT NULL DEFAULT 0,
       gosi_number TEXT,
-      bank_name TEXT NOT NULL,
+      bank_name TEXT DEFAULT '',
       bank_code TEXT,
-      iban TEXT NOT NULL,
-      annual_leave_balance INTEGER DEFAULT 30,
+      iban TEXT DEFAULT '',
+      annual_leave_balance REAL DEFAULT 0,
+      qualification_degree TEXT,
+      qualification_major TEXT,
+      emergency_phone TEXT,
       shift_type TEXT DEFAULT 'دوام صباحي',
       status TEXT DEFAULT 'نشط',
       role TEXT DEFAULT 'employee',
@@ -404,6 +407,29 @@ function initSchema() {
   try {
     db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;');
   } catch (e) {}
+  try {
+    db.exec('ALTER TABLE employees ADD COLUMN qualification_degree TEXT;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE employees ADD COLUMN qualification_major TEXT;');
+  } catch (e) {}
+  try {
+    db.exec('ALTER TABLE employees ADD COLUMN emergency_phone TEXT;');
+  } catch (e) {}
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS employee_qualifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      emp_id INTEGER NOT NULL,
+      degree TEXT NOT NULL,
+      major TEXT NOT NULL,
+      institution TEXT,
+      graduation_year INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+  `);
+
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS muqeem_residents (
@@ -483,27 +509,8 @@ function seedMuqeemResidentsFromExcel() {
       );
     }
 
-    // Ensure any expat employee in employees not in Excel (like JM-1003) is also added
-    for (const [natId, emp] of expatMap.entries()) {
-      const exists = db.prepare('SELECT id FROM muqeem_residents WHERE iqama_number = ?').get(natId);
-      if (!exists) {
-        stmt.run(
-          natId,
-          emp.full_name_ar,
-          emp.gender || 'ذكر',
-          emp.nationality || 'مصري',
-          emp.job_title_ar || 'موظف',
-          `A${natId.substring(0, 8)}`,
-          emp.passport_expiry || '2028-09-15',
-          '2021-09-21',
-          emp.iqama_expiry || '2026-09-21',
-          '1448-03-10',
-          '1992-05-14',
-          0,
-          '7013999755'
-        );
-      }
-    }
+    // Only residents genuinely present in the Muqeem Excel sheet are inserted.
+    // Zero fabrication: do NOT synthesize fake passport or iqama dates for missing records.
 
     // Delete any resident not in the company's employee database
     db.prepare('DELETE FROM muqeem_residents WHERE iqama_number NOT IN (SELECT national_id FROM employees WHERE is_saudi = 0)').run();
@@ -523,13 +530,6 @@ function syncEmployeeIqamaExpiries() {
           SELECT passport_expiry FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
         )
       WHERE is_saudi = 0 AND national_id IN (SELECT iqama_number FROM muqeem_residents);
-    `).run();
-
-    db.prepare(`
-      UPDATE employees SET
-        iqama_expiry = '2026-09-21',
-        passport_expiry = '2028-09-15'
-      WHERE is_saudi = 0 AND (iqama_expiry IS NULL OR iqama_expiry = '');
     `).run();
   } catch (err) {
     console.error('Error syncing employee iqama expiries:', err.message);

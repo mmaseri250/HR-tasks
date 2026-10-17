@@ -238,12 +238,12 @@ function seedEmployees() {
       emp.emp_code,
       emp.full_name_ar,
       emp.full_name_en || emp.full_name_ar,
-      emp.national_id,
+      emp.national_id ? emp.national_id : null,
       emp.nationality,
       emp.is_saudi,
       emp.gender || 'M',
-      emp.email,
-      emp.phone,
+      emp.email ? emp.email : null,
+      emp.phone ? emp.phone : null,
       deptId,
       branchId,
       emp.job_title_ar,
@@ -253,13 +253,13 @@ function seedEmployees() {
       emp.housing_allowance || 0,
       emp.transport_allowance || 0,
       emp.other_allowance || 0,
-      'مصرف الراجحي',
-      'RJHI',
+      emp.bank_name || '',
+      emp.bank_code || '',
       emp.iban || '',
-      emp.leave_balance || 0,
+      emp.leave_balance !== undefined && emp.leave_balance !== null ? Number(emp.leave_balance) : 0,
       shiftType,
       policyId,
-      emp.join_date || '2023-01-01',
+      emp.join_date ? emp.join_date : null,
       'نشط',
       'employee'
     ]);
@@ -316,10 +316,15 @@ function seedEmployees() {
     const dbEmp = get('SELECT id, join_date, annual_leave_balance FROM employees WHERE emp_code = ?', [emp.emp_code]);
     if (!dbEmp) continue;
 
-    const joinDate = new Date(dbEmp.join_date);
-    const serviceYears = Math.max(0, (now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
-    const annualRate = serviceYears > 5 ? 30 : 21;
-    const baseBal = Number(emp.leave_balance) || 0;
+    const hasJoinDate = dbEmp.join_date && !isNaN(new Date(dbEmp.join_date).getTime());
+    let serviceYears = 0;
+    let annualRate = 0;
+    if (hasJoinDate) {
+      const joinDate = new Date(dbEmp.join_date);
+      serviceYears = Math.max(0, (now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+      annualRate = serviceYears > 5 ? 30 : 21;
+    }
+    const baseBal = emp.leave_balance !== undefined && emp.leave_balance !== null ? Number(emp.leave_balance) : 0;
 
     run(`
       INSERT INTO leave_balances (
@@ -329,7 +334,7 @@ function seedEmployees() {
     `, [dbEmp.id, baseBal, annualRate, baseBal, todayStr]);
   }
 
-  // 4. Synchronize Iqama and Passport expiry dates from Muqeem Residents table
+  // 4. Synchronize Iqama and Passport expiry dates from Muqeem Residents table (Actual records only)
   run(`
     UPDATE employees SET
       iqama_expiry = (
@@ -339,13 +344,6 @@ function seedEmployees() {
         SELECT passport_expiry FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
       )
     WHERE is_saudi = 0 AND national_id IN (SELECT iqama_number FROM muqeem_residents);
-  `);
-
-  run(`
-    UPDATE employees SET
-      iqama_expiry = '2026-09-21',
-      passport_expiry = '2028-09-15'
-    WHERE is_saudi = 0 AND (iqama_expiry IS NULL OR iqama_expiry = '');
   `);
 }
 

@@ -10,19 +10,19 @@ async function runMuqeemAndEssTests() {
   // Test 1: getMuqeemReport()
   const report = muqeemModule.getMuqeemReport({});
   assert.ok(report, 'Report should be returned');
-  assert.strictEqual(report.summary.totalResidents, 80, 'Should have exactly 80 residents matching employee database');
-  assert.strictEqual(report.summary.insideKsa, 73, 'Should have 73 inside KSA');
+  assert.strictEqual(report.summary.totalResidents, 79, 'Should have exactly 79 residents matching employee database');
+  assert.strictEqual(report.summary.insideKsa, 72, 'Should have 72 inside KSA');
   assert.strictEqual(report.summary.outsideKsa, 7, 'Should have 7 outside KSA');
   assert.strictEqual(report.summary.validIqamas, 19, 'Valid iqamas should be 19 (including valid and expiring soon)');
   assert.strictEqual(report.summary.strictlyValid, 3, 'Strictly valid iqamas (> 60 days) should be 3');
   assert.strictEqual(report.summary.expiringSoon, 16, 'Expiring soon iqamas (<= 60 days) should be 16');
-  assert.strictEqual(report.summary.expiredIqamas, 61, 'Expired iqamas should be 61');
-  assert.strictEqual(report.summary.totalMonthlyFees, 58400, 'Monthly Qiwa fees should be 58,400 SAR (73 * 800)');
-  console.log('✓ نجح: التحقق من إجمالي مقيمي جوهرة المجد (80 مقيم، 19 سارية تشمل التي قاربت على الانتهاء، و 61 منتهية، ورسوم قوى 58,400 ر.س/شهر)');
+  assert.strictEqual(report.summary.expiredIqamas, 60, 'Expired iqamas should be 60');
+  assert.strictEqual(report.summary.totalMonthlyFees, 57600, 'Monthly Qiwa fees should be 57,600 SAR (72 * 800)');
+  console.log('✓ نجح: التحقق من إجمالي مقيمي جوهرة المجد (79 مقيم، 19 سارية تشمل التي قاربت على الانتهاء، و 60 منتهية، ورسوم قوى 57,600 ر.س/شهر)');
 
   // Test 2: Filter inside vs outside & valid vs expiring
   const reportInside = muqeemModule.getMuqeemReport({ status: 'inside' });
-  assert.strictEqual(reportInside.residents.length, 73, 'Inside filter should return 73 residents');
+  assert.strictEqual(reportInside.residents.length, 72, 'Inside filter should return 72 residents');
 
   const reportOutside = muqeemModule.getMuqeemReport({ status: 'outside' });
   assert.strictEqual(reportOutside.residents.length, 7, 'Outside filter should return 7 residents');
@@ -34,8 +34,8 @@ async function runMuqeemAndEssTests() {
   assert.strictEqual(reportExpiring.residents.length, 16, 'Expiring soon filter should return 16 residents');
 
   const reportExpired = muqeemModule.getMuqeemReport({ status: 'expired' });
-  assert.strictEqual(reportExpired.residents.length, 61, 'Expired filter should return 61 residents');
-  console.log('✓ نجح: تصفية المقيمين (داخل، خارج، سارية تشمل التي قاربت على الانتهاء 19، تشارف 16، منتهية 61) بدقة');
+  assert.strictEqual(reportExpired.residents.length, 60, 'Expired filter should return 60 residents');
+  console.log('✓ نجح: تصفية المقيمين (داخل 72، خارج 7، سارية تشمل التي قاربت على الانتهاء 19، تشارف 16، منتهية 60) بدقة');
 
   // Test 3: Add new resident, toggle location, update, delete
   const newResidentData = {

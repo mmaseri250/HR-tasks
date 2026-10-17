@@ -30,7 +30,8 @@ async function runLeavesTasksHierarchyTests() {
     nationality: 'سعودي',
     email: 'junior.test@jalmajd.com',
     join_date: '2024-01-01',
-    basic_salary: 7000
+    basic_salary: 7000,
+    annual_leave_balance: 21
   });
 
   const juniorRate = leavesModule.getAnnualAccrualRate(empJunior.join_date, '2026-01-01');
@@ -82,7 +83,7 @@ async function runLeavesTasksHierarchyTests() {
   assert(leaveReq.request_no.startsWith('LV-'), 'رقم الطلب يجب أن يبدأ بـ LV-');
 
   // Step 1: Direct Manager Approval
-  const mgrApproved = leavesModule.approveLeave(leaveReq.id, 'approve', 'manager', 'موافقة المدير المباشر', 'خالد سعد الشهراني');
+  const mgrApproved = leavesModule.approveLeave(leaveReq.id, 'approve', 'manager', 'موافقة المدير المباشر', 'مدير الإدارة المباشر');
   assert.strictEqual(mgrApproved.status, 'معلق بانتظار اعتماد الموارد البشرية');
   assert.strictEqual(mgrApproved.manager_status, 'موافق');
 

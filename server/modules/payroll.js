@@ -200,7 +200,7 @@ function approvePayrollPeriod(periodId, approverName) {
         approved_at = datetime('now'),
         wps_file_name = ?
     WHERE id = ?
-  `, [approverName || 'خالد سعد الشهراني (مدير الموارد البشرية)', wpsFileName, periodId]);
+  `, [approverName || 'المفوض بالاعتماد (إدارة الموارد البشرية)', wpsFileName, periodId]);
 
   return getPayrollPeriodDetails(periodId);
 }
