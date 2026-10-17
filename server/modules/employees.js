@@ -325,7 +325,7 @@ function getComplianceMetrics() {
   const saudizationRate = total > 0 ? Math.round((saudiCount / total) * 1000) / 10 : 0;
 
   let totalIqamas = 0;
-  let validIqamas = 0;
+  let strictlyValidIqamas = 0;
   let expiringSoonIqamas = 0;
   let expiredIqamas = 0;
 
@@ -354,11 +354,11 @@ function getComplianceMetrics() {
           expiringSoonIqamas++;
           iqamaStatus = `تشارف على الانتهاء (${daysRemaining} يوم)`;
           statusClass = 'warning';
-          workPermitStatus = 'تتطلب سداد المقابل المالي بقوى';
+          workPermitStatus = 'سارية - تتطلب سداد المقابل المالي بقوى';
           workPermitCost = 9600;
           actionRequired = 'سداد المقابل المالي وتجديد الإقامة';
         } else {
-          validIqamas++;
+          strictlyValidIqamas++;
           iqamaStatus = `سارية وممتثلة (${daysRemaining} يوم)`;
           statusClass = 'success';
           workPermitStatus = 'سارية ومسددة بالكامل';
@@ -441,17 +441,19 @@ function getComplianceMetrics() {
       nitaqatBand: saudizationRate >= 30 ? 'النطاق البلاتيني' : 'النطاق الأخضر المرتفع',
       iqama: {
         total: totalIqamas,
-        valid: validIqamas,
-        expiringSoon: expiringSoonIqamas,
-        expired: expiredIqamas,
+        valid: strictlyValidIqamas + expiringSoonIqamas, // 19: سارية وتشمل التي قاربت على الانتهاء
+        strictlyValid: strictlyValidIqamas, // 3: سارية بالكامل
+        expiringSoon: expiringSoonIqamas, // 16: تشارف على الانتهاء
+        expired: expiredIqamas, // 61: منتهية
         complianceRate: iqamaComplianceRate
       },
       workPermits: {
         total: totalIqamas,
         active: totalIqamas,
-        valid: totalIqamas - expiredIqamas,
-        expired: expiredIqamas,
-        pendingPayment: expiringSoonIqamas,
+        valid: totalIqamas - expiredIqamas, // 19: سارية وتشمل التي قاربت على الانتهاء
+        strictlyValid: strictlyValidIqamas, // 3
+        expired: expiredIqamas, // 61
+        pendingPayment: expiringSoonIqamas, // 16
         feeAnnualPerWorker: 9600,
         monthlyFeePerWorker: 800,
         complianceRate: workPermitsComplianceRate

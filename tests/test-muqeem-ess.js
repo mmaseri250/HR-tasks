@@ -13,16 +13,29 @@ async function runMuqeemAndEssTests() {
   assert.strictEqual(report.summary.totalResidents, 80, 'Should have exactly 80 residents matching employee database');
   assert.strictEqual(report.summary.insideKsa, 73, 'Should have 73 inside KSA');
   assert.strictEqual(report.summary.outsideKsa, 7, 'Should have 7 outside KSA');
+  assert.strictEqual(report.summary.validIqamas, 19, 'Valid iqamas should be 19 (including valid and expiring soon)');
+  assert.strictEqual(report.summary.strictlyValid, 3, 'Strictly valid iqamas (> 60 days) should be 3');
+  assert.strictEqual(report.summary.expiringSoon, 16, 'Expiring soon iqamas (<= 60 days) should be 16');
+  assert.strictEqual(report.summary.expiredIqamas, 61, 'Expired iqamas should be 61');
   assert.strictEqual(report.summary.totalMonthlyFees, 58400, 'Monthly Qiwa fees should be 58,400 SAR (73 * 800)');
-  console.log('✓ نجح: التحقق من إجمالي مقيمي جوهرة المجد المطابقين لقاعدة بيانات الموظفين (80 مقيم: 73 داخل المملكة و 7 بالخارج، ورسوم قوى 58,400 ر.س/شهر)');
+  console.log('✓ نجح: التحقق من إجمالي مقيمي جوهرة المجد (80 مقيم، 19 سارية تشمل التي قاربت على الانتهاء، و 61 منتهية، ورسوم قوى 58,400 ر.س/شهر)');
 
-  // Test 2: Filter inside vs outside
+  // Test 2: Filter inside vs outside & valid vs expiring
   const reportInside = muqeemModule.getMuqeemReport({ status: 'inside' });
   assert.strictEqual(reportInside.residents.length, 73, 'Inside filter should return 73 residents');
 
   const reportOutside = muqeemModule.getMuqeemReport({ status: 'outside' });
   assert.strictEqual(reportOutside.residents.length, 7, 'Outside filter should return 7 residents');
-  console.log('✓ نجح: تصفية المقيمين داخل السعودية وخارج السعودية بدقة');
+
+  const reportValid = muqeemModule.getMuqeemReport({ status: 'valid' });
+  assert.strictEqual(reportValid.residents.length, 19, 'Valid filter should return 19 residents (including expiring soon)');
+
+  const reportExpiring = muqeemModule.getMuqeemReport({ status: 'expiring_soon' });
+  assert.strictEqual(reportExpiring.residents.length, 16, 'Expiring soon filter should return 16 residents');
+
+  const reportExpired = muqeemModule.getMuqeemReport({ status: 'expired' });
+  assert.strictEqual(reportExpired.residents.length, 61, 'Expired filter should return 61 residents');
+  console.log('✓ نجح: تصفية المقيمين (داخل، خارج، سارية تشمل التي قاربت على الانتهاء 19، تشارف 16، منتهية 61) بدقة');
 
   // Test 3: Add new resident, toggle location, update, delete
   const newResidentData = {

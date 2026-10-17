@@ -73,7 +73,7 @@ function getMuqeemReport(filters = {}) {
 
   // Calculate full database summary stats (unfiltered by search/status for the top cards)
   const allDbRows = query('SELECT * FROM muqeem_residents');
-  let validCount = 0;
+  let strictlyValidCount = 0;
   let expiringSoonCount = 0;
   let expiredCount = 0;
   let insideKsaCount = 0;
@@ -89,22 +89,27 @@ function getMuqeemReport(filters = {}) {
         const diff = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
         if (diff < 0) expiredCount++;
         else if (diff <= 60) expiringSoonCount++;
-        else validCount++;
+        else strictlyValidCount++;
       } else {
-        validCount++;
+        strictlyValidCount++;
       }
     } else {
-      validCount++;
+      strictlyValidCount++;
     }
   });
 
-  // Apply status filter if requested (e.g. expiring_soon, expired, valid, inside_ksa, outside_ksa)
+  // Valid iqamas includes both strictly valid (> 60 days) and expiring soon (0-60 days)
+  const validCount = strictlyValidCount + expiringSoonCount;
+
+  // Apply status filter if requested (e.g. expiring_soon, expired, valid, strictly_valid, inside_ksa, outside_ksa)
   let filteredList = processed;
   if (filters.status === 'expiring_soon') {
     filteredList = processed.filter(p => p.days_remaining !== null && p.days_remaining >= 0 && p.days_remaining <= 60);
   } else if (filters.status === 'expired') {
     filteredList = processed.filter(p => p.days_remaining !== null && p.days_remaining < 0);
   } else if (filters.status === 'valid') {
+    filteredList = processed.filter(p => p.days_remaining === null || p.days_remaining >= 0);
+  } else if (filters.status === 'strictly_valid') {
     filteredList = processed.filter(p => p.days_remaining === null || p.days_remaining > 60);
   } else if (filters.status === 'inside_ksa' || filters.status === 'inside') {
     filteredList = processed.filter(p => p.is_outside_ksa === 0);
@@ -121,14 +126,17 @@ function getMuqeemReport(filters = {}) {
       totalResidents: total,
       insideKsa: insideKsaCount,
       outsideKsa: outsideKsaCount,
-      validIqamas: validCount,
-      expiringSoon: expiringSoonCount,
-      expiredIqamas: expiredCount,
+      validIqamas: validCount, // 19: تشمل السارية والتي شارفت على الانتهاء
+      strictlyValid: strictlyValidCount, // 3: سارية بالكامل أكثر من 60 يوماً
+      expiringSoon: expiringSoonCount, // 16: تشارف على الانتهاء خلال 60 يوماً
+      expiredIqamas: expiredCount, // 61: منتهية تتطلب التجديد
       complianceRate,
       monthlyFeePerWorker: 800,
       totalMonthlyFees: insideKsaCount * 800,
       totalAnnualFees: insideKsaCount * 9600,
-      workPermitsCount: total
+      workPermitsCount: total,
+      workPermitsValid: validCount,
+      workPermitsExpired: expiredCount
     }
   };
 }

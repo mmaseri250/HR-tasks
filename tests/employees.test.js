@@ -32,6 +32,9 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(compMetrics.metrics.expatCount, 80, 'يجب أن يكون عدد غير السعوديين 80 موظفاً من واقع ملفات إكسل');
   assert.strictEqual(compMetrics.metrics.saudiCount, 34, 'يجب أن يكون عدد السعوديين 34 موظفاً');
   assert.strictEqual(compMetrics.metrics.workPermits.active, 80, 'يجب أن تتوفر 80 رخصة عمل في قوى للمقيمين');
+  assert.strictEqual(compMetrics.metrics.iqama.valid, 19, 'يجب أن يكون عدد الإقامات السارية 19 (تشمل السارية والتي قاربت على الانتهاء)');
+  assert.strictEqual(compMetrics.metrics.iqama.expired, 61, 'يجب أن يكون عدد الإقامات المنتهية 61');
+  assert.strictEqual(compMetrics.metrics.workPermits.valid, 19, 'يجب أن يكون عدد رخص العمل السارية 19');
   assert.strictEqual(compMetrics.metrics.wps.complianceRate, 100, 'نسبة الالتزام بحماية الأجور يجب أن تكون 100%');
 
   console.log('✓ نجح: التحقق من استيراد 114 موظف رسمي (34 سعودي + 80 مقيم)، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');

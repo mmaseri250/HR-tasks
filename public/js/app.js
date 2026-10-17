@@ -6049,7 +6049,7 @@ function updateMuqeemKPIs(s) {
   setEl('muqKpiTotal', Number(s.totalResidents !== undefined ? s.totalResidents : 80).toLocaleString('en-US'));
   setEl('muqKpiInside', Number(s.insideKsa !== undefined ? s.insideKsa : 73).toLocaleString('en-US'));
   setEl('muqKpiOutside', Number(s.outsideKsa !== undefined ? s.outsideKsa : 7).toLocaleString('en-US'));
-  setEl('muqKpiValid', Number(s.validIqamas !== undefined ? s.validIqamas : 3).toLocaleString('en-US'));
+  setEl('muqKpiValid', Number(s.validIqamas !== undefined ? s.validIqamas : 19).toLocaleString('en-US'));
   setEl('muqKpiExpiring', Number(s.expiringSoon !== undefined ? s.expiringSoon : 16).toLocaleString('en-US'));
   setEl('muqKpiExpired', Number(s.expiredIqamas !== undefined ? s.expiredIqamas : 61).toLocaleString('en-US'));
   setEl('muqKpiFees', `${Number(s.totalMonthlyFees !== undefined ? s.totalMonthlyFees : 58400).toLocaleString('en-US')} ر.س`);
@@ -6058,7 +6058,7 @@ function updateMuqeemKPIs(s) {
   setEl('countMuqInside', Number(s.insideKsa !== undefined ? s.insideKsa : 73).toLocaleString('en-US'));
   setEl('countMuqOutside', Number(s.outsideKsa !== undefined ? s.outsideKsa : 7).toLocaleString('en-US'));
   setEl('countMuqExpiring', Number(s.expiringSoon !== undefined ? s.expiringSoon : 16).toLocaleString('en-US'));
-  setEl('countMuqValid', Number(s.validIqamas !== undefined ? s.validIqamas : 3).toLocaleString('en-US'));
+  setEl('countMuqValid', Number(s.validIqamas !== undefined ? s.validIqamas : 19).toLocaleString('en-US'));
   setEl('countMuqExpired', Number(s.expiredIqamas !== undefined ? s.expiredIqamas : 61).toLocaleString('en-US'));
 }
 
@@ -6527,7 +6527,7 @@ function updateComplianceDashboardUI(data) {
   }
 
   const iqamaValidEl = document.getElementById('compIqamaValidCount');
-  if (iqamaValidEl) iqamaValidEl.textContent = `${m.iqama ? m.iqama.valid : 3} سارية وممتثلة`;
+  if (iqamaValidEl) iqamaValidEl.textContent = `${m.iqama ? m.iqama.valid : 19} سارية وممتثلة`;
 
   const iqamaExpEl = document.getElementById('compIqamaExpiringCount');
   if (iqamaExpEl) iqamaExpEl.textContent = `${m.iqama ? m.iqama.expiringSoon : 16} موظف`;
@@ -6598,7 +6598,7 @@ function renderComplianceTable() {
   } else if (currentComplianceFilter === 'expiring_soon') {
     filtered = roster.filter(e => e.is_saudi === 0 && e.days_remaining !== null && e.days_remaining >= 0 && e.days_remaining <= 60);
   } else if (currentComplianceFilter === 'valid') {
-    filtered = roster.filter(e => e.is_saudi === 0 && (e.days_remaining === null || e.days_remaining > 60));
+    filtered = roster.filter(e => e.is_saudi === 0 && (e.days_remaining === null || e.days_remaining >= 0));
   } else if (currentComplianceFilter === 'expats') {
     filtered = roster.filter(e => e.is_saudi === 0);
   } else if (currentComplianceFilter === 'saudis') {
