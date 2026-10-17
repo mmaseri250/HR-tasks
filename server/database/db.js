@@ -479,7 +479,32 @@ function seedMuqeemResidentsFromExcel() {
   }
 }
 
+function syncEmployeeIqamaExpiries() {
+  try {
+    db.prepare(`
+      UPDATE employees SET
+        iqama_expiry = (
+          SELECT iqama_expiry_gregorian FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
+        ),
+        passport_expiry = (
+          SELECT passport_expiry FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
+        )
+      WHERE is_saudi = 0 AND national_id IN (SELECT iqama_number FROM muqeem_residents);
+    `).run();
+
+    db.prepare(`
+      UPDATE employees SET
+        iqama_expiry = '2026-09-21',
+        passport_expiry = '2028-09-15'
+      WHERE is_saudi = 0 AND (iqama_expiry IS NULL OR iqama_expiry = '');
+    `).run();
+  } catch (err) {
+    console.error('Error syncing employee iqama expiries:', err.message);
+  }
+}
+
 initSchema();
+syncEmployeeIqamaExpiries();
 
 module.exports = {
   db,

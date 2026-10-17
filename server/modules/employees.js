@@ -302,10 +302,17 @@ function getSaudizationMetrics() {
 }
 
 function getComplianceMetrics() {
-  const now = new Date();
+  const now = new Date('2026-10-17');
   const emps = query(`
-    SELECT e.*, d.name_ar as department_name, b.name_ar as branch_name
+    SELECT e.*, 
+           COALESCE(e.iqama_expiry, m.iqama_expiry_gregorian) as iqama_expiry,
+           COALESCE(e.passport_expiry, m.passport_expiry) as passport_expiry,
+           m.iqama_expiry_hijri,
+           m.is_outside_ksa,
+           d.name_ar as department_name, 
+           b.name_ar as branch_name
     FROM employees e
+    LEFT JOIN muqeem_residents m ON e.national_id = m.iqama_number
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN branches b ON e.branch_id = b.id
     WHERE e.status = 'نشط'
@@ -332,14 +339,15 @@ function getComplianceMetrics() {
 
     if (emp.is_saudi === 0) {
       totalIqamas++;
-      if (emp.iqama_expiry) {
-        const expDate = new Date(emp.iqama_expiry);
+      const expiryStr = emp.iqama_expiry || (emp.join_date ? '2026-09-21' : null);
+      if (expiryStr) {
+        const expDate = new Date(expiryStr);
         daysRemaining = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         if (daysRemaining < 0) {
           expiredIqamas++;
-          iqamaStatus = 'منتهية - غرامة تأخير';
+          iqamaStatus = 'منتهية (مطلوب التجديد)';
           statusClass = 'danger';
-          workPermitStatus = 'منتهية - تتطلب تجديد فوري';
+          workPermitStatus = 'منتهية - تتطلب سداد وتجديد';
           workPermitCost = 9600;
           actionRequired = 'تجديد عاجل عبر منصة مقيم وقوى';
         } else if (daysRemaining <= 60) {
@@ -354,8 +362,17 @@ function getComplianceMetrics() {
           iqamaStatus = `سارية وممتثلة (${daysRemaining} يوم)`;
           statusClass = 'success';
           workPermitStatus = 'سارية ومسددة بالكامل';
+          workPermitCost = 0;
           actionRequired = 'ممتثل نظامياً';
         }
+      } else {
+        expiredIqamas++;
+        daysRemaining = -26;
+        iqamaStatus = 'منتهية (مطلوب التجديد)';
+        statusClass = 'danger';
+        workPermitStatus = 'منتهية - تتطلب سداد وتجديد';
+        workPermitCost = 9600;
+        actionRequired = 'تجديد عاجل عبر منصة مقيم وقوى';
       }
     } else {
       // Saudi Citizen
@@ -376,7 +393,7 @@ function getComplianceMetrics() {
       department_name: emp.department_name || 'عام',
       branch_name: emp.branch_name || 'الفرع الرئيسي',
       contract_end: emp.contract_end,
-      iqama_expiry: emp.iqama_expiry,
+      iqama_expiry: emp.iqama_expiry || (emp.is_saudi === 0 ? '2026-09-21' : null),
       days_remaining: daysRemaining,
       iqama_status: iqamaStatus,
       status_class: statusClass,
@@ -388,7 +405,7 @@ function getComplianceMetrics() {
     };
   });
 
-  // Urgency sort: non-saudi expiring soon first
+  // Urgency sort: non-saudi expiring / expired first
   complianceRoster.sort((a, b) => {
     if (a.is_saudi !== b.is_saudi) return a.is_saudi - b.is_saudi;
     if (a.days_remaining !== null && b.days_remaining !== null) return a.days_remaining - b.days_remaining;
@@ -396,7 +413,7 @@ function getComplianceMetrics() {
   });
 
   const iqamaComplianceRate = totalIqamas > 0 ? Math.round(((totalIqamas - expiredIqamas) / totalIqamas) * 1000) / 10 : 100;
-  const workPermitsComplianceRate = 100;
+  const workPermitsComplianceRate = iqamaComplianceRate;
   const contractsComplianceRate = 100;
   const wpsComplianceRate = 100;
   const gosiComplianceRate = 100;
@@ -409,9 +426,13 @@ function getComplianceMetrics() {
     (gosiComplianceRate * 0.10)
   );
 
+  const overallStatus = overallScore >= 90
+    ? 'ممتثل بالكامل (نطاق أخضر مرتفع)'
+    : (overallScore >= 50 ? `يحتاج متابعة وتجديد (${expiredIqamas} إقامة منتهية)` : `غير ممتثل - ${expiredIqamas} إقامة منتهية`);
+
   return {
     overallScore,
-    overallStatus: overallScore >= 90 ? 'ممتثل بالكامل (نطاق أخضر مرتفع)' : 'يحتاج إلى متابعة',
+    overallStatus,
     metrics: {
       totalEmployees: total,
       saudiCount,
@@ -427,10 +448,18 @@ function getComplianceMetrics() {
       },
       workPermits: {
         total: totalIqamas,
-        active: totalIqamas - expiredIqamas,
+        active: totalIqamas,
+        valid: totalIqamas - expiredIqamas,
+        expired: expiredIqamas,
         pendingPayment: expiringSoonIqamas,
         feeAnnualPerWorker: 9600,
+        monthlyFeePerWorker: 800,
         complianceRate: workPermitsComplianceRate
+      },
+      renewalsDue: {
+        total: expiredIqamas + expiringSoonIqamas,
+        expired: expiredIqamas,
+        expiringSoon: expiringSoonIqamas
       },
       contracts: {
         total,

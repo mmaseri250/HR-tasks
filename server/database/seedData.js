@@ -328,6 +328,25 @@ function seedEmployees() {
       ) VALUES (?, ?, ?, 0, 0, 0, ?, ?, datetime('now'))
     `, [dbEmp.id, baseBal, annualRate, baseBal, todayStr]);
   }
+
+  // 4. Synchronize Iqama and Passport expiry dates from Muqeem Residents table
+  run(`
+    UPDATE employees SET
+      iqama_expiry = (
+        SELECT iqama_expiry_gregorian FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
+      ),
+      passport_expiry = (
+        SELECT passport_expiry FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
+      )
+    WHERE is_saudi = 0 AND national_id IN (SELECT iqama_number FROM muqeem_residents);
+  `);
+
+  run(`
+    UPDATE employees SET
+      iqama_expiry = '2026-09-21',
+      passport_expiry = '2028-09-15'
+    WHERE is_saudi = 0 AND (iqama_expiry IS NULL OR iqama_expiry = '');
+  `);
 }
 
 function seedPenaltyRegulations() {

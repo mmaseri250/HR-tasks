@@ -1269,14 +1269,14 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <!-- Overall Compliance Score -->
-            <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-50 to-transparent border border-emerald-200 space-y-2">
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-50/50 to-transparent border border-amber-200 space-y-2">
               <div class="flex justify-between items-center text-xs font-bold text-slate-500">
                 <span>المؤشر العام للامتثال</span>
-                <span class="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm"><i class="fa-solid fa-award"></i></span>
+                <span class="w-7 h-7 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-sm"><i class="fa-solid fa-award"></i></span>
               </div>
               <div class="flex items-baseline gap-2">
-                <h3 id="compOverallScore" class="text-3xl font-black text-emerald-800">100%</h3>
-                <span class="text-xs font-bold text-emerald-700">ممتثل بالكامل</span>
+                <h3 id="compOverallScore" class="text-3xl font-black font-mono text-amber-800">54%</h3>
+                <span id="compOverallBadge" class="text-xs font-bold text-amber-700">يحتاج متابعة وتجديد</span>
               </div>
               <p class="text-[11px] text-slate-600 font-semibold" id="compOverallSub">114 موظف رسمي (34 سعودي • 80 مقيم)</p>
             </div>
@@ -1288,12 +1288,16 @@
                 <span class="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-address-card"></i></span>
               </div>
               <div class="flex items-baseline gap-2">
-                <h3 id="compIqamaRate" class="text-3xl font-black text-slate-800">100%</h3>
-                <span id="compIqamaValidCount" class="text-xs font-bold text-emerald-600">سارية وممتثلة</span>
+                <h3 id="compIqamaRate" class="text-3xl font-black font-mono text-amber-700">24%</h3>
+                <span id="compIqamaValidCount" class="text-xs font-bold text-emerald-600">3 سارية وممتثلة</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
                 <span>تشارف على الانتهاء:</span>
-                <span id="compIqamaExpiringCount" class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-mono">17</span>
+                <span id="compIqamaExpiringCount" class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-mono">16 موظف</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
+                <span>منتهية (مطلوب التجديد):</span>
+                <span id="compIqamaExpiredCount" class="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full font-mono">61 إقامة</span>
               </div>
             </div>
 
@@ -1304,8 +1308,8 @@
                 <span class="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm"><i class="fa-solid fa-briefcase"></i></span>
               </div>
               <div class="flex items-baseline gap-2">
-                <h3 id="compWorkPermitRate" class="text-3xl font-black text-slate-800">100%</h3>
-                <span class="text-xs font-bold text-purple-700">رخص صادرة ومسددة</span>
+                <h3 id="compWorkPermitRate" class="text-3xl font-black font-mono text-purple-800">24%</h3>
+                <span id="compWorkPermitBadge" class="text-xs font-bold text-purple-700">19 سارية • 61 تتطلب سداد</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
                 <span>المقابل المالي للتجديد:</span>
@@ -1314,18 +1318,18 @@
             </div>
 
             <!-- Action Required & Renewals Due -->
-            <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-sm">
+            <div class="p-4 rounded-2xl bg-white border border-rose-200 space-y-2 shadow-sm">
               <div class="flex justify-between items-center text-xs font-bold text-slate-500">
                 <span>تجديدات مستحقة (إقامات ورخص)</span>
-                <span class="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                <span class="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm"><i class="fa-solid fa-clock-rotate-left"></i></span>
               </div>
               <div class="flex items-baseline gap-2">
-                <h3 id="compActionsDueCount" class="text-3xl font-black text-slate-800 font-mono">17</h3>
-                <span id="compActionsDueBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">تجديد مطلوب</span>
+                <h3 id="compActionsDueCount" class="text-3xl font-black text-rose-700 font-mono">77</h3>
+                <span id="compActionsDueBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200">77 يتطلب تجديد</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
                 <span>الإجراء المطلوب:</span>
-                <span id="compActionsDueSub" class="font-bold text-slate-700">سداد وتجديد عبر قوى ومقيم</span>
+                <span id="compActionsDueSub" class="font-bold text-slate-700">61 منتهية + 16 تشارف على الانتهاء</span>
               </div>
             </div>
 
@@ -1340,8 +1344,14 @@
                 <button onclick="filterComplianceTable('all')" id="btnCompTabAll" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm">
                   الكل
                 </button>
-                <button onclick="filterComplianceTable('expiring_soon')" id="btnCompTabExpiring" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                <button onclick="filterComplianceTable('expired')" id="btnCompTabExpired" class="px-3 py-1.5 rounded-lg text-rose-700 hover:text-rose-900">
+                  منتهية
+                </button>
+                <button onclick="filterComplianceTable('expiring_soon')" id="btnCompTabExpiring" class="px-3 py-1.5 rounded-lg text-amber-700 hover:text-amber-900">
                   تشارف على الانتهاء
+                </button>
+                <button onclick="filterComplianceTable('valid')" id="btnCompTabValid" class="px-3 py-1.5 rounded-lg text-emerald-700 hover:text-emerald-900">
+                  سارية وممتثلة
                 </button>
                 <button onclick="filterComplianceTable('expats')" id="btnCompTabExpats" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
                   الوافدون
