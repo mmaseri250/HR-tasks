@@ -31,11 +31,107 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Anti-stale Cache Control Middleware: ensures browsers and mobile PWAs never receive outdated data
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  } else if (req.path === '/' || req.path.endsWith('.html') || req.path === '/sw.js') {
+    res.set('Cache-Control', 'no-cache, must-revalidate');
+  }
+  next();
+});
+
 // Static frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // File upload setup for import
 const upload = multer({ dest: path.join(__dirname, '..', 'uploads') });
+
+/* =========================================================================
+   0. UNIFIED HIGH-SPEED BOOTSTRAP API (Single-Trip Hydration)
+   ========================================================================= */
+
+app.get('/api/bootstrap', (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const departments = query(`
+      SELECT d.*, COUNT(e.id) AS employee_count
+      FROM departments d
+      LEFT JOIN employees e ON d.id = e.department_id AND e.status = 'نشط'
+      GROUP BY d.id
+      ORDER BY d.id ASC
+    `);
+
+    const branches = query(`
+      SELECT b.*, COUNT(DISTINCT e.id) AS employee_count, COUNT(DISTINCT d.id) AS device_count
+      FROM branches b
+      LEFT JOIN employees e ON b.id = e.branch_id AND e.status = 'نشط'
+      LEFT JOIN biometric_devices d ON b.id = d.branch_id AND d.is_active = 1
+      GROUP BY b.id
+      ORDER BY b.id ASC
+    `);
+
+    const devices = query(`
+      SELECT d.*, b.name_ar AS branch_name_ar
+      FROM biometric_devices d
+      LEFT JOIN branches b ON d.branch_id = b.id
+      ORDER BY d.id ASC
+    `);
+
+    const employees = employeesModule.getAllEmployees();
+    const regulations = penaltiesModule.getAllPenaltyRegulations();
+    const issuedPenalties = penaltiesModule.getAllIssuedPenalties();
+    const users = usersModule.getAllUsers();
+    const policies = query('SELECT * FROM attendance_policies ORDER BY is_default DESC, id ASC');
+    const allRequests = requestsModule.getAllRequests();
+
+    // Telemetry for instant dashboard & compliance rendering
+    const saudization = employeesModule.getSaudizationMetrics();
+    const attendance = attendanceModule.getAttendanceStats(today);
+    const docAlerts = employeesModule.getDocumentExpiryAlerts();
+    const currentPayroll = get(`
+      SELECT * FROM payroll_periods
+      ORDER BY period_month DESC
+      LIMIT 1
+    `);
+    const compliance = employeesModule.getComplianceMetrics();
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: {
+        departments,
+        branches,
+        devices,
+        employees,
+        regulations,
+        issuedPenalties,
+        users,
+        policies,
+        allRequests,
+        dashboard: {
+          saudization,
+          attendance,
+          expiringDocsCount: docAlerts.length,
+          expiringDocs: docAlerts.slice(0, 5),
+          pendingRequestsCount: allRequests.filter(r => r.status === 'معلق').length,
+          pendingRequests: allRequests.filter(r => r.status === 'معلق').slice(0, 5),
+          currentPayroll,
+          deptDistribution: departments.map(d => ({ name_ar: d.name_ar, employee_count: d.employee_count })),
+          penaltiesCount: issuedPenalties.length,
+          recentPenalties: issuedPenalties.slice(0, 5)
+        },
+        compliance
+      }
+    });
+  } catch (err) {
+    console.error('Bootstrap API error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 /* =========================================================================
    1. AUTHENTICATION & USERS ROUTES

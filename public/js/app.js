@@ -363,12 +363,15 @@ const FALLBACK_DATA = {
     { id: 1, username: 'admin', password: 'Jj123', full_name: 'مدير النظام (Admin)', role: 'admin', permissions: ['all'], is_active: 1, created_at: '2026-09-30', emp_id: null }
   ],
   departments: [
-    { id: 1, code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager_name: 'الرئيس التنفيذي', employee_count: 0, location: 'مقر أبها - الطابق الإداري' },
-    { id: 2, code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager_name: 'مدير الموارد البشرية', employee_count: 0, location: 'مقر أبها - مبنى الإدارة' },
-    { id: 3, code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager_name: 'مدير المشتريات', employee_count: 0, location: 'مقر أبها - قسم المشتريات' },
-    { id: 4, code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager_name: 'مدير المبيعات', employee_count: 0, location: 'مقر أبها - الإدارة التجارية' },
-    { id: 5, code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager_name: 'مدير تقنية المعلومات', employee_count: 0, location: 'مقر أبها - مركز العمليات الرقمية' },
-    { id: 6, code: 'MKT', name_ar: 'ادارة التسويق', name_en: 'Marketing Department', manager_name: 'مدير التسويق', employee_count: 0, location: 'مقر أبها - الجناح الإعلامي' }
+    { id: 1, code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager_name: 'صالح سعيد القحطاني', employee_count: 0, location: 'مقر أبها - الطابق الإداري' },
+    { id: 2, code: 'ENG', name_ar: 'الادارة الهندسية', name_en: 'Engineering Department', manager_name: 'فارس عبدالرحمن القحطاني', employee_count: 0, location: 'مقر أبها - المبنى الهندسي' },
+    { id: 3, code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager_name: 'عبدالملك سعيد القحطاني', employee_count: 0, location: 'مقر أبها - مبنى الإدارة' },
+    { id: 4, code: 'FIN', name_ar: 'الادارة المالية', name_en: 'Finance Department', manager_name: 'هاني عبدالرحمن القحطاني', employee_count: 0, location: 'مقر أبها - الإدارة المالية' },
+    { id: 5, code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager_name: 'هاني عبدالله عبدالكريم', employee_count: 0, location: 'مقر أبها - قسم المشتريات' },
+    { id: 6, code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager_name: 'مشرف المبيعات', employee_count: 0, location: 'مقر أبها - الإدارة التجارية' },
+    { id: 7, code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager_name: 'محمد شكيل', employee_count: 0, location: 'مقر أبها - مركز العمليات الرقمية' },
+    { id: 8, code: 'MKT', name_ar: 'ادارة التسويق', name_en: 'Marketing Department', manager_name: 'مشرف التسويق', employee_count: 0, location: 'مقر أبها - الجناح الإعلامي' },
+    { id: 9, code: 'TAQEEB', name_ar: 'التعقيب', name_en: 'Government Relations & Taqeed', manager_name: 'عبدالعزيز سعيد مفرح', employee_count: 0, location: 'مقر أبها - العلاقات الحكومية' }
   ],
   branches: [
     { id: 1, code: 'BR-ABHA-01', name_ar: 'فرع ابها الرئيسي', name_en: 'Abha Main Branch', city: 'أبها', address: 'أبها - شارع الملك عبدالعزيز - برج جوهرة المجد', phone: '0172201122', manager_name: 'مدير فرع أبها الرئيسي', is_main: 1, employee_count: 0, device_count: 1 },
@@ -3911,34 +3914,57 @@ window.addEventListener('resize', () => {
   }
 });
 
-// Synchronize Data with Backend if available
+// Synchronize Data with Backend with Unified Single-Trip Bootstrap
 async function syncDataFromBackend() {
-  const deptsRes = await apiFetch('/api/departments');
-  if (deptsRes && deptsRes.success) state.departments = deptsRes.data;
+  try {
+    const bootRes = await apiFetch('/api/bootstrap');
+    if (bootRes && bootRes.success && bootRes.data) {
+      const d = bootRes.data;
+      if (d.departments) state.departments = d.departments;
+      if (d.branches) state.branches = d.branches;
+      if (d.devices) state.devices = d.devices;
+      if (d.employees) state.employees = d.employees;
+      if (d.regulations) state.regulations = d.regulations;
+      if (d.issuedPenalties) state.issuedPenalties = d.issuedPenalties;
+      if (d.users) state.users = d.users;
+      if (d.policies) state.policies = d.policies;
+      if (d.allRequests) state.allRequests = d.allRequests;
 
-  const branchesRes = await apiFetch('/api/branches');
-  if (branchesRes && branchesRes.success) state.branches = branchesRes.data;
+      // Cache bootstrap telemetry for instant dashboard rendering
+      window._bootstrapDashboard = d.dashboard;
+      window._bootstrapCompliance = d.compliance;
+      return;
+    }
+  } catch (err) {
+    console.warn('Bootstrap API error, falling back to parallel fetch:', err);
+  }
 
-  const devicesRes = await apiFetch('/api/devices');
-  if (devicesRes && devicesRes.success) state.devices = devicesRes.data;
+  // Fallback: parallel fetch with Promise.all
+  try {
+    const [deptsRes, branchesRes, devicesRes, empsRes, regsRes, pensRes, usersRes, polRes, reqRes] = await Promise.all([
+      apiFetch('/api/departments'),
+      apiFetch('/api/branches'),
+      apiFetch('/api/devices'),
+      apiFetch('/api/employees'),
+      apiFetch('/api/penalties/regulations'),
+      apiFetch('/api/penalties/issued'),
+      apiFetch('/api/users'),
+      apiFetch('/api/policies'),
+      apiFetch('/api/requests')
+    ]);
 
-  const empsRes = await apiFetch('/api/employees');
-  if (empsRes && empsRes.success) state.employees = empsRes.data;
-
-  const regsRes = await apiFetch('/api/penalties/regulations');
-  if (regsRes && regsRes.success) state.regulations = regsRes.data;
-
-  const pensRes = await apiFetch('/api/penalties/issued');
-  if (pensRes && pensRes.success) state.issuedPenalties = pensRes.data;
-
-  const usersRes = await apiFetch('/api/users');
-  if (usersRes && usersRes.success) state.users = usersRes.data;
-
-  const polRes = await apiFetch('/api/policies');
-  if (polRes && polRes.success) state.policies = polRes.data;
-
-  const reqRes = await apiFetch('/api/requests');
-  if (reqRes && reqRes.success) state.allRequests = reqRes.data;
+    if (deptsRes && deptsRes.success) state.departments = deptsRes.data;
+    if (branchesRes && branchesRes.success) state.branches = branchesRes.data;
+    if (devicesRes && devicesRes.success) state.devices = devicesRes.data;
+    if (empsRes && empsRes.success) state.employees = empsRes.data;
+    if (regsRes && regsRes.success) state.regulations = regsRes.data;
+    if (pensRes && pensRes.success) state.issuedPenalties = pensRes.data;
+    if (usersRes && usersRes.success) state.users = usersRes.data;
+    if (polRes && polRes.success) state.policies = polRes.data;
+    if (reqRes && reqRes.success) state.allRequests = reqRes.data;
+  } catch (err) {
+    console.error('Parallel fetch error:', err);
+  }
 }
 
 function populateDropdowns() {
@@ -4091,6 +4117,7 @@ function switchTab(tabId) {
       break;
     case 'employees-db':
       populateEmployeeFilterDropdowns();
+      if (empDbState.viewMode) switchEmpViewMode(empDbState.viewMode);
       filterEmployeesTable();
       break;
     case 'compliance':
@@ -4152,8 +4179,19 @@ function handleMobAttendanceClick() {
    ========================================================================= */
 
 async function loadDashboard() {
-  // Fetch live stats from API if available
-  const statsRes = await apiFetch('/api/dashboard/stats');
+  // Use bootstrap cache if available for instant 0ms rendering, or fetch in parallel
+  let statsRes, compRes;
+  if (window._bootstrapDashboard && window._bootstrapCompliance) {
+    statsRes = { success: true, data: window._bootstrapDashboard };
+    compRes = { success: true, data: window._bootstrapCompliance };
+    window._bootstrapDashboard = null;
+    window._bootstrapCompliance = null;
+  } else {
+    [statsRes, compRes] = await Promise.all([
+      apiFetch('/api/dashboard/stats'),
+      apiFetch('/api/compliance/stats')
+    ]);
+  }
   
   const total = statsRes && statsRes.data ? statsRes.data.attendance.totalEmployees : state.employees.length;
   const rate = statsRes && statsRes.data ? statsRes.data.saudization.saudizationRate : (total > 0 ? Math.round((state.employees.filter(e => e.is_saudi === 1).length / total) * 1000) / 10 : 32.1);
@@ -4167,7 +4205,6 @@ async function loadDashboard() {
   if (totalEl) totalEl.textContent = total;
   
   // Real Compliance indicator (Iqamas & Work permits)
-  const compRes = await apiFetch('/api/compliance/stats');
   const compScore = compRes && compRes.data ? (compRes.data.overallScore !== undefined ? compRes.data.overallScore : 54) : 54;
   const compRateEl = document.getElementById('statComplianceRate');
   if (compRateEl) {
@@ -4281,6 +4318,11 @@ function drawDeptChart() {
   const ctx = document.getElementById('deptChart');
   if (!ctx) return;
 
+  if (typeof Chart === 'undefined') {
+    setTimeout(drawDeptChart, 250);
+    return;
+  }
+
   if (state.charts.dept) {
     state.charts.dept.destroy();
   }
@@ -4301,7 +4343,7 @@ function drawDeptChart() {
       labels,
       datasets: [{
         data,
-        backgroundColor: ['#700c14', '#d4af37', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6'],
+        backgroundColor: ['#700c14', '#d4af37', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#065f46', '#0284c7', '#7c3aed'],
         borderWidth: 2,
         borderColor: '#ffffff'
       }]
@@ -4322,6 +4364,11 @@ function drawDeptChart() {
 function drawAttendanceChart(attStats) {
   const ctx = document.getElementById('attendanceChart');
   if (!ctx) return;
+
+  if (typeof Chart === 'undefined') {
+    setTimeout(() => drawAttendanceChart(attStats), 250);
+    return;
+  }
 
   if (state.charts.attendance) {
     state.charts.attendance.destroy();
@@ -4369,7 +4416,7 @@ function drawAttendanceChart(attStats) {
    ========================================================================= */
 
 const empDbState = {
-  viewMode: 'table',
+  viewMode: (typeof window !== 'undefined' && window.innerWidth < 768) ? 'cards' : 'table',
   currentPage: 1,
   pageSize: 15,
   filteredList: []
@@ -8472,11 +8519,26 @@ function closeModal(id) {
    10. PWA (PROGRESSIVE WEB APP) SERVICE WORKER & INSTALL LOGIC
    ========================================================================= */
 
-// Register Service Worker
+// Register Service Worker with Auto Update & Cache Refresh
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then((reg) => console.log('✓ Jawharat Al-Majd PWA Service Worker Registered:', reg.scope))
+      .then((reg) => {
+        console.log('✓ Jawharat Al-Majd PWA Service Worker Registered:', reg.scope);
+        // Explicitly check for updates on load to avoid serving stale code
+        reg.update();
+        reg.addEventListener('updatefound', () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('New version of HRMS app available. Auto reloading for latest version...');
+                window.location.reload();
+              }
+            });
+          }
+        });
+      })
       .catch((err) => console.log('PWA Service Worker Registration Failed:', err));
   });
 }

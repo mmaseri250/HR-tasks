@@ -69,17 +69,17 @@
 
       <!-- Live Indicators (Center) - Controlled dynamically by JS, hidden for regular employees -->
       <div id="headerExecCapsule" class="hidden items-center gap-2.5 text-xs">
-        <div class="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-full border border-emerald-200 shadow-sm">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-          <i class="fa-solid fa-shield-halved text-emerald-600 text-xs"></i>
+        <div class="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-2.5 py-1.5 rounded-full border border-amber-300 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+          <i class="fa-solid fa-shield-halved text-amber-600 text-xs"></i>
           <span class="font-bold">مؤشر الامتثال:</span>
-          <span id="headerNitaqatText" class="font-bold">100% ممتثل (قوى ومقيم)</span>
+          <span id="headerNitaqatText" class="font-bold">54% امتثال (61 إقامة منتهية)</span>
         </div>
 
-        <div class="flex items-center gap-1.5 bg-amber-50 text-amber-800 px-2.5 py-1.5 rounded-full border border-amber-200 shadow-sm">
-          <i class="fa-solid fa-fingerprint text-amber-600 text-xs"></i>
+        <div class="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-1.5 rounded-full border border-emerald-200 shadow-sm">
+          <i class="fa-solid fa-fingerprint text-emerald-600 text-xs"></i>
           <span class="font-bold">أجهزة البصمة:</span>
-          <span id="headerDevicesCountText" class="font-semibold">0 متصلة</span>
+          <span id="headerDevicesCountText" class="font-semibold">1 متصلة</span>
         </div>
 
         <div class="flex items-center gap-1.5 bg-indigo-50 text-indigo-800 px-2.5 py-1.5 rounded-full border border-indigo-200 shadow-sm">
@@ -187,7 +187,7 @@
         <button onclick="switchTab('compliance')" id="nav-compliance" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-shield-halved w-5 text-center text-base text-emerald-600"></i>
           <span class="flex-1 text-right">مؤشر الامتثال والإقامات</span>
-          <span id="badgeNavCompliance" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800">18</span>
+          <span id="badgeNavCompliance" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 font-mono">77</span>
         </button>
 
         <!-- 3. Disciplinary Penalties (Requested Desktop Items) -->
@@ -292,7 +292,7 @@
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-xs font-bold text-slate-400">إجمالي القوى العاملة</p>
-                <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2">15</h3>
+                <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono">114</h3>
                 <p class="text-xs text-emerald-600 font-bold mt-1"><i class="fa-solid fa-arrow-trend-up"></i> 100% موظفون نشطون</p>
               </div>
               <div class="w-12 h-12 rounded-2xl bg-rose-50 text-brand flex items-center justify-center text-xl">
@@ -301,19 +301,19 @@
             </div>
           </div>
 
-          <div class="card-elevated p-5 cursor-pointer hover:border-emerald-300 transition" onclick="switchTab('compliance')">
+          <div class="card-elevated p-5 cursor-pointer hover:border-amber-300 transition" onclick="switchTab('compliance')">
             <div class="flex justify-between items-start">
               <div>
                 <div class="flex items-center gap-1.5">
                   <p class="text-xs font-bold text-slate-400">مؤشر الامتثال النظامي</p>
-                  <span class="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded-full">الإقامات ورخص العمل</span>
+                  <span class="text-[9px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded-full">الإقامات ورخص العمل</span>
                 </div>
-                <h3 id="statComplianceRate" class="text-3xl font-black text-emerald-700 mt-2">100%</h3>
+                <h3 id="statComplianceRate" class="text-3xl font-black text-amber-600 mt-2 font-mono">54%</h3>
                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                  <span id="statComplianceSub" class="text-[10px] text-slate-500 font-bold">إقامات سارية وممتثلة بالكامل</span>
+                  <span id="statComplianceSub" class="text-[10px] text-amber-800 font-bold">3 سارية • 61 إقامة منتهية</span>
                 </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+              <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
                 <i class="fa-solid fa-shield-halved"></i>
               </div>
             </div>
@@ -323,8 +323,8 @@
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-xs font-bold text-slate-400">نسبة الحضور اليومي</p>
-                <h3 id="statAttendanceRate" class="text-3xl font-black text-blue-600 mt-2">93.3%</h3>
-                <p id="statAttendanceSummaryText" class="text-xs text-slate-500 font-bold mt-1">14 حاضر • 1 في إجازة</p>
+                <h3 id="statAttendanceRate" class="text-3xl font-black text-blue-600 mt-2 font-mono">100%</h3>
+                <p id="statAttendanceSummaryText" class="text-xs text-slate-500 font-bold mt-1">114 حاضر • 0 في إجازة</p>
               </div>
               <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
                 <i class="fa-solid fa-user-check"></i>
@@ -336,7 +336,7 @@
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-xs font-bold text-slate-400" id="statPayrollPeriodTitle">مسير الأجور الشهري</p>
-                <h3 id="statPayrollAmount" class="text-2xl font-black text-amber-600 mt-2">-- <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
+                <h3 id="statPayrollAmount" class="text-2xl font-black text-amber-600 mt-2 font-mono">367,000 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
                 <p class="text-xs text-emerald-600 font-bold mt-1" id="statPayrollStatusSubtitle"><i class="fa-solid fa-circle-check"></i> جاهز للاحتساب والصرف</p>
               </div>
               <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
@@ -355,7 +355,7 @@
               <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <i class="fa-solid fa-chart-pie text-brand"></i> توزيع القوى العاملة حسب الإدارات
               </h3>
-              <span class="text-xs text-slate-400 font-bold">6 إدارات رئيسية</span>
+              <span class="text-xs text-slate-400 font-bold">9 إدارات رئيسية</span>
             </div>
             <div class="chart-container-fixed">
               <canvas id="deptChart"></canvas>
