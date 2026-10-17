@@ -649,18 +649,20 @@
         <!-- 1. Smart Table View Container -->
         <div id="empTableViewContainer" class="card-elevated overflow-hidden shadow-sm">
           <div class="overflow-x-auto">
-            <table id="employeesTable" class="w-full text-xs text-right border-collapse">
-              <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+            <table id="employeesTable" class="w-full text-xs text-right border-collapse whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-800 font-black border-b border-slate-200">
                 <tr>
-                  <th class="py-3 px-3">الرقم</th>
-                  <th class="py-3 px-3">الموظف والبيانات</th>
-                  <th class="py-3 px-3">الهوية / الإقامة</th>
-                  <th class="py-3 px-3">الوظيفة والإدارة والفرع</th>
-                  <th class="py-3 px-3">المدير المباشر</th>
-                  <th class="py-3 px-3">الراتب الأساسي</th>
-                  <th class="py-3 px-3">إجمالي الراتب</th>
-                  <th class="py-3 px-3">حالة الوثيقة</th>
-                  <th class="py-3 px-3 text-center">إجراءات سريعة</th>
+                  <th class="py-3.5 px-3">الرقم الوظيفي</th>
+                  <th class="py-3.5 px-3">الاسم</th>
+                  <th class="py-3.5 px-3">الإدارة</th>
+                  <th class="py-3.5 px-3">المسمى الوظيفي</th>
+                  <th class="py-3.5 px-3">المدير المباشر</th>
+                  <th class="py-3.5 px-3">رقم الهوية</th>
+                  <th class="py-3.5 px-3">تاريخ التعيين</th>
+                  <th class="py-3.5 px-3">الراتب الأساسي</th>
+                  <th class="py-3.5 px-3">الراتب الإجمالي</th>
+                  <th class="py-3.5 px-3">رصيد الإجازات السنوي</th>
+                  <th class="py-3.5 px-3 text-center">الإجراءات</th>
                 </tr>
               </thead>
               <tbody id="employeesTableBody" class="divide-y divide-slate-100">
@@ -1066,20 +1068,20 @@
            ===================================================================== -->
       <section id="view-compliance" class="space-y-6 hidden">
         
-        <!-- Header Banner -->
-        <div class="card-elevated p-6">
+        <!-- Header Banner & Sub-Navigation -->
+        <div class="card-elevated p-6 space-y-4">
           <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
               <div class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
-                  <i class="fa-solid fa-shield-halved"></i>
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl text-white shadow-sm" style="background-color: #8B0000;">
+                  <i class="fa-solid fa-file-invoice"></i>
                 </div>
                 <div>
                   <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
-                    مؤشر الامتثال المؤسسي ولوحة الالتزام النظامي
-                    <span class="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full">نظام العمل والجهات الرقابية</span>
+                    قالب تقرير مقيم ولوحة الامتثال ورخص العمل
+                    <span class="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full">بيانات رسمية معتمدة</span>
                   </h2>
-                  <p class="text-xs text-slate-500 mt-0.5">متابعة حية لامتثال شركة جوهرة المجد بأنظمة تجديد الإقامات ورخص العمل (قوى)، توثيق العقود، حماية الأجور (مدد)، ونطاقات.</p>
+                  <p class="text-xs text-slate-500 mt-0.5">متابعة حية للمقيمين النشطين استناداً إلى ملف منصة مقيم الرسمية مع مؤشرات رخص العمل (قوى)، التواجد داخل وخارج المملكة، وحالات سريان الإقامات والجوازات.</p>
                 </div>
               </div>
             </div>
@@ -1087,19 +1089,184 @@
             <div class="flex items-center gap-2 flex-wrap">
               <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                متصل ومطابق مع منصة قوى ومقيم
+                متصل ومطابق مع منصة مقيم وقوى
               </span>
-              <button onclick="loadCompliance()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+              <button onclick="loadMuqeemReport()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
                 <i class="fa-solid fa-arrows-rotate"></i> تحديث الفحص
               </button>
-              <button onclick="exportComplianceReport()" class="px-4 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs flex items-center gap-1.5 shadow transition">
-                <i class="fa-solid fa-file-pdf"></i> تصدير تقرير الامتثال الرسمي
+              <button onclick="openAddMuqeemModal()" class="px-3.5 py-2 rounded-xl text-white font-bold text-xs flex items-center gap-1.5 shadow transition" style="background-color: #8B0000;">
+                <i class="fa-solid fa-user-plus text-amber-300"></i> إضافة مقيم
+              </button>
+              <button onclick="exportMuqeemExcel()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow transition">
+                <i class="fa-solid fa-file-excel"></i> تصدير مقيم Excel
               </button>
             </div>
           </div>
 
+          <!-- Section Sub-Navigation Tabs -->
+          <div class="flex items-center gap-2 pt-1">
+            <button id="btnTabMuqeem" onclick="switchComplianceSubTab('muqeem')" class="px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-[#8B0000] text-white shadow-sm">
+              <i class="fa-solid fa-file-invoice"></i> قالب تقرير مقيم (المقيمين النشطين)
+            </button>
+            <button id="btnTabGeneralComp" onclick="switchComplianceSubTab('general')" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200">
+              <i class="fa-solid fa-shield-halved"></i> لوحة الامتثال المؤسسي العام
+            </button>
+          </div>
+        </div>
+
+        <!-- =====================================================================
+             SUB-VIEW 1: OFFICIAL MUQEEM REPORT (قالب تقرير مقيم الرسمي)
+             ===================================================================== -->
+        <div id="subviewMuqeem" class="space-y-6">
+          
+          <!-- Top 7 KPI Cards for Muqeem -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+            
+            <!-- 1. Total Residents -->
+            <div class="card-elevated p-3.5 text-center border-t-4 border-[#8B0000]">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">إجمالي المقيمين</span>
+              <h3 id="muqKpiTotal" class="text-2xl font-black font-mono text-slate-800">100</h3>
+              <span class="text-[10px] text-slate-400 font-semibold">ملف مقيم الرسمي</span>
+            </div>
+
+            <!-- 2. Inside KSA -->
+            <div class="card-elevated p-3.5 text-center border-t-4 border-emerald-600">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">داخل السعودية</span>
+              <h3 id="muqKpiInside" class="text-2xl font-black font-mono text-emerald-700">92</h3>
+              <span class="text-[10px] text-emerald-600 font-bold">على رأس العمل</span>
+            </div>
+
+            <!-- 3. Outside KSA -->
+            <div class="card-elevated p-3.5 text-center border-t-4 border-blue-600">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">خارج السعودية</span>
+              <h3 id="muqKpiOutside" class="text-2xl font-black font-mono text-blue-700">8</h3>
+              <span class="text-[10px] text-blue-600 font-bold">تأشيرة خروج وعودة</span>
+            </div>
+
+            <!-- 4. Valid Iqamas -->
+            <div class="card-elevated p-3.5 text-center border-t-4 border-teal-500">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">إقامات سارية</span>
+              <h3 id="muqKpiValid" class="text-2xl font-black font-mono text-teal-700">3</h3>
+              <span class="text-[10px] text-teal-600 font-bold">أكثر من 60 يوماً</span>
+            </div>
+
+            <!-- 5. Expiring Soon -->
+            <div class="card-elevated p-3.5 text-center border-t-4 border-amber-500">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">تشارف على الانتهاء</span>
+              <h3 id="muqKpiExpiring" class="text-2xl font-black font-mono text-amber-700">17</h3>
+              <span class="text-[10px] text-amber-700 font-bold">خلال 60 يوماً</span>
+            </div>
+
+            <!-- 6. Expired -->
+            <div class="card-elevated p-3.5 text-center border-t-4 border-rose-600">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">منتهية (تتطلب تجديد)</span>
+              <h3 id="muqKpiExpired" class="text-2xl font-black font-mono text-rose-700">80</h3>
+              <span class="text-[10px] text-rose-600 font-bold">سداد الرسوم وتجديد</span>
+            </div>
+
+            <!-- 7. Monthly Qiwa Fees -->
+            <div class="card-elevated p-3.5 text-center border-t-4 border-purple-600">
+              <span class="text-[11px] font-bold text-slate-500 block mb-1">المقابل المالي (شهرياً)</span>
+              <h3 id="muqKpiFees" class="text-xl font-black font-mono text-purple-800">73,600 ر.س</h3>
+              <span class="text-[10px] text-slate-500">800 ر.س / عامل داخل المملكة</span>
+            </div>
+
+          </div>
+
+          <!-- Alert Note -->
+          <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center text-sm font-black flex-shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <span class="font-black text-amber-950 block">بيانات تقرير مقيم مستوردة بالكامل من ملف: "المقيمين النشطين10_5_2026.xlsx"</span>
+                <span class="text-[11px] text-amber-800">يمكنك تعديل أي مقيم، تغيير حالة التواجد (داخل / خارج السعودية)، أو إضافة مقيمين جدد مع احتساب فوري للمؤشرات ورخص العمل.</span>
+              </div>
+            </div>
+            <button onclick="syncMuqeemFromExcel()" class="px-3.5 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0 transition shadow-sm">
+              <i class="fa-solid fa-rotate"></i> إعادة مزامنة ملف Excel
+            </button>
+          </div>
+
+          <!-- Muqeem Table Card -->
+          <div class="card-elevated p-6 space-y-4">
+            
+            <!-- Filters Toolbar -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+              
+              <!-- Filter Tabs -->
+              <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold overflow-x-auto max-w-full">
+                <button onclick="filterMuqeem('all')" id="btnMuqFilterAll" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm">
+                  الكل (<span id="countMuqAll">100</span>)
+                </button>
+                <button onclick="filterMuqeem('inside_ksa')" id="btnMuqFilterInside" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  داخل السعودية (<span id="countMuqInside">92</span>)
+                </button>
+                <button onclick="filterMuqeem('outside_ksa')" id="btnMuqFilterOutside" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  خارج السعودية (<span id="countMuqOutside">8</span>)
+                </button>
+                <button onclick="filterMuqeem('expiring_soon')" id="btnMuqFilterExpiring" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  تشارف على الانتهاء (<span id="countMuqExpiring">17</span>)
+                </button>
+                <button onclick="filterMuqeem('valid')" id="btnMuqFilterValid" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  سارية (<span id="countMuqValid">3</span>)
+                </button>
+                <button onclick="filterMuqeem('expired')" id="btnMuqFilterExpired" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  منتهية (<span id="countMuqExpired">80</span>)
+                </button>
+              </div>
+
+              <!-- Search Field -->
+              <div class="relative w-full md:w-80">
+                <input type="text" id="muqSearchInput" oninput="handleMuqeemSearch(this.value)" placeholder="بحث برقم الإقامة، الاسم، المهنة، الجنسية..." class="w-full rounded-xl border border-slate-300 py-2 pr-9 pl-3 text-xs focus:ring-2 focus:ring-[#8B0000] font-bold">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400 text-xs"></i>
+              </div>
+            </div>
+
+            <!-- Muqeem Table Container -->
+            <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+              <table id="muqeemTable" class="w-full text-right text-xs whitespace-nowrap">
+                <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                  <tr>
+                    <th class="py-3.5 px-3">رقم الإقامة</th>
+                    <th class="py-3.5 px-3">اسم المقيم</th>
+                    <th class="py-3.5 px-3">الجنسية</th>
+                    <th class="py-3.5 px-3">المهنة</th>
+                    <th class="py-3.5 px-3 text-center">التواجد بالمملكة</th>
+                    <th class="py-3.5 px-3">رقم الجواز والانتهاء</th>
+                    <th class="py-3.5 px-3">انتهاء الإقامة (ميلادي / هجري)</th>
+                    <th class="py-3.5 px-3 text-center">الأيام المتبقية</th>
+                    <th class="py-3.5 px-3">حالة الإقامة ورخصة العمل</th>
+                    <th class="py-3.5 px-3 text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="muqeemTableBody" class="divide-y divide-slate-100">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer Stats -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between flex-wrap gap-2">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                نظام مقيم المتكامل: يتم احتساب مؤشرات رخص العمل والاقامات بناء على البيانات الرسمية المستوردة لشركة جوهرة المجد.
+              </span>
+              <span id="muqTableCountLabel" class="font-bold text-slate-700">عرض 100 مقيم</span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =====================================================================
+             SUB-VIEW 2: GENERAL COMPLIANCE OVERVIEW (لوحة الامتثال المؤسسي العام)
+             ===================================================================== -->
+        <div id="subviewGeneralCompliance" class="space-y-6 hidden">
+          
           <!-- Top Metric Cards (4 KPIs) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <!-- Overall Compliance Score -->
             <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-50 to-transparent border border-emerald-200 space-y-2">
@@ -1111,7 +1278,7 @@
                 <h3 id="compOverallScore" class="text-3xl font-black text-emerald-800">100%</h3>
                 <span class="text-xs font-bold text-emerald-700">ممتثل بالكامل</span>
               </div>
-              <p class="text-[11px] text-slate-600 font-semibold" id="compOverallSub">109 موظف (35 سعودي • 74 وافد)</p>
+              <p class="text-[11px] text-slate-600 font-semibold" id="compOverallSub">114 موظف رسمي (34 سعودي • 80 مقيم)</p>
             </div>
 
             <!-- Iqama Renewal Compliance -->
@@ -1122,11 +1289,11 @@
               </div>
               <div class="flex items-baseline gap-2">
                 <h3 id="compIqamaRate" class="text-3xl font-black text-slate-800">100%</h3>
-                <span id="compIqamaValidCount" class="text-xs font-bold text-emerald-600">58 سارية وممتثلة</span>
+                <span id="compIqamaValidCount" class="text-xs font-bold text-emerald-600">سارية وممتثلة</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
                 <span>تشارف على الانتهاء:</span>
-                <span id="compIqamaExpiringCount" class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">16 موظف</span>
+                <span id="compIqamaExpiringCount" class="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-mono">17</span>
               </div>
             </div>
 
@@ -1138,11 +1305,11 @@
               </div>
               <div class="flex items-baseline gap-2">
                 <h3 id="compWorkPermitRate" class="text-3xl font-black text-slate-800">100%</h3>
-                <span class="text-xs font-bold text-purple-700">74 رخصة صادرة</span>
+                <span class="text-xs font-bold text-purple-700">رخص صادرة ومسددة</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
                 <span>المقابل المالي للتجديد:</span>
-                <span id="compWorkPermitFee" class="font-bold text-slate-800">800 ر.س / شهرياً</span>
+                <span id="compWorkPermitFee" class="font-bold text-slate-800 font-mono">800 ر.س / شهرياً</span>
               </div>
             </div>
 
@@ -1153,8 +1320,8 @@
                 <span class="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-clock-rotate-left"></i></span>
               </div>
               <div class="flex items-baseline gap-2">
-                <h3 id="compActionsDueCount" class="text-3xl font-black text-slate-800">0</h3>
-                <span id="compActionsDueBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">ممتثل</span>
+                <h3 id="compActionsDueCount" class="text-3xl font-black text-slate-800 font-mono">17</h3>
+                <span id="compActionsDueBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">تجديد مطلوب</span>
               </div>
               <div class="flex items-center justify-between text-[11px] pt-1 border-t text-slate-500">
                 <span>الإجراء المطلوب:</span>
@@ -1164,81 +1331,65 @@
 
           </div>
 
-          <!-- Alert Banner for Expiring Iqamas and Work Permits -->
-          <div id="compUrgentAlertBanner" class="mt-5 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center text-base flex-shrink-0 mt-0.5">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+          <!-- General Compliance Roster Table Card -->
+          <div class="card-elevated p-6 space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+              
+              <!-- Filter Tabs -->
+              <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold overflow-x-auto max-w-full">
+                <button onclick="filterComplianceTable('all')" id="btnCompTabAll" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm">
+                  الكل
+                </button>
+                <button onclick="filterComplianceTable('expiring_soon')" id="btnCompTabExpiring" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  تشارف على الانتهاء
+                </button>
+                <button onclick="filterComplianceTable('expats')" id="btnCompTabExpats" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  الوافدون
+                </button>
+                <button onclick="filterComplianceTable('saudis')" id="btnCompTabSaudis" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
+                  السعوديون
+                </button>
               </div>
-              <div>
-                <h4 class="font-black text-amber-950 text-xs">تنبيه استباقي: 16 موظفاً وافداً تشارف إقاماتهم على الانتهاء خلال الـ 60 يوماً القادمة</h4>
-                <p class="text-[11px] text-amber-800 mt-0.5">يُرجى المبادرة بإصدار وسداد المقابل المالي لرخص العمل عبر منصة قوى، واستكمال تجديد الإقامات عبر مقيم تفادياً للغرامات النظامية.</p>
+
+              <!-- Search Field -->
+              <div class="relative w-full md:w-72">
+                <input type="text" id="compSearchInput" oninput="handleComplianceSearch(this.value)" placeholder="بحث بالاسم، رقم الهوية، الكود..." class="w-full rounded-xl border border-slate-300 py-2 pr-9 pl-3 text-xs focus:ring-2 focus:ring-brand font-bold">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400 text-xs"></i>
               </div>
             </div>
-            <button onclick="filterComplianceTable('expiring_soon')" class="px-3.5 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0 transition shadow-sm">
-              <i class="fa-solid fa-filter"></i> عرض الموظفين المشمولين
-            </button>
-          </div>
 
-        </div>
-
-        <!-- Compliance Table Card -->
-        <div class="card-elevated p-6 space-y-4">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-            
-            <!-- Filter Tabs -->
-            <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold overflow-x-auto max-w-full">
-              <button onclick="filterComplianceTable('all')" id="btnCompTabAll" class="px-3 py-1.5 rounded-lg bg-white text-brand shadow-sm">
-                الكل (109)
-              </button>
-              <button onclick="filterComplianceTable('expiring_soon')" id="btnCompTabExpiring" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
-                تشارف على الانتهاء (16)
-              </button>
-              <button onclick="filterComplianceTable('expats')" id="btnCompTabExpats" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
-                الوافدون (74)
-              </button>
-              <button onclick="filterComplianceTable('saudis')" id="btnCompTabSaudis" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">
-                السعوديون (35)
-              </button>
+            <!-- Table Container -->
+            <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+              <table class="w-full text-right text-xs whitespace-nowrap">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-3 px-3">كود الموظف</th>
+                    <th class="py-3 px-3">اسم الموظف</th>
+                    <th class="py-3 px-3">الجنسية</th>
+                    <th class="py-3 px-3">الهوية / الإقامة</th>
+                    <th class="py-3 px-3">الوظيفة والفرع</th>
+                    <th class="py-3 px-3">تاريخ انتهاء الإقامة / العقد</th>
+                    <th class="py-3 px-3">الأيام المتبقية</th>
+                    <th class="py-3 px-3">رخصة العمل (قوى)</th>
+                    <th class="py-3 px-3">حالة الامتثال</th>
+                    <th class="py-3 px-3 text-center">الإجراء</th>
+                  </tr>
+                </thead>
+                <tbody id="complianceTableBody" class="divide-y divide-slate-100">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
             </div>
 
-            <!-- Search Field -->
-            <div class="relative w-full md:w-72">
-              <input type="text" id="compSearchInput" oninput="handleComplianceSearch(this.value)" placeholder="بحث بالاسم، رقم الهوية، الكود، الوظيفة..." class="w-full rounded-xl border border-slate-300 py-2 pr-9 pl-3 text-xs focus:ring-2 focus:ring-brand font-bold">
-              <i class="fa-solid fa-magnifying-glass absolute right-3 top-3 text-slate-400 text-xs"></i>
+            <!-- Legal Reference Note -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between flex-wrap gap-2">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-blue-600"></i>
+                تنويه نظامي: تجديد الإقامة يتطلب وجود تأمين طبي ساري (مجلس الضمان الصحي) + سداد رسوم رخصة العمل عبر منصة قوى (800 ر.س/شهرياً) + سداد رسوم الجوازات عبر مقيم.
+              </span>
+              <span class="font-bold text-slate-700">شركة جوهرة المجد للمقاولات • فرع ابها الرئيسي</span>
             </div>
-          </div>
 
-          <!-- Table Container -->
-          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
-            <table class="w-full text-right text-xs">
-              <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-                <tr>
-                  <th class="py-3 px-3">كود الموظف</th>
-                  <th class="py-3 px-3">اسم الموظف</th>
-                  <th class="py-3 px-3">الجنسية</th>
-                  <th class="py-3 px-3">الهوية / الإقامة</th>
-                  <th class="py-3 px-3">الوظيفة والفرع</th>
-                  <th class="py-3 px-3">تاريخ انتهاء الإقامة / العقد</th>
-                  <th class="py-3 px-3">الأيام المتبقية</th>
-                  <th class="py-3 px-3">رخصة العمل (قوى)</th>
-                  <th class="py-3 px-3">حالة الامتثال</th>
-                  <th class="py-3 px-3 text-center">الإجراء</th>
-                </tr>
-              </thead>
-              <tbody id="complianceTableBody" class="divide-y divide-slate-100">
-                <!-- Injected via JavaScript -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Legal Reference Note -->
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center justify-between flex-wrap gap-2">
-            <span class="flex items-center gap-2">
-              <i class="fa-solid fa-circle-info text-blue-600"></i>
-              تنويه نظامي: تجديد الإقامة يتطلب وجود تأمين طبي ساري (مجلس الضمان الصحي) + سداد رسوم رخصة العمل عبر منصة قوى (800 ر.س/شهرياً) + سداد رسوم الجوازات عبر مقيم.
-            </span>
-            <span class="font-bold text-brand">شركة جوهرة المجد للتجارة • سجل تجاري: 7004872169</span>
           </div>
 
         </div>
@@ -1544,13 +1695,19 @@
                 <span class="text-xs bg-white/25 px-2.5 py-0.5 rounded-full font-bold">بوابة الخدمة الذاتية للموظفين (ESS)</span>
                 <h2 id="essEmployeeName" class="text-2xl font-black mt-1">سارة عبدالله الشهري</h2>
                 <p id="essEmployeeTitle" class="text-xs text-white/90">أخصائية موارد بشرية وعلاقات موظفين • شركة جوهرة المجد</p>
+                <div class="mt-2 flex items-center gap-2">
+                  <span class="text-[11px] font-bold text-white/80">عرض ملف الموظف:</span>
+                  <select id="essEmpSelector" onchange="onEssEmpSelected(this.value)" class="rounded-xl border border-white/30 bg-white/20 text-white font-bold text-xs py-1 px-3 focus:outline-none">
+                    <!-- Populated dynamically via JS -->
+                  </select>
+                </div>
               </div>
             </div>
 
             <div class="flex items-center gap-3 bg-white/20 backdrop-blur-md p-3 rounded-2xl border border-white/30 text-xs">
               <div class="text-center px-3 border-l border-white/30">
-                <span class="block text-white/80">رصيد الإجازات المتبقي</span>
-                <span id="essLeaveBalance" class="text-xl font-black">28 يوم</span>
+                <span class="block text-white/80">رصيد الإجازات السنوي</span>
+                <span id="essLeaveBalance" class="text-xl font-black font-mono">0 يوم</span>
               </div>
               <div class="text-center px-3">
                 <span class="block text-white/80">حالة العقد والوثائق</span>
@@ -1610,6 +1767,62 @@
             <h4 class="text-xs font-bold text-slate-800 mt-2" data-i18n="ess_card_cert">خطاب تعريف QR</h4>
             <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="ess_card_cert_sub">موثق إلكترونياً للبنوك</p>
           </button>
+        <!-- =====================================================================
+             ESS SECTION: ASSIGNED TASKS (المهام والتكليفات المسندة إليك)
+             ===================================================================== -->
+        <div class="card-elevated p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-list-check" style="color: #8B0000;"></i> المهام والتكليفات المسندة إليك
+                <span id="essTasksBadge" class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full font-mono">0 مهمة</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">متابعة وإنجاز كافة المهام والتكليفات المسندة إليك من الإدارة وتحديث نسبة الإنجاز حتى اكتمال المهمة.</p>
+            </div>
+            <button onclick="refreshEssTasks()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-arrows-rotate"></i> تحديث المهام
+            </button>
+          </div>
+
+          <!-- 4 KPI counters for employee tasks -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+              <span class="text-[11px] font-bold text-slate-500 block mb-0.5">إجمالي المهام المسندة</span>
+              <span id="essTasksTotalCount" class="text-xl font-mono font-black text-slate-800">0</span>
+            </div>
+            <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-200 text-center">
+              <span class="text-[11px] font-bold text-blue-700 block mb-0.5">قيد التنفيذ</span>
+              <span id="essTasksInProgressCount" class="text-xl font-mono font-black text-blue-800">0</span>
+            </div>
+            <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200 text-center">
+              <span class="text-[11px] font-bold text-amber-700 block mb-0.5">بانتظار الاعتماد</span>
+              <span id="essTasksPendingCount" class="text-xl font-mono font-black text-amber-800">0</span>
+            </div>
+            <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center">
+              <span class="text-[11px] font-bold text-emerald-700 block mb-0.5">مهام مكتملة</span>
+              <span id="essTasksCompletedCount" class="text-xl font-mono font-black text-emerald-800">0</span>
+            </div>
+          </div>
+
+          <!-- Tasks Table -->
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-right whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                <tr>
+                  <th class="py-3.5 px-3">رقم المهمة</th>
+                  <th class="py-3.5 px-3">عنوان المهمة وتفاصيلها</th>
+                  <th class="py-3.5 px-3">الأولوية</th>
+                  <th class="py-3.5 px-3">تاريخ الاستحقاق</th>
+                  <th class="py-3.5 px-3" style="min-width: 160px;">نسبة الإنجاز</th>
+                  <th class="py-3.5 px-3">الحالة</th>
+                  <th class="py-3.5 px-3 text-center">الإجراء</th>
+                </tr>
+              </thead>
+              <tbody id="essTasksTableBody" class="divide-y divide-slate-100">
+                <!-- Loaded dynamically via JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Requests History Table -->
@@ -3443,6 +3656,109 @@
           <button type="button" onclick="closeModal('modalGenerateWordForm')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
           <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 shadow">
             <i class="fa-solid fa-download"></i> توليد وتحميل المستند (.docx)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: MUQEEM RESIDENT (إضافة وتعديل سجل مقيم)
+       ========================================================================= -->
+  <div id="modalMuqeemResident" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="muqeemModalTitle" class="text-base font-black text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-file-invoice text-brand"></i> إضافة سجل مقيم جديد
+        </h3>
+        <button onclick="closeModal('modalMuqeemResident')" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="muqeemResidentForm" onsubmit="handleMuqeemResidentSubmit(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="muqeemResidentId">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رقم الإقامة: *</label>
+            <input type="text" id="muqeemIqamaNumber" required maxlength="10" placeholder="مثال: 2064427269" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold focus:ring-2 focus:ring-brand">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الاسم الرباعي: *</label>
+            <input type="text" id="muqeemFullName" required placeholder="الاسم كما هو في الإقامة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold focus:ring-2 focus:ring-brand">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الجنسية: *</label>
+            <input type="text" id="muqeemNationality" required placeholder="مصر، اليمن، نيبال..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">المهنة: *</label>
+            <input type="text" id="muqeemOccupation" required placeholder="مهنة الإقامة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الجنس:</label>
+            <select id="muqeemGender" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold bg-white">
+              <option value="ذكر">ذكر</option>
+              <option value="أنثى">أنثى</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">التواجد بالمملكة: *</label>
+            <select id="muqeemIsOutsideKsa" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold bg-white focus:ring-2 focus:ring-brand">
+              <option value="0">داخل السعودية (على رأس العمل)</option>
+              <option value="1">خارج السعودية (إجازة / تأشيرة خروج وعودة)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رقم صاحب العمل:</label>
+            <input type="text" id="muqeemEmployerId" value="7013999755" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رقم الجواز:</label>
+            <input type="text" id="muqeemPassportNumber" placeholder="رقم الجواز..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ انتهاء الجواز:</label>
+            <input type="date" id="muqeemPassportExpiry" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ انتهاء الإقامة (ميلادي): *</label>
+            <input type="date" id="muqeemIqamaExpiryGregorian" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ انتهاء الإقامة (هجري):</label>
+            <input type="text" id="muqeemIqamaExpiryHijri" placeholder="1448-04-13" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ إصدار الإقامة:</label>
+            <input type="date" id="muqeemIqamaIssueDate" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ الميلاد:</label>
+            <input type="date" id="muqeemBirthDate" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalMuqeemResident')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center gap-2 shadow">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ البيانات
           </button>
         </div>
       </form>

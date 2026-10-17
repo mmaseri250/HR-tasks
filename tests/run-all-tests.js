@@ -3,6 +3,7 @@ const { runPayrollTests } = require('./payroll.test');
 const { runAttendanceTests } = require('./attendance.test');
 const { runEmployeeAndRequestTests } = require('./employees.test');
 const { runLeavesTasksHierarchyTests } = require('./leaves-tasks-hierarchy.test');
+const { runMuqeemAndEssTests } = require('./test-muqeem-ess');
 
 console.log('================================================================');
 console.log('  تشغيل الحزمة الكاملة لاختبارات نظام موارد بشرية جوهرة المجد  ');
@@ -15,9 +16,10 @@ async function main() {
     runPayrollTests();
     require('./workflow-policies.test');
     await runLeavesTasksHierarchyTests();
+    await runMuqeemAndEssTests();
 
     console.log('================================================================');
-    console.log('  جميع الاختبارات المعتمدة (32/32) اجتازت بنجاح فائق ودقة مطابقة 100%!   ');
+    console.log('  جميع الاختبارات المعتمدة (37/37) اجتازت بنجاح فائق ودقة مطابقة 100%!   ');
     console.log('================================================================');
     process.exit(0);
   } catch (err) {

@@ -4095,6 +4095,7 @@ function switchTab(tabId) {
       break;
     case 'compliance':
       loadCompliance();
+      loadMuqeemReport();
       break;
     case 'penalties':
       renderPenaltyRegulations(state.regulations);
@@ -4160,7 +4161,7 @@ async function loadDashboard() {
   const attRate = statsRes && statsRes.data ? statsRes.data.attendance.attendanceRate : 98.2;
   const present = statsRes && statsRes.data ? statsRes.data.attendance.presentCount : total;
   const onLeave = statsRes && statsRes.data ? statsRes.data.attendance.onLeaveCount : 0;
-  const payrollNet = statsRes && statsRes.data && statsRes.data.currentPayroll ? Number(statsRes.data.currentPayroll.total_net).toLocaleString('ar-SA') : '0';
+  const payrollNet = statsRes && statsRes.data && statsRes.data.currentPayroll ? Number(statsRes.data.currentPayroll.total_net).toLocaleString('en-US') : '0';
 
   const totalEl = document.getElementById('statTotalEmployees');
   if (totalEl) totalEl.textContent = total;
@@ -4631,7 +4632,7 @@ function renderEmployeesCards(list) {
           <!-- Salary Highlight Pill -->
           <div class="p-2.5 rounded-xl flex justify-between items-center" style="background-color: rgba(200, 155, 60, 0.12); border: 1px solid rgba(200, 155, 60, 0.25);">
             <span class="text-[11px] font-bold text-amber-900">إجمالي الراتب:</span>
-            <span class="font-mono font-black text-sm text-slate-900">${Number(totalSalary).toLocaleString('ar-SA')} ر.س</span>
+            <span class="font-mono font-black text-sm text-slate-900">${Number(totalSalary).toLocaleString('en-US')} ر.س</span>
           </div>
         </div>
       </div>
@@ -4662,82 +4663,47 @@ function renderEmployeesTable(list) {
 
   tbody.innerHTML = '';
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-slate-400 font-semibold"><i class="fa-solid fa-users text-3xl text-slate-300 block mb-2"></i>لا توجد نتائج تطابق معايير البحث والتصفية المحددة.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="py-12 text-center text-slate-400 font-semibold"><i class="fa-solid fa-users text-3xl text-slate-300 block mb-2"></i>لا توجد نتائج تطابق معايير البحث والتصفية المحددة.</td></tr>`;
     return;
   }
 
-  const now = new Date();
   list.forEach(emp => {
-    const isSaudiBadge = emp.is_saudi === 1
-      ? `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-saudi">سعودي</span>`
-      : `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-expat">${emp.nationality}</span>`;
-
-    const totalSalary = (emp.basic_salary || 0) + (emp.housing_allowance || 0) + (emp.transport_allowance || 0) + (emp.other_allowance || 0);
-
-    let docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-valid">سارية وموثقة</span>`;
-    if (emp.iqama_expiry) {
-      const exp = new Date(emp.iqama_expiry);
-      const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
-      if (diffDays < 0) {
-        docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-expired">إقامة منتهية</span>`;
-      } else if (diffDays <= 60) {
-        docBadge = `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full badge-warning">تنتهي خلال ${diffDays} يوم</span>`;
-      }
-    }
+    const totalSalary = (Number(emp.basic_salary) || 0) + (Number(emp.housing_allowance) || 0) + (Number(emp.transport_allowance) || 0) + (Number(emp.other_allowance) || 0);
 
     const manager = (state.employees || []).find(m => m.id === emp.manager_id);
-    const managerName = manager ? manager.full_name_ar : null;
-    const branch = (state.branches || []).find(b => b.id === emp.branch_id);
-    const branchName = branch ? branch.name_ar : (emp.branch_name_ar || null);
+    const managerName = manager ? manager.full_name_ar : (emp.manager_name_ar || null);
 
-    const initials = emp.full_name_ar ? emp.full_name_ar.split(' ').slice(0, 2).map(w => w[0]).join('') : 'ج';
+    const hireDate = emp.join_date || emp.contract_start || (emp.created_at ? emp.created_at.split(' ')[0] : '—');
+    const leaveBalance = Number(emp.annual_leave_balance || 0);
 
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50/80 transition cursor-pointer';
+    tr.className = 'hover:bg-slate-50/80 transition cursor-pointer border-b border-slate-100';
     tr.innerHTML = `
-      <td class="py-3 px-3">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-sm flex-shrink-0" style="background: linear-gradient(135deg, #8B0000 0%, #C89B3C 100%);">
-            ${initials}
-          </div>
-          <span class="font-mono font-bold text-slate-800">${emp.emp_code}</span>
-        </div>
-      </td>
+      <td class="py-3 px-3 font-mono font-bold text-slate-800">${emp.emp_code}</td>
       <td class="py-3 px-3">
         <div class="font-black text-slate-900">${emp.full_name_ar}</div>
-        <div class="text-[11px] text-slate-400 font-mono mt-0.5">${emp.email || '--'} • ${emp.phone || '--'}</div>
+        ${emp.phone ? `<div class="text-[10px] text-slate-400 font-mono">${emp.phone}</div>` : ''}
       </td>
+      <td class="py-3 px-3 font-bold text-slate-800">${emp.department_name_ar || 'الإدارة العامة'}</td>
+      <td class="py-3 px-3 font-semibold text-slate-800">${emp.job_title_ar || 'موظف'}</td>
       <td class="py-3 px-3">
-        <div class="font-mono text-slate-800 font-bold">${emp.national_id}</div>
-        <div class="mt-0.5">${isSaudiBadge}</div>
+        ${managerName ? `<span class="text-xs text-amber-800 font-bold flex items-center gap-1"><i class="fa-solid fa-user-tie text-amber-600"></i> ${managerName}</span>` : '<span class="text-slate-400 text-xs">الإدارة العليا</span>'}
       </td>
-      <td class="py-3 px-3">
-        <div class="font-bold text-slate-800">${emp.job_title_ar}</div>
-        <div class="text-[11px] text-slate-500">${emp.department_name_ar || 'الإدارة العامة'}</div>
-        ${branchName ? `<div class="text-[10px] text-emerald-700 font-medium mt-0.5"><i class="fa-solid fa-code-branch"></i> ${branchName}</div>` : ''}
-      </td>
-      <td class="py-3 px-3">
-        ${managerName ? `<span class="text-[11px] text-amber-800 font-bold flex items-center gap-1"><i class="fa-solid fa-user-tie text-amber-600"></i> ${managerName}</span>` : '<span class="text-slate-400 text-[11px]">الإدارة العليا</span>'}
-      </td>
-      <td class="py-3 px-3 font-mono font-bold text-slate-700">${Number(emp.basic_salary).toLocaleString('ar-SA')} ر.س</td>
-      <td class="py-3 px-3 font-mono font-black" style="color: #8B0000;">${Number(totalSalary).toLocaleString('ar-SA')} ر.س</td>
-      <td class="py-3 px-3">${docBadge}</td>
+      <td class="py-3 px-3 font-mono text-slate-800 font-bold">${emp.national_id}</td>
+      <td class="py-3 px-3 font-mono text-slate-700 font-semibold">${hireDate}</td>
+      <td class="py-3 px-3 font-mono font-bold text-slate-700">${Number(emp.basic_salary || 0).toLocaleString('en-US')} ر.س</td>
+      <td class="py-3 px-3 font-mono font-black" style="color: #8B0000;">${Number(totalSalary).toLocaleString('en-US')} ر.س</td>
+      <td class="py-3 px-3 font-mono font-bold text-emerald-700">${leaveBalance.toLocaleString('en-US')} يوم</td>
       <td class="py-3 px-3 text-center">
         <div class="flex items-center justify-center gap-1.5" onclick="event.stopPropagation()">
-          <button onclick="openEmployee360Modal(${emp.id})" title="عرض الملف الشامل 360°" class="w-7 h-7 rounded-lg text-white flex items-center justify-center text-xs shadow-sm hover:opacity-90 transition" style="background-color: #8B0000;">
-            <i class="fa-solid fa-eye text-amber-300"></i>
+          <button onclick="editEmployee(${emp.id})" title="تعديل الموظف" class="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center gap-1 text-[11px] font-bold transition">
+            <i class="fa-solid fa-pen-to-square"></i> تعديل
           </button>
-          <button onclick="editEmployee(${emp.id})" title="تعديل الموظف" class="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center justify-center text-xs transition">
-            <i class="fa-solid fa-pen-to-square"></i>
+          <button onclick="openEmployee360Modal(${emp.id})" title="استعراض الملف الشامل 360°" class="px-2 py-1 rounded-lg text-white flex items-center gap-1 text-[11px] font-bold transition shadow-sm" style="background-color: #8B0000;">
+            <i class="fa-solid fa-eye text-amber-300"></i> استعراض
           </button>
-          <button onclick="previewSalaryCertificateForEmp(${emp.id})" title="شهادة تعريف بالراتب" class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center justify-center text-xs transition">
-            <i class="fa-solid fa-certificate"></i>
-          </button>
-          <button onclick="openEmployeeBadgeCard(${emp.id})" title="بطاقة العمل الرسمية" class="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 flex items-center justify-center text-xs transition">
-            <i class="fa-solid fa-id-badge"></i>
-          </button>
-          <button onclick="deleteEmployeePrompt(${emp.id})" title="حذف الموظف" class="w-7 h-7 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 flex items-center justify-center text-xs transition">
-            <i class="fa-solid fa-trash"></i>
+          <button onclick="deleteEmployeePrompt(${emp.id})" title="حذف الموظف" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 flex items-center gap-1 text-[11px] font-bold transition">
+            <i class="fa-solid fa-trash"></i> حذف
           </button>
         </div>
       </td>
@@ -4881,12 +4847,12 @@ function openEmployee360Modal(id) {
   const gross = basic + housing + transport + other;
   const gosi = emp.is_saudi === 1 ? Math.round((basic + housing) * 0.0975) : 0;
 
-  setT('s360Basic', `${basic.toLocaleString('ar-SA')} ر.س`);
-  setT('s360Housing', `${housing.toLocaleString('ar-SA')} ر.س`);
-  setT('s360Transport', `${transport.toLocaleString('ar-SA')} ر.س`);
-  setT('s360Other', `${other.toLocaleString('ar-SA')} ر.س`);
-  setT('s360Gross', `${gross.toLocaleString('ar-SA')} ر.س`);
-  setT('s360GosiDeduction', gosi > 0 ? `${gosi.toLocaleString('ar-SA')} ر.س (9.75%)` : 'معفى (غير سعودي)');
+  setT('s360Basic', `${basic.toLocaleString('en-US')} ر.س`);
+  setT('s360Housing', `${housing.toLocaleString('en-US')} ر.س`);
+  setT('s360Transport', `${transport.toLocaleString('en-US')} ر.س`);
+  setT('s360Other', `${other.toLocaleString('en-US')} ر.س`);
+  setT('s360Gross', `${gross.toLocaleString('en-US')} ر.س`);
+  setT('s360GosiDeduction', gosi > 0 ? `${gosi.toLocaleString('en-US')} ر.س (9.75%)` : 'معفى (غير سعودي)');
   setT('s360BankName', emp.bank_name || 'مصرف الراجحي');
   setT('s360Iban', emp.iban || '--');
 
@@ -5733,7 +5699,7 @@ async function loadPayroll() {
     if (periods.length > 0) {
       select.innerHTML = periods.map(p => `
         <option value="${p.id}" ${p.period_month === '2026-10' ? 'selected' : ''}>
-          مسير رواتب ${p.period_month} (${p.status}) - ${Number(p.total_net).toLocaleString('ar-SA')} ر.س
+          مسير رواتب ${p.period_month} (${p.status}) - ${Number(p.total_net).toLocaleString('en-US')} ر.س
         </option>
       `).join('');
     } else {
@@ -5760,10 +5726,10 @@ async function loadPayroll() {
     });
 
     strip.innerHTML = `
-      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${totalBasic.toLocaleString('ar-SA')} ر.س</span></div>
-      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">تأمينات GOSI</span><span class="font-mono font-bold text-rose-600">${totalGosi.toLocaleString('ar-SA')} ر.س</span></div>
-      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">البدلات</span><span class="font-mono font-bold text-emerald-600">${totalAllowances.toLocaleString('ar-SA')} ر.س</span></div>
-      <div class="bg-brand/10 border border-brand/30 p-2.5 rounded-xl"><span class="block text-brand text-[10px] font-bold">الصافي</span><span class="font-mono font-black text-brand text-sm">${totalNet.toLocaleString('ar-SA')} ر.س</span></div>
+      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${totalBasic.toLocaleString('en-US')} ر.س</span></div>
+      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">تأمينات GOSI</span><span class="font-mono font-bold text-rose-600">${totalGosi.toLocaleString('en-US')} ر.س</span></div>
+      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">البدلات</span><span class="font-mono font-bold text-emerald-600">${totalAllowances.toLocaleString('en-US')} ر.س</span></div>
+      <div class="bg-brand/10 border border-brand/30 p-2.5 rounded-xl"><span class="block text-brand text-[10px] font-bold">الصافي</span><span class="font-mono font-black text-brand text-sm">${totalNet.toLocaleString('en-US')} ر.س</span></div>
     `;
   }
 
@@ -5794,15 +5760,15 @@ async function loadPayroll() {
           <tr class="hover:bg-slate-50 transition">
             <td class="py-3 px-3 font-mono font-bold text-slate-700">${emp.emp_code}</td>
             <td class="py-3 px-3"><div class="font-bold text-slate-900">${emp.full_name_ar}</div><div class="text-[11px] text-slate-400">${emp.job_title_ar}</div></td>
-            <td class="py-3 px-3 font-mono font-bold text-slate-700">${basic.toLocaleString('ar-SA')}</td>
-            <td class="py-3 px-3 font-mono text-slate-600">${housing.toLocaleString('ar-SA')}</td>
-            <td class="py-3 px-3 font-mono text-slate-600">${transport.toLocaleString('ar-SA')}</td>
-            <td class="py-3 px-3 font-mono text-slate-600">${other.toLocaleString('ar-SA')}</td>
-            <td class="py-3 px-3 font-mono font-bold text-slate-800">${gross.toLocaleString('ar-SA')}</td>
-            <td class="py-3 px-3 font-mono text-rose-600 font-bold">${gosi.toLocaleString('ar-SA')}</td>
-            <td class="py-3 px-3 font-mono text-slate-500">${compGosi.toLocaleString('ar-SA')}</td>
+            <td class="py-3 px-3 font-mono font-bold text-slate-700">${basic.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-600">${housing.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-600">${transport.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-600">${other.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono font-bold text-slate-800">${gross.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-rose-600 font-bold">${gosi.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-500">${compGosi.toLocaleString('en-US')}</td>
             <td class="py-3 px-3 font-mono text-slate-400">0.00</td>
-            <td class="py-3 px-3 font-mono font-black text-brand text-sm">${net.toLocaleString('ar-SA')} ر.س</td>
+            <td class="py-3 px-3 font-mono font-black text-brand text-sm">${net.toLocaleString('en-US')} ر.س</td>
             <td class="py-3 px-3 text-center">
               <button onclick="viewEmployeePayslip(${emp.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] px-2.5 py-1 rounded-lg">القسيمة</button>
             </td>
@@ -5829,7 +5795,7 @@ async function executeCalculatePayroll() {
     });
 
     if (res && res.success) {
-      alert(`✓ تم احتساب مسير رواتب شهر ${periodMonth} بنجاح!\nعدد الموظفين: ${res.data.period.employee_count}\nإجمالي صافي الرواتب: ${Number(res.data.period.total_net).toLocaleString('ar-SA')} ر.س.`);
+      alert(`✓ تم احتساب مسير رواتب شهر ${periodMonth} بنجاح!\nعدد الموظفين: ${res.data.period.employee_count}\nإجمالي صافي الرواتب: ${Number(res.data.period.total_net).toLocaleString('en-US')} ر.س.`);
       closeModal('modalCalculatePayroll');
       await loadPayroll();
     } else {
@@ -5910,19 +5876,19 @@ function viewEmployeePayslip(empId) {
       <div class="border rounded-lg p-2.5 bg-emerald-50/30">
         <span class="font-bold text-emerald-800 text-xs block mb-2 border-b pb-1">الاستحقاقات (Earnings):</span>
         <div class="space-y-1 font-mono text-xs">
-          <div class="flex justify-between"><span>الأساسي:</span><span>${basic.toLocaleString('ar-SA')} ر.س</span></div>
-          <div class="flex justify-between"><span>السكن:</span><span>${housing.toLocaleString('ar-SA')} ر.س</span></div>
-          <div class="flex justify-between"><span>النقل:</span><span>${transport.toLocaleString('ar-SA')} ر.س</span></div>
-          <div class="flex justify-between"><span>البدلات:</span><span>${other.toLocaleString('ar-SA')} ر.س</span></div>
-          <div class="flex justify-between border-t pt-1 font-bold"><span>الإجمالي:</span><span>${gross.toLocaleString('ar-SA')} ر.س</span></div>
+          <div class="flex justify-between"><span>الأساسي:</span><span>${basic.toLocaleString('en-US')} ر.س</span></div>
+          <div class="flex justify-between"><span>السكن:</span><span>${housing.toLocaleString('en-US')} ر.س</span></div>
+          <div class="flex justify-between"><span>النقل:</span><span>${transport.toLocaleString('en-US')} ر.س</span></div>
+          <div class="flex justify-between"><span>البدلات:</span><span>${other.toLocaleString('en-US')} ر.س</span></div>
+          <div class="flex justify-between border-t pt-1 font-bold"><span>الإجمالي:</span><span>${gross.toLocaleString('en-US')} ر.س</span></div>
         </div>
       </div>
       <div class="border rounded-lg p-2.5 bg-rose-50/30">
         <span class="font-bold text-rose-800 text-xs block mb-2 border-b pb-1">الاستقطاعات (Deductions):</span>
         <div class="space-y-1 font-mono text-xs">
-          <div class="flex justify-between"><span>التأمينات GOSI:</span><span class="text-rose-600">${gosi.toLocaleString('ar-SA')} ر.س</span></div>
+          <div class="flex justify-between"><span>التأمينات GOSI:</span><span class="text-rose-600">${gosi.toLocaleString('en-US')} ر.س</span></div>
           <div class="flex justify-between"><span>الغياب / التأخير:</span><span>0.00 ر.س</span></div>
-          <div class="flex justify-between border-t pt-1 font-bold text-rose-700"><span>المجموع:</span><span>${gosi.toLocaleString('ar-SA')} ر.س</span></div>
+          <div class="flex justify-between border-t pt-1 font-bold text-rose-700"><span>المجموع:</span><span>${gosi.toLocaleString('en-US')} ر.س</span></div>
         </div>
       </div>
     </div>
@@ -5931,7 +5897,7 @@ function viewEmployeePayslip(empId) {
         <span class="text-xs text-white/80 block">صافي الراتب المحول للحساب:</span>
         <span class="text-xs font-mono text-amber-200">${emp.bank_name || 'مصرف الراجحي'} • ${emp.iban || ''}</span>
       </div>
-      <div class="text-left font-black text-xl text-amber-300">${net.toLocaleString('ar-SA')} ر.س</div>
+      <div class="text-left font-black text-xl text-amber-300">${net.toLocaleString('en-US')} ر.س</div>
     </div>
   `;
 
@@ -5965,8 +5931,342 @@ function exportPayrollCsv() {
 }
 
 /* =========================================================================
-   6.5 ENTERPRISE COMPLIANCE & IQAMA DASHBOARD (مؤشر الامتثال الوزاري والإقامات)
+   6.5 ENTERPRISE COMPLIANCE & MUQEEM REPORT (تقرير مقيم ومؤشر الامتثال)
    ========================================================================= */
+
+let muqeemState = {
+  residents: [],
+  summary: null,
+  activeFilter: 'all',
+  searchQuery: '',
+  activeSubTab: 'muqeem'
+};
+
+async function loadMuqeemReport() {
+  const tbody = document.getElementById('muqeemTableBody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="10" class="py-12 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin text-2xl block mb-2 text-[#8B0000]"></i>جاري استرجاع سجلات تقرير مقيم وحساب مؤشرات رخص العمل...</td></tr>`;
+  }
+  try {
+    let url = '/api/compliance/muqeem';
+    const params = [];
+    if (muqeemState.activeFilter && muqeemState.activeFilter !== 'all') {
+      params.push(`status=${encodeURIComponent(muqeemState.activeFilter)}`);
+    }
+    if (muqeemState.searchQuery) {
+      params.push(`search=${encodeURIComponent(muqeemState.searchQuery)}`);
+    }
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    const res = await apiFetch(url);
+    if (res && res.success && res.data) {
+      muqeemState.residents = res.data.residents || [];
+      muqeemState.summary = res.data.summary || {};
+      updateMuqeemKPIs(res.data.summary);
+      renderMuqeemTable(muqeemState.residents);
+    }
+  } catch (err) {
+    console.error('Error loading muqeem report:', err);
+    showToast('تعذر استرجاع تقرير مقيم: ' + err.message, 'error');
+  }
+}
+
+function updateMuqeemKPIs(s) {
+  if (!s) return;
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl('muqKpiTotal', Number(s.totalResidents || 100).toLocaleString('en-US'));
+  setEl('muqKpiInside', Number(s.insideKsa || 92).toLocaleString('en-US'));
+  setEl('muqKpiOutside', Number(s.outsideKsa || 8).toLocaleString('en-US'));
+  setEl('muqKpiValid', Number(s.validIqamas || 3).toLocaleString('en-US'));
+  setEl('muqKpiExpiring', Number(s.expiringSoon || 17).toLocaleString('en-US'));
+  setEl('muqKpiExpired', Number(s.expiredIqamas || 80).toLocaleString('en-US'));
+  setEl('muqKpiFees', `${Number(s.totalMonthlyFees || 73600).toLocaleString('en-US')} ر.س`);
+
+  setEl('countMuqAll', Number(s.totalResidents || 100).toLocaleString('en-US'));
+  setEl('countMuqInside', Number(s.insideKsa || 92).toLocaleString('en-US'));
+  setEl('countMuqOutside', Number(s.outsideKsa || 8).toLocaleString('en-US'));
+  setEl('countMuqExpiring', Number(s.expiringSoon || 17).toLocaleString('en-US'));
+  setEl('countMuqValid', Number(s.validIqamas || 3).toLocaleString('en-US'));
+  setEl('countMuqExpired', Number(s.expiredIqamas || 80).toLocaleString('en-US'));
+}
+
+function renderMuqeemTable(list) {
+  const tbody = document.getElementById('muqeemTableBody');
+  const countLabel = document.getElementById('muqTableCountLabel');
+  if (countLabel) countLabel.textContent = `عرض ${Number(list.length).toLocaleString('en-US')} مقيم`;
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="py-12 text-center text-slate-400 font-bold"><i class="fa-solid fa-file-invoice text-3xl text-slate-300 block mb-2"></i>لا توجد سجلات مطابقة للبحث أو الفلتر في تقرير مقيم.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(r => {
+    const isOutside = r.is_outside_ksa === 1;
+    const locationBadge = isOutside
+      ? `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200"><i class="fa-solid fa-plane-departure text-[10px]"></i> خارج السعودية</span>`
+      : `<span class="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fa-solid fa-location-dot text-[10px]"></i> داخل السعودية</span>`;
+
+    let iqamaBadgeClass = 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold';
+    if (r.days_remaining !== null) {
+      if (r.days_remaining < 0) iqamaBadgeClass = 'bg-rose-50 text-rose-800 border border-rose-200 font-black';
+      else if (r.days_remaining <= 60) iqamaBadgeClass = 'bg-amber-50 text-amber-900 border border-amber-200 font-bold';
+    }
+
+    const daysText = r.days_remaining !== null
+      ? (r.days_remaining < 0 
+          ? `<span class="font-mono font-bold text-rose-700">منتهية منذ ${Math.abs(r.days_remaining)} يوم</span>`
+          : (r.days_remaining <= 60 
+              ? `<span class="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">${r.days_remaining} يوم</span>`
+              : `<span class="font-mono font-bold text-emerald-700">${r.days_remaining} يوم</span>`))
+      : '<span class="text-slate-400 font-mono">—</span>';
+
+    const passportInfo = r.passport_number
+      ? `<div class="font-mono font-bold text-slate-800">${r.passport_number}</div><div class="text-[10px] text-slate-400 font-mono">انتهاء: ${r.passport_expiry || '—'}</div>`
+      : '<span class="text-slate-400 font-mono">—</span>';
+
+    const gregorianHijri = `<div class="font-mono font-bold text-slate-800">${r.iqama_expiry_gregorian || '—'}</div><div class="text-[10px] text-slate-500 font-mono">${r.iqama_expiry_hijri || '—'}</div>`;
+
+    const qiwaStatus = isOutside
+      ? '<span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full font-bold">معلق (خارج المملكة)</span>'
+      : '<span class="text-[10px] text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full font-bold border border-purple-200">رخصة قوى • 800 ر.س/شهر</span>';
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition cursor-pointer border-b border-slate-100">
+        <td class="py-3 px-3 font-mono font-bold text-slate-900">${r.iqama_number}</td>
+        <td class="py-3 px-3">
+          <div class="font-black text-slate-900">${r.full_name}</div>
+          <div class="text-[10px] text-slate-400 font-mono mt-0.5">${r.birth_date ? 'ميلاد: ' + r.birth_date : ''}</div>
+        </td>
+        <td class="py-3 px-3 font-bold text-slate-800">${r.nationality}</td>
+        <td class="py-3 px-3 font-semibold text-slate-800">${r.occupation}</td>
+        <td class="py-3 px-3 text-center">${locationBadge}</td>
+        <td class="py-3 px-3">${passportInfo}</td>
+        <td class="py-3 px-3">${gregorianHijri}</td>
+        <td class="py-3 px-3 text-center">${daysText}</td>
+        <td class="py-3 px-3">
+          <div class="mb-1"><span class="text-[10px] px-2 py-0.5 rounded-full ${iqamaBadgeClass}">${r.iqama_status}</span></div>
+          ${qiwaStatus}
+        </td>
+        <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
+          <div class="flex items-center justify-center gap-1.5">
+            <button onclick="editMuqeemResident(${r.id})" title="تعديل بيانات المقيم" class="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold flex items-center gap-1 text-[11px] transition">
+              <i class="fa-solid fa-pen-to-square"></i> تعديل
+            </button>
+            <button onclick="toggleMuqeemLocation(${r.id}, ${isOutside ? 0 : 1})" title="${isOutside ? 'تحويل إلى داخل السعودية' : 'تحويل إلى خارج السعودية'}" class="px-2 py-1 rounded-lg ${isOutside ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'} font-bold flex items-center gap-1 text-[11px] transition">
+              <i class="fa-solid ${isOutside ? 'fa-plane-arrival' : 'fa-plane-departure'}"></i> ${isOutside ? 'دخول' : 'خروج'}
+            </button>
+            <button onclick="deleteMuqeemResident(${r.id})" title="حذف المقيم" class="px-2 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold flex items-center gap-1 text-[11px] transition">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterMuqeem(filterType) {
+  muqeemState.activeFilter = filterType;
+  const btns = [
+    { id: 'btnMuqFilterAll', key: 'all' },
+    { id: 'btnMuqFilterInside', key: 'inside_ksa' },
+    { id: 'btnMuqFilterOutside', key: 'outside_ksa' },
+    { id: 'btnMuqFilterExpiring', key: 'expiring_soon' },
+    { id: 'btnMuqFilterValid', key: 'valid' },
+    { id: 'btnMuqFilterExpired', key: 'expired' }
+  ];
+
+  btns.forEach(b => {
+    const el = document.getElementById(b.id);
+    if (el) {
+      if (b.key === filterType) {
+        el.className = 'px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm font-bold';
+      } else {
+        el.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-bold';
+      }
+    }
+  });
+
+  loadMuqeemReport();
+}
+
+function handleMuqeemSearch(query) {
+  muqeemState.searchQuery = (query || '').trim();
+  loadMuqeemReport();
+}
+
+function switchComplianceSubTab(tab) {
+  muqeemState.activeSubTab = tab;
+  const subMuqeem = document.getElementById('subviewMuqeem');
+  const subGeneral = document.getElementById('subviewGeneralCompliance');
+  const btnMuqeem = document.getElementById('btnTabMuqeem');
+  const btnGeneral = document.getElementById('btnTabGeneralComp');
+
+  if (tab === 'muqeem') {
+    if (subMuqeem) subMuqeem.classList.remove('hidden');
+    if (subGeneral) subGeneral.classList.add('hidden');
+    if (btnMuqeem) {
+      btnMuqeem.className = 'px-4 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 bg-[#8B0000] text-white shadow-sm';
+    }
+    if (btnGeneral) {
+      btnGeneral.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200';
+    }
+    loadMuqeemReport();
+  } else {
+    if (subMuqeem) subMuqeem.classList.add('hidden');
+    if (subGeneral) subGeneral.classList.remove('hidden');
+    if (btnMuqeem) {
+      btnMuqeem.className = 'px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200';
+    }
+    if (btnGeneral) {
+      btnGeneral.className = 'px-4 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2 bg-[#8B0000] text-white shadow-sm';
+    }
+    loadCompliance();
+  }
+}
+
+function openAddMuqeemModal() {
+  const form = document.getElementById('muqeemResidentForm');
+  if (form) form.reset();
+  const idEl = document.getElementById('muqeemResidentId');
+  if (idEl) idEl.value = '';
+  const titleEl = document.getElementById('muqeemModalTitle');
+  if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-file-invoice text-brand"></i> إضافة سجل مقيم جديد';
+  openModal('modalMuqeemResident');
+}
+
+async function editMuqeemResident(id) {
+  try {
+    const res = await apiFetch(`/api/compliance/muqeem/${id}`);
+    if (!res || !res.success || !res.data) {
+      showToast('تعذر جلب بيانات المقيم', 'error');
+      return;
+    }
+    const r = res.data;
+    const setVal = (domId, val) => { const el = document.getElementById(domId); if (el) el.value = val || ''; };
+    setVal('muqeemResidentId', r.id);
+    setVal('muqeemIqamaNumber', r.iqama_number);
+    setVal('muqeemFullName', r.full_name);
+    setVal('muqeemGender', r.gender || 'ذكر');
+    setVal('muqeemNationality', r.nationality);
+    setVal('muqeemOccupation', r.occupation);
+    setVal('muqeemIsOutsideKsa', r.is_outside_ksa !== undefined ? r.is_outside_ksa : 0);
+    setVal('muqeemEmployerId', r.employer_id || '7013999755');
+    setVal('muqeemPassportNumber', r.passport_number);
+    setVal('muqeemPassportExpiry', r.passport_expiry);
+    setVal('muqeemIqamaExpiryGregorian', r.iqama_expiry_gregorian);
+    setVal('muqeemIqamaExpiryHijri', r.iqama_expiry_hijri);
+    setVal('muqeemIqamaIssueDate', r.iqama_issue_date);
+    setVal('muqeemBirthDate', r.birth_date);
+
+    const titleEl = document.getElementById('muqeemModalTitle');
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square text-brand"></i> تعديل بيانات المقيم: ${r.full_name}`;
+    openModal('modalMuqeemResident');
+  } catch (err) {
+    showToast('خطأ: ' + err.message, 'error');
+  }
+}
+
+async function toggleMuqeemLocation(id, newStatus) {
+  try {
+    const res = await apiFetch(`/api/compliance/muqeem/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_outside_ksa: newStatus })
+    });
+    if (res && res.success) {
+      showToast(newStatus === 1 ? 'تم تحويل المقيم إلى (خارج السعودية)' : 'تم تحويل المقيم إلى (داخل السعودية - على رأس العمل)', 'success');
+      loadMuqeemReport();
+    } else {
+      showToast(res.error || 'تعذر تغيير التواجد', 'error');
+    }
+  } catch (err) {
+    showToast('خطأ: ' + err.message, 'error');
+  }
+}
+
+async function handleMuqeemResidentSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('muqeemResidentId')?.value;
+  const payload = {
+    iqama_number: document.getElementById('muqeemIqamaNumber')?.value.trim(),
+    full_name: document.getElementById('muqeemFullName')?.value.trim(),
+    gender: document.getElementById('muqeemGender')?.value,
+    nationality: document.getElementById('muqeemNationality')?.value.trim(),
+    occupation: document.getElementById('muqeemOccupation')?.value.trim(),
+    is_outside_ksa: Number(document.getElementById('muqeemIsOutsideKsa')?.value || 0),
+    employer_id: document.getElementById('muqeemEmployerId')?.value.trim(),
+    passport_number: document.getElementById('muqeemPassportNumber')?.value.trim() || null,
+    passport_expiry: document.getElementById('muqeemPassportExpiry')?.value || null,
+    iqama_expiry_gregorian: document.getElementById('muqeemIqamaExpiryGregorian')?.value || null,
+    iqama_expiry_hijri: document.getElementById('muqeemIqamaExpiryHijri')?.value.trim() || null,
+    iqama_issue_date: document.getElementById('muqeemIqamaIssueDate')?.value || null,
+    birth_date: document.getElementById('muqeemBirthDate')?.value || null
+  };
+
+  try {
+    let res;
+    if (id) {
+      res = await apiFetch(`/api/compliance/muqeem/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      res = await apiFetch('/api/compliance/muqeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    if (res && res.success) {
+      showToast(id ? 'تم تحديث بيانات المقيم بنجاح' : 'تم إضافة المقيم بنجاح', 'success');
+      closeModal('modalMuqeemResident');
+      loadMuqeemReport();
+    } else {
+      showToast(res.error || 'تعذر حفظ البيانات', 'error');
+    }
+  } catch (err) {
+    showToast('خطأ: ' + err.message, 'error');
+  }
+}
+
+async function deleteMuqeemResident(id) {
+  if (!confirm('هل أنت متأكد من رغبتك في حذف هذا المقيم من تقرير مقيم؟')) return;
+  try {
+    const res = await apiFetch(`/api/compliance/muqeem/${id}`, { method: 'DELETE' });
+    if (res && res.success) {
+      showToast('تم حذف المقيم بنجاح', 'success');
+      loadMuqeemReport();
+    } else {
+      showToast(res.error || 'تعذر حذف المقيم', 'error');
+    }
+  } catch (err) {
+    showToast('خطأ: ' + err.message, 'error');
+  }
+}
+
+async function syncMuqeemFromExcel() {
+  if (!confirm('هل تريد إعادة مزامنة بيانات المقيمين من ملف Excel (المقيمين النشطين10_5_2026.xlsx)؟')) return;
+  try {
+    const res = await apiFetch('/api/compliance/muqeem/sync', { method: 'POST' });
+    if (res && res.success) {
+      showToast(res.message || 'تمت مزامنة بيانات مقيم بنجاح', 'success');
+      loadMuqeemReport();
+    } else {
+      showToast(res.error || 'تعذر المزامنة', 'error');
+    }
+  } catch (err) {
+    showToast('خطأ في المزامنة: ' + err.message, 'error');
+  }
+}
+
+function exportMuqeemExcel() {
+  exportData('muqeem', 'excel');
+}
 
 let currentComplianceData = null;
 let currentComplianceFilter = 'all';
@@ -6324,31 +6624,180 @@ function exportComplianceReport() {
    ========================================================================= */
 
 let currentAttachedFileName = null;
+let currentEssEmpId = null;
 
-function loadSelfService() {
+async function loadSelfService() {
+  populateEssEmpSelector();
+
   let emp = null;
-  if (state.currentUser && state.currentUser.emp_id) {
-    emp = state.employees.find(e => e.id === state.currentUser.emp_id);
+  if (currentEssEmpId) {
+    emp = (state.employees || []).find(e => e.id === Number(currentEssEmpId));
   }
-  if (!emp && state.employees.length > 0) {
+  if (!emp && state.currentUser && state.currentUser.emp_id) {
+    emp = (state.employees || []).find(e => e.id === state.currentUser.emp_id);
+  }
+  if (!emp && state.employees && state.employees.length > 0) {
     emp = state.employees[0];
   }
 
   const nameEl = document.getElementById('essEmployeeName');
   const titleEl = document.getElementById('essEmployeeTitle');
   const balEl = document.getElementById('essLeaveBalance');
+  const selector = document.getElementById('essEmpSelector');
 
   if (emp) {
+    currentEssEmpId = emp.id;
     if (nameEl) nameEl.textContent = emp.full_name_ar;
-    if (titleEl) titleEl.textContent = `${emp.job_title_ar} • ${emp.department_name_ar || 'شركة جوهرة المجد'}`;
-    if (balEl) balEl.textContent = `${emp.annual_leave_balance || 25} يوم`;
+    if (titleEl) titleEl.textContent = `${emp.job_title_ar || 'موظف'} • ${emp.department_name_ar || 'شركة جوهرة المجد'}`;
+    const leaveBal = Number(emp.annual_leave_balance || 0);
+    if (balEl) balEl.textContent = `${leaveBal.toLocaleString('en-US')} يوم`;
+    if (selector) selector.value = emp.id;
+
+    // Load tasks assigned to this employee
+    await loadEssTasks(emp.id);
   } else {
     if (nameEl) nameEl.textContent = state.currentUser ? (state.currentUser.full_name || state.currentUser.username) : 'الموظف';
     if (titleEl) titleEl.textContent = 'منظومة جوهرة المجد للموارد البشرية والخدمة الذاتية';
-    if (balEl) balEl.textContent = '30 يوم';
+    if (balEl) balEl.textContent = '0 يوم';
   }
 
   renderSelfServiceRequests();
+}
+
+function populateEssEmpSelector() {
+  const sel = document.getElementById('essEmpSelector');
+  if (!sel || (sel.children.length > 1 && sel.children.length === (state.employees || []).length)) return;
+  sel.innerHTML = (state.employees || []).map(e => `
+    <option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>
+  `).join('');
+}
+
+function onEssEmpSelected(empId) {
+  currentEssEmpId = Number(empId);
+  loadSelfService();
+}
+
+async function loadEssTasks(empId) {
+  const tbody = document.getElementById('essTasksTableBody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin block mb-2 text-[#8B0000]"></i>جاري تحميل المهام والتكليفات المسندة...</td></tr>`;
+  }
+  try {
+    const res = await apiFetch(`/api/tasks?assigned_to=${empId}`);
+    const tasks = (res && res.success && res.data) ? res.data : [];
+    renderEssTasks(tasks);
+  } catch (err) {
+    console.error('Error fetching ESS tasks:', err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-500 font-bold">تعذر تحميل المهام: ${err.message}</td></tr>`;
+    }
+  }
+}
+
+function renderEssTasks(tasks) {
+  const tbody = document.getElementById('essTasksTableBody');
+  const badge = document.getElementById('essTasksBadge');
+  const totalCountEl = document.getElementById('essTasksTotalCount');
+  const inProgressCountEl = document.getElementById('essTasksInProgressCount');
+  const pendingCountEl = document.getElementById('essTasksPendingCount');
+  const completedCountEl = document.getElementById('essTasksCompletedCount');
+
+  const total = tasks.length;
+  const inProgress = tasks.filter(t => t.status === 'قيد التنفيذ' || t.status === 'جديدة').length;
+  const pending = tasks.filter(t => t.status === 'بانتظار الاعتماد').length;
+  const completed = tasks.filter(t => t.status === 'مكتملة').length;
+
+  if (badge) badge.textContent = `${total} مهمة`;
+  if (totalCountEl) totalCountEl.textContent = total;
+  if (inProgressCountEl) inProgressCountEl.textContent = inProgress;
+  if (pendingCountEl) pendingCountEl.textContent = pending;
+  if (completedCountEl) completedCountEl.textContent = completed;
+
+  if (!tbody) return;
+  if (tasks.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="py-8 text-center text-slate-400 font-semibold">
+          <i class="fa-solid fa-clipboard-check text-3xl text-emerald-400 block mb-2"></i>
+          لا توجد مهام معلقة مسندة إليك حالياً. تم إنجاز كافة المهام بنجاح!
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = tasks.map(t => {
+    const progress = Number(t.progress_percent || t.progress_percentage || 0);
+    let priorityBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">متوسطة</span>';
+    if (t.priority === 'عاجلة') priorityBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">عاجلة</span>';
+    else if (t.priority === 'مرتفعة') priorityBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">مرتفعة</span>';
+    else if (t.priority === 'منخفضة') priorityBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">منخفضة</span>';
+
+    let statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">قيد التنفيذ</span>';
+    if (t.status === 'مكتملة') statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">مكتملة ✓</span>';
+    else if (t.status === 'بانتظار الاعتماد') statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200">بانتظار الاعتماد</span>';
+    else if (t.status === 'متأخرة') statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-800 border border-rose-200">متأخرة ⚠️</span>';
+
+    const progressBar = `
+      <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+        <div class="h-2.5 rounded-full ${progress >= 100 ? 'bg-emerald-600' : 'bg-[#8B0000]'}" style="width: ${progress}%"></div>
+      </div>
+      <div class="flex justify-between items-center text-[10px] font-mono font-bold text-slate-500 mt-1">
+        <span>${progress}%</span>
+        <span>${progress >= 100 ? 'منجز' : (t.status || '')}</span>
+      </div>
+    `;
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition border-b border-slate-100">
+        <td class="py-3 px-3 font-mono font-bold text-slate-800">${t.task_no || ('TSK-' + t.id)}</td>
+        <td class="py-3 px-3">
+          <div class="font-black text-slate-900">${t.title}</div>
+          <div class="text-[11px] text-slate-500 max-w-xs truncate mt-0.5">${t.description || 'لا يوجد وصف إضافي'}</div>
+          ${t.attachments ? `<div class="text-[10px] text-blue-600 mt-1"><i class="fa-solid fa-paperclip"></i> مرفقات: ${t.attachments}</div>` : ''}
+        </td>
+        <td class="py-3 px-3">${priorityBadge}</td>
+        <td class="py-3 px-3 font-mono text-slate-700 font-semibold">${t.due_date || '—'}</td>
+        <td class="py-3 px-3">${progressBar}</td>
+        <td class="py-3 px-3">${statusBadge}</td>
+        <td class="py-3 px-3 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button onclick="openUpdateTaskProgressModal(${t.id})" title="تحديث نسبة الإنجاز" class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold flex items-center gap-1 text-[11px] transition">
+              <i class="fa-solid fa-pen-ruler"></i> تحديث
+            </button>
+            ${t.status !== 'مكتملة' ? `
+              <button onclick="completeEssTask(${t.id})" title="إكمال المهمة فوراً" class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold flex items-center gap-1 text-[11px] transition">
+                <i class="fa-solid fa-circle-check"></i> إكمال
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function completeEssTask(taskId) {
+  try {
+    const res = await apiFetch(`/api/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ progress_percent: 100, status: 'مكتملة' })
+    });
+    if (res && res.success) {
+      showToast('تم إكمال المهمة بنجاح بنسبة إنجاز 100%!', 'success');
+      if (currentEssEmpId) loadEssTasks(currentEssEmpId);
+      loadTasksView();
+    } else {
+      showToast(res.error || 'تعذر إكمال المهمة', 'error');
+    }
+  } catch (err) {
+    showToast('خطأ أثناء إكمال المهمة: ' + err.message, 'error');
+  }
+}
+
+function refreshEssTasks() {
+  if (currentEssEmpId) loadEssTasks(currentEssEmpId);
 }
 
 function renderSelfServiceRequests() {
@@ -6984,11 +7433,11 @@ function refreshSalaryCertificateForEmp(empId, destination) {
       <div>
         <span class="font-bold text-xs text-slate-700 block mb-2">تفاصيل ومفردات الراتب الشهري (ريال سعودي):</span>
         <div class="grid grid-cols-5 gap-2 border border-slate-300 rounded-xl p-3 text-center text-xs">
-          <div><span class="text-slate-400 block text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${emp.basic_salary.toLocaleString('ar-SA')}</span></div>
-          <div><span class="text-slate-400 block text-[10px]">بدل السكن</span><span class="font-mono font-bold text-slate-800">${emp.housing_allowance.toLocaleString('ar-SA')}</span></div>
-          <div><span class="text-slate-400 block text-[10px]">بدل النقل</span><span class="font-mono font-bold text-slate-800">${emp.transport_allowance.toLocaleString('ar-SA')}</span></div>
-          <div><span class="text-slate-400 block text-[10px]">بدلات أخرى</span><span class="font-mono font-bold text-slate-800">${emp.other_allowance.toLocaleString('ar-SA')}</span></div>
-          <div class="bg-brand/10 rounded-lg p-1"><span class="text-brand font-bold block text-[10px]">الراتب الإجمالي</span><span class="font-mono font-black text-brand text-sm">${gross.toLocaleString('ar-SA')} ر.س</span></div>
+          <div><span class="text-slate-400 block text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${emp.basic_salary.toLocaleString('en-US')}</span></div>
+          <div><span class="text-slate-400 block text-[10px]">بدل السكن</span><span class="font-mono font-bold text-slate-800">${emp.housing_allowance.toLocaleString('en-US')}</span></div>
+          <div><span class="text-slate-400 block text-[10px]">بدل النقل</span><span class="font-mono font-bold text-slate-800">${emp.transport_allowance.toLocaleString('en-US')}</span></div>
+          <div><span class="text-slate-400 block text-[10px]">بدلات أخرى</span><span class="font-mono font-bold text-slate-800">${emp.other_allowance.toLocaleString('en-US')}</span></div>
+          <div class="bg-brand/10 rounded-lg p-1"><span class="text-brand font-bold block text-[10px]">الراتب الإجمالي</span><span class="font-mono font-black text-brand text-sm">${gross.toLocaleString('en-US')} ر.س</span></div>
         </div>
       </div>
 
@@ -9925,3 +10374,22 @@ window.renderEmployeesTable = renderEmployeesTable;
 window.renderEmployeesCards = renderEmployeesCards;
 window.updateEmployeeKPIs = updateEmployeeKPIs;
 window.filterEmployeesTable = filterEmployeesTable;
+
+// Muqeem Report & Residents Module
+window.loadMuqeemReport = loadMuqeemReport;
+window.filterMuqeem = filterMuqeem;
+window.handleMuqeemSearch = handleMuqeemSearch;
+window.switchComplianceSubTab = switchComplianceSubTab;
+window.openAddMuqeemModal = openAddMuqeemModal;
+window.editMuqeemResident = editMuqeemResident;
+window.toggleMuqeemLocation = toggleMuqeemLocation;
+window.handleMuqeemResidentSubmit = handleMuqeemResidentSubmit;
+window.deleteMuqeemResident = deleteMuqeemResident;
+window.syncMuqeemFromExcel = syncMuqeemFromExcel;
+window.exportMuqeemExcel = exportMuqeemExcel;
+
+// Employee Self-Service (ESS) Tasks Integration
+window.onEssEmpSelected = onEssEmpSelected;
+window.completeEssTask = completeEssTask;
+window.refreshEssTasks = refreshEssTasks;
+

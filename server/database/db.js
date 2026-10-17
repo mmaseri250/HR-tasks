@@ -404,6 +404,79 @@ function initSchema() {
   try {
     db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;');
   } catch (e) {}
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS muqeem_residents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      iqama_number TEXT UNIQUE NOT NULL,
+      full_name TEXT NOT NULL,
+      gender TEXT DEFAULT 'ذكر',
+      nationality TEXT NOT NULL,
+      occupation TEXT NOT NULL,
+      passport_number TEXT,
+      passport_expiry TEXT,
+      iqama_issue_date TEXT,
+      iqama_expiry_gregorian TEXT,
+      iqama_expiry_hijri TEXT,
+      birth_date TEXT,
+      is_outside_ksa INTEGER DEFAULT 0,
+      employer_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_muqeem_iqama ON muqeem_residents(iqama_number);
+    CREATE INDEX IF NOT EXISTS idx_muqeem_outside ON muqeem_residents(is_outside_ksa);
+  `);
+
+  try {
+    const countCheck = db.prepare('SELECT count(*) as cnt FROM muqeem_residents').get();
+    if (countCheck && countCheck.cnt === 0) {
+      seedMuqeemResidentsFromExcel();
+    }
+  } catch (e) {
+    console.error('Error checking muqeem_residents seed:', e.message);
+  }
+}
+
+function seedMuqeemResidentsFromExcel() {
+  try {
+    const xlsx = require('xlsx');
+    const excelPath = path.join(__dirname, '..', '..', 'المقيمين النشطين10_5_2026.xlsx');
+    if (!fs.existsSync(excelPath)) return;
+    const wb = xlsx.readFile(excelPath);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(ws);
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO muqeem_residents (
+        iqama_number, full_name, gender, nationality, occupation,
+        passport_number, passport_expiry, iqama_issue_date,
+        iqama_expiry_gregorian, iqama_expiry_hijri, birth_date,
+        is_outside_ksa, employer_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const row of data) {
+      const iqama = String(row['رقم الاقامة'] || '').trim();
+      if (!iqama) continue;
+      stmt.run(
+        iqama,
+        String(row['الاسم'] || '').trim(),
+        String(row['الجنس'] || 'ذكر').trim(),
+        String(row['الجنسية'] || '').trim(),
+        String(row['المهنة'] || '').trim(),
+        String(row['رقم الجواز'] || '').trim(),
+        String(row['تاريخ انتهاء الجواز'] || '').trim(),
+        String(row['تاريخ اصدار الاقامة'] || '').trim(),
+        String(row['تاريخ انتهاء الاقامة'] || '').trim(),
+        String(row['تاريخ انتهاء الاقامة بالهجري'] || '').trim(),
+        String(row['تاريخ الميلاد'] || '').trim(),
+        String(row['خارج المملكه'] || '').trim() === 'نعم' ? 1 : 0,
+        String(row['رقم صاحب العمل'] || '7013999755').trim()
+      );
+    }
+  } catch (err) {
+    console.error('Could not auto-seed muqeem residents:', err.message);
+  }
 }
 
 initSchema();

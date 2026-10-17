@@ -3,13 +3,16 @@ const { query, get, run } = require('../database/db');
 
 function getAllEmployees(filters = {}) {
   let sql = `
-    SELECT e.*, d.name_ar AS department_name_ar, d.name_en AS department_name_en,
+    SELECT e.*, 
+           COALESCE(lb.current_balance, e.annual_leave_balance, 0) AS annual_leave_balance,
+           d.name_ar AS department_name_ar, d.name_en AS department_name_en,
            b.name_ar AS branch_name_ar,
            m.full_name_ar AS manager_name_ar
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN branches b ON e.branch_id = b.id
     LEFT JOIN employees m ON e.manager_id = m.id
+    LEFT JOIN leave_balances lb ON e.id = lb.emp_id
     WHERE 1=1
   `;
   const params = [];
@@ -46,13 +49,16 @@ function getAllEmployees(filters = {}) {
 
 function getEmployeeById(id) {
   const sql = `
-    SELECT e.*, d.name_ar AS department_name_ar, d.name_en AS department_name_en,
+    SELECT e.*, 
+           COALESCE(lb.current_balance, e.annual_leave_balance, 0) AS annual_leave_balance,
+           d.name_ar AS department_name_ar, d.name_en AS department_name_en,
            b.name_ar AS branch_name_ar,
            m.full_name_ar AS manager_name_ar
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN branches b ON e.branch_id = b.id
     LEFT JOIN employees m ON e.manager_id = m.id
+    LEFT JOIN leave_balances lb ON e.id = lb.emp_id
     WHERE e.id = ?
   `;
   return get(sql, [id]);
@@ -440,7 +446,8 @@ function getComplianceMetrics() {
         status: 'ممتثل للتأمينات الاجتماعية'
       }
     },
-    roster: complianceRoster
+    roster: complianceRoster,
+    complianceRoster: complianceRoster
   };
 }
 

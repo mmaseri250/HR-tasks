@@ -18,6 +18,7 @@ const leavesModule = require('./modules/leaves');
 const tasksModule = require('./modules/tasks');
 const formsGenerator = require('./modules/formsGenerator');
 const exportService = require('./modules/exportService');
+const muqeemModule = require('./modules/muqeem');
 
 // Initialize Seed Data
 seedDatabase();
@@ -503,6 +504,64 @@ app.get('/api/compliance/stats', (req, res) => {
   try {
     const compliance = employeesModule.getComplianceMetrics();
     res.json({ success: true, data: compliance });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Official Muqeem Report (تقرير مقيم الرسمي) API Endpoints
+app.get('/api/compliance/muqeem', (req, res) => {
+  try {
+    const report = muqeemModule.getMuqeemReport(req.query);
+    res.json({ success: true, data: report });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/compliance/muqeem/:id', (req, res) => {
+  try {
+    const item = muqeemModule.getMuqeemResidentById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ success: false, error: 'سجل المقيم غير موجود' });
+    }
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/compliance/muqeem', (req, res) => {
+  try {
+    const created = muqeemModule.createMuqeemResident(req.body);
+    res.status(201).json({ success: true, message: 'تم إضافة سجل المقيم بنجاح', data: created });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/compliance/muqeem/:id', (req, res) => {
+  try {
+    const updated = muqeemModule.updateMuqeemResident(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث بيانات المقيم بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/compliance/muqeem/:id', (req, res) => {
+  try {
+    const result = muqeemModule.deleteMuqeemResident(req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/compliance/muqeem/sync', (req, res) => {
+  try {
+    const result = muqeemModule.syncFromExcel();
+    res.json(result);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

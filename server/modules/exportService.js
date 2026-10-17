@@ -174,6 +174,36 @@ function getExportDataset(type, filters = {}) {
       const comp = employeesModule.getComplianceMetrics();
       rows = comp.roster || [];
       break;
+
+    case 'muqeem':
+      title = 'تقرير مقيم الرسمي وسجل المقيمين النشطين ورخص العمل';
+      columns = [
+        { key: 'iqama_number', label: 'رقم الإقامة', width: 16 },
+        { key: 'full_name', label: 'اسم المقيم', width: 28 },
+        { key: 'nationality', label: 'الجنسية', width: 14 },
+        { key: 'occupation', label: 'المهنة', width: 22 },
+        { key: 'location_status', label: 'التواجد بالمملكة', width: 16 },
+        { key: 'passport_number', label: 'رقم الجواز', width: 15 },
+        { key: 'passport_expiry', label: 'انتهاء الجواز', width: 14 },
+        { key: 'iqama_issue_date', label: 'تاريخ الإصدار', width: 14 },
+        { key: 'iqama_expiry_gregorian', label: 'انتهاء الإقامة (ميلادي)', width: 16 },
+        { key: 'iqama_expiry_hijri', label: 'انتهاء الإقامة (هجري)', width: 16 },
+        { key: 'days_remaining', label: 'الأيام المتبقية', width: 14 },
+        { key: 'iqama_status', label: 'حالة الإقامة', width: 18 },
+        { key: 'qiwa_status_text', label: 'رخصة العمل (قوى)', width: 20 },
+        { key: 'employer_id', label: 'رقم صاحب العمل', width: 16 }
+      ];
+      try {
+        const muqeemModule = require('./muqeem');
+        const muqRep = muqeemModule.getMuqeemReport(filters);
+        rows = (muqRep.residents || []).map(r => ({
+          ...r,
+          qiwa_status_text: r.is_outside_ksa === 1 ? 'معلق (خارج المملكة)' : 'سارية • 800 ر.س/شهر'
+        }));
+      } catch (e) {
+        rows = [];
+      }
+      break;
   }
 
   return { title, columns, rows };
@@ -185,12 +215,12 @@ function getExportDataset(type, filters = {}) {
 function exportToExcel(type, filters = {}) {
   const dataset = getExportDataset(type, filters);
   const now = new Date();
-  const dateFormatted = now.toLocaleDateString('ar-SA', {
+  const dateFormatted = now.toLocaleDateString('ar-SA-u-nu-latn', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
-  const timeFormatted = now.toLocaleTimeString('ar-SA', {
+  const timeFormatted = now.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -263,7 +293,8 @@ function exportToExcel(type, filters = {}) {
     penalties: 'القرارات الجزائية',
     payroll: 'مسير الرواتب',
     permissions: 'طلبات الاستئذان',
-    reports: 'مؤشرات الامتثال'
+    reports: 'مؤشرات الامتثال',
+    muqeem: 'تقرير مقيم النشطين'
   };
   const sheetName = sheetNames[type] || 'البيانات الرسمية';
 
@@ -350,7 +381,7 @@ async function exportToWord(type, filters = {}) {
           alignment: AlignmentType.CENTER,
           spacing: { after: 200 },
           children: [
-            new TextRun({ text: `تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')} | إجمالي السجلات: ${dataset.rows.length}`, font: 'Arial', size: 14, color: '777777' })
+            new TextRun({ text: `تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA-u-nu-latn')} | إجمالي السجلات: ${dataset.rows.length}`, font: 'Arial', size: 14, color: '777777' })
           ]
         }),
         table,
