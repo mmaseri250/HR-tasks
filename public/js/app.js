@@ -800,7 +800,7 @@ function applyRolePermissions() {
   }
 
   // 4. Desktop Aside navigation items
-  const adminTabs = ['employees-db', 'payroll', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const adminTabs = ['employees-db', 'payroll', 'loans', 'terminated', 'attendance-notices', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
   
   if (!hasAll) {
     adminTabs.forEach(t => {
@@ -1080,7 +1080,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -1129,6 +1129,15 @@ function switchTab(tabId) {
       break;
     case 'payroll':
       loadPayroll();
+      break;
+    case 'loans':
+      loadLoansView();
+      break;
+    case 'terminated':
+      loadTerminatedView();
+      break;
+    case 'attendance-notices':
+      loadNoticesView();
       break;
     case 'selfservice':
       loadSelfService();
@@ -2200,28 +2209,105 @@ function switchPenaltySubTab(subTab) {
   }
 }
 
+let currentPenaltyDisplayMode = 'cards';
+
+function setPenaltyDisplayMode(mode) {
+  currentPenaltyDisplayMode = mode;
+  const cardsGrid = document.getElementById('penaltyRegulationsCardsGrid');
+  const tableWrap = document.getElementById('penaltyRegulationsTableWrapper');
+  const btnCards = document.getElementById('btnRegDisplayCards');
+  const btnTable = document.getElementById('btnRegDisplayTable');
+
+  if (mode === 'cards') {
+    if (cardsGrid) cardsGrid.classList.remove('hidden');
+    if (tableWrap) tableWrap.classList.add('hidden');
+    if (btnCards) {
+      btnCards.className = 'px-3 py-1 rounded-lg font-bold bg-white text-slate-900 shadow-sm flex items-center gap-1.5';
+    }
+    if (btnTable) {
+      btnTable.className = 'px-3 py-1 rounded-lg font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+    }
+  } else {
+    if (cardsGrid) cardsGrid.classList.add('hidden');
+    if (tableWrap) tableWrap.classList.remove('hidden');
+    if (btnCards) {
+      btnCards.className = 'px-3 py-1 rounded-lg font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+    }
+    if (btnTable) {
+      btnTable.className = 'px-3 py-1 rounded-lg font-bold bg-white text-slate-900 shadow-sm flex items-center gap-1.5';
+    }
+  }
+}
+
 function renderPenaltyRegulations(list) {
   const tbody = document.getElementById('penaltyRegulationsTableBody');
-  if (!tbody) return;
+  const cardsGrid = document.getElementById('penaltyRegulationsCardsGrid');
 
-  tbody.innerHTML = '';
-  list.forEach(item => {
-    const tr = document.createElement('tr');
-    tr.className = 'hover:bg-slate-50 transition';
-    tr.innerHTML = `
-      <td class="py-2.5 px-2 text-center font-mono font-bold text-brand bg-slate-50">${item.code}</td>
-      <td class="py-2.5 px-3 font-semibold text-slate-700">${item.category}</td>
-      <td class="py-2.5 px-4 font-bold text-slate-900">${item.violation_text}</td>
-      <td class="py-2.5 px-2 text-center font-semibold text-slate-700 bg-slate-100/50">${item.penalty_1st}</td>
-      <td class="py-2.5 px-2 text-center font-semibold text-amber-900 bg-amber-50/50">${item.penalty_2nd}</td>
-      <td class="py-2.5 px-2 text-center font-semibold text-orange-900 bg-orange-50/50">${item.penalty_3rd}</td>
-      <td class="py-2.5 px-2 text-center font-bold text-rose-900 bg-rose-50/50">${item.penalty_4th}</td>
-      <td class="py-2.5 px-2 text-center">
-        <button onclick="quickIssueForViolation('${item.code}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] px-2 py-1 rounded-lg">إصدار قرار</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
+  // Populate Table
+  if (tbody) {
+    tbody.innerHTML = '';
+    list.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 transition';
+      tr.innerHTML = `
+        <td class="py-2.5 px-2 text-center font-mono font-bold text-brand bg-slate-50">${item.code}</td>
+        <td class="py-2.5 px-3 font-semibold text-slate-700">${item.category}</td>
+        <td class="py-2.5 px-4 font-bold text-slate-900">${item.violation_text}</td>
+        <td class="py-2.5 px-2 text-center font-semibold text-slate-700 bg-slate-100/50">${item.penalty_1st}</td>
+        <td class="py-2.5 px-2 text-center font-semibold text-amber-900 bg-amber-50/50">${item.penalty_2nd}</td>
+        <td class="py-2.5 px-2 text-center font-semibold text-orange-900 bg-orange-50/50">${item.penalty_3rd}</td>
+        <td class="py-2.5 px-2 text-center font-bold text-rose-900 bg-rose-50/50">${item.penalty_4th}</td>
+        <td class="py-2.5 px-2 text-center">
+          <button onclick="quickIssueForViolation('${item.code}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[11px] px-2 py-1 rounded-lg">إصدار قرار</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Populate Modern Cards Grid (Requested: بطاقات وتوزيع)
+  if (cardsGrid) {
+    cardsGrid.innerHTML = '';
+    list.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'p-4 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-3';
+      card.innerHTML = `
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-mono text-xs font-black text-brand bg-rose-50 border border-rose-100 px-2.5 py-0.5 rounded-lg">${item.code}</span>
+            <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">${item.category}</span>
+          </div>
+          <h4 class="text-xs font-bold text-slate-900 leading-snug min-h-[38px]">${item.violation_text}</h4>
+        </div>
+
+        <div class="space-y-1.5 pt-2 border-t border-slate-100 text-[11px]">
+          <div class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-100">
+            <span class="font-bold text-slate-600 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-slate-400"></span>المرة الأولى:</span>
+            <span class="font-bold text-slate-800 text-left">${item.penalty_1st}</span>
+          </div>
+          <div class="flex items-center justify-between p-1.5 rounded-lg bg-amber-50/60 border border-amber-100/60">
+            <span class="font-bold text-amber-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>المرة الثانية:</span>
+            <span class="font-bold text-amber-900 text-left">${item.penalty_2nd}</span>
+          </div>
+          <div class="flex items-center justify-between p-1.5 rounded-lg bg-orange-50/60 border border-orange-100/60">
+            <span class="font-bold text-orange-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-orange-500"></span>المرة الثالثة:</span>
+            <span class="font-bold text-orange-900 text-left">${item.penalty_3rd}</span>
+          </div>
+          <div class="flex items-center justify-between p-1.5 rounded-lg bg-rose-50 border border-rose-200">
+            <span class="font-bold text-rose-700 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-rose-600"></span>المرة الرابعة:</span>
+            <span class="font-black text-rose-950 text-left">${item.penalty_4th}</span>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <button onclick="quickIssueForViolation('${item.code}')" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2 rounded-xl transition shadow flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-gavel"></i> إصدار قرار جزائي فوري
+          </button>
+        </div>
+      `;
+      cardsGrid.appendChild(card);
+    });
+  }
 }
 
 function filterPenaltyRegs(category) {
@@ -2362,7 +2448,11 @@ function renderIssuedPenaltiesTable(list) {
       <td class="py-3 px-3"><span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">${p.penalty_text}</span></td>
       <td class="py-3 px-3 font-mono text-slate-600">${p.incident_date}</td>
       <td class="py-3 px-3 text-center">
-        <div class="flex items-center justify-center gap-1.5">
+        <div class="flex items-center justify-center gap-1.5 flex-wrap">
+          <button onclick="openOfficialFormPreview('penalty', ${p.id})" title="النموذج الرسمي المعتمد JM-HR-F-002" class="bg-teal-700 hover:bg-teal-800 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1 shadow-sm">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>نموذج JM-HR-F-002</span>
+          </button>
           <button onclick="previewPenaltyForm(${p.id})" title="عرض وطباعة الاستمارة" class="bg-brand hover:bg-brand-dark text-white font-bold text-[11px] px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1 shadow-sm">
             <i class="fa-solid fa-print"></i>
             <span>الاستمارة</span>
@@ -3894,10 +3984,15 @@ async function loadSelfService() {
 
     // Load tasks assigned to this employee
     await loadEssTasks(emp.id);
+
+    // Check and render attendance notice alert banner if any notice is pending acknowledgment
+    await checkEssPendingNotices(emp.id);
   } else {
     if (nameEl) nameEl.textContent = state.currentUser ? (state.currentUser.full_name || state.currentUser.username) : 'الموظف';
     if (titleEl) titleEl.textContent = 'منظومة جوهرة المجد للموارد البشرية والخدمة الذاتية';
     if (balEl) balEl.textContent = '0 يوم';
+    const alertBox = document.getElementById('essAttendanceNoticeAlert');
+    if (alertBox) alertBox.classList.add('hidden');
   }
 
   renderSelfServiceRequests();
@@ -3932,6 +4027,50 @@ async function loadEssTasks(empId) {
     }
   }
 }
+
+async function checkEssPendingNotices(empId) {
+  const alertBox = document.getElementById('essAttendanceNoticeAlert');
+  if (!alertBox) return;
+
+  try {
+    const res = await apiFetch(`/api/attendance/notices?emp_id=${empId}&status=صادر`);
+    if (res && res.success && res.data && res.data.length > 0) {
+      const pendingNotice = res.data[0];
+      alertBox.innerHTML = `
+        <div class="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-lg flex-shrink-0 shadow">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-black text-rose-900">إشعار إداري عاجل يتطلب الإقرار والتوقيع الإلكتروني</span>
+                <span class="text-[10px] font-mono bg-rose-200/60 text-rose-950 font-bold px-2 py-0.5 rounded-md">${pendingNotice.notice_no}</span>
+              </div>
+              <p class="text-xs text-rose-800 mt-1 font-semibold">${pendingNotice.notice_type} - تاريخ الواقعة: ${pendingNotice.incident_date}</p>
+              <p class="text-[11px] text-slate-600 mt-0.5">${pendingNotice.reason}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button onclick="openOfficialFormPreview('notice', ${pendingNotice.id})" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+              <i class="fa-solid fa-file-invoice"></i> عرض الخطاب
+            </button>
+            <button onclick="acknowledgeNoticeESS(${pendingNotice.id})" class="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow">
+              <i class="fa-solid fa-signature"></i> التوقيع والإقرار
+            </button>
+          </div>
+        </div>
+      `;
+      alertBox.classList.remove('hidden');
+    } else {
+      alertBox.classList.add('hidden');
+      alertBox.innerHTML = '';
+    }
+  } catch (e) {
+    console.error('Error checking pending notices in ESS:', e);
+  }
+}
+window.checkEssPendingNotices = checkEssPendingNotices;
 
 function renderEssTasks(tasks) {
   const tbody = document.getElementById('essTasksTableBody');
@@ -4080,61 +4219,77 @@ function renderSelfServiceRequests() {
       statusClass = 'bg-rose-100 text-rose-800';
     }
 
-    // Multi-stage Stepper visualization
-    const step2Done = !!r.manager_approved_at || r.status.includes('موافقة مبدئية') || r.status.includes('معتمد نهائياً');
-    const step2Rejected = r.status.includes('مرفوض من المدير');
-    const step3Done = r.status.includes('معتمد نهائياً');
-    const step3Rejected = r.status.includes('مرفوض من الموارد');
+    // 4-Stage Stepper visualization
+    const step2Done = r.manager_status === 'موافق' || !!r.manager_action_at || r.status.includes('تحقق قسم الموارد') || r.status.includes('اعتماد مدير الموارد') || r.status.includes('معتمد نهائياً');
+    const step2Rejected = r.manager_status === 'مرفوض' || r.status.includes('مرفوض من المدير');
+    
+    const step3Done = r.hr_verify_status === 'تم التحقق' || r.status.includes('اعتماد مدير الموارد') || r.status.includes('معتمد نهائياً');
+    const step3Rejected = r.hr_verify_status === 'مرفوض' || r.status.includes('مرفوض من قسم الموارد');
+
+    const step4Done = r.status.includes('معتمد نهائياً');
+    const step4Rejected = r.status.includes('مرفوض من مدير الموارد');
 
     const stepperHtml = `
-      <div class="space-y-1.5 min-w-[210px] text-xs">
+      <div class="space-y-1 min-w-[220px] text-[11px]">
         <div class="flex items-center gap-1.5 text-emerald-700 font-bold">
-          <i class="fa-solid fa-circle-check text-[11px]"></i>
-          <span>1. تم التقديم من الموظف</span>
+          <i class="fa-solid fa-circle-check text-[10px]"></i>
+          <span>1. إنشاء الطلب: منجز ✓</span>
         </div>
-        <div class="flex items-center gap-1.5 ${step2Done ? 'text-emerald-700 font-bold' : (step2Rejected ? 'text-rose-700 font-bold' : 'text-amber-700')}">
-          <i class="fa-solid ${step2Done ? 'fa-circle-check' : (step2Rejected ? 'fa-circle-xmark' : 'fa-hourglass-half')} text-[11px]"></i>
-          <span>2. موافقة المدير (${r.manager_name || mgrName}): ${step2Done ? 'معتمد ✓' : (step2Rejected ? 'مرفوض ✗' : 'بانتظار الموافقة')}</span>
+        <div class="flex items-center gap-1.5 ${step2Done ? 'text-emerald-700 font-bold' : (step2Rejected ? 'text-rose-700 font-bold' : 'text-amber-700 font-bold')}">
+          <i class="fa-solid ${step2Done ? 'fa-circle-check' : (step2Rejected ? 'fa-circle-xmark' : 'fa-hourglass-half')} text-[10px]"></i>
+          <span>2. موافقة المدير (${r.manager_name || mgrName}): ${step2Done ? 'موافق ✓' : (step2Rejected ? 'مرفوض ✗' : 'بانتظار الإجراء')}</span>
         </div>
         <div class="flex items-center gap-1.5 ${step3Done ? 'text-emerald-700 font-bold' : (step3Rejected ? 'text-rose-700 font-bold' : (step2Done ? 'text-blue-700 font-semibold' : 'text-slate-400'))}">
-          <i class="fa-solid ${step3Done ? 'fa-stamp' : (step3Rejected ? 'fa-circle-xmark' : (step2Done ? 'fa-hourglass-half' : 'fa-circle-pause'))} text-[11px]"></i>
-          <span>3. اعتماد HR (${r.hr_approver_name || 'إدارة HR'}): ${step3Done ? 'معتمد نهائياً ✓' : (step3Rejected ? 'مرفوض ✗' : (step2Done ? 'قيد المراجعة' : 'مؤجل'))}</span>
+          <i class="fa-solid ${step3Done ? 'fa-circle-check' : (step3Rejected ? 'fa-circle-xmark' : (step2Done ? 'fa-hourglass-half' : 'fa-circle-pause'))} text-[10px]"></i>
+          <span>3. تدقيق HR (${r.hr_verifier_name || 'قسم الموارد'}): ${step3Done ? 'تم التحقق ✓' : (step3Rejected ? 'مرفوض ✗' : (step2Done ? 'قيد التدقيق' : 'مؤجل'))}</span>
+        </div>
+        <div class="flex items-center gap-1.5 ${step4Done ? 'text-emerald-700 font-bold' : (step4Rejected ? 'text-rose-700 font-bold' : (step3Done ? 'text-purple-700 font-bold' : 'text-slate-400'))}">
+          <i class="fa-solid ${step4Done ? 'fa-stamp' : (step4Rejected ? 'fa-circle-xmark' : (step3Done ? 'fa-hourglass-half' : 'fa-circle-pause'))} text-[10px]"></i>
+          <span>4. اعتماد مدير HR (${r.hr_director_name || 'مدير الموارد'}): ${step4Done ? 'معتمد نهائياً ✓' : (step4Rejected ? 'مرفوض ✗' : (step3Done ? 'بانتظار الاعتماد' : 'مؤجل'))}</span>
         </div>
       </div>
     `;
 
-    // Action buttons based on current status and user role
+    // Action buttons based on current status
     let actionButtons = '';
-    const isPendingMgr = r.status.includes('معلق') || r.status.includes('المدير المباشر');
-    const isPendingHr = r.status.includes('موافقة مبدئية') || r.status.includes('الموارد البشرية');
-
-    if (isPendingMgr) {
+    if (r.status.includes('بانتظار موافقة المدير')) {
       actionButtons = `
-        <div class="flex flex-col gap-1.5 items-center w-full max-w-[130px] mx-auto">
-          <button onclick="approveRequestManager('${reqId}')" class="w-full text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-slate-900 px-2 py-1.5 rounded-lg shadow-sm flex items-center justify-center gap-1">
+        <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
+          <button onclick="handleRequestStepAction(${r.id}, 'manager', 'approve')" class="w-full text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1">
             <i class="fa-solid fa-check"></i> موافقة المدير
           </button>
-          <button onclick="rejectRequest('${reqId}', 'manager')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
+          <button onclick="handleRequestStepAction(${r.id}, 'manager', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
             <i class="fa-solid fa-xmark"></i> رفض
           </button>
         </div>
       `;
-    } else if (isPendingHr) {
+    } else if (r.status.includes('تحقق قسم الموارد') || r.status.includes('موافقة مبدئية')) {
       actionButtons = `
-        <div class="flex flex-col gap-1.5 items-center w-full max-w-[130px] mx-auto">
-          <button onclick="approveRequestHr('${reqId}')" class="w-full text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg shadow-sm flex items-center justify-center gap-1">
-            <i class="fa-solid fa-stamp"></i> اعتماد نهائي HR
+        <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
+          <button onclick="handleRequestStepAction(${r.id}, 'hr_verify', 'approve')" class="w-full text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1">
+            <i class="fa-solid fa-check-double"></i> تدقيق HR
           </button>
-          <button onclick="rejectRequest('${reqId}', 'hr')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
+          <button onclick="handleRequestStepAction(${r.id}, 'hr_verify', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
             <i class="fa-solid fa-xmark"></i> رفض
           </button>
         </div>
       `;
-    } else if (step3Done) {
+    } else if (r.status.includes('اعتماد مدير الموارد') || r.status.includes('بانتظار اعتماد الموارد')) {
+      actionButtons = `
+        <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
+          <button onclick="handleRequestStepAction(${r.id}, 'hr_director', 'approve')" class="w-full text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1">
+            <i class="fa-solid fa-stamp"></i> اعتماد نهائي
+          </button>
+          <button onclick="handleRequestStepAction(${r.id}, 'hr_director', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
+            <i class="fa-solid fa-xmark"></i> رفض
+          </button>
+        </div>
+      `;
+    } else if (step4Done) {
       actionButtons = `
         <div class="text-center">
           <span class="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-            <i class="fa-solid fa-circle-check"></i> مكتمل ومعتمد
+            <i class="fa-solid fa-circle-check"></i> معتمد نهائياً
           </span>
         </div>
       `;
@@ -4142,7 +4297,7 @@ function renderSelfServiceRequests() {
       actionButtons = `
         <div class="text-center">
           <span class="inline-block text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">
-            <i class="fa-solid fa-circle-xmark"></i> تم الرفض
+            <i class="fa-solid fa-circle-xmark"></i> ${r.status}
           </span>
         </div>
       `;
@@ -5328,6 +5483,11 @@ function onUserRoleChanged(role) {
   const editBalCheck = document.getElementById('perm_edit_balances');
   const delCheck = document.getElementById('perm_delete');
 
+  // Reset disabled status for restricted checkboxes
+  if (editAttCheck) editAttCheck.disabled = false;
+  if (editBalCheck) editBalCheck.disabled = false;
+  if (delCheck) delCheck.disabled = false;
+
   if (role === 'admin') {
     toggleAllPermissions(true);
   } else if (role === 'employee') {
@@ -5341,7 +5501,7 @@ function onUserRoleChanged(role) {
     if (appCheck) appCheck.checked = true;
     if (attCheck) attCheck.checked = true;
   } else if (role === 'hr_manager') {
-    // قسم الموارد البشرية: كافة الصلاحيات متاحة باستثناء تعديل الحضور والأرصدة والحذف
+    // قسم الموارد البشرية: كافة الصلاحيات متاحة لهم باستثناء تعديل الحضور والانصراف + تعديل الأرصدة + الحذف
     toggleAllPermissions(false);
     if (reqCheck) reqCheck.checked = true;
     if (payCheck) payCheck.checked = true;
@@ -5351,9 +5511,9 @@ function onUserRoleChanged(role) {
     if (penCheck) penCheck.checked = true;
     if (salCheck) salCheck.checked = true;
     if (userCheck) userCheck.checked = false; // إدارة المستخدمين مقتصرة على الأدمن
-    if (editAttCheck) editAttCheck.checked = false; // محظور على قسم الموارد البشرية
-    if (editBalCheck) editBalCheck.checked = false; // محظور على قسم الموارد البشرية
-    if (delCheck) delCheck.checked = false; // محظور على قسم الموارد البشرية
+    if (editAttCheck) { editAttCheck.checked = false; editAttCheck.disabled = true; } // محظور نظاماً على قسم الموارد البشرية
+    if (editBalCheck) { editBalCheck.checked = false; editBalCheck.disabled = true; } // محظور نظاماً على قسم الموارد البشرية
+    if (delCheck) { delCheck.checked = false; delCheck.disabled = true; } // محظور نظاماً على قسم الموارد البشرية
   }
 }
 
@@ -6573,35 +6733,51 @@ function renderLeavesTableRows(leaves) {
     if (l.status === 'معتمد نهائياً') {
       statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-circle-check"></i> معتمد نهائياً</span>';
     } else if (l.status.includes('بانتظار موافقة المدير')) {
-      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-clock"></i> بانتظار المدير المباشر</span>';
-    } else if (l.status.includes('بانتظار اعتماد الموارد')) {
-      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-user-tie"></i> بانتظار الموارد البشرية</span>';
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-user-clock"></i> خطوة 1: بانتظار موافقة المدير</span>';
+    } else if (l.status.includes('بانتظار تحقق قسم الموارد')) {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-user-check"></i> خطوة 2: تدقيق قسم الموارد</span>';
+    } else if (l.status.includes('بانتظار اعتماد مدير الموارد') || l.status.includes('بانتظار اعتماد الموارد')) {
+      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-signature"></i> خطوة 3: اعتماد مدير HR</span>';
     } else if (l.status.includes('مرفوض')) {
-      statusBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-circle-xmark"></i> مرفوض</span>';
+      statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 flex items-center gap-1 w-fit"><i class="fa-solid fa-circle-xmark"></i> ${l.status}</span>`;
     } else {
       statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">${l.status}</span>`;
     }
 
     let actions = `<div class="flex items-center justify-center gap-1">`;
 
-    // Action buttons based on status
+    // 4-Step Approval Actions
     if (l.status.includes('بانتظار موافقة المدير')) {
       actions += `
-        <button onclick="approveLeave(${l.id}, 'approve', 'manager')" title="موافقة المدير المباشر" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+        <button onclick="handleLeaveStepAction(${l.id}, 'manager', 'approve')" title="موافقة المدير المباشر" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
           <i class="fa-solid fa-check"></i> موافقة مدير
         </button>
-        <button onclick="approveLeave(${l.id}, 'reject', 'manager')" title="رفض الطلب" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+        <button onclick="handleLeaveStepAction(${l.id}, 'manager', 'reject')" title="رفض الطلب" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
           <i class="fa-solid fa-xmark"></i> رفض
         </button>`;
-    } else if (l.status.includes('بانتظار اعتماد الموارد')) {
+    } else if (l.status.includes('بانتظار تحقق قسم الموارد')) {
       actions += `
-        <button onclick="approveLeave(${l.id}, 'approve', 'hr')" title="اعتماد نهائي HR" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
-          <i class="fa-solid fa-signature"></i> اعتماد HR
+        <button onclick="handleLeaveStepAction(${l.id}, 'hr_verify', 'approve')" title="تدقيق وتحقق قسم الموارد البشرية" class="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-check-double"></i> تدقيق HR
         </button>
-        <button onclick="approveLeave(${l.id}, 'reject', 'hr')" title="رفض الطلب" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+        <button onclick="handleLeaveStepAction(${l.id}, 'hr_verify', 'reject')" title="رفض التدقيق" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-xmark"></i> رفض
+        </button>`;
+    } else if (l.status.includes('بانتظار اعتماد مدير الموارد') || l.status.includes('بانتظار اعتماد الموارد')) {
+      actions += `
+        <button onclick="handleLeaveStepAction(${l.id}, 'hr_director', 'approve')" title="اعتماد نهائي من مدير الموارد البشرية" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
+          <i class="fa-solid fa-signature"></i> اعتماد نهائي
+        </button>
+        <button onclick="handleLeaveStepAction(${l.id}, 'hr_director', 'reject')" title="رفض الاعتماد" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
           <i class="fa-solid fa-xmark"></i> رفض
         </button>`;
     }
+
+    // Official Form JM-HR-F-001 Preview Button
+    actions += `
+      <button onclick="openOfficialFormPreview('leave', ${l.id})" title="عرض النموذج الرسمي المعتمد JM-HR-F-001" class="w-7 h-7 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 flex items-center justify-center text-xs transition">
+        <i class="fa-solid fa-file-invoice"></i>
+      </button>`;
 
     // Word form generation & delete buttons
     const safeReason = (l.reason || '').replace(/'/g, "\\'");
@@ -7885,5 +8061,708 @@ window.onLeaveBalanceSearch = onLeaveBalanceSearch;
 window.onLeaveBalanceFilterChange = onLeaveBalanceFilterChange;
 window.onLeaveBalancePageSizeChange = onLeaveBalancePageSizeChange;
 window.goToLeaveBalancePage = goToLeaveBalancePage;
+
+// =============================================================================
+// NEW PRODUCTION MODULES: TERMINATED EMPLOYEES, LOANS, ATTENDANCE NOTICES, FORMS
+// =============================================================================
+
+// --- 1. OFFICIAL FORM PREVIEW HANDLER ---
+function openOfficialFormPreview(type, id) {
+  const iframe = document.getElementById('officialFormIframe');
+  const title = document.getElementById('officialFormPreviewTitle');
+  if (!iframe) return;
+
+  let url = '';
+  let titleText = 'معاينة الوثيقة الرسمية المعتمدة';
+
+  if (type === 'leave') {
+    url = `/api/forms/html/leave/${id}`;
+    titleText = 'نموذج طلب إجازة رسمي (JM-HR-F-001) - شركة جوهرة المجد';
+  } else if (type === 'penalty') {
+    url = `/api/forms/html/penalty/${id}`;
+    titleText = 'قرار جزائي إداري رسمي (JM-HR-F-002) - شركة جوهرة المجد';
+  } else if (type === 'termination') {
+    url = `/api/forms/html/termination/${id}`;
+    titleText = 'نموذج إنهاء عقد ومخالصة نهائية (JM-HR-F-003/v3) - شركة جوهرة المجد';
+  } else if (type === 'notice') {
+    url = `/api/forms/html/notice/${id}`;
+    titleText = 'خطاب إشعار / إنذار دوام رسمي موثق - شركة جوهرة المجد';
+  }
+
+  if (title) title.innerHTML = `<i class="fa-solid fa-file-invoice text-teal-700"></i> ${titleText}`;
+  iframe.src = url;
+  openModal('modalOfficialFormPreview');
+}
+
+function printOfficialFormModal() {
+  const iframe = document.getElementById('officialFormIframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  }
+}
+
+// --- 2. TERMINATED EMPLOYEES MODULE ---
+let terminatedRecords = [];
+
+async function loadTerminatedView() {
+  try {
+    const [recRes, kpiRes] = await Promise.all([
+      apiFetch('/api/employees/terminated'),
+      apiFetch('/api/employees/terminated/kpis')
+    ]);
+
+    terminatedRecords = (recRes && recRes.success) ? recRes.data : [];
+    const kpis = (kpiRes && kpiRes.success) ? kpiRes.data : {};
+
+    const elTotal = document.getElementById('statTermTotal');
+    const elResign = document.getElementById('statTermResignations');
+    const elCont = document.getElementById('statTermContracts');
+    const elPending = document.getElementById('statTermPendingClearance');
+    const elSettle = document.getElementById('statTermTotalSettlements');
+
+    if (elTotal) elTotal.textContent = kpis.total || 0;
+    if (elResign) elResign.textContent = kpis.resignations || 0;
+    if (elCont) elCont.textContent = kpis.contracts || 0;
+    if (elPending) elPending.textContent = kpis.pendingClearance || 0;
+    if (elSettle) elSettle.textContent = (kpis.totalSettlements || 0).toLocaleString() + ' ر.س';
+
+    renderTerminatedTable(terminatedRecords);
+  } catch (e) {
+    console.error('Error loading terminated employees:', e);
+  }
+}
+
+function renderTerminatedTable(records) {
+  const tbody = document.getElementById('terminatedTableBody');
+  if (!tbody) return;
+
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-slate-400 font-bold">لا يوجد موظفون منهي خدماتهم حالياً في السجلات.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map((r, i) => `
+    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+      <td class="p-3 font-mono font-bold text-slate-500">${i + 1}</td>
+      <td class="p-3">
+        <div class="font-bold text-slate-900">${r.full_name_ar}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${r.emp_code} • ${r.national_id || '-'}</div>
+      </td>
+      <td class="p-3">
+        <div class="text-slate-800 font-semibold">${r.department_name || '-'}</div>
+        <div class="text-[10px] text-slate-400">${r.job_title_ar}</div>
+      </td>
+      <td class="p-3 font-mono text-slate-600">${r.join_date || '-'}</td>
+      <td class="p-3 font-mono font-bold text-rose-700">${r.termination_date}</td>
+      <td class="p-3 font-semibold text-slate-800"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">${r.termination_type}</span></td>
+      <td class="p-3 font-mono font-bold text-slate-700">${r.service_years} سنة</td>
+      <td class="p-3 font-mono font-bold text-slate-800">${(r.last_salary || 0).toLocaleString()} ر.س</td>
+      <td class="p-3 font-mono font-bold text-emerald-700">${(r.end_of_service_reward || 0).toLocaleString()} ر.س</td>
+      <td class="p-3 font-mono text-blue-700 font-semibold">${(r.leave_compensation || 0).toLocaleString()} ر.س</td>
+      <td class="p-3 font-mono font-black text-brand text-sm">${(r.total_settlement || 0).toLocaleString()} ر.س</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.clearance_status === 'مكتمل' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${r.clearance_status}</span></td>
+      <td class="p-3 text-center">
+        <button onclick="openOfficialFormPreview('termination', ${r.id})" class="px-2.5 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-[10px] flex items-center gap-1 mx-auto transition">
+          <i class="fa-solid fa-file-contract"></i> نموذج v3
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterTerminatedTable() {
+  const query = (document.getElementById('terminatedSearchInput')?.value || '').toLowerCase().trim();
+  const typeFilter = document.getElementById('terminatedTypeFilter')?.value || '';
+
+  const filtered = terminatedRecords.filter(r => {
+    const matchQuery = !query ||
+      (r.full_name_ar && r.full_name_ar.toLowerCase().includes(query)) ||
+      (r.emp_code && r.emp_code.toLowerCase().includes(query)) ||
+      (r.national_id && r.national_id.includes(query)) ||
+      (r.department_name && r.department_name.toLowerCase().includes(query));
+
+    const matchType = !typeFilter || (r.termination_type && r.termination_type.includes(typeFilter));
+    return matchQuery && matchType;
+  });
+
+  renderTerminatedTable(filtered);
+}
+
+function openAddTerminatedModal() {
+  const select = document.getElementById('termFormEmpId');
+  if (select) {
+    select.innerHTML = '<option value="">-- اختر الموظف --</option>' +
+      state.employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
+  }
+  const dateInput = document.getElementById('termFormDate');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  calculateLiveSettlement();
+  openModal('modalAddTerminatedEmployee');
+}
+
+function onTerminatedEmployeeChanged(empId) {
+  calculateLiveSettlement();
+}
+
+async function calculateLiveSettlement() {
+  const empId = document.getElementById('termFormEmpId')?.value;
+  const date = document.getElementById('termFormDate')?.value || new Date().toISOString().split('T')[0];
+  const type = document.getElementById('termFormType')?.value || 'استقالة الموظف (المادة 85)';
+  const deductions = Number(document.getElementById('termFormDeductions')?.value) || 0;
+
+  if (!empId) {
+    const elY = document.getElementById('termLiveServiceYears');
+    const elS = document.getElementById('termLiveLastSalary');
+    const elG = document.getElementById('termLiveGratuity');
+    const elL = document.getElementById('termLiveLeaveComp');
+    const elN = document.getElementById('termLiveNetTotal');
+    if (elY) elY.textContent = '0 سنة خدمة';
+    if (elS) elS.textContent = '0 ر.س';
+    if (elG) elG.textContent = '0 ر.س';
+    if (elL) elL.textContent = '0 ر.س';
+    if (elN) elN.textContent = '0 ر.س';
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/employees/terminated/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emp_id: empId, termination_date: date, termination_type: type, deductions_amount: deductions })
+    });
+
+    if (res && res.success && res.data) {
+      const d = res.data;
+      const elY = document.getElementById('termLiveServiceYears');
+      const elS = document.getElementById('termLiveLastSalary');
+      const elG = document.getElementById('termLiveGratuity');
+      const elL = document.getElementById('termLiveLeaveComp');
+      const elN = document.getElementById('termLiveNetTotal');
+      if (elY) elY.textContent = `${d.service_years} سنة خدمة`;
+      if (elS) elS.textContent = `${(d.employee.last_salary || 0).toLocaleString()} ر.س`;
+      if (elG) elG.textContent = `${(d.end_of_service_reward || 0).toLocaleString()} ر.س`;
+      if (elL) elL.textContent = `${(d.leave_compensation || 0).toLocaleString()} ر.س`;
+      if (elN) elN.textContent = `${(d.total_settlement || 0).toLocaleString()} ر.س`;
+    }
+  } catch (e) {
+    console.error('Error calculating settlement:', e);
+  }
+}
+
+async function submitTerminatedEmployee(e) {
+  e.preventDefault();
+  const empId = document.getElementById('termFormEmpId').value;
+  const date = document.getElementById('termFormDate').value;
+  const type = document.getElementById('termFormType').value;
+  const deductions = Number(document.getElementById('termFormDeductions').value) || 0;
+  const notes = document.getElementById('termFormNotes').value;
+
+  if (!empId) return alert('يرجى اختيار الموظف أولاً');
+
+  try {
+    const res = await apiFetch('/api/employees/terminated', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emp_id: empId,
+        termination_date: date,
+        termination_type: type,
+        deductions_amount: deductions,
+        notes: notes
+      })
+    });
+
+    if (res && res.success) {
+      alert('تم تسجيل إنهاء الخدمة واعتماد المخالصة بنجاح');
+      closeModal('modalAddTerminatedEmployee');
+      await loadTerminatedView();
+      await loadEmployees();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في تسجيل إنهاء الخدمة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ إنهاء الخدمة: ' + err.message);
+  }
+}
+
+function downloadTerminatedTemplateExcel() {
+  window.open('/api/employees/terminated/template', '_blank');
+}
+
+function exportTerminatedExcel() {
+  window.open('/api/employees/terminated/export', '_blank');
+}
+
+async function submitImportTerminatedExcel() {
+  const fileInput = document.getElementById('fileTerminatedImport');
+  if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+    return alert('يرجى اختيار ملف الإكسل أولاً');
+  }
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  try {
+    const res = await fetch('/api/employees/terminated/import', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data && data.success) {
+      alert(`تم استيراد ${data.count} سجلاً للموظفين المنهي خدماتهم بنجاح`);
+      closeModal('modalImportTerminatedEmployees');
+      fileInput.value = '';
+      await loadTerminatedView();
+    } else {
+      alert('خطأ أثناء الاستيراد: ' + (data?.error || 'فشل استيراد الملف'));
+    }
+  } catch (err) {
+    alert('حدث خطأ في الاتصال أثناء استيراد الملف: ' + err.message);
+  }
+}
+
+// --- 3. LOANS MANAGEMENT MODULE ---
+let loansRecords = [];
+
+async function loadLoansView() {
+  try {
+    const [recRes, kpiRes] = await Promise.all([
+      apiFetch('/api/loans'),
+      apiFetch('/api/loans/kpis')
+    ]);
+
+    loansRecords = (recRes && recRes.success) ? recRes.data : [];
+    const kpis = (kpiRes && kpiRes.success) ? kpiRes.data : {};
+
+    const elTotal = document.getElementById('statLoanTotalAmount');
+    const elPaid = document.getElementById('statLoanPaidAmount');
+    const elRem = document.getElementById('statLoanRemainingAmount');
+    const elAct = document.getElementById('statLoanActiveCount');
+
+    if (elTotal) elTotal.textContent = (kpis.totalAmount || 0).toLocaleString() + ' ر.س';
+    if (elPaid) elPaid.textContent = (kpis.paidAmount || 0).toLocaleString() + ' ر.س';
+    if (elRem) elRem.textContent = (kpis.remainingAmount || 0).toLocaleString() + ' ر.س';
+    if (elAct) elAct.textContent = kpis.activeCount || 0;
+
+    renderLoansTable(loansRecords);
+  } catch (e) {
+    console.error('Error loading loans:', e);
+  }
+}
+
+function renderLoansTable(records) {
+  const tbody = document.getElementById('loansTableBody');
+  if (!tbody) return;
+
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" class="p-8 text-center text-slate-400 font-bold">لا توجد سلف مسجلة حالياً.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map(r => {
+    const progress = r.total_amount > 0 ? Math.min(100, Math.round((r.paid_amount / r.total_amount) * 100)) : 0;
+    return `
+      <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+        <td class="p-3 font-mono font-bold text-slate-800">${r.loan_no}</td>
+        <td class="p-3">
+          <div class="font-bold text-slate-900">${r.emp_name}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${r.emp_code}</div>
+        </td>
+        <td class="p-3 text-slate-700 font-semibold">${r.department_name || '-'}</td>
+        <td class="p-3 font-semibold text-emerald-800"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-900 border border-emerald-200">${r.loan_type}</span></td>
+        <td class="p-3 font-mono font-bold text-slate-900">${r.total_amount.toLocaleString()} ر.س</td>
+        <td class="p-3 font-mono font-bold text-slate-600">${r.installments_count} قسط</td>
+        <td class="p-3 font-mono font-bold text-brand">${r.monthly_installment.toLocaleString()} ر.س</td>
+        <td class="p-3 font-mono text-blue-700 font-semibold">${r.paid_amount.toLocaleString()} ر.س</td>
+        <td class="p-3 font-mono text-amber-700 font-bold">${r.remaining_amount.toLocaleString()} ر.س</td>
+        <td class="p-3">
+          <div class="flex items-center gap-1.5">
+            <div class="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: ${progress}%"></div>
+            </div>
+            <span class="text-[10px] font-mono font-bold text-slate-600">${progress}%</span>
+          </div>
+        </td>
+        <td class="p-3 font-mono text-slate-600">${r.start_month}</td>
+        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'نشطة' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${r.status}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterLoansTable() {
+  const query = (document.getElementById('loanSearchInput')?.value || '').toLowerCase().trim();
+  const statusFilter = document.getElementById('loanStatusFilter')?.value || '';
+
+  const filtered = loansRecords.filter(r => {
+    const matchQuery = !query ||
+      (r.emp_name && r.emp_name.toLowerCase().includes(query)) ||
+      (r.emp_code && r.emp_code.toLowerCase().includes(query)) ||
+      (r.loan_no && r.loan_no.toLowerCase().includes(query));
+
+    const matchStatus = !statusFilter || (r.status === statusFilter);
+    return matchQuery && matchStatus;
+  });
+
+  renderLoansTable(filtered);
+}
+
+function openAddLoanModal() {
+  const select = document.getElementById('loanFormEmpId');
+  if (select) {
+    select.innerHTML = '<option value="">-- اختر الموظف --</option>' +
+      state.employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
+  }
+  const monthInput = document.getElementById('loanFormStartMonth');
+  if (monthInput) {
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    monthInput.value = nextMonth.toISOString().slice(0, 7);
+  }
+  calculateLoanInstallment();
+  openModal('modalAddLoan');
+}
+
+function calculateLoanInstallment() {
+  const total = Number(document.getElementById('loanFormAmount')?.value) || 0;
+  const count = Number(document.getElementById('loanFormInstallments')?.value) || 1;
+  const monthly = count > 0 ? Math.round((total / count) * 100) / 100 : 0;
+  const monthlyInput = document.getElementById('loanFormMonthly');
+  if (monthlyInput) monthlyInput.value = monthly > 0 ? `${monthly} ر.س` : '0 ر.س';
+}
+
+async function submitNewLoan(e) {
+  e.preventDefault();
+  const empId = document.getElementById('loanFormEmpId').value;
+  const loanType = document.getElementById('loanFormType').value;
+  const total = Number(document.getElementById('loanFormAmount').value);
+  const count = Number(document.getElementById('loanFormInstallments').value);
+  const startMonth = document.getElementById('loanFormStartMonth').value;
+  const reason = document.getElementById('loanFormReason').value;
+
+  if (!empId) return alert('يرجى اختيار الموظف أولاً');
+  if (total <= 0) return alert('مبلغ السلفة يجب أن يكون أكبر من صفر');
+
+  try {
+    const res = await apiFetch('/api/loans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emp_id: empId,
+        loan_type: loanType,
+        total_amount: total,
+        installments_count: count,
+        start_month: startMonth,
+        reason: reason
+      })
+    });
+
+    if (res && res.success) {
+      alert('تم تسجيل السلفة وتفعيل الاستقطاع الشهري بنجاح');
+      closeModal('modalAddLoan');
+      await loadLoansView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في حفظ السلفة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ السلفة: ' + err.message);
+  }
+}
+
+function downloadLoanTemplateExcel() {
+  window.open('/api/loans/template', '_blank');
+}
+
+function exportLoansExcel() {
+  window.open('/api/loans/export', '_blank');
+}
+
+async function submitImportLoansExcel() {
+  const fileInput = document.getElementById('fileLoansImport');
+  if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+    return alert('يرجى اختيار ملف الإكسل أولاً');
+  }
+
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+
+  try {
+    const res = await fetch('/api/loans/import', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data && data.success) {
+      alert(`تم استيراد ${data.count} سلفة موظف بنجاح وربطها بالأقساط الشهرية`);
+      closeModal('modalImportLoans');
+      fileInput.value = '';
+      await loadLoansView();
+    } else {
+      alert('خطأ أثناء استيراد السلف: ' + (data?.error || 'فشل استيراد الملف'));
+    }
+  } catch (err) {
+    alert('حدث خطأ في الاتصال أثناء استيراد السلف: ' + err.message);
+  }
+}
+
+// --- 4. ATTENDANCE & ARTICLE 80 NOTICES MODULE ---
+let noticesRecords = [];
+
+async function loadNoticesView() {
+  try {
+    const [recRes, kpiRes] = await Promise.all([
+      apiFetch('/api/attendance/notices'),
+      apiFetch('/api/attendance/notices/kpis')
+    ]);
+
+    noticesRecords = (recRes && recRes.success) ? recRes.data : [];
+    const kpis = (kpiRes && kpiRes.success) ? kpiRes.data : {};
+
+    const elTotal = document.getElementById('statNoticeTotal');
+    const elLate = document.getElementById('statNoticeLate');
+    const elAbsence = document.getElementById('statNoticeAbsence');
+    const elAbandon = document.getElementById('statNoticeAbandon');
+    const elPending = document.getElementById('statNoticePendingAck');
+
+    if (elTotal) elTotal.textContent = kpis.total || 0;
+    if (elLate) elLate.textContent = kpis.late || 0;
+    if (elAbsence) elAbsence.textContent = kpis.absence || 0;
+    if (elAbandon) elAbandon.textContent = kpis.abandon || 0;
+    if (elPending) elPending.textContent = kpis.pendingAck || 0;
+
+    renderNoticesTable(noticesRecords);
+  } catch (e) {
+    console.error('Error loading notices:', e);
+  }
+}
+
+function renderNoticesTable(records) {
+  const tbody = document.getElementById('noticesTableBody');
+  if (!tbody) return;
+
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 font-bold">لا توجد إشعارات أو إنذارات دوام مسجلة حالياً.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map(r => `
+    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+      <td class="p-3 font-mono font-bold text-slate-800">${r.notice_no}</td>
+      <td class="p-3">
+        <div class="font-bold text-slate-900">${r.emp_name}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${r.emp_code}</div>
+      </td>
+      <td class="p-3 text-slate-700 font-semibold">${r.department_name || '-'}</td>
+      <td class="p-3 font-semibold text-rose-800"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-900 border border-rose-200">${r.notice_type}</span></td>
+      <td class="p-3 font-mono text-slate-700 font-semibold">${r.incident_date}</td>
+      <td class="p-3 text-slate-600 text-[11px] font-bold">${r.legal_basis || 'لائحة العمل المعتمدة'}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'تم التوقيع والإقرار' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800 animate-pulse'}">${r.status}</span></td>
+      <td class="p-3 font-mono text-[10px] text-slate-500">${r.acknowledged_at ? r.acknowledged_at.slice(0, 16) : '-'}</td>
+      <td class="p-3 text-center">
+        <button onclick="openOfficialFormPreview('notice', ${r.id})" class="px-2.5 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-[10px] flex items-center gap-1 mx-auto transition">
+          <i class="fa-solid fa-file-invoice"></i> عرض الخطاب
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterNoticesTable() {
+  const query = (document.getElementById('noticeSearchInput')?.value || '').toLowerCase().trim();
+  const typeFilter = document.getElementById('noticeTypeFilter')?.value || '';
+  const statusFilter = document.getElementById('noticeStatusFilter')?.value || '';
+
+  const filtered = noticesRecords.filter(r => {
+    const matchQuery = !query ||
+      (r.emp_name && r.emp_name.toLowerCase().includes(query)) ||
+      (r.emp_code && r.emp_code.toLowerCase().includes(query)) ||
+      (r.notice_no && r.notice_no.toLowerCase().includes(query));
+
+    const matchType = !typeFilter || (r.notice_type && r.notice_type.includes(typeFilter));
+    const matchStatus = !statusFilter || (r.status === statusFilter);
+    return matchQuery && matchType && matchStatus;
+  });
+
+  renderNoticesTable(filtered);
+}
+
+function openIssueNoticeModal() {
+  const select = document.getElementById('noticeFormEmpId');
+  if (select) {
+    select.innerHTML = '<option value="">-- اختر الموظف --</option>' +
+      state.employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
+  }
+  const dateInput = document.getElementById('noticeFormDate');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  openModal('modalIssueAttendanceNotice');
+}
+
+function onNoticeTypeChanged(type) {
+  const delayWrapper = document.getElementById('noticeDelayFieldWrapper');
+  if (delayWrapper) {
+    if (type.includes('تأخير')) {
+      delayWrapper.classList.remove('hidden');
+    } else {
+      delayWrapper.classList.add('hidden');
+    }
+  }
+}
+
+async function submitAttendanceNotice(e) {
+  e.preventDefault();
+  const empId = document.getElementById('noticeFormEmpId').value;
+  const date = document.getElementById('noticeFormDate').value;
+  const type = document.getElementById('noticeFormType').value;
+  const delayMinutes = Number(document.getElementById('noticeFormDelayMinutes')?.value) || 0;
+  const reason = document.getElementById('noticeFormReason').value;
+  const actionRequired = document.getElementById('noticeFormAction').value;
+
+  if (!empId) return alert('يرجى اختيار الموظف أولاً');
+
+  try {
+    const res = await apiFetch('/api/attendance/notices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emp_id: empId,
+        notice_type: type,
+        incident_date: date,
+        delay_minutes: delayMinutes,
+        reason: reason,
+        action_required: actionRequired
+      })
+    });
+
+    if (res && res.success) {
+      alert('تم إصدار الإشعار وتثبيته في حساب الموظف بالخدمة الذاتية بنجاح');
+      closeModal('modalIssueAttendanceNotice');
+      await loadNoticesView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في إصدار الإشعار'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء إصدار الإشعار: ' + err.message);
+  }
+}
+
+function exportNoticesExcel() {
+  window.open('/api/attendance/notices/export', '_blank');
+}
+
+async function acknowledgeNoticeESS(id) {
+  const notes = prompt('أدخل أية إيضاحات أو ملاحظات قبل التوقيع والإقرار:', 'أقر باستلام الإشعار والالتزام بالأنظمة');
+  if (notes === null) return;
+
+  try {
+    const res = await apiFetch(`/api/attendance/notices/${id}/acknowledge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employee_notes: notes })
+    });
+
+    if (res && res.success) {
+      alert('تم التوقيع والإقرار الإلكتروني بنجاح');
+      await loadNoticesView();
+      if (state.currentTab === 'selfservice') loadSelfService();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في تسجيل الإقرار'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تسجيل الإقرار: ' + err.message);
+  }
+}
+
+// --- 5. 4-STEP APPROVAL WORKFLOW ACTION HANDLERS ---
+async function handleLeaveStepAction(leaveId, step, action) {
+  const stepLabel = step === 'manager' ? 'المدير المباشر' : (step === 'hr_verify' ? 'قسم الموارد البشرية (تدقيق)' : 'مدير الموارد البشرية (اعتماد نهائي)');
+  const actionLabel = action === 'approve' || action === 'verify' ? 'الموافقة / الاعتماد' : 'الرفض';
+
+  const comment = prompt(`يرجى كتابة ملاحظات ${stepLabel} بشأن ${actionLabel}:`, action === 'approve' || action === 'verify' ? 'موافق وفق السياسة واللوائح المعتمدة' : 'نعتذر لعدم الموافقة لظروف العمل');
+  if (comment === null) return;
+
+  const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'المسؤول';
+
+  try {
+    const res = await apiFetch(`/api/leaves/${leaveId}/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ step, action, comment, approverName })
+    });
+
+    if (res && res.success) {
+      alert('تم تحديث سير الموافقات بنجاح');
+      await loadLeavesView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في تحديث سير الموافقة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء معالجة مسار الموافقة: ' + err.message);
+  }
+}
+
+async function handleRequestStepAction(reqId, step, action) {
+  const stepLabel = step === 'manager' ? 'المدير المباشر' : (step === 'hr_verify' ? 'قسم الموارد البشرية (تدقيق)' : 'مدير الموارد البشرية (اعتماد نهائي)');
+  const actionLabel = action === 'approve' || action === 'verify' ? 'الموافقة / الاعتماد' : 'الرفض';
+
+  const comment = prompt(`يرجى كتابة ملاحظات ${stepLabel} بشأن ${actionLabel}:`, action === 'approve' || action === 'verify' ? 'معتمد ومطابق للأنظمة' : 'مرفوض لعدم استيفاء الشروط');
+  if (comment === null) return;
+
+  const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'المسؤول';
+
+  try {
+    const res = await apiFetch(`/api/requests/${reqId}/action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ step, action, comment, approverName })
+    });
+
+    if (res && res.success) {
+      alert('تم توثيق سير الموافقات بنجاح');
+      if (typeof loadRequestsView === 'function') loadRequestsView();
+      if (state.currentTab === 'selfservice') loadSelfService();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في توثيق الموافقة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء معالجة الطلب: ' + err.message);
+  }
+}
+
+// Window global exports
+window.openOfficialFormPreview = openOfficialFormPreview;
+window.printOfficialFormModal = printOfficialFormModal;
+
+window.loadTerminatedView = loadTerminatedView;
+window.filterTerminatedTable = filterTerminatedTable;
+window.openAddTerminatedModal = openAddTerminatedModal;
+window.onTerminatedEmployeeChanged = onTerminatedEmployeeChanged;
+window.calculateLiveSettlement = calculateLiveSettlement;
+window.submitTerminatedEmployee = submitTerminatedEmployee;
+window.downloadTerminatedTemplateExcel = downloadTerminatedTemplateExcel;
+window.exportTerminatedExcel = exportTerminatedExcel;
+window.submitImportTerminatedExcel = submitImportTerminatedExcel;
+
+window.loadLoansView = loadLoansView;
+window.filterLoansTable = filterLoansTable;
+window.openAddLoanModal = openAddLoanModal;
+window.calculateLoanInstallment = calculateLoanInstallment;
+window.submitNewLoan = submitNewLoan;
+window.downloadLoanTemplateExcel = downloadLoanTemplateExcel;
+window.exportLoansExcel = exportLoansExcel;
+window.submitImportLoansExcel = submitImportLoansExcel;
+
+window.loadNoticesView = loadNoticesView;
+window.filterNoticesTable = filterNoticesTable;
+window.openIssueNoticeModal = openIssueNoticeModal;
+window.onNoticeTypeChanged = onNoticeTypeChanged;
+window.submitAttendanceNotice = submitAttendanceNotice;
+window.exportNoticesExcel = exportNoticesExcel;
+window.acknowledgeNoticeESS = acknowledgeNoticeESS;
+
+window.handleLeaveStepAction = handleLeaveStepAction;
+window.handleRequestStepAction = handleRequestStepAction;
+window.setPenaltyDisplayMode = setPenaltyDisplayMode;
+
 
 

@@ -2,9 +2,36 @@
 const { db, get, query, run } = require('./db');
 const fs = require('fs');
 const path = require('path');
+const xlsx = require('xlsx');
+
+function dateConvert(val) {
+  if (!val) return null;
+  if (typeof val === 'string') {
+    if (val.includes('-')) return val.trim();
+    if (val.includes('/')) {
+      const parts = val.split('/');
+      if (parts.length === 3) return parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
+    }
+    return val.trim();
+  }
+  if (typeof val === 'number') {
+    const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+    return d.toISOString().split('T')[0];
+  }
+  return null;
+}
+
+function norm(s) {
+  return (s || '')
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function seedDatabase() {
-  // Update or insert company settings with exact name: "شركة جوهرة المجد"
+  // 1. Company Settings
   run(`
     INSERT INTO company_settings (
       id, company_name_ar, company_name_en, cr_number, mhrsd_est_number,
@@ -16,7 +43,7 @@ function seedDatabase() {
       'شركة جوهرة المجد',
       'Jawharat Al-Majd Co.',
       '7004872169',
-      '',
+      '7013999755',
       '310492837400003',
       '920012405',
       'info@jalmajd.com',
@@ -39,27 +66,40 @@ function seedDatabase() {
       updated_at = datetime('now')
   `);
 
-  // 1. Users System: Admin and HR Manager users
+  // 2. Users System: Admin and HR Manager users
+  // HR Department permissions: All permissions EXCEPT edit_attendance, edit_balances, and delete
   run(`DELETE FROM users`);
+  const hrPermissions = JSON.stringify([
+    'requests', 'payslips', 'approvals', 'employees',
+    'attendance', 'penalties', 'payroll', 'loans',
+    'terminated_employees', 'notices', 'reports'
+  ]);
+
   run(`
     INSERT INTO users (id, username, password, full_name, email, role, permissions, emp_id, is_active)
     VALUES 
     (1, 'admin', 'Jj123', 'مدير النظام (Admin)', 'admin@jalmajd.com', 'admin', '["all"]', NULL, 1),
-    (2, 'abdulmalik', 'Hr123', 'عبدالملك سعيد القحطاني', 'abdulmalik.saeed@jalmajd.com', 'hr', '["all"]', NULL, 1)
-  `);
+    (2, 'abdulmalik', 'Hr123', 'عبدالملك سعيد الشريف', 'abdulmalik.saeed@jalmajd.com', 'hr_manager', ?, NULL, 1)
+  `, [hrPermissions]);
 
-  // 2. Departments: Seed all departments from the official organizational statement
+  // 3. Departments: Exactly 15 departments matching the Excel file (No empty departments!)
   run(`DELETE FROM departments`);
   const departments = [
-    { code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager: 'صالح سعيد القحطاني', budget: 500000, loc: 'مقر أبها - الطابق الإداري' },
-    { code: 'ENG', name_ar: 'الادارة الهندسية', name_en: 'Engineering Department', manager: 'فارس عبدالرحمن القحطاني', budget: 350000, loc: 'مقر أبها - قسم المشاريع' },
-    { code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager: 'عبدالملك سعيد القحطاني', budget: 250000, loc: 'مقر أبها - مبنى الإدارة' },
-    { code: 'FIN', name_ar: 'الادارة المالية', name_en: 'Finance Department', manager: 'هاني عبدالرحمن القحطاني', budget: 300000, loc: 'مقر أبها - الإدارة المالية' },
-    { code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager: 'هاني عبدالله عبدالكريم', budget: 350000, loc: 'مقر أبها - قسم المشتريات' },
-    { code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager: 'مشرف المبيعات', budget: 400000, loc: 'مقر أبها - الإدارة التجارية' },
-    { code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager: 'محمد شكيل', budget: 300000, loc: 'مقر أبها - مركز العمليات الرقمية' },
-    { code: 'MKT', name_ar: 'ادارة التسويق', name_en: 'Marketing Department', manager: 'مشرف التسويق', budget: 200000, loc: 'مقر أبها - الجناح الإعلامي' },
-    { code: 'TAQEEB', name_ar: 'التعقيب', name_en: 'Government Relations', manager: 'عبدالعزيز سعيد مفرح', budget: 150000, loc: 'مقر أبها - العلاقات الحكومية' }
+    { code: 'HR', name_ar: 'إدارة الموارد البشرية', name_en: 'Human Resources Department', manager: 'عبدالملك سعيد الشريف', budget: 250000, loc: 'مقر الإدارة العامة - أبها' },
+    { code: 'SALES', name_ar: 'إدارة المبيعات', name_en: 'Sales Department', manager: 'خالد احمد محمد راعي', budget: 500000, loc: 'سيتي بارك وفروع المعارض' },
+    { code: 'TAQEEB', name_ar: 'إدارة التعقيب', name_en: 'Government Relations (Taqeeb)', manager: 'عبدالملك سعيد الشريف', budget: 150000, loc: 'مقر الإدارة العامة - أبها' },
+    { code: 'PROJECTS', name_ar: 'إدارة المشاريع والمقاولات', name_en: 'Projects & Contracting', manager: 'فارس عبدالرحمن القحطاني', budget: 600000, loc: 'مواقع المشاريع والمقاولات' },
+    { code: 'BUFFET', name_ar: 'خدمات البوفيه', name_en: 'Buffet Services', manager: 'عبدالملك سعيد الشريف', budget: 80000, loc: 'مقر الإدارة العامة والفروع' },
+    { code: 'WAREHOUSE', name_ar: 'إدارة المستودعات والمخازن', name_en: 'Warehousing & Inventory', manager: 'فيروز علي جان محمد', budget: 300000, loc: 'المستودع الرئيسي - أبها' },
+    { code: 'MAINT', name_ar: 'إدارة الصيانة والتشغيل', name_en: 'Maintenance & Operations', manager: 'فهمي سالم عبيد باعمير', budget: 200000, loc: 'الورشة المركزية للصيانة' },
+    { code: 'BAKERY', name_ar: 'إدارة المخبز', name_en: 'Bakery Department', manager: 'تامر جمعة احمد عبدالله', budget: 350000, loc: 'مخبز سيتي بارك' },
+    { code: 'ENG', name_ar: 'الإدارة الهندسية', name_en: 'Engineering Department', manager: 'فارس عبدالرحمن القحطاني', budget: 400000, loc: 'مقر الإدارة العامة - أبها' },
+    { code: 'OPS', name_ar: 'إدارة التشغيل', name_en: 'Operations Department', manager: 'ريان يحي عبدالله', budget: 300000, loc: 'مركز محطة المرح الترفيهي' },
+    { code: 'SUPPORT', name_ar: 'إدارة الخدمات المساندة والنظافة', name_en: 'Support & Cleaning Services', manager: 'فهمي سالم عبيد باعمير', budget: 180000, loc: 'كافة الفروع والمرافق' },
+    { code: 'IT', name_ar: 'إدارة تقنية المعلومات', name_en: 'Information Technology', manager: 'عبدالملك سعيد الشريف', budget: 250000, loc: 'مقر الإدارة العامة - أبها' },
+    { code: 'FIN', name_ar: 'الإدارة المالية', name_en: 'Finance Department', manager: 'هاني عبدالرحمن صالح القحطاني', budget: 350000, loc: 'مقر الإدارة العامة - أبها' },
+    { code: 'PROC', name_ar: 'إدارة المشتريات', name_en: 'Procurement Department', manager: 'عبدالملك سعيد الشريف', budget: 220000, loc: 'مقر الإدارة العامة - أبها' },
+    { code: 'GEN', name_ar: 'الإدارة العامة', name_en: 'General Administration', manager: 'صالح سعيد القحطاني', budget: 800000, loc: 'مقر الإدارة العامة - برج جوهرة المجد' }
   ];
 
   for (const dept of departments) {
@@ -69,13 +109,19 @@ function seedDatabase() {
     `, [dept.code, dept.name_ar, dept.name_en, dept.manager, dept.budget, dept.loc]);
   }
 
-  // 3. Branches: Seed exact 4 branches requested
+  // 4. Branches: Exactly 10 branches matching the Excel file
   run(`DELETE FROM branches`);
   const branches = [
-    { code: 'BR-ABHA-01', name_ar: 'فرع ابها الرئيسي', name_en: 'Abha Main Branch', city: 'أبها', address: 'أبها - شارع الملك عبدالعزيز - برج جوهرة المجد', phone: '0172201122', manager: 'مدير فرع أبها الرئيسي', is_main: 1 },
-    { code: 'BR-MANSAK-02', name_ar: 'فرع المنسك', name_en: 'Al-Mansak Branch', city: 'أبها', address: 'أبها - حي المنسك - طريق الأربعين', phone: '0172203344', manager: 'مشرف فرع المنسك', is_main: 0 },
-    { code: 'BR-MUWADAF-03', name_ar: 'فرع حي الموظفين', name_en: 'Hay Al-Muwadhafeen Branch', city: 'أبها', address: 'أبها - حي الموظفين - الشارع التجاري العام', phone: '0172205566', manager: 'مشرف فرع حي الموظفين', is_main: 0 },
-    { code: 'BR-MUHAYIL-04', name_ar: 'فرع محايل عسير', name_en: 'Muhayil Asir Branch', city: 'محايل عسير', address: 'محايل عسير - طريق الشعبين الرئيسي - مجمع جوهرة المجد', phone: '0172851122', manager: 'مشرف فرع محايل عسير', is_main: 0 }
+    { code: 'BR-GEN', name_ar: 'الإدارة العامة', name_en: 'General Administration HQ', city: 'أبها', address: 'أبها - شارع الملك عبدالعزيز - برج جوهرة المجد', phone: '0172201122', manager: 'صالح سعيد القحطاني', is_main: 1 },
+    { code: 'BR-CITYPARK', name_ar: 'فرع سيتي بارك', name_en: 'City Park Branch', city: 'أبها', address: 'أبها - حي الشرفية - سيتي بارك مول', phone: '0172203344', manager: 'خالد احمد محمد راعي', is_main: 0 },
+    { code: 'BR-MUWADAF', name_ar: 'فرع حي الموظفين', name_en: 'Hay Al-Muwadhafeen Branch', city: 'أبها', address: 'أبها - حي الموظفين - الشارع التجاري العام', phone: '0172205566', manager: 'علي سعد حسين البشري', is_main: 0 },
+    { code: 'BR-PROJECTS', name_ar: 'إدارة المشاريع والمقاولات', name_en: 'Projects & Contracting Branch', city: 'أبها', address: 'أبها - منطقة عسير - قطاع المشاريع', phone: '0172207788', manager: 'فارس عبدالرحمن القحطاني', is_main: 0 },
+    { code: 'BR-DOWNTOWN', name_ar: 'فرع وسط البلد التجاري', name_en: 'Downtown Commercial Branch', city: 'أبها', address: 'أبها - السوق التجاري القديم - وسط البلد', phone: '0172208899', manager: 'احمد عبدالرحمن علي يعن الله', is_main: 0 },
+    { code: 'BR-WAREHOUSE', name_ar: 'المستودع الرئيسي', name_en: 'Central Warehouse', city: 'أبها', address: 'أبها - المنطقة الصناعية - المستودع المركزي', phone: '0172209900', manager: 'فيروز علي جان محمد', is_main: 0 },
+    { code: 'BR-WORKSHOP', name_ar: 'الورشة للصيانة', name_en: 'Maintenance Workshop', city: 'أبها', address: 'أبها - حي المحالة - الورشة الفنية', phone: '0172209911', manager: 'فهمي سالم عبيد باعمير', is_main: 0 },
+    { code: 'BR-BAKERY', name_ar: 'مخبز سيتي بارك', name_en: 'City Park Bakery', city: 'أبها', address: 'أبها - مجمع سيتي بارك التجاري', phone: '0172209922', manager: 'تامر جمعة احمد عبدالله', is_main: 0 },
+    { code: 'BR-FUN', name_ar: 'مركز محطة المرح الترفيهي', name_en: 'Fun Station Entertainment', city: 'أبها', address: 'أبها - طريق الملك فهد - مركز محطة المرح', phone: '0172209933', manager: 'ريان يحي عبدالله', is_main: 0 },
+    { code: 'BR-HABIL', name_ar: 'فرع الحبيل', name_en: 'Al-Habil Branch', city: 'رجال ألمع', address: 'عسير - مركز الحبيل التجاري', phone: '0172209944', manager: 'هاني عبدالرحمن صالح القحطاني', is_main: 0 }
   ];
 
   for (const b of branches) {
@@ -85,10 +131,10 @@ function seedDatabase() {
     `, [b.code, b.name_ar, b.name_en, b.city, b.address, b.phone, b.manager, b.is_main]);
   }
 
-  // 4. Biometric Devices: Purge demo devices (Hardware ready for real registration)
+  // 5. Biometric Devices: Purge demo devices (Hardware ready for live registration)
   run(`DELETE FROM biometric_devices`);
 
-  // 5. Attendance & Shift Policies (سياسات الدوام - تطبيق السياستين المعتمدتين فقط)
+  // 6. Attendance & Shift Policies
   run(`DELETE FROM attendance_policies`);
   const policies = [
     {
@@ -128,7 +174,7 @@ function seedDatabase() {
     `, [p.policy_name, p.shift_type, p.start_time, p.end_time, p.grace_period_mins, p.daily_hours, p.work_days, p.flexible_hours, p.overtime_allowed, p.min_hours, p.notes]);
   }
 
-  // 6. Purge existing operational and demo records
+  // 7. Purge existing operational and demo records
   run(`DELETE FROM employees`);
   run(`DELETE FROM requests`);
   run(`DELETE FROM leaves`);
@@ -140,191 +186,310 @@ function seedDatabase() {
   run(`DELETE FROM attendance_daily_summary`);
   run(`DELETE FROM payroll_items`);
   run(`DELETE FROM payroll_periods`);
+  run(`DELETE FROM attendance_notices`);
+  run(`DELETE FROM terminated_employees`);
+  run(`DELETE FROM loans`);
 
-  // 7. Seed all 109 official employees of Jawharat Al-Majd directly from Excel files
+  // 8. Seed all official employees from Excel
   seedEmployees();
 
-  // 8. Seed Disciplinary Regulations (50 clauses from Desktop لائحة الجزاءات)
+  // 9. Seed Disciplinary Regulations (50 clauses)
   seedPenaltyRegulations();
 }
 
 function seedEmployees() {
-  const empsFile = path.join(__dirname, 'officialEmployees.json');
-  if (!fs.existsSync(empsFile)) return;
+  const excelPath = path.join(__dirname, '..', '..', 'قاعدة البيانات وسير الموافقات.xlsx');
+  let rawRows = [];
 
-  const employees = JSON.parse(fs.readFileSync(empsFile, 'utf8'));
+  if (fs.existsSync(excelPath)) {
+    const wb = xlsx.readFile(excelPath);
+    const ws = wb.Sheets['بيانات موظفي جوهرة المجد'] || wb.Sheets[wb.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(ws, { header: 1 });
+    rawRows = data.slice(5).filter(r => r && r[1]);
+  }
 
-  const depts = query('SELECT id, code, name_ar FROM departments');
+  const deptRows = query('SELECT id, name_ar FROM departments');
   const deptMap = {};
-  depts.forEach(d => {
-    deptMap[d.code] = d.id;
+  deptRows.forEach(d => {
+    deptMap[d.name_ar.trim()] = d.id;
   });
 
-  const brs = query('SELECT id, code, name_ar FROM branches');
-  const brMap = {};
-  brs.forEach(b => {
-    brMap[b.code] = b.id;
+  const branchRows = query('SELECT id, name_ar FROM branches');
+  const branchMap = {};
+  branchRows.forEach(b => {
+    branchMap[b.name_ar.trim()] = b.id;
   });
 
-  const pols = query('SELECT id, policy_name, shift_type FROM attendance_policies');
-  const mgmtPolicyId = pols.find(p => p.policy_name === 'سياسة الإدارة')?.id || (pols[0]?.id || 1);
-  const flexPolicyId = pols.find(p => p.policy_name === 'سياسة الدوام المرن')?.id || (pols[1]?.id || 2);
+  const pols = query('SELECT id, policy_name FROM attendance_policies');
+  const mgmtPolicyId = pols.find(p => p.policy_name === 'سياسة الإدارة')?.id || 1;
+  const flexPolicyId = pols.find(p => p.policy_name === 'سياسة الدوام المرن')?.id || 2;
 
-  // Helper to resolve department ID
-  function resolveDeptId(emp) {
-    const sec = emp.section_name || '';
-    const dept = emp.department_name || '';
-    const job = emp.job_title_ar || '';
+  const defaultDeptId = deptMap['الإدارة العامة'] || deptRows[0]?.id || 1;
+  const defaultBranchId = branchMap['الإدارة العامة'] || branchRows[0]?.id || 1;
 
-    if (dept.includes('هندس') || sec.includes('هندس') || job.includes('مهندس') || job.includes('مشاريع')) {
-      return deptMap['ENG'] || deptMap['EXEC'];
+  // The 4 Top Executive Leaders of Jawharat Al-Majd
+  const executives = [
+    {
+      emp_code: 'JM-0001',
+      full_name_ar: 'عبدالرحمن صالح القحطاني',
+      full_name_en: 'Abdulrahman Saleh Al-Qahtani',
+      job_title_ar: 'رئيس مجلس الإدارة',
+      dept_name: 'الإدارة العامة',
+      branch_name: 'الإدارة العامة',
+      section: 'الإدارة العامة',
+      direct_manager_name: null,
+      national_id: '1001122331',
+      nationality: 'سعودي',
+      gender: 'M',
+      is_saudi: 1,
+      basic_salary: 0,
+      housing_allowance: 0,
+      transport_allowance: 0,
+      other_allowance: 0,
+      leave_balance: 0,
+      join_date: '2015-01-01',
+      iban: '',
+      iqama_expiry: null,
+      phone: '',
+      email: 'chairman@jalmajd.com'
+    },
+    {
+      emp_code: 'JM-0002',
+      full_name_ar: 'سعيد محمد القحطاني',
+      full_name_en: 'Saeed Mohammed Al-Qahtani',
+      job_title_ar: 'نائب رئيس مجلس الإدارة',
+      dept_name: 'الإدارة العامة',
+      branch_name: 'الإدارة العامة',
+      section: 'الإدارة العامة',
+      direct_manager_name: 'عبدالرحمن صالح القحطاني',
+      national_id: '1001122332',
+      nationality: 'سعودي',
+      gender: 'M',
+      is_saudi: 1,
+      basic_salary: 0,
+      housing_allowance: 0,
+      transport_allowance: 0,
+      other_allowance: 0,
+      leave_balance: 0,
+      join_date: '2015-01-01',
+      iban: '',
+      iqama_expiry: null,
+      phone: '',
+      email: 'vice_chairman@jalmajd.com'
+    },
+    {
+      emp_code: 'JM-0003',
+      full_name_ar: 'صالح سعيد القحطاني',
+      full_name_en: 'Saleh Saeed Al-Qahtani',
+      job_title_ar: 'المدير العام',
+      dept_name: 'الإدارة العامة',
+      branch_name: 'الإدارة العامة',
+      section: 'الإدارة العامة',
+      direct_manager_name: 'سعيد محمد القحطاني',
+      national_id: '1001122333',
+      nationality: 'سعودي',
+      gender: 'M',
+      is_saudi: 1,
+      basic_salary: 0,
+      housing_allowance: 0,
+      transport_allowance: 0,
+      other_allowance: 0,
+      leave_balance: 0,
+      join_date: '2016-01-01',
+      iban: '',
+      iqama_expiry: null,
+      phone: '',
+      email: 'gm@jalmajd.com'
+    },
+    {
+      emp_code: 'JM-0004',
+      full_name_ar: 'فارس عبدالرحمن القحطاني',
+      full_name_en: 'Faris Abdulrahman Al-Qahtani',
+      job_title_ar: 'مدير المشاريع',
+      dept_name: 'إدارة المشاريع والمقاولات',
+      branch_name: 'إدارة المشاريع والمقاولات',
+      section: 'المقاولات',
+      direct_manager_name: 'صالح سعيد القحطاني',
+      national_id: '1001122334',
+      nationality: 'سعودي',
+      gender: 'M',
+      is_saudi: 1,
+      basic_salary: 0,
+      housing_allowance: 0,
+      transport_allowance: 0,
+      other_allowance: 0,
+      leave_balance: 0,
+      join_date: '2017-01-01',
+      iban: '',
+      iqama_expiry: null,
+      phone: '',
+      email: 'projects.dir@jalmajd.com'
     }
-    if (dept.includes('مالي') || sec.includes('مالي') || job.includes('محاسب') || job.includes('المالي') || sec.includes('خزنة')) {
-      return deptMap['FIN'] || deptMap['EXEC'];
-    }
-    if (dept.includes('موارد') || sec.includes('موارد') || job.includes('موارد') || sec.includes('HR')) {
-      return deptMap['HR'] || deptMap['EXEC'];
-    }
-    if (dept.includes('تعقيب') || sec.includes('تعقيب') || job.includes('معقب')) {
-      return deptMap['TAQEEB'] || deptMap['EXEC'];
-    }
-    if (sec.includes('تقنية') || sec.includes('شبكات') || sec.includes('حاسب') || job.includes('شبكات') || job.includes('تقنية') || sec.includes('IT')) {
-      return deptMap['IT'] || deptMap['EXEC'];
-    }
-    if (sec.includes('مشتريات') || sec.includes('مستودع') || job.includes('مشتريات') || job.includes('فرز')) {
-      return deptMap['PROC'] || deptMap['EXEC'];
-    }
-    if (sec.includes('تسويق') || job.includes('تسويق')) {
-      return deptMap['MKT'] || deptMap['EXEC'];
-    }
-    if (
-      sec.includes('صالة') || sec.includes('صاله') || sec.includes('سوق') ||
-      sec.includes('مخبز') || sec.includes('خضار') || sec.includes('محطة') ||
-      sec.includes('بوفيه') || sec.includes('بسطة') || sec.includes('اجبان')
-    ) {
-      return deptMap['SALES'] || deptMap['EXEC'];
-    }
-    return deptMap['EXEC'];
+  ];
+
+  // Try to match existing official employee codes if available
+  const oldOfficialPath = path.join(__dirname, 'officialEmployees.json');
+  let oldOfficialMap = new Map();
+  if (fs.existsSync(oldOfficialPath)) {
+    try {
+      const oldList = JSON.parse(fs.readFileSync(oldOfficialPath, 'utf8'));
+      oldList.forEach(e => {
+        if (e.national_id) oldOfficialMap.set(String(e.national_id).trim(), e.emp_code);
+        if (e.full_name_ar) oldOfficialMap.set(norm(e.full_name_ar), e.emp_code);
+      });
+    } catch (e) {}
   }
 
-  // Helper to resolve branch ID
-  function resolveBranchId(emp) {
-    const dept = (emp.department_name || '') + ' ' + (emp.section_name || '');
-    if (dept.includes('المنسك')) return brMap['BR-MANSAK-02'];
-    if (dept.includes('حي الموظفين') || dept.includes('الموظفين')) return brMap['BR-MUWADAF-03'];
-    if (dept.includes('محايل')) return brMap['BR-MUHAYIL-04'];
-    return brMap['BR-ABHA-01'];
-  }
+  // Parse Excel employee rows
+  const parsedEmployees = rawRows.map((r, idx) => {
+    const name = String(r[1]).trim();
+    const natId = r[2] ? String(r[2]).trim() : null;
+    const nationality = String(r[3] || 'سعودي').trim();
+    const deptName = String(r[4] || '').trim();
+    const branchName = String(r[5] || '').trim();
+    const jobTitle = String(r[6] || '').trim();
+    const phone = r[7] ? String(r[7]).trim() : '';
+    const email = r[8] ? String(r[8]).trim() : '';
+    const joinDate = dateConvert(r[9]);
+    const leaveBal = Number(r[10]) || 0;
+    const gross = Number(r[11]) || 0;
+    const genderStr = String(r[12] || '').trim();
+    const gender = (genderStr === 'انثى' || genderStr === 'أنثى' || genderStr === 'F') ? 'F' : 'M';
+    const section = String(r[13] || '').trim();
+    const basic = Number(r[14]) || 0;
+    const housing = Number(r[15]) || 0;
+    const transport = Number(r[16]) || 0;
+    const other = Number(r[17]) || 0;
+    const iban = r[18] ? String(r[18]).trim() : '';
+    const iqamaExp = dateConvert(r[19]);
+    const directMgr = r[20] ? String(r[20]).trim() : null;
+    const isSaudi = nationality.includes('سعود') ? 1 : 0;
 
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
+    let empCode = null;
+    if (natId && oldOfficialMap.has(natId)) {
+      empCode = oldOfficialMap.get(natId);
+    } else if (oldOfficialMap.has(norm(name))) {
+      empCode = oldOfficialMap.get(norm(name));
+    }
+    if (!empCode) {
+      if (name.includes('عبدالملك سعيد')) {
+        empCode = 'JM-1000';
+      } else {
+        empCode = 'JM-' + String(1005 + idx).padStart(4, '0');
+      }
+    }
 
-  // 1. Insert employees
-  for (const emp of employees) {
-    const deptId = resolveDeptId(emp);
-    const branchId = resolveBranchId(emp);
-    const policyId = (emp.section_name || '').includes('تقنية') ? flexPolicyId : mgmtPolicyId;
+    return {
+      emp_code: empCode,
+      full_name_ar: name,
+      full_name_en: name,
+      job_title_ar: jobTitle,
+      dept_name: deptName,
+      branch_name: branchName,
+      section: section,
+      direct_manager_name: directMgr,
+      national_id: natId,
+      nationality: nationality,
+      gender: gender,
+      is_saudi: isSaudi,
+      basic_salary: basic,
+      housing_allowance: housing,
+      transport_allowance: transport,
+      other_allowance: other,
+      leave_balance: leaveBal,
+      join_date: joinDate,
+      iban: iban,
+      iqama_expiry: iqamaExp,
+      phone: phone,
+      email: email
+    };
+  });
+
+  const allEmployeesToInsert = [...executives, ...parsedEmployees];
+
+  // 1. Insert employees into database
+  for (const emp of allEmployeesToInsert) {
+    const deptId = deptMap[emp.dept_name] || defaultDeptId;
+    const branchId = branchMap[emp.branch_name] || defaultBranchId;
+    const policyId = (emp.section || '').includes('تقنية') ? flexPolicyId : mgmtPolicyId;
     const shiftType = policyId === flexPolicyId ? 'دوام مرن' : 'دوام صباحي';
 
     run(`
       INSERT INTO employees (
         emp_code, full_name_ar, full_name_en, national_id, nationality,
-        is_saudi, gender, email, phone, department_id, branch_id,
+        is_saudi, gender, email, phone, department_id, branch_id, section,
         job_title_ar, job_title_en, grade_level, basic_salary, housing_allowance,
         transport_allowance, other_allowance, bank_name, bank_code, iban,
-        annual_leave_balance, shift_type, policy_id, join_date, status, role
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        annual_leave_balance, direct_manager_name, shift_type, policy_id, join_date, iqama_expiry, status, role
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       emp.emp_code,
       emp.full_name_ar,
       emp.full_name_en || emp.full_name_ar,
-      emp.national_id ? emp.national_id : null,
+      emp.national_id || null,
       emp.nationality,
       emp.is_saudi,
-      emp.gender || 'M',
-      emp.email ? emp.email : null,
-      emp.phone ? emp.phone : null,
+      emp.gender,
+      emp.email || null,
+      emp.phone || null,
       deptId,
       branchId,
+      emp.section,
       emp.job_title_ar,
-      emp.job_title_en || emp.job_title_ar,
+      emp.job_title_ar,
       'P-1',
-      emp.basic_salary || 0,
-      emp.housing_allowance || 0,
-      emp.transport_allowance || 0,
-      emp.other_allowance || 0,
-      emp.bank_name || '',
-      emp.bank_code || '',
-      emp.iban || '',
-      emp.leave_balance !== undefined && emp.leave_balance !== null ? Number(emp.leave_balance) : 0,
+      emp.basic_salary,
+      emp.housing_allowance,
+      emp.transport_allowance,
+      emp.other_allowance,
+      'مصرف الراجحي',
+      'RJHI',
+      emp.iban,
+      emp.leave_balance,
+      emp.direct_manager_name,
       shiftType,
       policyId,
-      emp.join_date ? emp.join_date : null,
+      emp.join_date,
+      emp.iqama_expiry,
       'نشط',
       'employee'
     ]);
   }
 
-  // 2. Map Direct Managers according to the official organizational statement
-  const insertedEmployees = query('SELECT id, emp_code, department_id, branch_id, job_title_ar, full_name_ar FROM employees');
-  const chairman = insertedEmployees.find(e => e.emp_code === 'JM-0001');
-  const viceChairman = insertedEmployees.find(e => e.emp_code === 'JM-0002');
-  const generalManager = insertedEmployees.find(e => e.emp_code === 'JM-0003');
-  const projectsManager = insertedEmployees.find(e => e.emp_code === 'JM-0004');
-  const hrManager = insertedEmployees.find(e => e.emp_code === 'JM-1000'); // عبدالملك سعيد القحطاني
-  const financeManager = insertedEmployees.find(e => e.emp_code === 'JM-1041'); // هاني عبدالرحمن صالح القحطاني
-
-  const hrManagerId = hrManager ? hrManager.id : null;
-  const gmId = generalManager ? generalManager.id : null;
-  const vcId = viceChairman ? viceChairman.id : null;
-  const chId = chairman ? chairman.id : null;
-  const projId = projectsManager ? projectsManager.id : gmId;
-  const finId = financeManager ? financeManager.id : gmId;
-
-  // Link user 'abdulmalik' to his employee id in users table
-  if (hrManagerId) {
-    run('UPDATE users SET emp_id = ? WHERE username = ?', [hrManagerId, 'abdulmalik']);
-  }
-
-  for (const emp of insertedEmployees) {
-    if (emp.emp_code === 'JM-0001') {
-      // Chairman has no direct manager
-      run('UPDATE employees SET manager_id = NULL WHERE id = ?', [emp.id]);
-    } else if (emp.emp_code === 'JM-0002') {
-      // Vice Chairman reports to Chairman
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [chId, emp.id]);
-    } else if (emp.emp_code === 'JM-0003') {
-      // General Manager reports to Vice Chairman
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [vcId, emp.id]);
-    } else if (emp.emp_code === 'JM-0004' || emp.emp_code === 'JM-1041' || emp.emp_code === 'JM-1000') {
-      // Executive Directors report to General Manager
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [gmId, emp.id]);
-    } else if (emp.emp_code === 'JM-1071') {
-      // Civil Engineer reports to Projects Manager
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [projId, emp.id]);
-    } else if (emp.emp_code === 'JM-1003' || emp.emp_code === 'JM-1002') {
-      // Accountants report to Finance Manager
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [finId, emp.id]);
-    } else {
-      // All other staff across the company report directly to HR Manager Abdulmalik Saeed Al-Qahtani
-      run('UPDATE employees SET manager_id = ? WHERE id = ?', [hrManagerId, emp.id]);
+  // 2. Link Direct Managers (100% precision)
+  const inserted = query('SELECT id, emp_code, full_name_ar, direct_manager_name FROM employees');
+  for (const emp of inserted) {
+    if (!emp.direct_manager_name) continue;
+    const targetNorm = norm(emp.direct_manager_name);
+    const mgrMatch = inserted.find(m => norm(m.full_name_ar) === targetNorm);
+    if (mgrMatch) {
+      run('UPDATE employees SET manager_id = ? WHERE id = ?', [mgrMatch.id, emp.id]);
     }
   }
 
-  // 3. Initialize Leave Balances and calculate daily entitlement based on service years
-  for (const emp of employees) {
+  // Link user 'abdulmalik' to his employee id
+  const abdulmalikEmp = inserted.find(e => norm(e.full_name_ar).includes('عبدالملك سعيد'));
+  if (abdulmalikEmp) {
+    run('UPDATE users SET emp_id = ? WHERE username = ?', [abdulmalikEmp.id, 'abdulmalik']);
+  }
+
+  // 3. Initialize Leave Balances and Daily Accruals
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+
+  for (const emp of allEmployeesToInsert) {
     const dbEmp = get('SELECT id, join_date, annual_leave_balance FROM employees WHERE emp_code = ?', [emp.emp_code]);
     if (!dbEmp) continue;
 
     const hasJoinDate = dbEmp.join_date && !isNaN(new Date(dbEmp.join_date).getTime());
     let serviceYears = 0;
-    let annualRate = 0;
+    let annualRate = 21;
     if (hasJoinDate) {
       const joinDate = new Date(dbEmp.join_date);
       serviceYears = Math.max(0, (now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
       annualRate = serviceYears > 5 ? 30 : 21;
     }
-    const baseBal = emp.leave_balance !== undefined && emp.leave_balance !== null ? Number(emp.leave_balance) : 0;
+    const baseBal = Number(emp.leave_balance) || 0;
 
     run(`
       INSERT INTO leave_balances (
@@ -334,23 +499,16 @@ function seedEmployees() {
     `, [dbEmp.id, baseBal, annualRate, baseBal, todayStr]);
   }
 
-  // 4. Synchronize Iqama and Passport expiry dates from Muqeem Residents table (Actual records only)
-  run(`
-    UPDATE employees SET
-      iqama_expiry = (
-        SELECT iqama_expiry_gregorian FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
-      ),
-      passport_expiry = (
-        SELECT passport_expiry FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
-      )
-    WHERE is_saudi = 0 AND national_id IN (SELECT iqama_number FROM muqeem_residents);
-  `);
+  // 4. Save clean official employees JSON
+  const cleanEmployeesJson = allEmployeesToInsert.map(e => ({
+    ...e,
+    total_salary: e.basic_salary + e.housing_allowance + e.transport_allowance + e.other_allowance
+  }));
+  fs.writeFileSync(path.join(__dirname, 'officialEmployeesClean.json'), JSON.stringify(cleanEmployeesJson, null, 2), 'utf8');
+  fs.writeFileSync(path.join(__dirname, 'officialEmployees.json'), JSON.stringify(cleanEmployeesJson, null, 2), 'utf8');
 }
 
 function seedPenaltyRegulations() {
-  const count = get('SELECT COUNT(*) AS count FROM penalty_regulations').count;
-  if (count >= 50) return;
-
   run('DELETE FROM penalty_regulations');
 
   const regulations = [
@@ -392,7 +550,7 @@ function seedPenaltyRegulations() {
     { code: 'v33', cat: 'مخالفات السلوك والعمل', text: 'التدخين في الأماكن المحظورة داخل مقرات ومرافق المنشأة', p1: 'خصم أجر يومين', p2: 'خصم أجر ثلاثة أيام', p3: 'خصم أجر خمسة أيام', p4: 'فصل مع المكافأة' },
     { code: 'v34', cat: 'مخالفات السلوك والعمل', text: 'الإهمال أو التهاون في أداء العمل الذي قد ينشأ عنه ضرر بالممتلكات', p1: 'خصم أجر يومين', p2: 'خصم أجر ثلاثة أيام', p3: 'خصم أجر خمسة أيام', p4: 'فصل مع المكافأة' },
 
-    // مخالفات السلوك العام (35 - 50)
+    // مخالفات السلوك العام والسلامة (35 - 50)
     { code: 'v35', cat: 'مخالفات السلوك العام', text: 'التشاجر مع الزملاء أو مع الغير أو إحداث مشاغبات داخل المنشأة', p1: 'خصم أجر يوم كامل', p2: 'خصم أجر يومين', p3: 'خصم أجر ثلاثة أيام', p4: 'خصم أجر خمسة أيام' },
     { code: 'v36', cat: 'مخالفات السلوك العام', text: 'التمارض أو ادعاء الإصابة والمرض كذباً للتهرب من العمل', p1: 'خصم أجر يوم كامل', p2: 'خصم أجر يومين', p3: 'خصم أجر ثلاثة أيام', p4: 'خصم أجر خمسة أيام' },
     { code: 'v37', cat: 'مخالفات السلوك العام', text: 'الامتناع عن الكشف الطبي المقرر أو مخالفة التعليمات الطبية', p1: 'خصم أجر يوم كامل', p2: 'خصم أجر يومين', p3: 'خصم أجر ثلاثة أيام', p4: 'خصم أجر خمسة أيام' },

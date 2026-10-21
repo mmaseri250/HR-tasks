@@ -204,6 +204,85 @@ function getExportDataset(type, filters = {}) {
         rows = [];
       }
       break;
+
+    case 'terminated_employees':
+    case 'terminated':
+      title = 'سجل الموظفين المنهي خدماتهم ومكافأة نهاية الخدمة';
+      columns = [
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'full_name_ar', label: 'الاسم الكامل', width: 26 },
+        { key: 'national_id', label: 'الهوية / الإقامة', width: 18 },
+        { key: 'nationality', label: 'الجنسية', width: 14 },
+        { key: 'department_name', label: 'الإدارة', width: 18 },
+        { key: 'job_title_ar', label: 'المسمى الوظيفي', width: 20 },
+        { key: 'join_date', label: 'تاريخ التعيين', width: 14 },
+        { key: 'termination_date', label: 'تاريخ الإنهاء', width: 14 },
+        { key: 'termination_type', label: 'نوع الإنهاء', width: 16 },
+        { key: 'service_years', label: 'سنوات الخدمة', width: 14 },
+        { key: 'last_salary', label: 'آخر راتب', width: 14 },
+        { key: 'end_of_service_reward', label: 'مكافأة نهاية الخدمة', width: 18 },
+        { key: 'leave_compensation', label: 'تعويض الإجازات', width: 16 },
+        { key: 'deductions_amount', label: 'الخصومات', width: 14 },
+        { key: 'total_settlement', label: 'صافي المستحقات', width: 16 },
+        { key: 'clearance_status', label: 'إخلاء الطرف', width: 16 },
+        { key: 'qiwa_status', label: 'منصة قوى', width: 16 }
+      ];
+      try {
+        const termModule = require('./terminatedEmployees');
+        rows = termModule.getAllTerminated(filters);
+      } catch (e) {
+        rows = [];
+      }
+      break;
+
+    case 'loans':
+      title = 'سجل السلف الإدارية والأقساط الشهرية';
+      columns = [
+        { key: 'loan_no', label: 'رقم السلفة', width: 16 },
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'emp_name', label: 'اسم الموظف', width: 26 },
+        { key: 'department_name', label: 'الإدارة', width: 18 },
+        { key: 'loan_type', label: 'نوع السلفة', width: 16 },
+        { key: 'total_amount', label: 'المبلغ الإجمالي', width: 16 },
+        { key: 'installments_count', label: 'عدد الأقساط', width: 12 },
+        { key: 'monthly_installment', label: 'القسط الشهري', width: 14 },
+        { key: 'paid_amount', label: 'المبلغ المسدد', width: 14 },
+        { key: 'remaining_amount', label: 'المبلغ المتبقي', width: 14 },
+        { key: 'start_month', label: 'شهر بدء الخصم', width: 14 },
+        { key: 'status', label: 'الحالة', width: 14 }
+      ];
+      try {
+        const loansModule = require('./loans');
+        rows = loansModule.getAllLoans(filters);
+      } catch (e) {
+        rows = [];
+      }
+      break;
+
+    case 'attendance_notices':
+    case 'notices':
+      title = 'سجل إشعارات وإنذارات الغياب والتأخير والانقطاع عن العمل';
+      columns = [
+        { key: 'notice_no', label: 'رقم الإشعار', width: 16 },
+        { key: 'emp_code', label: 'الرقم الوظيفي', width: 14 },
+        { key: 'emp_name', label: 'اسم الموظف', width: 26 },
+        { key: 'department', label: 'الإدارة', width: 18 },
+        { key: 'branch', label: 'الفرع', width: 18 },
+        { key: 'notice_type', label: 'نوع الإشعار', width: 20 },
+        { key: 'incident_date', label: 'تاريخ الواقعة', width: 14 },
+        { key: 'duration_mins', label: 'مدة التأخير (د)', width: 14 },
+        { key: 'absence_days', label: 'أيام الغياب', width: 12 },
+        { key: 'legal_basis', label: 'السند النظامي والقانوني', width: 30 },
+        { key: 'penalty_applied', label: 'الإجراء المترتب', width: 20 },
+        { key: 'status', label: 'الحالة', width: 18 }
+      ];
+      try {
+        const noticesModule = require('./attendanceNotices');
+        rows = noticesModule.getAllNotices(filters);
+      } catch (e) {
+        rows = [];
+      }
+      break;
   }
 
   return { title, columns, rows };
@@ -294,7 +373,12 @@ function exportToExcel(type, filters = {}) {
     payroll: 'مسير الرواتب',
     permissions: 'طلبات الاستئذان',
     reports: 'مؤشرات الامتثال',
-    muqeem: 'تقرير مقيم النشطين'
+    muqeem: 'تقرير مقيم النشطين',
+    terminated_employees: 'المنهي خدماتهم',
+    terminated: 'المنهي خدماتهم',
+    loans: 'سجل السلف',
+    attendance_notices: 'إشعارات الدوام',
+    notices: 'إشعارات الدوام'
   };
   const sheetName = sheetNames[type] || 'البيانات الرسمية';
 

@@ -208,6 +208,25 @@
           <span>مسيرات الرواتب وحماية الأجور</span>
         </button>
 
+        <!-- 5.1 Loans & Advance Deductions (إدارة واستيراد السلف) -->
+        <button onclick="switchTab('loans')" id="nav-loans" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-hand-holding-dollar w-5 text-center text-base text-emerald-700"></i>
+          <span class="flex-1 text-right">إدارة واستيراد السلف</span>
+        </button>
+
+        <!-- 5.2 Terminated Employees (الموظفون المنهي خدماتهم) -->
+        <button onclick="switchTab('terminated')" id="nav-terminated" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-user-xmark w-5 text-center text-base text-slate-700"></i>
+          <span class="flex-1 text-right">الموظفون المنهي خدماتهم</span>
+        </button>
+
+        <!-- 5.3 Attendance & Article 80 Notices (إشعارات وإنذارات الدوام) -->
+        <button onclick="switchTab('attendance-notices')" id="nav-attendance-notices" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-triangle-exclamation w-5 text-center text-base text-rose-600"></i>
+          <span class="flex-1 text-right">إشعارات وإنذارات الدوام</span>
+          <span id="badgeNavNotices" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 hidden">0</span>
+        </button>
+
         <!-- 6. Self-Service -->
         <button onclick="switchTab('selfservice')" id="nav-selfservice" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-user-shield w-5 text-center text-base text-indigo-600"></i>
@@ -1499,12 +1518,30 @@
               <button onclick="filterPenaltyRegs('مخالفات السلوك والعمل')" class="text-[11px] font-bold px-3 py-1 rounded-lg bg-amber-50 text-amber-800">السلوك والعمل (18)</button>
               <button onclick="filterPenaltyRegs('مخالفات السلوك العام')" class="text-[11px] font-bold px-3 py-1 rounded-lg bg-blue-50 text-blue-800">السلوك العام (16)</button>
             </div>
-            <div class="w-full sm:w-64">
-              <input type="text" id="regSearchInput" oninput="searchPenaltyRegs(this.value)" placeholder="ابحث بنص المخالفة أو الكود..." class="w-full text-xs rounded-xl border border-slate-300 py-1.5 px-3">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <!-- View Switcher (Cards vs Table) -->
+              <div class="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs">
+                <button type="button" onclick="setPenaltyDisplayMode('cards')" id="btnRegDisplayCards" class="px-3 py-1 rounded-lg font-bold bg-white text-slate-900 shadow-sm flex items-center gap-1.5">
+                  <i class="fa-solid fa-grip text-brand"></i> بطاقات وتوزيع
+                </button>
+                <button type="button" onclick="setPenaltyDisplayMode('table')" id="btnRegDisplayTable" class="px-3 py-1 rounded-lg font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+                  <i class="fa-solid fa-table-list"></i> جدول
+                </button>
+              </div>
+
+              <div class="w-full sm:w-60">
+                <input type="text" id="regSearchInput" oninput="searchPenaltyRegs(this.value)" placeholder="ابحث بنص المخالفة أو الكود..." class="w-full text-xs rounded-xl border border-slate-300 py-1.5 px-3">
+              </div>
             </div>
           </div>
 
-          <div class="overflow-x-auto">
+          <!-- Modern Cards Grid View (Requested: بطاقات وتوزيع) -->
+          <div id="penaltyRegulationsCardsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <!-- JS populated with cards -->
+          </div>
+
+          <!-- Classic Table View -->
+          <div id="penaltyRegulationsTableWrapper" class="overflow-x-auto hidden">
             <table class="w-full text-xs text-right">
               <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
                 <tr>
@@ -1734,6 +1771,282 @@
       </section>
 
       <!-- =====================================================================
+           VIEW: LOANS & ADVANCES (إدارة واستيراد السلف والأقساط الشهرية)
+           ===================================================================== -->
+      <section id="view-loans" class="space-y-6 hidden">
+        <div class="card-elevated p-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> إدارة واستيراد سلف الموظفين والأقساط الشهرية
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">إدارة السلف الشخصية والطارئة، استيراد السلف من إكسل، مع الربط الآلي للاستقطاع الشهري من مسيرات الرواتب.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="openAddLoanModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle"></i> تسجيل سلفة جديدة
+              </button>
+              <button onclick="openModal('modalImportLoans')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-excel"></i> استيراد سلف من Excel
+              </button>
+              <button onclick="downloadLoanTemplateExcel()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-download"></i> تحميل النموذج (.xlsx)
+              </button>
+              <button onclick="exportLoansExcel()" class="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-export"></i> تصدير Excel
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+              <span class="text-xs text-emerald-700 font-bold">إجمالي مبالغ السلف</span>
+              <h3 id="statLoanTotalAmount" class="text-2xl font-black text-emerald-950 font-mono mt-1">0 ر.س</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-blue-50 border border-blue-100">
+              <span class="text-xs text-blue-700 font-bold">إجمالي المبالغ المسددة</span>
+              <h3 id="statLoanPaidAmount" class="text-2xl font-black text-blue-950 font-mono mt-1">0 ر.س</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-100">
+              <span class="text-xs text-amber-700 font-bold">الأرصدة المتبقية للتحصيل</span>
+              <h3 id="statLoanRemainingAmount" class="text-2xl font-black text-amber-950 font-mono mt-1">0 ر.س</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-purple-50 border border-purple-100">
+              <span class="text-xs text-purple-700 font-bold">عدد السلف النشطة الجارية</span>
+              <h3 id="statLoanActiveCount" class="text-2xl font-black text-purple-950 font-mono mt-1">0</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <input type="text" id="loanSearchInput" oninput="filterLoansTable()" placeholder="ابحث برقم السلفة أو اسم الموظف..." class="w-full sm:w-72 text-xs rounded-xl border border-slate-300 py-2 px-3">
+            <select id="loanStatusFilter" onchange="filterLoansTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3">
+              <option value="">جميع الحالات</option>
+              <option value="نشطة">نشطة (جارية)</option>
+              <option value="مسددة بالكامل">مسددة بالكامل</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Loans Table -->
+        <div class="card-elevated overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-right">
+              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3">رقم السلفة</th>
+                  <th class="py-3 px-3">الموظف</th>
+                  <th class="py-3 px-3">الإدارة</th>
+                  <th class="py-3 px-3">نوع السلفة</th>
+                  <th class="py-3 px-3">إجمالي السلفة</th>
+                  <th class="py-3 px-3">الأقساط</th>
+                  <th class="py-3 px-3">القسط الشهري</th>
+                  <th class="py-3 px-3">المسدد</th>
+                  <th class="py-3 px-3">المتبقي</th>
+                  <th class="py-3 px-3">نسبة السداد</th>
+                  <th class="py-3 px-3">شهر البدء</th>
+                  <th class="py-3 px-3">الحالة</th>
+                </tr>
+              </thead>
+              <tbody id="loansTableBody" class="divide-y divide-slate-100">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW: TERMINATED EMPLOYEES (الموظفون المنهي خدماتهم ومكافأة نهاية الخدمة)
+           ===================================================================== -->
+      <section id="view-terminated" class="space-y-6 hidden">
+        <div class="card-elevated p-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-user-xmark text-slate-700"></i> الموظفون المنهي خدماتهم وحساب مكافأة نهاية الخدمة (م84 وم85)
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">حساب مكافأة نهاية الخدمة، تعويض الإجازات، إخلاء الطرف، إصدار النموذج الرسمي JM-HR-F-003/v3، واستيراد وتصدير الإكسل.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="openAddTerminatedModal()" class="bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-user-minus"></i> تسجيل إنهاء خدمة
+              </button>
+              <button onclick="openModal('modalImportTerminatedEmployees')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-excel"></i> استيراد من Excel
+              </button>
+              <button onclick="downloadTerminatedTemplateExcel()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-download"></i> النموذج الاسترشادي (.xlsx)
+              </button>
+              <button onclick="exportTerminatedExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-export"></i> تصدير Excel
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-5">
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <span class="text-xs text-slate-600 font-bold">إجمالي المنتهية خدماتهم</span>
+              <h3 id="statTermTotal" class="text-2xl font-black text-slate-900 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+              <span class="text-xs text-amber-700 font-bold">الاستقالات (م85)</span>
+              <h3 id="statTermResignations" class="text-2xl font-black text-amber-950 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200">
+              <span class="text-xs text-blue-700 font-bold">انتهاء عقود / فصل</span>
+              <h3 id="statTermContracts" class="text-2xl font-black text-blue-950 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200">
+              <span class="text-xs text-rose-700 font-bold">بانتظار إخلاء الطرف</span>
+              <h3 id="statTermPendingClearance" class="text-2xl font-black text-rose-950 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <span class="text-xs text-emerald-700 font-bold">إجمالي المستحقات والمكافآت</span>
+              <h3 id="statTermTotalSettlements" class="text-2xl font-black text-emerald-950 font-mono mt-1">0 ر.س</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <input type="text" id="terminatedSearchInput" oninput="filterTerminatedTable()" placeholder="ابحث بالاسم أو الرقم الوظيفي أو الهوية..." class="w-full sm:w-72 text-xs rounded-xl border border-slate-300 py-2 px-3">
+            <select id="terminatedTypeFilter" onchange="filterTerminatedTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3">
+              <option value="">جميع أسباب الإنهاء</option>
+              <option value="استقالة">استقالة الموظف (المادة 85)</option>
+              <option value="انتهاء مدة العقد">انتهاء مدة العقد (المادة 74/1)</option>
+              <option value="صاحب العمل">إنهاء صاحب العمل (المادة 77)</option>
+              <option value="مادة 80">فسخ بموجب المادة 80</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Terminated Employees Table -->
+        <div class="card-elevated overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-right">
+              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3">الرقم</th>
+                  <th class="py-3 px-3">الموظف</th>
+                  <th class="py-3 px-3">الإدارة</th>
+                  <th class="py-3 px-3">تاريخ التعيين</th>
+                  <th class="py-3 px-3">تاريخ الإنهاء</th>
+                  <th class="py-3 px-3">نوع الإنهاء</th>
+                  <th class="py-3 px-3">مدة الخدمة</th>
+                  <th class="py-3 px-3">آخر راتب</th>
+                  <th class="py-3 px-3">مكافأة نهاية الخدمة</th>
+                  <th class="py-3 px-3">تعويض الإجازات</th>
+                  <th class="py-3 px-3 font-black text-brand">صافي المستحقات</th>
+                  <th class="py-3 px-3">إخلاء الطرف</th>
+                  <th class="py-3 px-3 text-center">النموذج الرسمي (v3)</th>
+                </tr>
+              </thead>
+              <tbody id="terminatedTableBody" class="divide-y divide-slate-100">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW: ATTENDANCE & ARTICLE 80 NOTICES (إشعارات وإنذارات الدوام والانقطاع)
+           ===================================================================== -->
+      <section id="view-attendance-notices" class="space-y-6 hidden">
+        <div class="card-elevated p-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> نظام إشعارات وإنذارات الدوام والانقطاع (المادة 80)
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">نظام إنذارات داخلي موثق (تأخير، غياب، انقطاع عن العمل م80)، يلزم الموظف بالإقرار والتوقيع الإلكتروني - 0 بريد خارجي.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="openIssueNoticeModal()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> إصدار إشعار / إنذار رسمي
+              </button>
+              <button onclick="exportNoticesExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-excel"></i> تصدير Excel
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-5">
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <span class="text-xs text-slate-600 font-bold">إجمالي الإشعارات الصادرة</span>
+              <h3 id="statNoticeTotal" class="text-2xl font-black text-slate-900 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+              <span class="text-xs text-amber-700 font-bold">إنذارات التأخير الصباحي</span>
+              <h3 id="statNoticeLate" class="text-2xl font-black text-amber-950 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-orange-50 border border-orange-200">
+              <span class="text-xs text-orange-700 font-bold">إنذارات الغياب</span>
+              <h3 id="statNoticeAbsence" class="text-2xl font-black text-orange-950 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200">
+              <span class="text-xs text-rose-700 font-bold">إنذارات الانقطاع (المادة 80)</span>
+              <h3 id="statNoticeAbandon" class="text-2xl font-black text-rose-950 font-mono mt-1">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-purple-50 border border-purple-200">
+              <span class="text-xs text-purple-700 font-bold">بانتظار إقرار الموظف</span>
+              <h3 id="statNoticePendingAck" class="text-2xl font-black text-purple-950 font-mono mt-1">0</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <input type="text" id="noticeSearchInput" oninput="filterNoticesTable()" placeholder="ابحث برقم الإشعار أو اسم الموظف..." class="w-full sm:w-72 text-xs rounded-xl border border-slate-300 py-2 px-3">
+            <select id="noticeTypeFilter" onchange="filterNoticesTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3">
+              <option value="">جميع أنواع الإشعارات</option>
+              <option value="تأخير">تأخير صباحي</option>
+              <option value="غياب">غياب دون عذر</option>
+              <option value="انقطاع">انقطاع عن العمل (المادة 80)</option>
+              <option value="انصراف">انصراف مبكر</option>
+            </select>
+            <select id="noticeStatusFilter" onchange="filterNoticesTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3">
+              <option value="">جميع الحالات</option>
+              <option value="صادر">بانتظار الإقرار</option>
+              <option value="تم التوقيع والإقرار">تم التوقيع والإقرار</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Attendance Notices Table -->
+        <div class="card-elevated overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-right">
+              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3">رقم الإشعار</th>
+                  <th class="py-3 px-3">الموظف</th>
+                  <th class="py-3 px-3">الإدارة</th>
+                  <th class="py-3 px-3">نوع الإشعار</th>
+                  <th class="py-3 px-3">تاريخ الواقعة</th>
+                  <th class="py-3 px-3">السند النظامي والقانوني</th>
+                  <th class="py-3 px-3">حالة الإقرار</th>
+                  <th class="py-3 px-3">تاريخ الإقرار</th>
+                  <th class="py-3 px-3 text-center">الخطاب الرسمي الموثق</th>
+                </tr>
+              </thead>
+              <tbody id="noticesTableBody" class="divide-y divide-slate-100">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
            VIEW 6: EMPLOYEE SELF-SERVICE (ESS)
            ===================================================================== -->
       <section id="view-selfservice" class="space-y-6 hidden">
@@ -1772,6 +2085,9 @@
             </div>
           </div>
         </div>
+
+        <!-- Official Attendance Notice Pending ESS Acknowledgment Banner -->
+        <div id="essAttendanceNoticeAlert" class="hidden"></div>
 
         <!-- Section 1: Quick ESS Actions Grid -->
         <div class="ess-actions-grid">
@@ -4218,6 +4534,330 @@
 
     </div>
   </div>
+
+  <!-- =========================================================================
+       MODAL: ADD TERMINATED EMPLOYEE (تسجيل إنهاء خدمة موظف)
+       ========================================================================= -->
+  <div id="modalAddTerminatedEmployee" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-user-minus text-rose-600"></i> تسجيل إنهاء خدمة موظف وحساب المستحقات
+        </h3>
+        <button onclick="closeModal('modalAddTerminatedEmployee')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <form id="formAddTerminatedEmployee" onsubmit="submitTerminatedEmployee(event)" class="space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الموظف: *</label>
+            <select id="termFormEmpId" required onchange="onTerminatedEmployeeChanged(this.value)" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+              <option value="">-- اختر الموظف --</option>
+              <!-- JS Populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ إنهاء الخدمة: *</label>
+            <input type="date" id="termFormDate" required onchange="calculateLiveSettlement()" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">نوع وسبب إنهاء الخدمة: *</label>
+            <select id="termFormType" required onchange="calculateLiveSettlement()" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+              <option value="استقالة الموظف (المادة 85)">استقالة الموظف (المادة 85)</option>
+              <option value="انتهاء مدة العقد المحدد (المادة 74/1)">انتهاء مدة العقد المحدد (المادة 74/1)</option>
+              <option value="إنهاء العقد من قبل صاحب العمل (المادة 77)">إنهاء العقد من قبل صاحب العمل (المادة 77)</option>
+              <option value="فسخ العقد لسبب مشروع (المادة 80)">فسخ العقد لسبب مشروع (المادة 80 - دون مكافأة)</option>
+              <option value="بلوغ سن التقاعد">بلوغ سن التقاعد</option>
+              <option value="ظروف قاهرة / طارئة">ظروف قاهرة / طارئة</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الاستقطاعات والخصومات إن وجدت (SAR):</label>
+            <input type="number" id="termFormDeductions" value="0" min="0" oninput="calculateLiveSettlement()" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">ملاحظات وأسباب الإنهاء:</label>
+          <textarea id="termFormNotes" rows="2" placeholder="أدخل أية تفاصيل إضافية بشأن تسليم العهد وإخلاء الطرف..." class="w-full rounded-xl border border-slate-300 py-2 px-3"></textarea>
+        </div>
+
+        <!-- Live Settlement Calculation Card -->
+        <div id="termLiveCalcCard" class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+          <div class="flex justify-between items-center border-b border-amber-200/60 pb-1.5 text-amber-900 font-bold">
+            <span><i class="fa-solid fa-calculator ml-1 text-amber-700"></i> الاحتساب الآلي لمستحقات نهاية الخدمة (نظام العمل السعودي)</span>
+            <span id="termLiveServiceYears" class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-mono">0 سنة خدمة</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] pt-1">
+            <div>
+              <span class="text-slate-500 block">آخر راتب إجمالي:</span>
+              <strong id="termLiveLastSalary" class="text-slate-800 font-mono">0 ر.س</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block">مكافأة نهاية الخدمة:</span>
+              <strong id="termLiveGratuity" class="text-emerald-700 font-mono">0 ر.س</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block">تعويض رصيد الإجازات:</span>
+              <strong id="termLiveLeaveComp" class="text-blue-700 font-mono">0 ر.س</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block">صافي مبلغ التصفية:</span>
+              <strong id="termLiveNetTotal" class="text-brand font-mono text-sm">0 ر.س</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalAddTerminatedEmployee')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold flex items-center gap-2">
+            <i class="fa-solid fa-check-circle"></i> تثبيت إنهاء الخدمة والترحيل
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: IMPORT TERMINATED EMPLOYEES (استيراد المنهي خدماتهم من إكسل)
+       ========================================================================= -->
+  <div id="modalImportTerminatedEmployees" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-file-excel text-emerald-600"></i> استيراد الموظفين المنهي خدماتهم من Excel
+        </h3>
+        <button onclick="closeModal('modalImportTerminatedEmployees')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600 leading-relaxed">
+          يرجى تحميل النموذج المعتمد وتعبئة بيانات الموظفين المنهي خدماتهم، ثم رفع الملف لإدراجهم مباشرة في السجلات ومطابقة المستحقات.
+        </p>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+          <span class="font-bold text-slate-700">تحميل النموذج الاسترشادي (.xlsx):</span>
+          <button type="button" onclick="downloadTerminatedTemplateExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-download"></i> تحميل النموذج
+          </button>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اختر ملف الإكسل (.xlsx):</label>
+          <input type="file" id="fileTerminatedImport" accept=".xlsx, .xls" class="w-full text-xs border border-slate-300 rounded-xl p-2 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-brand file:text-white file:font-bold">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalImportTerminatedEmployees')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="button" onclick="submitImportTerminatedExcel()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 shadow">
+            <i class="fa-solid fa-cloud-arrow-up"></i> بدء الاستيراد
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: ADD LOAN (تسجيل سلفة جديدة)
+       ========================================================================= -->
+  <div id="modalAddLoan" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> تسجيل سلفة موظف جديدة
+        </h3>
+        <button onclick="closeModal('modalAddLoan')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <form id="formAddLoan" onsubmit="submitNewLoan(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الموظف: *</label>
+          <select id="loanFormEmpId" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+            <option value="">-- اختر الموظف --</option>
+            <!-- JS Populated -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">نوع السلفة: *</label>
+            <select id="loanFormType" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+              <option value="سلفة شخصية">سلفة شخصية</option>
+              <option value="سلفة زواج">سلفة زواج</option>
+              <option value="سلفة طوارئ">سلفة طوارئ</option>
+              <option value="سلفة علاجية">سلفة علاجية</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">شهر بدء الاستقطاع: *</label>
+            <input type="month" id="loanFormStartMonth" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">إجمالي السلفة (SAR): *</label>
+            <input type="number" id="loanFormAmount" required min="100" step="100" oninput="calculateLoanInstallment()" placeholder="مثال: 3000" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-emerald-700">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">عدد الأقساط: *</label>
+            <input type="number" id="loanFormInstallments" required min="1" max="36" value="3" oninput="calculateLoanInstallment()" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">القسط الشهري (SAR):</label>
+            <input type="text" id="loanFormMonthly" readonly class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 px-3 font-bold text-brand font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">سبب ومبررات طلب السلفة:</label>
+          <textarea id="loanFormReason" rows="2" placeholder="أدخل أية ملاحظات توثيقية..." class="w-full rounded-xl border border-slate-300 py-2 px-3"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalAddLoan')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> اعتماد السلفة وتفعيل الخصم
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: IMPORT LOANS (استيراد السلف من إكسل)
+       ========================================================================= -->
+  <div id="modalImportLoans" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-file-excel text-emerald-600"></i> استيراد السلف من Excel
+        </h3>
+        <button onclick="closeModal('modalImportLoans')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600 leading-relaxed">
+          يمكنك استيراد سلف الموظفين دفعة واحدة من ملف إكسل لربطها بمسيرات الرواتب الشهرية مباشرة.
+        </p>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+          <span class="font-bold text-slate-700">تحميل نموذج السلف (.xlsx):</span>
+          <button type="button" onclick="downloadLoanTemplateExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-download"></i> تحميل النموذج
+          </button>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اختر ملف السلف (.xlsx):</label>
+          <input type="file" id="fileLoansImport" accept=".xlsx, .xls" class="w-full text-xs border border-slate-300 rounded-xl p-2 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-brand file:text-white file:font-bold">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalImportLoans')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="button" onclick="submitImportLoansExcel()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 shadow">
+            <i class="fa-solid fa-cloud-arrow-up"></i> بدء استيراد السلف
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: ISSUE ATTENDANCE NOTICE (إصدار إشعار دوام رسمي دون بريد)
+       ========================================================================= -->
+  <div id="modalIssueAttendanceNotice" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> إصدار إشعار / إنذار دوام رسمي (داخلي)
+        </h3>
+        <button onclick="closeModal('modalIssueAttendanceNotice')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <form id="formIssueAttendanceNotice" onsubmit="submitAttendanceNotice(event)" class="space-y-3 text-xs">
+        <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-[11px] flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-blue-700 text-base"></i>
+          <span><strong>نظام داخلي 100%:</strong> يثبت الإشعار بحساب الموظف في الخدمة الذاتية (ESS) ليلزمه بالإقرار الرقمي، دون إرسال أي بريد خارجي.</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الموظف المعني: *</label>
+            <select id="noticeFormEmpId" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+              <option value="">-- اختر الموظف --</option>
+              <!-- JS Populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ الواقعة: *</label>
+            <input type="date" id="noticeFormDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">نوع الإشعار / الإنذار: *</label>
+            <select id="noticeFormType" required onchange="onNoticeTypeChanged(this.value)" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+              <option value="إشعار تأخير صباحي">إشعار تأخير صباحي</option>
+              <option value="إنذار غياب دون عذر مشروع">إنذار غياب دون عذر مشروع</option>
+              <option value="إنذار انقطاع عن العمل (المادة 80 - 15 يوم متصل)">إنذار انقطاع عن العمل (المادة 80 - 15 يوماً متصلة)</option>
+              <option value="إنذار انقطاع عن العمل (المادة 80 - 30 يوم متقطع)">إنذار انقطاع عن العمل (المادة 80 - 30 يوماً متقطعة)</option>
+              <option value="تنبيه انصراف مبكر">تنبيه انصراف مبكر</option>
+            </select>
+          </div>
+          <div id="noticeDelayFieldWrapper">
+            <label class="block font-bold text-slate-700 mb-1">مدة التأخير (بالدقائق):</label>
+            <input type="number" id="noticeFormDelayMinutes" min="1" placeholder="مثال: 45" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">تفاصيل الواقعة ومبررات الإشعار: *</label>
+          <textarea id="noticeFormReason" required rows="2" placeholder="أدخل تفاصيل المخالفة وتاريخها بدقة وفق السجلات الرسمية..." class="w-full rounded-xl border border-slate-300 py-2 px-3"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الإجراء المطلوب من الموظف:</label>
+          <input type="text" id="noticeFormAction" placeholder="مثال: الالتزام بساعات العمل الرسمية ومراجعة الموارد البشرية لتسوية الغياب" class="w-full rounded-xl border border-slate-300 py-2 px-3">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalIssueAttendanceNotice')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i> إصدار وتثبيت الإشعار رسمياً
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: OFFICIAL FORM PREVIEW & PRINT (معاينة النماذج الرسمية JM-HR-F-001/002/003)
+       ========================================================================= -->
+  <div id="modalOfficialFormPreview" class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-4 sm:p-6 space-y-4 shadow-2xl border border-slate-200 flex flex-col max-h-[95vh]">
+      <div class="flex justify-between items-center border-b pb-3 flex-shrink-0">
+        <h3 id="officialFormPreviewTitle" class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-file-invoice text-teal-700"></i> معاينة الوثيقة الرسمية المعتمدة
+        </h3>
+        <div class="flex items-center gap-2">
+          <button onclick="printOfficialFormModal()" class="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-print"></i> طباعة فورية / PDF
+          </button>
+          <button onclick="closeModal('modalOfficialFormPreview')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-1 bg-slate-100 rounded-2xl border border-slate-200">
+        <iframe id="officialFormIframe" class="w-full h-[650px] rounded-xl bg-white border-0"></iframe>
+      </div>
+    </div>
+  </div>
+
 
 <!-- =========================================================================
        FLOATING PERSONAL HR ASSISTANT CHATBOT (مساعد جوهرة المجد الذكي)

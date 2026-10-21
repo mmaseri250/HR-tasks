@@ -98,16 +98,28 @@ function calculateMonthlyPayroll(periodMonth) {
       delayDeduction = Math.round((delayMin / 60) * hourlyRate * 100) / 100;
     }
 
-    // Advances / Loans repayment
+    // Advances / Loans repayment from loans table or requests
     let advanceDeduction = 0;
-    const activeLoan = get(`
-      SELECT id, amount FROM requests
-      WHERE emp_id = ? AND request_type = 'سلفة مالية' AND status = 'معتمد نهائياً'
-      LIMIT 1
-    `, [emp.id]);
-    if (activeLoan && activeLoan.amount > 0) {
-      // Monthly installment e.g. 500 SAR
-      advanceDeduction = Math.min(500, activeLoan.amount);
+    try {
+      const loanRecord = get(`
+        SELECT monthly_installment, remaining_amount FROM loans
+        WHERE emp_id = ? AND status = 'نشطة' AND remaining_amount > 0 AND start_month <= ?
+        LIMIT 1
+      `, [emp.id, periodMonth]);
+      if (loanRecord && loanRecord.remaining_amount > 0) {
+        advanceDeduction = Math.min(loanRecord.monthly_installment, loanRecord.remaining_amount);
+      }
+    } catch (e) {}
+
+    if (advanceDeduction === 0) {
+      const activeLoan = get(`
+        SELECT id, amount FROM requests
+        WHERE emp_id = ? AND request_type = 'سلفة مالية' AND status = 'معتمد نهائياً'
+        LIMIT 1
+      `, [emp.id]);
+      if (activeLoan && activeLoan.amount > 0) {
+        advanceDeduction = Math.min(500, activeLoan.amount);
+      }
     }
 
     const otherDeduct = 0;

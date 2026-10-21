@@ -101,6 +101,8 @@ function initSchema() {
       bank_code TEXT,
       iban TEXT DEFAULT '',
       annual_leave_balance REAL DEFAULT 0,
+      section TEXT,
+      direct_manager_name TEXT,
       qualification_degree TEXT,
       qualification_major TEXT,
       emergency_phone TEXT,
@@ -208,12 +210,26 @@ function initSchema() {
       amount REAL DEFAULT 0,
       destination_entity TEXT,
       reason TEXT NOT NULL,
-      status TEXT DEFAULT 'معلق',
+      status TEXT DEFAULT 'معلق - بانتظار موافقة المدير المباشر',
+      manager_id INTEGER,
+      manager_name TEXT,
+      manager_status TEXT DEFAULT 'معلق',
       manager_comment TEXT,
+      manager_action_at TEXT,
+      hr_verify_status TEXT DEFAULT 'معلق',
+      hr_verify_comment TEXT,
+      hr_verify_at TEXT,
+      hr_verifier_name TEXT,
+      hr_director_status TEXT DEFAULT 'معلق',
+      hr_director_comment TEXT,
+      hr_director_action_at TEXT,
+      hr_director_name TEXT,
+      manager_comment_legacy TEXT,
       hr_comment TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE,
+      FOREIGN KEY (manager_id) REFERENCES employees(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS biometric_devices (
@@ -288,7 +304,7 @@ function initSchema() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- Dedicated Leave Management System (إدارة الإجازات وسير الموافقات)
+    -- Dedicated Leave Management System (إدارة الإجازات وسير الموافقات الرباعي)
     CREATE TABLE IF NOT EXISTS leaves (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       request_no TEXT UNIQUE NOT NULL,
@@ -300,11 +316,20 @@ function initSchema() {
       reason TEXT,
       substitute_emp_id INTEGER,
       attachment TEXT,
-      status TEXT DEFAULT 'معلق بانتظار موافقة المدير المباشر',
+      status TEXT DEFAULT 'معلق - بانتظار موافقة المدير المباشر',
       manager_id INTEGER,
+      manager_name TEXT,
       manager_status TEXT DEFAULT 'معلق',
       manager_comment TEXT,
       manager_action_at TEXT,
+      hr_verify_status TEXT DEFAULT 'معلق',
+      hr_verify_comment TEXT,
+      hr_verify_at TEXT,
+      hr_verifier_name TEXT,
+      hr_director_status TEXT DEFAULT 'معلق',
+      hr_director_comment TEXT,
+      hr_director_action_at TEXT,
+      hr_director_name TEXT,
       hr_status TEXT DEFAULT 'معلق',
       hr_comment TEXT,
       hr_action_at TEXT,
@@ -313,6 +338,78 @@ function initSchema() {
       FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE,
       FOREIGN KEY (manager_id) REFERENCES employees(id) ON DELETE SET NULL,
       FOREIGN KEY (substitute_emp_id) REFERENCES employees(id) ON DELETE SET NULL
+    );
+
+    -- Attendance Notices & Disciplinary Warnings (نظام إشعارات وإنذارات الغياب والتأخير والانقطاع - المادة 80)
+    CREATE TABLE IF NOT EXISTS attendance_notices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      notice_no TEXT UNIQUE NOT NULL,
+      emp_id INTEGER NOT NULL,
+      emp_code TEXT,
+      emp_name TEXT NOT NULL,
+      department TEXT,
+      branch TEXT,
+      notice_type TEXT NOT NULL,
+      incident_date TEXT NOT NULL,
+      duration_mins INTEGER DEFAULT 0,
+      absence_days REAL DEFAULT 0,
+      consecutive_days INTEGER DEFAULT 0,
+      legal_basis TEXT,
+      details TEXT,
+      penalty_applied TEXT,
+      status TEXT DEFAULT 'صادر',
+      acknowledged_at TEXT,
+      employee_notes TEXT,
+      issued_by TEXT DEFAULT 'إدارة الموارد البشرية',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+
+    -- Terminated & Resigned Employees (الموظفون المنهي خدماتهم ومكافأة نهاية الخدمة)
+    CREATE TABLE IF NOT EXISTS terminated_employees (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      emp_id INTEGER,
+      emp_code TEXT NOT NULL,
+      full_name_ar TEXT NOT NULL,
+      national_id TEXT,
+      nationality TEXT,
+      department_name TEXT,
+      job_title_ar TEXT,
+      join_date TEXT,
+      termination_date TEXT NOT NULL,
+      termination_type TEXT NOT NULL,
+      termination_reason TEXT,
+      service_years REAL DEFAULT 0,
+      last_salary REAL DEFAULT 0,
+      end_of_service_reward REAL DEFAULT 0,
+      leave_compensation REAL DEFAULT 0,
+      deductions_amount REAL DEFAULT 0,
+      total_settlement REAL DEFAULT 0,
+      clearance_status TEXT DEFAULT 'قيد إجراءات إخلاء الطرف',
+      qiwa_status TEXT DEFAULT 'بانتظار الإسقاط من قوى',
+      notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Employee Loans & Advances (إدارة واستيراد السلف والأقساط الشهرية)
+    CREATE TABLE IF NOT EXISTS loans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      loan_no TEXT UNIQUE NOT NULL,
+      emp_id INTEGER NOT NULL,
+      emp_code TEXT,
+      emp_name TEXT NOT NULL,
+      loan_type TEXT DEFAULT 'سلفة شخصية',
+      total_amount REAL NOT NULL,
+      installments_count INTEGER NOT NULL DEFAULT 1,
+      monthly_installment REAL NOT NULL,
+      paid_amount REAL DEFAULT 0,
+      remaining_amount REAL NOT NULL,
+      start_month TEXT NOT NULL,
+      reason TEXT,
+      status TEXT DEFAULT 'نشطة',
+      approved_by TEXT DEFAULT 'إدارة الموارد البشرية',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
     );
 
     -- Daily Accrual and Leave Balances (أرصدة الإجازات والاستحقاق اليومي)
@@ -380,42 +477,47 @@ function initSchema() {
     // Column already exists
   }
 
-  try {
-    db.exec('ALTER TABLE requests ADD COLUMN manager_approved_at TEXT;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE requests ADD COLUMN manager_name TEXT;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE requests ADD COLUMN hr_approved_at TEXT;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE requests ADD COLUMN hr_approver_name TEXT;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE employees ADD COLUMN policy_id INTEGER;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE employees ADD COLUMN branch_id INTEGER;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE biometric_devices ADD COLUMN branch_id INTEGER;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE attendance_policies ADD COLUMN min_hours REAL DEFAULT 3.0;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE employees ADD COLUMN qualification_degree TEXT;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE employees ADD COLUMN qualification_major TEXT;');
-  } catch (e) {}
-  try {
-    db.exec('ALTER TABLE employees ADD COLUMN emergency_phone TEXT;');
-  } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN manager_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN manager_approved_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN manager_action_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN manager_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN manager_comment TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN manager_status TEXT DEFAULT "معلق";'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_verify_status TEXT DEFAULT "معلق";'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_verify_comment TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_verify_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_verifier_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_director_status TEXT DEFAULT "معلق";'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_director_comment TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_director_action_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_director_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_approved_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN hr_approver_name TEXT;'); } catch (e) {}
+
+  try { db.exec('ALTER TABLE leaves ADD COLUMN manager_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN manager_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN manager_status TEXT DEFAULT "معلق";'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN manager_comment TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN manager_action_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_verify_status TEXT DEFAULT "معلق";'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_verify_comment TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_verify_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_verifier_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_director_status TEXT DEFAULT "معلق";'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_director_comment TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_director_action_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN hr_director_name TEXT;'); } catch (e) {}
+
+  try { db.exec('ALTER TABLE employees ADD COLUMN section TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN direct_manager_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN policy_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN branch_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE biometric_devices ADD COLUMN branch_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE attendance_policies ADD COLUMN min_hours REAL DEFAULT 3.0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN qualification_degree TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN qualification_major TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN emergency_phone TEXT;'); } catch (e) {}
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS employee_qualifications (

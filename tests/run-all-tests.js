@@ -17,9 +17,10 @@ async function main() {
     require('./workflow-policies.test');
     await runLeavesTasksHierarchyTests();
     await runMuqeemAndEssTests();
+    require('./new-features.test');
 
     console.log('================================================================');
-    console.log('  جميع الاختبارات المعتمدة (37/37) اجتازت بنجاح فائق ودقة مطابقة 100%!   ');
+    console.log('  جميع الاختبارات المعتمدة والشاملة اجتازت بنجاح فائق ودقة مطابقة 100%!   ');
     console.log('================================================================');
     process.exit(0);
   } catch (err) {

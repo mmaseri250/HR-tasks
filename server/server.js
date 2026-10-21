@@ -19,6 +19,10 @@ const tasksModule = require('./modules/tasks');
 const formsGenerator = require('./modules/formsGenerator');
 const exportService = require('./modules/exportService');
 const muqeemModule = require('./modules/muqeem');
+const attendanceNoticesModule = require('./modules/attendanceNotices');
+const terminatedEmployeesModule = require('./modules/terminatedEmployees');
+const loansModule = require('./modules/loans');
+const officialTemplates = require('./modules/officialTemplates');
 
 // Initialize Seed Data
 seedDatabase();
@@ -1363,6 +1367,283 @@ app.get('/api/export/word', async (req, res) => {
     res.send(buffer);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   ATTENDANCE NOTICES API (In-System Notice System - No Emails)
+   ========================================================================= */
+app.get('/api/attendance/notices', (req, res) => {
+  try {
+    const notices = attendanceNoticesModule.getAllNotices(req.query);
+    res.json({ success: true, count: notices.length, data: notices });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/attendance/notices/kpis', (req, res) => {
+  try {
+    const kpis = attendanceNoticesModule.getNoticesKPIs();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/attendance/notices/:id', (req, res) => {
+  try {
+    const notice = attendanceNoticesModule.getNoticeById(req.params.id);
+    if (!notice) return res.status(404).json({ success: false, error: 'الإشعار غير موجود' });
+    res.json({ success: true, data: notice });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/attendance/notices', (req, res) => {
+  try {
+    const notice = attendanceNoticesModule.createNotice(req.body);
+    res.status(201).json({ success: true, message: 'تم إصدار الإشعار بنجاح', data: notice });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/attendance/notices/:id/acknowledge', (req, res) => {
+  try {
+    const { employee_notes } = req.body;
+    const updated = attendanceNoticesModule.acknowledgeNotice(req.params.id, employee_notes);
+    res.json({ success: true, message: 'تم توثيق إقرار واستلام الإشعار بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   TERMINATED EMPLOYEES API (End of Service & Gratuity Calculator)
+   ========================================================================= */
+app.get('/api/employees/terminated', (req, res) => {
+  try {
+    const list = terminatedEmployeesModule.getAllTerminated(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/employees/terminated/kpis', (req, res) => {
+  try {
+    const kpis = terminatedEmployeesModule.getTerminatedKPIs();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/employees/terminated/export', (req, res) => {
+  try {
+    const buffer = terminatedEmployeesModule.exportToExcel();
+    const filename = encodeURIComponent(`الموظفون_المنهي_خدماتهم_${new Date().toISOString().split('T')[0]}.xlsx`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${filename}`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/employees/terminated/template', (req, res) => {
+  try {
+    const buffer = terminatedEmployeesModule.generateTemplateExcel();
+    const filename = encodeURIComponent('نموذج_استيراد_المنهي_خدماتهم.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${filename}`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/employees/terminated/calculate', (req, res) => {
+  try {
+    const calc = terminatedEmployeesModule.calculateSettlement(req.body);
+    res.json({ success: true, data: calc });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/employees/terminated', (req, res) => {
+  try {
+    const record = terminatedEmployeesModule.recordTermination(req.body);
+    res.status(201).json({ success: true, message: 'تم تسجيل إنهاء الخدمة بنجاح وتحديث حالة الموظف', data: record });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/employees/terminated/import', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: 'يرجى إرفاق ملف إكسل للاستيراد' });
+    const buffer = fs.readFileSync(req.file.path);
+    const result = terminatedEmployeesModule.importFromExcel(buffer);
+    try { fs.unlinkSync(req.file.path); } catch (e) {}
+    res.json({ success: true, message: `تم استيراد ${result.count} سجل للمنهي خدماتهم بنجاح`, count: result.count });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/employees/terminated/:id', (req, res) => {
+  try {
+    const record = terminatedEmployeesModule.getTerminatedById(req.params.id);
+    if (!record) return res.status(404).json({ success: false, error: 'السجل غير موجود' });
+    res.json({ success: true, data: record });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   LOANS & ADVANCES API
+   ========================================================================= */
+app.get('/api/loans', (req, res) => {
+  try {
+    const loans = loansModule.getAllLoans(req.query);
+    res.json({ success: true, count: loans.length, data: loans });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/loans/kpis', (req, res) => {
+  try {
+    const kpis = loansModule.getLoansKPIs();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/loans/export', (req, res) => {
+  try {
+    const buffer = loansModule.exportLoansToExcel();
+    const filename = encodeURIComponent(`سجل_السلف_${new Date().toISOString().split('T')[0]}.xlsx`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${filename}`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/loans/template', (req, res) => {
+  try {
+    const buffer = loansModule.generateLoanTemplateExcel();
+    const filename = encodeURIComponent('نموذج_استيراد_السلف.xlsx');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${filename}`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/loans', (req, res) => {
+  try {
+    const loan = loansModule.createLoan(req.body);
+    res.status(201).json({ success: true, message: 'تم تسجيل السلفة بنجاح', data: loan });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/loans/import', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, error: 'يرجى إرفاق ملف إكسل للاستيراد' });
+    const buffer = fs.readFileSync(req.file.path);
+    const result = loansModule.importLoansFromExcel(buffer);
+    try { fs.unlinkSync(req.file.path); } catch (e) {}
+    res.json({ success: true, message: `تم استيراد ${result.count} سلفة بنجاح`, count: result.count });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/loans/:id', (req, res) => {
+  try {
+    const loan = loansModule.getLoanById(req.params.id);
+    if (!loan) return res.status(404).json({ success: false, error: 'السلفة غير موجودة' });
+    res.json({ success: true, data: loan });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   4-STEP APPROVAL ACTIONS (Requests & Leaves)
+   ========================================================================= */
+app.post('/api/requests/:id/action', (req, res) => {
+  try {
+    const { step, action, comment, userName } = req.body;
+    const updated = requestsModule.processRequestStep(req.params.id, step, action, comment, userName);
+    res.json({ success: true, message: 'تم تحديث خطوة الاعتماد بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/leaves/:id/action', (req, res) => {
+  try {
+    const { step, action, comment, userName } = req.body;
+    const updated = leavesModule.processLeaveStep(req.params.id, step, action, comment, userName);
+    res.json({ success: true, message: 'تم تحديث خطوة اعتماد الإجازة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   OFFICIAL HTML FORMS PRINT & PREVIEW
+   ========================================================================= */
+app.get('/api/forms/html/leave/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderLeaveFormHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد النموذج: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/forms/html/penalty/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderPenaltyFormHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد النموذج: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/forms/html/resignation/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderResignationTerminationFormHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد النموذج: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/forms/html/notice/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderAttendanceNoticeHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد النموذج: ${err.message}</h3>`);
   }
 });
 

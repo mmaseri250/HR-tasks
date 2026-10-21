@@ -103,26 +103,54 @@ function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
   let params = [];
 
   if (role === 'manager' || role === 'dept_manager') {
+    const isRej = newStatus.includes('مرفوض');
     sql = `
       UPDATE requests
       SET status = ?,
+          manager_status = ?,
           manager_comment = ?,
           manager_name = ?,
           manager_approved_at = datetime('now'),
+          manager_action_at = datetime('now'),
           updated_at = datetime('now')
       WHERE id = ?
     `;
     params = [
       newStatus,
-      comment || (newStatus.includes('مرفوض') ? 'تم الرفض من قبل المدير المباشر' : 'موافقة مبدئية من قبل المدير المباشر'),
+      isRej ? 'مرفوض' : 'موافق',
+      comment || (isRej ? 'تم الرفض من قبل المدير المباشر' : 'موافقة مبدئية من قبل المدير المباشر'),
       approverName || req.direct_manager_name || 'المدير المباشر',
       id
     ];
-  } else {
-    // Admin / HR
+  } else if (role === 'hr_verify') {
+    const isRej = newStatus.includes('مرفوض');
     sql = `
       UPDATE requests
       SET status = ?,
+          hr_verify_status = ?,
+          hr_verify_comment = ?,
+          hr_verifier_name = ?,
+          hr_verify_at = datetime('now'),
+          updated_at = datetime('now')
+      WHERE id = ?
+    `;
+    params = [
+      newStatus,
+      isRej ? 'مرفوض' : 'تم التحقق',
+      comment || (isRej ? 'تم الرفض من قبل قسم الموارد البشرية' : 'تم التحقق والتدقيق من قسم الموارد البشرية'),
+      approverName || 'قسم الموارد البشرية',
+      id
+    ];
+  } else {
+    // Admin / HR Director (Final Step)
+    const isRej = newStatus.includes('مرفوض');
+    sql = `
+      UPDATE requests
+      SET status = ?,
+          hr_director_status = ?,
+          hr_director_comment = ?,
+          hr_director_name = ?,
+          hr_director_action_at = datetime('now'),
           hr_comment = ?,
           hr_approver_name = ?,
           hr_approved_at = datetime('now'),
@@ -131,7 +159,10 @@ function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
     `;
     params = [
       newStatus,
-      comment || (newStatus.includes('مرفوض') ? 'تم الرفض من قبل الموارد البشرية' : 'تم الاعتماد النهائي من إدارة الموارد البشرية'),
+      isRej ? 'مرفوض' : 'معتمد',
+      comment || (isRej ? 'تم الرفض من قبل مدير الموارد البشرية' : 'تم الاعتماد النهائي من مدير الموارد البشرية'),
+      approverName || 'مدير الموارد البشرية',
+      comment || (isRej ? 'تم الرفض من قبل الموارد البشرية' : 'تم الاعتماد النهائي من إدارة الموارد البشرية'),
       approverName || 'إدارة الموارد البشرية',
       id
     ];
@@ -148,6 +179,37 @@ function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
 
   run(sql, params);
   return getRequestById(id);
+}
+
+/**
+ * 4-Step Approval Processing for General Requests
+ * Step 1: Employee submission (status = 'معلق - بانتظار موافقة المدير المباشر')
+ * Step 2: Direct Manager Action (approve -> 'معلق - بانتظار تحقق قسم الموارد البشرية' / reject)
+ * Step 3: HR Verification (verify -> 'معلق - بانتظار اعتماد مدير الموارد البشرية' / reject)
+ * Step 4: HR Director Approval (approve -> 'معتمد نهائياً' / reject)
+ */
+function processRequestStep(id, step, action, comment = '', userName = '') {
+  const req = getRequestById(id);
+  if (!req) throw new Error('الطلب غير موجود');
+
+  if (step === 'manager') {
+    const newStatus = action === 'approve'
+      ? 'معلق - بانتظار تحقق قسم الموارد البشرية'
+      : 'مرفوض من المدير المباشر';
+    return updateRequestStatus(id, newStatus, 'manager', comment, userName);
+  } else if (step === 'hr_verify') {
+    const newStatus = action === 'approve' || action === 'verify'
+      ? 'معلق - بانتظار اعتماد مدير الموارد البشرية'
+      : 'مرفوض من قسم الموارد البشرية';
+    return updateRequestStatus(id, newStatus, 'hr_verify', comment, userName);
+  } else if (step === 'hr_director' || step === 'final') {
+    const newStatus = action === 'approve'
+      ? 'معتمد نهائياً'
+      : 'مرفوض من مدير الموارد البشرية';
+    return updateRequestStatus(id, newStatus, 'hr_director', comment, userName);
+  }
+
+  throw new Error('خطوة الاعتماد غير معروفة');
 }
 
 // Generate Official Salary Certificate Data for instant preview & printing
@@ -221,5 +283,6 @@ module.exports = {
   getRequestById,
   submitRequest,
   updateRequestStatus,
+  processRequestStep,
   generateCertifiedSalaryLetter
 };

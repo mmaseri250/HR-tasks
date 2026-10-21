@@ -241,16 +241,14 @@ function submitLeaveRequest(data) {
   const seq = String((countRow.total || 0) + 1).padStart(4, '0');
   const request_no = `LV-${year}-${seq}`;
 
-  const initialStatus = emp.manager_id
-    ? 'معلق بانتظار موافقة المدير المباشر'
-    : 'معلق بانتظار اعتماد الموارد البشرية';
+  const initialStatus = 'معلق - بانتظار موافقة المدير المباشر';
 
   const sql = `
     INSERT INTO leaves (
       request_no, emp_id, leave_type, start_date, end_date, days_count,
       reason, substitute_emp_id, attachment, status, manager_id,
-      manager_status, hr_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', datetime('now'), datetime('now'))
+      manager_status, hr_verify_status, hr_director_status, hr_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
   `;
 
   const result = run(sql, [
@@ -342,52 +340,107 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
       run(`
         UPDATE leaves
         SET manager_status = 'موافق',
+            manager_name = ?,
             manager_comment = ?,
             manager_action_at = datetime('now'),
-            status = 'معلق بانتظار اعتماد الموارد البشرية',
+            status = 'معلق - بانتظار تحقق قسم الموارد البشرية',
             updated_at = datetime('now')
         WHERE id = ?
-      `, [comment || 'موافقة مبدئية من قبل المدير المباشر', id]);
+      `, [approverName || leave.direct_manager_name || 'المدير المباشر', comment || 'موافقة مبدئية من قبل المدير المباشر', id]);
     } else {
       run(`
         UPDATE leaves
         SET manager_status = 'مرفوض',
+            manager_name = ?,
             manager_comment = ?,
             manager_action_at = datetime('now'),
             status = 'مرفوض من المدير المباشر',
             updated_at = datetime('now')
         WHERE id = ?
-      `, [comment || 'تم رفض الطلب من قبل المدير المباشر', id]);
+      `, [approverName || leave.direct_manager_name || 'المدير المباشر', comment || 'تم رفض الطلب من قبل المدير المباشر', id]);
+    }
+  } else if (role === 'hr_verify' || role === 'hr_specialist') {
+    if (action === 'approve' || action === 'verify') {
+      run(`
+        UPDATE leaves
+        SET hr_verify_status = 'تم التحقق',
+            hr_verifier_name = ?,
+            hr_verify_comment = ?,
+            hr_verify_at = datetime('now'),
+            status = 'معلق - بانتظار اعتماد مدير الموارد البشرية',
+            updated_at = datetime('now')
+        WHERE id = ?
+      `, [approverName || 'قسم الموارد البشرية', comment || 'تم التحقق والتدقيق من قسم الموارد البشرية', id]);
+    } else {
+      run(`
+        UPDATE leaves
+        SET hr_verify_status = 'مرفوض',
+            hr_verifier_name = ?,
+            hr_verify_comment = ?,
+            hr_verify_at = datetime('now'),
+            status = 'مرفوض من قسم الموارد البشرية',
+            updated_at = datetime('now')
+        WHERE id = ?
+      `, [approverName || 'قسم الموارد البشرية', comment || 'تم رفض الطلب من قبل قسم الموارد البشرية', id]);
     }
   } else {
-    // HR Manager / Admin (Tier 2 - Final Approval)
+    // HR Director / Admin (Final Step)
     if (action === 'approve') {
       run(`
         UPDATE leaves
-        SET hr_status = 'موافق',
+        SET hr_director_status = 'معتمد',
+            hr_director_name = ?,
+            hr_director_comment = ?,
+            hr_director_action_at = datetime('now'),
+            hr_status = 'موافق',
             hr_comment = ?,
             hr_action_at = datetime('now'),
             status = 'معتمد نهائياً',
             updated_at = datetime('now')
         WHERE id = ?
-      `, [comment || 'تم الاعتماد النهائي من قبل إدارة الموارد البشرية', id]);
+      `, [
+        approverName || 'مدير الموارد البشرية',
+        comment || 'تم الاعتماد النهائي من قبل مدير الموارد البشرية',
+        comment || 'تم الاعتماد النهائي من قبل إدارة الموارد البشرية',
+        id
+      ]);
 
       // Trigger balance update and deduction
       getEmployeeLeaveBalance(leave.emp_id);
     } else {
       run(`
         UPDATE leaves
-        SET hr_status = 'مرفوض',
+        SET hr_director_status = 'مرفوض',
+            hr_director_name = ?,
+            hr_director_comment = ?,
+            hr_director_action_at = datetime('now'),
+            hr_status = 'مرفوض',
             hr_comment = ?,
             hr_action_at = datetime('now'),
-            status = 'مرفوض من الموارد البشرية',
+            status = 'مرفوض من مدير الموارد البشرية',
             updated_at = datetime('now')
         WHERE id = ?
-      `, [comment || 'تم رفض الطلب من قبل إدارة الموارد البشرية', id]);
+      `, [
+        approverName || 'مدير الموارد البشرية',
+        comment || 'تم رفض الطلب من قبل مدير الموارد البشرية',
+        comment || 'تم رفض الطلب من قبل إدارة الموارد البشرية',
+        id
+      ]);
     }
   }
 
   return getLeaveById(id);
+}
+
+function processLeaveStep(id, step, action, comment = '', userName = '') {
+  if (step === 'manager') {
+    return approveLeave(id, action, 'manager', comment, userName);
+  } else if (step === 'hr_verify') {
+    return approveLeave(id, action, 'hr_verify', comment, userName);
+  } else if (step === 'hr_director' || step === 'final') {
+    return approveLeave(id, action, 'hr_director', comment, userName);
+  }
+  throw new Error('خطوة اعتماد الإجازة غير صحيحة');
 }
 
 /**
@@ -436,6 +489,7 @@ module.exports = {
   getLeaveById,
   getAllLeaves,
   approveLeave,
+  processLeaveStep,
   deleteLeave,
   getLeavesKPIs
 };

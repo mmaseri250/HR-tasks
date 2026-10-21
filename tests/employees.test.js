@@ -15,10 +15,10 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(initialEmployees.length, 114, 'يجب أن تحتوي قاعدة البيانات على 114 موظفاً معتمداً (109 من الإكسل + 5 قياديين)');
   
   const depts = db.query('SELECT * FROM departments');
-  assert.strictEqual(depts.length, 9, 'يجب أن تتوفر الإدارات الـ 9 المعتمدة في البيان التنظيمي');
+  assert.strictEqual(depts.length, 15, 'يجب أن تتوفر الإدارات الـ 15 المعتمدة في البيان التنظيمي');
 
   const branches = db.query('SELECT * FROM branches');
-  assert.strictEqual(branches.length, 4, 'يجب أن تتوفر الفروع الـ 4 المطلوبة بالكامل');
+  assert.strictEqual(branches.length, 10, 'يجب أن تتوفر الفروع الـ 10 المطلوبة بالكامل');
 
   const devices = db.query('SELECT * FROM biometric_devices');
   assert.strictEqual(devices.length, 0, 'يجب أن تبدأ أجهزة البصمة بـ 0 بعد حذف الأجهزة التجريبية');
