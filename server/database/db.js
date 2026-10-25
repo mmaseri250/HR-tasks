@@ -567,7 +567,9 @@ function initSchema() {
   try { db.exec('ALTER TABLE employees ADD COLUMN policy_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN branch_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE biometric_devices ADD COLUMN branch_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE biometric_devices ADD COLUMN is_active INTEGER DEFAULT 1;'); } catch (e) {}
   try { db.exec('ALTER TABLE attendance_policies ADD COLUMN min_hours REAL DEFAULT 3.0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE attendance_policies ADD COLUMN is_default INTEGER DEFAULT 0;'); } catch (e) {}
   try { db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN qualification_degree TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN qualification_major TEXT;'); } catch (e) {}

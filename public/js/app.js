@@ -772,23 +772,6 @@ function applyRolePermissions() {
     }
   }
 
-  // 2. Executive Indicators in Header (Nitaqat, Biometrics, WPS) - STRICTLY HIDDEN for regular employee
-  const headerExecCapsule = document.getElementById('headerExecCapsule');
-  if (headerExecCapsule) {
-    if (role === 'employee') {
-      headerExecCapsule.style.setProperty('display', 'none', 'important');
-      headerExecCapsule.classList.add('hidden');
-    } else {
-      if (window.innerWidth >= 1280) {
-        headerExecCapsule.style.setProperty('display', 'flex', 'important');
-        headerExecCapsule.classList.remove('hidden');
-      } else {
-        headerExecCapsule.style.setProperty('display', 'none', 'important');
-        headerExecCapsule.classList.add('hidden');
-      }
-    }
-  }
-
   // 3. Header Users Button - only Admin or explicit 'users' permission
   const headerUsers = document.getElementById('headerUsersBtn');
   if (headerUsers) {
@@ -1147,6 +1130,7 @@ function switchTab(tabId) {
       break;
     case 'organization':
       renderOrganization();
+      loadOrgHierarchy();
       break;
     case 'branches':
       renderBranches();
@@ -1163,9 +1147,9 @@ function switchTab(tabId) {
     case 'forms':
       populateFormsEmpSelect();
       break;
-    case 'organization':
-      renderOrganization();
-      loadOrgHierarchy();
+    case 'data-exchange':
+      break;
+    case 'docs':
       break;
   }
 }

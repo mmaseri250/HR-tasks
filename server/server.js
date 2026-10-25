@@ -74,7 +74,7 @@ app.get('/api/bootstrap', (req, res) => {
       SELECT b.*, COUNT(DISTINCT e.id) AS employee_count, COUNT(DISTINCT d.id) AS device_count
       FROM branches b
       LEFT JOIN employees e ON b.id = e.branch_id AND e.status = 'نشط'
-      LEFT JOIN biometric_devices d ON b.id = d.branch_id AND d.is_active = 1
+      LEFT JOIN biometric_devices d ON b.id = d.branch_id AND (d.status != 'معطل' OR d.status IS NULL)
       GROUP BY b.id
       ORDER BY b.id ASC
     `);
@@ -90,7 +90,7 @@ app.get('/api/bootstrap', (req, res) => {
     const regulations = penaltiesModule.getAllPenaltyRegulations();
     const issuedPenalties = penaltiesModule.getAllIssuedPenalties();
     const users = usersModule.getAllUsers();
-    const policies = query('SELECT * FROM attendance_policies ORDER BY is_default DESC, id ASC');
+    const policies = query('SELECT * FROM attendance_policies ORDER BY id ASC');
     const allRequests = requestsModule.getAllRequests();
 
     // Telemetry for instant dashboard & compliance rendering
@@ -668,7 +668,10 @@ app.post('/api/compliance/muqeem/sync', (req, res) => {
   }
 });
 
-app.get('/api/employees/:id', (req, res) => {
+app.get('/api/employees/:id', (req, res, next) => {
+  if (req.params.id === 'terminated' || req.params.id === 'hierarchy') {
+    return next();
+  }
   try {
     const emp = employeesModule.getEmployeeById(req.params.id);
     if (!emp) {

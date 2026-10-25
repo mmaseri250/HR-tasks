@@ -19,6 +19,7 @@ async function main() {
     await runMuqeemAndEssTests();
     require('./new-features.test');
     require('./absence-notices.test');
+    require('./page-connectivity.test');
 
     console.log('================================================================');
     console.log('  جميع الاختبارات المعتمدة والشاملة اجتازت بنجاح فائق ودقة مطابقة 100%!   ');

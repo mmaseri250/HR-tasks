@@ -195,8 +195,8 @@ function importLoansFromExcel(buffer) {
 function getLoansKPIs() {
   const totalAmount = get('SELECT COALESCE(SUM(total_amount), 0) AS s FROM loans').s || 0;
   const paidAmount = get('SELECT COALESCE(SUM(paid_amount), 0) AS s FROM loans').s || 0;
-  const remainingAmount = get('SELECT COALESCE(SUM(remaining_amount), 0) AS s FROM loans WHERE status = "نشطة"').s || 0;
-  const activeCount = get('SELECT COUNT(*) AS c FROM loans WHERE status = "نشطة"').c || 0;
+  const remainingAmount = get("SELECT COALESCE(SUM(remaining_amount), 0) AS s FROM loans WHERE status = 'نشطة'").s || 0;
+  const activeCount = get("SELECT COUNT(*) AS c FROM loans WHERE status = 'نشطة'").c || 0;
   return { totalAmount, paidAmount, remainingAmount, activeCount };
 }
 
