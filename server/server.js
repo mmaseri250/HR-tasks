@@ -23,6 +23,7 @@ const attendanceNoticesModule = require('./modules/attendanceNotices');
 const terminatedEmployeesModule = require('./modules/terminatedEmployees');
 const loansModule = require('./modules/loans');
 const officialTemplates = require('./modules/officialTemplates');
+const absenceNoticesModule = require('./modules/absenceNotices');
 
 // Initialize Seed Data
 seedDatabase();
@@ -1644,6 +1645,131 @@ app.get('/api/forms/html/notice/:id', (req, res) => {
     res.send(html);
   } catch (err) {
     res.status(500).send(`<h3>خطأ في توليد النموذج: ${err.message}</h3>`);
+  }
+});
+
+/* =========================================================================
+   ABSENCE NOTICES & COMPANY EMAIL STAGING API
+   ========================================================================= */
+app.get('/api/absence-notices', (req, res) => {
+  try {
+    const list = absenceNoticesModule.getAllAbsenceNotices(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/absence-notices/kpis', (req, res) => {
+  try {
+    const kpis = absenceNoticesModule.getAbsenceKPIs();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/absence-notices/export', (req, res) => {
+  try {
+    const buffer = absenceNoticesModule.exportAbsenceNoticesExcel(req.query);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="absence-notices.xlsx"');
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/absence-notices/template', (req, res) => {
+  try {
+    const buffer = absenceNoticesModule.generateAbsenceTemplateExcel();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="absence-notices-template.xlsx"');
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/absence-notices/import', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'لم يتم رفع ملف إكسل' });
+    }
+    const buffer = fs.readFileSync(req.file.path);
+    const result = absenceNoticesModule.importAbsenceNoticesExcel(buffer);
+    fs.unlinkSync(req.file.path);
+    res.json({ success: true, message: `تم استيراد ${result.successCount} إشعار غياب بنجاح`, data: result });
+  } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/absence-notices/:id', (req, res) => {
+  try {
+    const notice = absenceNoticesModule.getAbsenceNoticeById(req.params.id);
+    if (!notice) return res.status(404).json({ success: false, error: 'إشعار الغياب غير موجود' });
+    res.json({ success: true, data: notice });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/absence-notices', (req, res) => {
+  try {
+    const notice = absenceNoticesModule.createAbsenceNotice(req.body);
+    res.status(201).json({ success: true, message: 'تم إنشاء إشعار الغياب وتجهيزه لبريد الشركة بنجاح', data: notice });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/absence-notices/:id/acknowledge', (req, res) => {
+  try {
+    const notice = absenceNoticesModule.acknowledgeAbsenceNotice(req.params.id, req.body.notes);
+    res.json({ success: true, message: 'تم إقرار واستلام إشعار الغياب بنجاح', data: notice });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/absence-notices/:id/print', (req, res) => {
+  try {
+    const html = absenceNoticesModule.renderOfficialAbsenceLetterHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في طباعة إشعار الغياب: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/absence-notices/:id/email-preview', (req, res) => {
+  try {
+    const notice = absenceNoticesModule.getAbsenceNoticeById(req.params.id);
+    if (!notice) return res.status(404).send('<h3>إشعار الغياب غير موجود</h3>');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(notice.email_body_html || '<p>لا توجد معاينة متاحة</p>');
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في معاينة البريد: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/company-email/settings', (req, res) => {
+  try {
+    const settings = absenceNoticesModule.getCompanyEmailSettings();
+    res.json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/company-email/settings', (req, res) => {
+  try {
+    const updated = absenceNoticesModule.saveCompanyEmailSettings(req.body);
+    res.json({ success: true, message: 'تم حفظ إعدادات بريد الشركة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 

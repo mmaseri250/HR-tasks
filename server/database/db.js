@@ -469,6 +469,60 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_leaves_status ON leaves(status);
     CREATE INDEX IF NOT EXISTS idx_tasks_emp ON tasks(assigned_to);
     CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+
+    -- Dedicated Absence Notices (نظام إشعارات الغياب وربط بريد الشركة)
+    CREATE TABLE IF NOT EXISTS absence_notices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      notice_no TEXT UNIQUE NOT NULL,
+      emp_id INTEGER NOT NULL,
+      emp_code TEXT,
+      emp_name TEXT NOT NULL,
+      department_name TEXT,
+      job_title TEXT,
+      recipient_email TEXT DEFAULT '',
+      manager_name TEXT DEFAULT '',
+      manager_email TEXT DEFAULT '',
+      absence_date TEXT NOT NULL,
+      absence_end_date TEXT,
+      days_count REAL DEFAULT 1,
+      absence_type TEXT NOT NULL,
+      warning_tier TEXT NOT NULL,
+      legal_basis TEXT,
+      reason TEXT,
+      action_required TEXT,
+      email_subject TEXT,
+      email_body_html TEXT,
+      email_status TEXT DEFAULT 'جاهز للربط ببريد الشركة',
+      email_sent_at TEXT,
+      status TEXT DEFAULT 'صادر',
+      acknowledged_at TEXT,
+      employee_notes TEXT,
+      created_by TEXT DEFAULT 'إدارة الموارد البشرية',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS company_email_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      smtp_host TEXT DEFAULT '',
+      smtp_port INTEGER DEFAULT 587,
+      smtp_user TEXT DEFAULT '',
+      smtp_pass TEXT DEFAULT '',
+      from_email TEXT DEFAULT 'hr@jawharat-almajd.com',
+      from_name TEXT DEFAULT 'شركة جوهرة المجد للمقاولات - الموارد البشرية',
+      is_ssl INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 0,
+      last_tested_at TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    INSERT OR IGNORE INTO company_email_settings (id, smtp_host, smtp_port, smtp_user, smtp_pass, from_email, from_name, is_ssl, is_active, updated_at)
+    VALUES (1, '', 587, '', '', 'hr@jawharat-almajd.com', 'شركة جوهرة المجد للمقاولات - الموارد البشرية', 0, 0, CURRENT_TIMESTAMP);
+
+    CREATE INDEX IF NOT EXISTS idx_absence_notices_emp ON absence_notices(emp_id);
+    CREATE INDEX IF NOT EXISTS idx_absence_notices_status ON absence_notices(status);
+    CREATE INDEX IF NOT EXISTS idx_absence_notices_email ON absence_notices(email_status);
   `);
 
   try {

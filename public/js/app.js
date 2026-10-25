@@ -800,7 +800,7 @@ function applyRolePermissions() {
   }
 
   // 4. Desktop Aside navigation items
-  const adminTabs = ['employees-db', 'payroll', 'loans', 'terminated', 'attendance-notices', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const adminTabs = ['employees-db', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
   
   if (!hasAll) {
     adminTabs.forEach(t => {
@@ -1080,7 +1080,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -1138,6 +1138,9 @@ function switchTab(tabId) {
       break;
     case 'attendance-notices':
       loadNoticesView();
+      break;
+    case 'absence':
+      loadAbsenceView();
       break;
     case 'selfservice':
       loadSelfService();
@@ -8763,6 +8766,435 @@ window.acknowledgeNoticeESS = acknowledgeNoticeESS;
 window.handleLeaveStepAction = handleLeaveStepAction;
 window.handleRequestStepAction = handleRequestStepAction;
 window.setPenaltyDisplayMode = setPenaltyDisplayMode;
+
+/* =========================================================================
+   DEDICATED ABSENCE NOTICES & COMPANY EMAIL STAGING SYSTEM
+   ========================================================================= */
+let absenceRecords = [];
+let currentEmailPreviewNotice = null;
+
+async function loadAbsenceView() {
+  try {
+    const [recRes, kpiRes, emailSettingsRes] = await Promise.all([
+      apiFetch('/api/absence-notices'),
+      apiFetch('/api/absence-notices/kpis'),
+      apiFetch('/api/company-email/settings')
+    ]);
+
+    absenceRecords = (recRes && recRes.success) ? recRes.data : [];
+    const kpis = (kpiRes && kpiRes.success) ? kpiRes.data : {};
+    const settings = (emailSettingsRes && emailSettingsRes.success) ? emailSettingsRes.data : {};
+
+    const elTotal = document.getElementById('statAbsenceTotal');
+    const elSingle = document.getElementById('statAbsenceSingle');
+    const elConsecutive = document.getElementById('statAbsenceConsecutive');
+    const elArt80 = document.getElementById('statAbsenceArt80');
+    const elReady = document.getElementById('statAbsenceReadyEmail');
+    const elAck = document.getElementById('statAbsenceAck');
+
+    if (elTotal) elTotal.textContent = kpis.total || 0;
+    if (elSingle) elSingle.textContent = kpis.singleDay || 0;
+    if (elConsecutive) elConsecutive.textContent = kpis.consecutive || 0;
+    if (elArt80) elArt80.textContent = kpis.article80 || 0;
+    if (elReady) elReady.textContent = kpis.readyForEmail || 0;
+    if (elAck) elAck.textContent = kpis.acknowledged || 0;
+
+    const badge = document.getElementById('companyEmailStatusBadge');
+    if (badge) {
+      if (settings.is_active) {
+        badge.textContent = 'حالة بريد الشركة: 🟢 الإرسال المباشر مفعّل';
+      } else {
+        badge.textContent = 'حالة بريد الشركة: ⚙️ جاهز للربط (محفوظ ومُجهز بالنظام)';
+      }
+    }
+
+    renderAbsenceTable(absenceRecords);
+  } catch (e) {
+    console.error('Error loading absence notices:', e);
+  }
+}
+
+function renderAbsenceTable(records) {
+  const tbody = document.getElementById('absenceTableBody');
+  if (!tbody) return;
+
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 font-bold">لا توجد إشعارات غياب مسجلة حالياً. انقر على "إصدار إشعار غياب جديد" للبدء.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map(r => {
+    const isArt80 = (r.absence_type && r.absence_type.includes('80')) || (r.warning_tier && r.warning_tier.includes('80'));
+    return `
+      <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+        <td class="p-3 font-mono font-bold text-slate-800">${r.notice_no}</td>
+        <td class="p-3">
+          <div class="font-bold text-slate-900">${r.emp_name}</div>
+          <div class="text-[10px] text-slate-400 font-mono">${r.emp_code}</div>
+        </td>
+        <td class="p-3">
+          <div class="font-semibold text-slate-800">${r.department_name || '-'}</div>
+          <div class="text-[10px] text-slate-500">${r.job_title || ''}</div>
+        </td>
+        <td class="p-3">
+          <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${isArt80 ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+            ${r.absence_type} (${r.days_count} يوم)
+          </span>
+          <div class="text-[10px] text-slate-500 font-bold mt-0.5">${r.warning_tier}</div>
+        </td>
+        <td class="p-3 font-mono text-slate-700 font-semibold text-[11px]">
+          ${r.absence_date}
+          ${r.absence_end_date && r.absence_end_date !== r.absence_date ? `<br><span class="text-[10px] text-slate-400">إلى ${r.absence_end_date}</span>` : ''}
+        </td>
+        <td class="p-3 font-mono text-[11px] text-slate-600">${r.recipient_email || '<span class="text-slate-400">غير مسجل</span>'}</td>
+        <td class="p-3">
+          <div class="text-[11px] font-semibold text-slate-800">${r.manager_name || '-'}</div>
+          <div class="text-[10px] font-mono text-slate-400">${r.manager_email || ''}</div>
+        </td>
+        <td class="p-3 text-center">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            ${r.email_status}
+          </span>
+        </td>
+        <td class="p-3 text-center">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'تم الإقرار' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">
+            ${r.status}
+          </span>
+        </td>
+        <td class="p-3 text-center">
+          <div class="flex items-center justify-center gap-1.5 flex-wrap">
+            <button onclick="openPreviewEmailModal(${r.id})" class="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-[10px] flex items-center gap-1 transition shadow-sm">
+              <i class="fa-solid fa-envelope-open-text"></i> معاينة البريد
+            </button>
+            <button onclick="printAbsenceLetterDirect(${r.id})" class="px-2 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-[10px] flex items-center gap-1 transition">
+              <i class="fa-solid fa-print"></i> الخطاب
+            </button>
+            ${r.status !== 'تم الإقرار' ? `
+            <button onclick="acknowledgeAbsenceInTable(${r.id})" class="px-2 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-[10px] flex items-center gap-1 transition" title="إقرار واستلام">
+              <i class="fa-solid fa-check"></i> إقرار
+            </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterAbsenceTable() {
+  const query = (document.getElementById('absenceSearchInput')?.value || '').toLowerCase().trim();
+  const typeFilter = document.getElementById('absenceTypeFilter')?.value || '';
+  const warningFilter = document.getElementById('absenceWarningFilter')?.value || '';
+  const emailStatusFilter = document.getElementById('absenceEmailStatusFilter')?.value || '';
+
+  const filtered = absenceRecords.filter(r => {
+    const matchQuery = !query ||
+      (r.emp_name && r.emp_name.toLowerCase().includes(query)) ||
+      (r.emp_code && r.emp_code.toLowerCase().includes(query)) ||
+      (r.notice_no && r.notice_no.toLowerCase().includes(query)) ||
+      (r.recipient_email && r.recipient_email.toLowerCase().includes(query)) ||
+      (r.reason && r.reason.toLowerCase().includes(query));
+
+    const matchType = !typeFilter || (r.absence_type && r.absence_type.includes(typeFilter));
+    const matchWarning = !warningFilter || (r.warning_tier && r.warning_tier.includes(warningFilter));
+    const matchEmailStatus = !emailStatusFilter || (r.email_status === emailStatusFilter);
+
+    return matchQuery && matchType && matchWarning && matchEmailStatus;
+  });
+
+  renderAbsenceTable(filtered);
+}
+
+function openAddAbsenceModal() {
+  const select = document.getElementById('absenceFormEmpId');
+  if (select) {
+    select.innerHTML = '<option value="">-- اختر الموظف --</option>' +
+      state.employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
+  }
+  const today = new Date().toISOString().split('T')[0];
+  const startInput = document.getElementById('absenceFormStartDate');
+  const endInput = document.getElementById('absenceFormEndDate');
+  if (startInput) startInput.value = today;
+  if (endInput) endInput.value = today;
+  const daysInput = document.getElementById('absenceFormDaysCount');
+  if (daysInput) daysInput.value = 1;
+
+  const detailBox = document.getElementById('absenceEmpDetailBox');
+  if (detailBox) detailBox.classList.add('hidden');
+
+  openModal('modalAddAbsenceNotice');
+}
+
+function onAbsenceEmpChanged(empId) {
+  const detailBox = document.getElementById('absenceEmpDetailBox');
+  if (!empId) {
+    if (detailBox) detailBox.classList.add('hidden');
+    return;
+  }
+
+  const emp = state.employees.find(e => String(e.id) === String(empId));
+  if (!emp) return;
+
+  const deptEl = document.getElementById('absenceDetailDept');
+  const empEmailEl = document.getElementById('absenceDetailEmpEmail');
+  const mgrEl = document.getElementById('absenceDetailManager');
+  const mgrEmailEl = document.getElementById('absenceDetailMgrEmail');
+
+  const deptName = emp.department_name || (state.departments?.find(d => d.id === emp.department_id)?.name_ar) || 'الإدارة العامة';
+  if (deptEl) deptEl.textContent = `${deptName} - ${emp.job_title_ar || 'موظف'}`;
+  if (empEmailEl) empEmailEl.textContent = emp.email || 'غير مسجل بقاعدة البيانات';
+
+  // Find direct manager name & email
+  let mgrName = emp.direct_manager_name || 'الإدارة العامة';
+  let mgrEmail = 'غير مسجل';
+  if (emp.manager_id) {
+    const mgr = state.employees.find(m => m.id === emp.manager_id);
+    if (mgr) {
+      mgrName = mgr.full_name_ar;
+      mgrEmail = mgr.email || mgrEmail;
+    }
+  } else if (emp.direct_manager_name) {
+    const mgr = state.employees.find(m => m.full_name_ar === emp.direct_manager_name);
+    if (mgr && mgr.email) mgrEmail = mgr.email;
+  }
+
+  if (mgrEl) mgrEl.textContent = mgrName;
+  if (mgrEmailEl) mgrEmailEl.textContent = mgrEmail;
+
+  if (detailBox) detailBox.classList.remove('hidden');
+}
+
+function onAbsenceTypeSelected(type) {
+  const warningSelect = document.getElementById('absenceFormWarningTier');
+  if (!warningSelect) return;
+  if (type.includes('المادة 80')) {
+    warningSelect.value = 'إنذار نهائي / فصل م80';
+  } else if (type.includes('متصل')) {
+    warningSelect.value = 'إنذار كتابي أول';
+  } else {
+    warningSelect.value = 'إشعار غياب أولي';
+  }
+}
+
+function calcAbsenceDays() {
+  const startVal = document.getElementById('absenceFormStartDate')?.value;
+  const endVal = document.getElementById('absenceFormEndDate')?.value;
+  const daysEl = document.getElementById('absenceFormDaysCount');
+  if (!daysEl) return;
+
+  if (startVal && endVal) {
+    const s = new Date(startVal);
+    const e = new Date(endVal);
+    if (e >= s) {
+      const diffTime = Math.abs(e - s);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      daysEl.value = diffDays;
+      return;
+    }
+  }
+  daysEl.value = 1;
+}
+
+async function submitNewAbsenceNotice(e) {
+  e.preventDefault();
+  const empId = document.getElementById('absenceFormEmpId').value;
+  const type = document.getElementById('absenceFormType').value;
+  const warningTier = document.getElementById('absenceFormWarningTier').value;
+  const startDate = document.getElementById('absenceFormStartDate').value;
+  const endDate = document.getElementById('absenceFormEndDate').value;
+  const daysCount = Number(document.getElementById('absenceFormDaysCount').value) || 1;
+  const reason = document.getElementById('absenceFormReason').value;
+  const actionRequired = document.getElementById('absenceFormAction').value;
+
+  if (!empId || !startDate) return alert('يرجى اختيار الموظف وتاريخ الغياب');
+
+  try {
+    const res = await apiFetch('/api/absence-notices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        emp_id: empId,
+        absence_type: type,
+        warning_tier: warningTier,
+        absence_date: startDate,
+        absence_end_date: endDate,
+        days_count: daysCount,
+        reason: reason,
+        action_required: actionRequired
+      })
+    });
+
+    if (res && res.success) {
+      alert('تم إنشاء إشعار الغياب وتجهيزه لبريد الشركة بنجاح!');
+      closeModal('modalAddAbsenceNotice');
+      await loadAbsenceView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في إنشاء إشعار الغياب'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء إنشاء إشعار الغياب: ' + err.message);
+  }
+}
+
+async function openPreviewEmailModal(id) {
+  try {
+    const res = await apiFetch(`/api/absence-notices/${id}`);
+    if (!res || !res.success || !res.data) {
+      return alert('تعذر جلب تفاصيل إشعار الغياب');
+    }
+    const notice = res.data;
+    currentEmailPreviewNotice = notice;
+
+    document.getElementById('previewEmailTo').textContent = `${notice.emp_name} <${notice.recipient_email || 'غير مسجل'}>`;
+    document.getElementById('previewEmailCc').textContent = `${notice.manager_name || 'الإدارة العامة'} <${notice.manager_email || 'غير مسجل'}>`;
+    document.getElementById('previewEmailSubject').textContent = notice.email_subject || '-';
+    document.getElementById('previewEmailStatus').textContent = `${notice.email_status} (جاهز للربط بخادم SMTP)`;
+
+    const iframe = document.getElementById('previewEmailIframe');
+    if (iframe) {
+      iframe.src = `/api/absence-notices/${id}/email-preview`;
+    }
+
+    openModal('modalPreviewCompanyEmail');
+  } catch (err) {
+    alert('خطأ أثناء تحميل معاينة البريد: ' + err.message);
+  }
+}
+
+function printAbsenceLetterFromEmailModal() {
+  if (currentEmailPreviewNotice && currentEmailPreviewNotice.id) {
+    printAbsenceLetterDirect(currentEmailPreviewNotice.id);
+  }
+}
+
+function printAbsenceLetterDirect(id) {
+  window.open(`/api/absence-notices/${id}/print`, '_blank');
+}
+
+async function acknowledgeAbsenceInTable(id) {
+  const notes = prompt('أدخل أية ملاحظات توثيقية للإقرار (أو اضغط موافق للإقرار المباشر):', 'أقر بالاطلاع والاستلام');
+  if (notes === null) return;
+
+  try {
+    const res = await apiFetch(`/api/absence-notices/${id}/acknowledge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes })
+    });
+    if (res && res.success) {
+      alert('تم إقرار واستلام إشعار الغياب بنجاح!');
+      await loadAbsenceView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في تسجيل الإقرار'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+
+async function openCompanyEmailSettingsModal() {
+  try {
+    const res = await apiFetch('/api/company-email/settings');
+    if (res && res.success && res.data) {
+      const s = res.data;
+      document.getElementById('smtpHost').value = s.smtp_host || '';
+      document.getElementById('smtpPort').value = s.smtp_port || 587;
+      document.getElementById('smtpUser').value = s.smtp_user || '';
+      document.getElementById('smtpPass').value = s.smtp_pass || '';
+      document.getElementById('smtpFromEmail').value = s.from_email || 'hr@jawharat-almajd.com';
+      document.getElementById('smtpFromName').value = s.from_name || 'شركة جوهرة المجد للمقاولات - الموارد البشرية';
+      document.getElementById('smtpIsSsl').checked = Boolean(s.is_ssl);
+      document.getElementById('smtpIsActive').checked = Boolean(s.is_active);
+    }
+    openModal('modalCompanyEmailSettings');
+  } catch (err) {
+    alert('خطأ في استرجاع إعدادات البريد: ' + err.message);
+  }
+}
+
+async function submitCompanyEmailSettings(e) {
+  e.preventDefault();
+  const data = {
+    smtp_host: document.getElementById('smtpHost').value.trim(),
+    smtp_port: Number(document.getElementById('smtpPort').value) || 587,
+    smtp_user: document.getElementById('smtpUser').value.trim(),
+    smtp_pass: document.getElementById('smtpPass').value.trim(),
+    from_email: document.getElementById('smtpFromEmail').value.trim(),
+    from_name: document.getElementById('smtpFromName').value.trim(),
+    is_ssl: document.getElementById('smtpIsSsl').checked ? 1 : 0,
+    is_active: document.getElementById('smtpIsActive').checked ? 1 : 0
+  };
+
+  try {
+    const res = await apiFetch('/api/company-email/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (res && res.success) {
+      alert('تم حفظ إعدادات بريد الشركة بنجاح!');
+      closeModal('modalCompanyEmailSettings');
+      await loadAbsenceView();
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل في حفظ إعدادات البريد'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ الإعدادات: ' + err.message);
+  }
+}
+
+function exportAbsenceExcel() {
+  window.open('/api/absence-notices/export', '_blank');
+}
+
+function downloadAbsenceTemplate() {
+  window.open('/api/absence-notices/template', '_blank');
+}
+
+async function handleAbsenceExcelUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch('/api/absence-notices/import', {
+      method: 'POST',
+      body: formData
+    });
+    const result = await response.json();
+    if (result.success) {
+      alert(`نجح الاستيراد!\n- تم استيراد: ${result.data.successCount} إشعار غياب\n- تم تخطي: ${result.data.skippedCount}`);
+      await loadAbsenceView();
+    } else {
+      alert('خطأ في الاستيراد: ' + result.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء رفع الملف: ' + err.message);
+  } finally {
+    event.target.value = '';
+  }
+}
+
+// Window global exports for Absence Notices
+window.loadAbsenceView = loadAbsenceView;
+window.renderAbsenceTable = renderAbsenceTable;
+window.filterAbsenceTable = filterAbsenceTable;
+window.openAddAbsenceModal = openAddAbsenceModal;
+window.onAbsenceEmpChanged = onAbsenceEmpChanged;
+window.onAbsenceTypeSelected = onAbsenceTypeSelected;
+window.calcAbsenceDays = calcAbsenceDays;
+window.submitNewAbsenceNotice = submitNewAbsenceNotice;
+window.openPreviewEmailModal = openPreviewEmailModal;
+window.printAbsenceLetterFromEmailModal = printAbsenceLetterFromEmailModal;
+window.printAbsenceLetterDirect = printAbsenceLetterDirect;
+window.acknowledgeAbsenceInTable = acknowledgeAbsenceInTable;
+window.openCompanyEmailSettingsModal = openCompanyEmailSettingsModal;
+window.submitCompanyEmailSettings = submitCompanyEmailSettings;
+window.exportAbsenceExcel = exportAbsenceExcel;
+window.downloadAbsenceTemplate = downloadAbsenceTemplate;
+window.handleAbsenceExcelUpload = handleAbsenceExcelUpload;
 
 
 

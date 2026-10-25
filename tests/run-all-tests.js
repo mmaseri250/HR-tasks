@@ -18,6 +18,7 @@ async function main() {
     await runLeavesTasksHierarchyTests();
     await runMuqeemAndEssTests();
     require('./new-features.test');
+    require('./absence-notices.test');
 
     console.log('================================================================');
     console.log('  جميع الاختبارات المعتمدة والشاملة اجتازت بنجاح فائق ودقة مطابقة 100%!   ');
