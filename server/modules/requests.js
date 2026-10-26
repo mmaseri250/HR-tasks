@@ -102,7 +102,31 @@ function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
   let sql = '';
   let params = [];
 
-  if (role === 'manager' || role === 'dept_manager') {
+  if (role === 'reset' || role === 'revert') {
+    sql = `
+      UPDATE requests
+      SET status = 'معلق - بانتظار موافقة المدير المباشر',
+          manager_status = 'معلق',
+          manager_comment = NULL,
+          manager_name = NULL,
+          manager_approved_at = NULL,
+          manager_action_at = NULL,
+          hr_verify_status = 'معلق',
+          hr_verify_comment = NULL,
+          hr_verify_at = NULL,
+          hr_verifier_name = NULL,
+          hr_director_status = 'معلق',
+          hr_director_comment = NULL,
+          hr_director_action_at = NULL,
+          hr_director_name = NULL,
+          hr_comment = NULL,
+          hr_approved_at = NULL,
+          hr_approver_name = NULL,
+          updated_at = datetime('now')
+      WHERE id = ?
+    `;
+    params = [id];
+  } else if (role === 'manager' || role === 'dept_manager') {
     const isRej = newStatus.includes('مرفوض');
     sql = `
       UPDATE requests
@@ -182,34 +206,99 @@ function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
 }
 
 /**
- * 4-Step Approval Processing for General Requests
- * Step 1: Employee submission (status = 'معلق - بانتظار موافقة المدير المباشر')
- * Step 2: Direct Manager Action (approve -> 'معلق - بانتظار تحقق قسم الموارد البشرية' / reject)
- * Step 3: HR Verification (verify -> 'معلق - بانتظار اعتماد مدير الموارد البشرية' / reject)
- * Step 4: HR Director Approval (approve -> 'معتمد نهائياً' / reject)
+ * 4-Step Approval Processing for General Requests with Strict Role & Identity Enforcement:
+ * Rule 1: Applicant employee can NEVER approve/verify their own request.
+ * Step 1: Direct Manager (or Admin)
+ * Step 2: HR Verification (HR specialist/manager or Admin)
+ * Step 3: HR Director Final Approval (HR Director or Admin)
  */
-function processRequestStep(id, step, action, comment = '', userName = '') {
+function processRequestStep(id, step, action, comment = '', userContext = null) {
   const req = getRequestById(id);
   if (!req) throw new Error('الطلب غير موجود');
 
+  let approverName = '';
+  let userRole = 'admin';
+  let userEmpId = null;
+  let userPerms = [];
+
+  if (typeof userContext === 'string') {
+    approverName = userContext;
+  } else if (typeof userContext === 'object' && userContext !== null) {
+    approverName = userContext.full_name || userContext.name || userContext.username || '';
+    userRole = userContext.role || 'employee';
+    userEmpId = userContext.emp_id ? Number(userContext.emp_id) : null;
+    userPerms = userContext.permissions || [];
+  }
+
+  // 1. Strict Self-Approval Prevention
+  if (userEmpId && Number(userEmpId) === Number(req.emp_id)) {
+    throw new Error('غير مصرح: لا يحق للموظف مقدم الطلب اعتماد أو تدقيق طلبه الخاص إطلاقاً.');
+  }
+
+  // 2. Step 1: Direct Manager Approval
   if (step === 'manager') {
+    const isDirectManager = userEmpId && Number(userEmpId) === Number(req.manager_id);
+    const isAdmin = userRole === 'admin' || userRole === 'general_manager';
+    if (!isDirectManager && !isAdmin) {
+      throw new Error(`غير مصرح: اعتماد هذه الخطوة مقتصر على المدير المباشر للموظف (${req.direct_manager_name || 'المدير المباشر'}) أو مدير النظام.`);
+    }
+
     const newStatus = action === 'approve'
       ? 'معلق - بانتظار تحقق قسم الموارد البشرية'
       : 'مرفوض من المدير المباشر';
-    return updateRequestStatus(id, newStatus, 'manager', comment, userName);
-  } else if (step === 'hr_verify') {
+    return updateRequestStatus(id, newStatus, 'manager', comment, approverName || req.direct_manager_name);
+  }
+
+  // 3. Step 2: HR Verification
+  if (step === 'hr_verify') {
+    const isHR = userRole === 'admin' || userRole === 'hr_manager' || userPerms.includes('approvals') || userPerms.includes('requests');
+    if (!isHR) {
+      throw new Error('غير مصرح: هذه الخطوة مخصصة لتدقيق وتحقق قسم الموارد البشرية أو مدير النظام.');
+    }
+
     const newStatus = action === 'approve' || action === 'verify'
       ? 'معلق - بانتظار اعتماد مدير الموارد البشرية'
       : 'مرفوض من قسم الموارد البشرية';
-    return updateRequestStatus(id, newStatus, 'hr_verify', comment, userName);
-  } else if (step === 'hr_director' || step === 'final') {
+    return updateRequestStatus(id, newStatus, 'hr_verify', comment, approverName || 'قسم الموارد البشرية');
+  }
+
+  // 4. Step 3: HR Director Final Approval
+  if (step === 'hr_director' || step === 'final') {
+    const isDirector = userRole === 'admin' || userRole === 'hr_manager' || userRole === 'general_manager';
+    if (!isDirector) {
+      throw new Error('غير مصرح: هذه الخطوة مخصصة لاعتماد مدير الموارد البشرية أو مدير النظام.');
+    }
+
     const newStatus = action === 'approve'
       ? 'معتمد نهائياً'
       : 'مرفوض من مدير الموارد البشرية';
-    return updateRequestStatus(id, newStatus, 'hr_director', comment, userName);
+    return updateRequestStatus(id, newStatus, 'hr_director', comment, approverName || 'مدير الموارد البشرية');
   }
 
   throw new Error('خطوة الاعتماد غير معروفة');
+}
+
+/**
+ * Revert request action back to direct manager pending state
+ */
+function revertRequestAction(id, userContext = null, reason = 'تراجع عن الإجراء') {
+  const req = getRequestById(id);
+  if (!req) throw new Error('الطلب غير موجود');
+
+  let userRole = 'admin';
+  let userEmpId = null;
+  if (typeof userContext === 'object' && userContext !== null) {
+    userRole = userContext.role || 'employee';
+    userEmpId = userContext.emp_id ? Number(userContext.emp_id) : null;
+  }
+
+  const isDirectManager = userEmpId && Number(userEmpId) === Number(req.manager_id);
+  const isHR = userRole === 'admin' || userRole === 'hr_manager';
+  if (!isDirectManager && !isHR) {
+    throw new Error('غير مصرح: التراجع عن الإجراء متاح فقط للمدير المباشر أو إدارة الموارد البشرية.');
+  }
+
+  return updateRequestStatus(id, 'معلق - بانتظار موافقة المدير المباشر', 'reset', reason, '');
 }
 
 // Generate Official Salary Certificate Data for instant preview & printing
@@ -284,5 +373,6 @@ module.exports = {
   submitRequest,
   updateRequestStatus,
   processRequestStep,
+  revertRequestAction,
   generateCertifiedSalaryLetter
 };

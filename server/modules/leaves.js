@@ -329,13 +329,61 @@ function getAllLeaves(filters = {}) {
  * Tier 1: Direct Manager (موافقة مبدئية) -> moves to HR Manager
  * Tier 2: HR Manager (اعتماد نهائي) -> deducts from balance
  */
-function approveLeave(id, action, role = 'manager', comment = '', approverName = '') {
+function approveLeave(id, action, role = 'manager', comment = '', approverName = '', userContext = null) {
   const leave = getLeaveById(id);
   if (!leave) {
     throw new Error('طلب الإجازة غير موجود');
   }
 
+  let userRole = 'admin';
+  let userEmpId = null;
+  let userPerms = [];
+
+  if (typeof userContext === 'object' && userContext !== null) {
+    userRole = userContext.role || 'employee';
+    userEmpId = userContext.emp_id ? Number(userContext.emp_id) : null;
+    userPerms = userContext.permissions || [];
+  }
+
+  // 1. Strict Self-Approval Prevention
+  if (userEmpId && Number(userEmpId) === Number(leave.emp_id)) {
+    throw new Error('غير مصرح: لا يحق للموظف مقدم الطلب اعتماد أو تدقيق طلب إجازته الشخصية إطلاقاً.');
+  }
+
+  if (role === 'reset' || role === 'revert') {
+    run(`
+      UPDATE leaves
+      SET status = 'معلق - بانتظار موافقة المدير المباشر',
+          manager_status = 'معلق',
+          manager_comment = NULL,
+          manager_name = NULL,
+          manager_action_at = NULL,
+          hr_verify_status = 'معلق',
+          hr_verify_comment = NULL,
+          hr_verify_at = NULL,
+          hr_verifier_name = NULL,
+          hr_director_status = 'معلق',
+          hr_director_comment = NULL,
+          hr_director_action_at = NULL,
+          hr_director_name = NULL,
+          hr_status = 'معلق',
+          hr_comment = NULL,
+          hr_action_at = NULL,
+          updated_at = datetime('now')
+      WHERE id = ?
+    `, [id]);
+    // Recalculate balance
+    getEmployeeLeaveBalance(leave.emp_id);
+    return getLeaveById(id);
+  }
+
   if (role === 'manager' || role === 'direct_manager') {
+    const isDirectManager = userEmpId && Number(userEmpId) === Number(leave.manager_id);
+    const isAdmin = userRole === 'admin' || userRole === 'general_manager';
+    if (userContext && !isDirectManager && !isAdmin) {
+      throw new Error(`غير مصرح: اعتماد هذه الخطوة مقتصر على المدير المباشر (${leave.direct_manager_name || 'المدير المباشر'}) أو مدير النظام.`);
+    }
+
     if (action === 'approve') {
       run(`
         UPDATE leaves
@@ -360,6 +408,11 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
       `, [approverName || leave.direct_manager_name || 'المدير المباشر', comment || 'تم رفض الطلب من قبل المدير المباشر', id]);
     }
   } else if (role === 'hr_verify' || role === 'hr_specialist') {
+    const isHR = userRole === 'admin' || userRole === 'hr_manager' || userPerms.includes('approvals') || userPerms.includes('leaves');
+    if (userContext && !isHR) {
+      throw new Error('غير مصرح: هذه الخطوة مخصصة لتدقيق قسم الموارد البشرية أو مدير النظام.');
+    }
+
     if (action === 'approve' || action === 'verify') {
       run(`
         UPDATE leaves
@@ -385,6 +438,11 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
     }
   } else {
     // HR Director / Admin (Final Step)
+    const isDirector = userRole === 'admin' || userRole === 'hr_manager' || userRole === 'general_manager';
+    if (userContext && !isDirector) {
+      throw new Error('غير مصرح: هذه الخطوة مخصصة لاعتماد مدير الموارد البشرية أو مدير النظام.');
+    }
+
     if (action === 'approve') {
       run(`
         UPDATE leaves
@@ -432,15 +490,26 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
   return getLeaveById(id);
 }
 
-function processLeaveStep(id, step, action, comment = '', userName = '') {
+function processLeaveStep(id, step, action, comment = '', userContext = null) {
+  let approverName = '';
+  if (typeof userContext === 'string') {
+    approverName = userContext;
+  } else if (typeof userContext === 'object' && userContext !== null) {
+    approverName = userContext.full_name || userContext.name || userContext.username || '';
+  }
+
   if (step === 'manager') {
-    return approveLeave(id, action, 'manager', comment, userName);
+    return approveLeave(id, action, 'manager', comment, approverName, userContext);
   } else if (step === 'hr_verify') {
-    return approveLeave(id, action, 'hr_verify', comment, userName);
+    return approveLeave(id, action, 'hr_verify', comment, approverName, userContext);
   } else if (step === 'hr_director' || step === 'final') {
-    return approveLeave(id, action, 'hr_director', comment, userName);
+    return approveLeave(id, action, 'hr_director', comment, approverName, userContext);
   }
   throw new Error('خطوة اعتماد الإجازة غير صحيحة');
+}
+
+function revertLeaveAction(id, userContext = null, reason = 'تراجع عن الإجراء') {
+  return approveLeave(id, 'revert', 'reset', reason, '', userContext);
 }
 
 /**
@@ -490,6 +559,7 @@ module.exports = {
   getAllLeaves,
   approveLeave,
   processLeaveStep,
+  revertLeaveAction,
   deleteLeave,
   getLeavesKPIs
 };

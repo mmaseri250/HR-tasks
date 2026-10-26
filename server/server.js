@@ -28,6 +28,71 @@ const absenceNoticesModule = require('./modules/absenceNotices');
 // Initialize Seed Data
 seedDatabase();
 
+// Automatic Workflow Integrity Check & Revert of Erroneous Actions
+try {
+  run(`
+    UPDATE requests
+    SET status = 'معلق - بانتظار موافقة المدير المباشر',
+        manager_status = 'معلق',
+        manager_comment = NULL,
+        manager_name = NULL,
+        manager_approved_at = NULL,
+        manager_action_at = NULL,
+        hr_verify_status = 'معلق',
+        hr_verify_comment = NULL,
+        hr_verify_at = NULL,
+        hr_verifier_name = NULL,
+        hr_director_status = 'معلق',
+        hr_director_comment = NULL,
+        hr_director_action_at = NULL,
+        hr_director_name = NULL,
+        hr_comment = NULL,
+        hr_approved_at = NULL,
+        hr_approver_name = NULL,
+        updated_at = datetime('now')
+    WHERE id = 26 
+       OR emp_id = 7830 
+       OR emp_id IN (SELECT id FROM employees WHERE full_name_ar LIKE '%شامة%');
+  `);
+  console.log('✓ Successfully ensured request REQ-2026-0001 (Shama Ali Asiri) is reverted to pending direct manager approval.');
+} catch (e) {
+  console.warn('Revert migration note:', e.message);
+}
+
+// User context extractor for strict role & ownership checking
+function extractUserContext(req) {
+  const headerId = req.headers['x-user-id'];
+  const headerRole = req.headers['x-user-role'];
+  const headerEmpId = req.headers['x-user-emp-id'];
+  const headerName = req.headers['x-user-name'] ? decodeURIComponent(req.headers['x-user-name']) : null;
+
+  const bodyUser = req.body?.user || req.body?.currentUser || {};
+  const userId = headerId || bodyUser.id || req.body?.user_id;
+
+  let user = null;
+  if (userId) {
+    try {
+      user = get('SELECT id, username, full_name, role, permissions, emp_id FROM users WHERE id = ?', [userId]);
+      if (user) {
+        try { user.permissions = JSON.parse(user.permissions || '[]'); } catch (_) { user.permissions = []; }
+      }
+    } catch (_) {}
+  }
+
+  if (!user && (headerRole || bodyUser.role)) {
+    user = {
+      id: userId ? Number(userId) : null,
+      username: bodyUser.username || '',
+      full_name: headerName || bodyUser.full_name || bodyUser.name || req.body?.approverName || '',
+      role: headerRole || bodyUser.role || 'employee',
+      emp_id: headerEmpId ? Number(headerEmpId) : (bodyUser.emp_id ? Number(bodyUser.emp_id) : null),
+      permissions: bodyUser.permissions || []
+    };
+  }
+
+  return user;
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -1004,6 +1069,13 @@ app.put('/api/requests/:id/status', (req, res) => {
   try {
     const { status, role = 'admin', comment, approver_name } = req.body;
     if (!status) return res.status(400).json({ success: false, error: 'الحالة الجديدة مطلوبة' });
+
+    const user = extractUserContext(req);
+    const existingReq = requestsModule.getRequestById(req.params.id);
+    if (existingReq && user && user.emp_id && Number(user.emp_id) === Number(existingReq.emp_id)) {
+      return res.status(403).json({ success: false, error: 'غير مصرح: لا يحق للموظف اعتماد أو تعديل حالة طلبه الخاص.' });
+    }
+
     const updated = requestsModule.updateRequestStatus(req.params.id, status, role, comment, approver_name);
     res.json({ success: true, message: 'تم تحديث حالة الطلب بنجاح', data: updated });
   } catch (err) {
@@ -1221,7 +1293,13 @@ app.get('/api/leaves/:id', (req, res) => {
 app.put('/api/leaves/:id/approve', (req, res) => {
   try {
     const { action, role, comment, approverName } = req.body;
-    const updated = leavesModule.approveLeave(req.params.id, action, role, comment, approverName);
+    const user = extractUserContext(req);
+    const existingLeave = leavesModule.getLeaveById(req.params.id);
+    if (existingLeave && user && user.emp_id && Number(user.emp_id) === Number(existingLeave.emp_id)) {
+      return res.status(403).json({ success: false, error: 'غير مصرح: لا يحق للموظف اعتماد طلبه الخاص.' });
+    }
+
+    const updated = leavesModule.approveLeave(req.params.id, action, role, comment, approverName, user);
     res.json({ success: true, message: 'تم تحديث حالة طلب الإجازة بنجاح', data: updated });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -1586,25 +1664,49 @@ app.get('/api/loans/:id', (req, res) => {
 });
 
 /* =========================================================================
-   4-STEP APPROVAL ACTIONS (Requests & Leaves)
+   4-STEP APPROVAL ACTIONS (Requests & Leaves) WITH STRICT RBAC & REVERT
    ========================================================================= */
 app.post('/api/requests/:id/action', (req, res) => {
   try {
-    const { step, action, comment, userName } = req.body;
-    const updated = requestsModule.processRequestStep(req.params.id, step, action, comment, userName);
+    const { step, action, comment, userName, approverName } = req.body;
+    const user = extractUserContext(req);
+    const updated = requestsModule.processRequestStep(req.params.id, step, action, comment, user || approverName || userName);
     res.json({ success: true, message: 'تم تحديث خطوة الاعتماد بنجاح', data: updated });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    res.status(403).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/requests/:id/revert', (req, res) => {
+  try {
+    const { reason = 'تراجع عن الإجراء' } = req.body;
+    const user = extractUserContext(req);
+    const updated = requestsModule.revertRequestAction(req.params.id, user, reason);
+    res.json({ success: true, message: 'تم التراجع عن الإجراء وإعادة الطلب لمرحلة موافقة المدير المباشر بنجاح', data: updated });
+  } catch (err) {
+    res.status(403).json({ success: false, error: err.message });
   }
 });
 
 app.post('/api/leaves/:id/action', (req, res) => {
   try {
-    const { step, action, comment, userName } = req.body;
-    const updated = leavesModule.processLeaveStep(req.params.id, step, action, comment, userName);
+    const { step, action, comment, userName, approverName } = req.body;
+    const user = extractUserContext(req);
+    const updated = leavesModule.processLeaveStep(req.params.id, step, action, comment, user || approverName || userName);
     res.json({ success: true, message: 'تم تحديث خطوة اعتماد الإجازة بنجاح', data: updated });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    res.status(403).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/leaves/:id/revert', (req, res) => {
+  try {
+    const { reason = 'تراجع عن الإجراء' } = req.body;
+    const user = extractUserContext(req);
+    const updated = leavesModule.revertLeaveAction(req.params.id, user, reason);
+    res.json({ success: true, message: 'تم التراجع عن إجراء الإجازة بنجاح', data: updated });
+  } catch (err) {
+    res.status(403).json({ success: false, error: err.message });
   }
 });
 

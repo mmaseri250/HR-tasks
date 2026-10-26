@@ -461,10 +461,21 @@ const state = {
   charts: { dept: null, attendance: null }
 };
 
-// Safe API Fetcher with Automatic Fallback
+// Safe API Fetcher with Automatic Fallback and User Identity Headers
 async function apiFetch(endpoint, options = {}) {
   try {
-    const res = await fetch(endpoint, options);
+    const opts = { ...options };
+    opts.headers = { ...(opts.headers || {}) };
+
+    if (state.currentUser) {
+      if (state.currentUser.id) opts.headers['x-user-id'] = String(state.currentUser.id);
+      if (state.currentUser.role) opts.headers['x-user-role'] = String(state.currentUser.role);
+      if (state.currentUser.emp_id) opts.headers['x-user-emp-id'] = String(state.currentUser.emp_id);
+      const uName = state.currentUser.full_name || state.currentUser.full_name_ar || state.currentUser.username;
+      if (uName) opts.headers['x-user-name'] = encodeURIComponent(uName);
+    }
+
+    const res = await fetch(endpoint, opts);
     if (!res.ok) {
       const errData = await res.json().catch(() => null);
       return errData || { success: false, message: `HTTP ${res.status}` };
@@ -4177,6 +4188,13 @@ function renderSelfServiceRequests() {
     list = [...state.myRequests];
   }
 
+  // If current logged-in user is an employee, restrict ESS list to their own requests
+  const curUser = state.currentUser || {};
+  const curEmpId = curUser.emp_id ? Number(curUser.emp_id) : (currentEssEmpId ? Number(currentEssEmpId) : null);
+  if (curUser.role === 'employee' && curEmpId) {
+    list = list.filter(r => Number(r.emp_id) === curEmpId);
+  }
+
   if (list.length === 0) {
     tbody.innerHTML = `
       <tr>
@@ -4200,7 +4218,7 @@ function renderSelfServiceRequests() {
     let statusClass = 'bg-amber-100 text-amber-800';
     if (r.status.includes('معتمد نهائياً')) {
       statusClass = 'bg-emerald-100 text-emerald-800';
-    } else if (r.status.includes('موافقة مبدئية')) {
+    } else if (r.status.includes('موافقة مبدئية') || r.status.includes('تحقق قسم الموارد')) {
       statusClass = 'bg-blue-100 text-blue-800';
     } else if (r.status.includes('مرفوض')) {
       statusClass = 'bg-rose-100 text-rose-800';
@@ -4237,57 +4255,123 @@ function renderSelfServiceRequests() {
       </div>
     `;
 
-    // Action buttons based on current status
+    // Strict Role & Self-Approval Prevention
+    const reqEmpId = Number(r.emp_id);
+    const isApplicant = curEmpId && reqEmpId && curEmpId === reqEmpId;
+    const isDirectManager = curEmpId && Number(r.manager_id) === curEmpId;
+    const isAdmin = curUser.role === 'admin' || curUser.role === 'general_manager';
+    const isHR = isAdmin || curUser.role === 'hr_manager' || (curUser.permissions && curUser.permissions.includes('approvals'));
+
     let actionButtons = '';
-    if (r.status.includes('بانتظار موافقة المدير')) {
-      actionButtons = `
-        <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
-          <button onclick="handleRequestStepAction(${r.id}, 'manager', 'approve')" class="w-full text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1">
-            <i class="fa-solid fa-check"></i> موافقة المدير
-          </button>
-          <button onclick="handleRequestStepAction(${r.id}, 'manager', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
-            <i class="fa-solid fa-xmark"></i> رفض
-          </button>
-        </div>
-      `;
-    } else if (r.status.includes('تحقق قسم الموارد') || r.status.includes('موافقة مبدئية')) {
-      actionButtons = `
-        <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
-          <button onclick="handleRequestStepAction(${r.id}, 'hr_verify', 'approve')" class="w-full text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1">
-            <i class="fa-solid fa-check-double"></i> تدقيق HR
-          </button>
-          <button onclick="handleRequestStepAction(${r.id}, 'hr_verify', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
-            <i class="fa-solid fa-xmark"></i> رفض
-          </button>
-        </div>
-      `;
-    } else if (r.status.includes('اعتماد مدير الموارد') || r.status.includes('بانتظار اعتماد الموارد')) {
-      actionButtons = `
-        <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
-          <button onclick="handleRequestStepAction(${r.id}, 'hr_director', 'approve')" class="w-full text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1">
-            <i class="fa-solid fa-stamp"></i> اعتماد نهائي
-          </button>
-          <button onclick="handleRequestStepAction(${r.id}, 'hr_director', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1">
-            <i class="fa-solid fa-xmark"></i> رفض
-          </button>
-        </div>
-      `;
-    } else if (step4Done) {
-      actionButtons = `
-        <div class="text-center">
-          <span class="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-            <i class="fa-solid fa-circle-check"></i> معتمد نهائياً
-          </span>
-        </div>
-      `;
+    if (isApplicant) {
+      // The applicant can NEVER approve their own request!
+      if (step4Done) {
+        actionButtons = `
+          <div class="text-center">
+            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              <i class="fa-solid fa-circle-check"></i> معتمد ومكتمل
+            </span>
+          </div>
+        `;
+      } else if (r.status.includes('مرفوض')) {
+        actionButtons = `
+          <div class="text-center">
+            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">
+              <i class="fa-solid fa-circle-xmark"></i> طلب مرفوض
+            </span>
+          </div>
+        `;
+      } else {
+        actionButtons = `
+          <div class="text-center space-y-1">
+            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full" title="طلبك قيد المتابعة والاعتماد لدى المسؤولين">
+              <i class="fa-solid fa-hourglass-half"></i> قيد المتابعة والاعتماد
+            </span>
+            <div class="text-[9px] text-slate-400 font-medium">بانتظار موافقة المدير المباشر</div>
+          </div>
+        `;
+      }
     } else {
-      actionButtons = `
-        <div class="text-center">
-          <span class="inline-block text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">
-            <i class="fa-solid fa-circle-xmark"></i> ${r.status}
-          </span>
-        </div>
-      `;
+      // The viewer is NOT the applicant (Direct Manager, HR, or Admin)
+      if (r.status.includes('بانتظار موافقة المدير')) {
+        if (isDirectManager || isAdmin) {
+          actionButtons = `
+            <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
+              <button onclick="handleRequestStepAction(${r.id}, 'manager', 'approve')" class="w-full text-[10px] font-bold bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fa-solid fa-check"></i> موافقة المدير
+              </button>
+              <button onclick="handleRequestStepAction(${r.id}, 'manager', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fa-solid fa-xmark"></i> رفض
+              </button>
+            </div>
+          `;
+        } else {
+          actionButtons = `<span class="text-[10px] text-slate-400 font-medium">بانتظار موافقة المدير المباشر</span>`;
+        }
+      } else if (r.status.includes('تحقق قسم الموارد') || r.status.includes('موافقة مبدئية')) {
+        if (isHR) {
+          actionButtons = `
+            <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
+              <button onclick="handleRequestStepAction(${r.id}, 'hr_verify', 'approve')" class="w-full text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fa-solid fa-check-double"></i> تدقيق HR
+              </button>
+              <button onclick="handleRequestStepAction(${r.id}, 'hr_verify', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fa-solid fa-xmark"></i> رفض
+              </button>
+              ${(isDirectManager || isAdmin) ? `
+              <button onclick="handleRevertRequestAction(${r.id})" title="تراجع عن موافقة المدير وإعادة الطلب للبداية" class="w-full text-[9px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-1 py-0.5 rounded border border-amber-200 flex items-center justify-center gap-1 transition">
+                <i class="fa-solid fa-rotate-left"></i> تراجع عن الإجراء
+              </button>
+              ` : ''}
+            </div>
+          `;
+        } else if (isDirectManager || isAdmin) {
+          actionButtons = `
+            <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
+              <span class="text-[10px] text-blue-600 font-medium">تمت موافقة المدير</span>
+              <button onclick="handleRevertRequestAction(${r.id})" title="تراجع عن موافقة المدير وإعادة الطلب لمرحلة موافقة المدير" class="w-full text-[9px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-1 py-0.5 rounded border border-amber-200 flex items-center justify-center gap-1 transition">
+                <i class="fa-solid fa-rotate-left"></i> تراجع عن الإجراء
+              </button>
+            </div>
+          `;
+        } else {
+          actionButtons = `<span class="text-[10px] text-blue-600 font-medium">بانتظار تدقيق HR</span>`;
+        }
+      } else if (r.status.includes('اعتماد مدير الموارد') || r.status.includes('بانتظار اعتماد الموارد')) {
+        if (isAdmin || curUser.role === 'hr_manager') {
+          actionButtons = `
+            <div class="flex flex-col gap-1 items-center w-full max-w-[130px] mx-auto">
+              <button onclick="handleRequestStepAction(${r.id}, 'hr_director', 'approve')" class="w-full text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-lg shadow-sm flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fa-solid fa-stamp"></i> اعتماد نهائي
+              </button>
+              <button onclick="handleRequestStepAction(${r.id}, 'hr_director', 'reject')" class="w-full text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1 transition active:scale-95">
+                <i class="fa-solid fa-xmark"></i> رفض
+              </button>
+              <button onclick="handleRevertRequestAction(${r.id})" title="تراجع عن الإجراء وإعادة الطلب للبداية" class="w-full text-[9px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-1 py-0.5 rounded border border-amber-200 flex items-center justify-center gap-1 transition">
+                <i class="fa-solid fa-rotate-left"></i> تراجع عن الإجراء
+              </button>
+            </div>
+          `;
+        } else {
+          actionButtons = `<span class="text-[10px] text-purple-600 font-medium">بانتظار اعتماد مدير HR</span>`;
+        }
+      } else if (step4Done) {
+        actionButtons = `
+          <div class="text-center">
+            <span class="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              <i class="fa-solid fa-circle-check"></i> معتمد نهائياً
+            </span>
+          </div>
+        `;
+      } else {
+        actionButtons = `
+          <div class="text-center">
+            <span class="inline-block text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">
+              <i class="fa-solid fa-circle-xmark"></i> ${r.status}
+            </span>
+          </div>
+        `;
+      }
     }
 
     const durationText = r.duration || (r.days_count ? `${r.days_count} يوم` : (r.amount ? `${Number(r.amount).toLocaleString()} ر.س` : '-'));
@@ -8668,23 +8752,55 @@ async function handleLeaveStepAction(leaveId, step, action) {
   const comment = prompt(`يرجى كتابة ملاحظات ${stepLabel} بشأن ${actionLabel}:`, action === 'approve' || action === 'verify' ? 'موافق وفق السياسة واللوائح المعتمدة' : 'نعتذر لعدم الموافقة لظروف العمل');
   if (comment === null) return;
 
-  const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'المسؤول';
+  const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.full_name || state.currentUser.username) : 'المسؤول';
 
   try {
     const res = await apiFetch(`/api/leaves/${leaveId}/action`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ step, action, comment, approverName })
+      body: JSON.stringify({ 
+        step, 
+        action, 
+        comment, 
+        approverName,
+        user: state.currentUser 
+      })
     });
 
     if (res && res.success) {
-      alert('تم تحديث سير الموافقات بنجاح');
+      alert('✓ تم تحديث سير الموافقات بنجاح');
+      await syncDataFromBackend();
       await loadLeavesView();
+      if (state.currentTab === 'selfservice') loadSelfService();
     } else {
-      alert('خطأ: ' + (res?.error || 'فشل في تحديث سير الموافقة'));
+      alert('خطأ في الصلاحية: ' + (res?.error || res?.message || 'فشل في تحديث سير الموافقة'));
     }
   } catch (err) {
     alert('حدث خطأ أثناء معالجة مسار الموافقة: ' + err.message);
+  }
+}
+
+async function handleRevertLeaveAction(leaveId) {
+  if (!confirm('هل أنت متأكد من التراجع عن الإجراء وإعادة طلب الإجازة لمرحلة موافقة المدير المباشر؟')) return;
+  const reason = prompt('سبب التراجع عن الإجراء:', 'تراجع بناءً على مراجعة الصلاحيات');
+  if (reason === null) return;
+
+  try {
+    const res = await apiFetch(`/api/leaves/${leaveId}/revert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason, user: state.currentUser })
+    });
+    if (res && res.success) {
+      alert('✓ تم التراجع عن الإجراء بنجاح.');
+      await syncDataFromBackend();
+      await loadLeavesView();
+      if (state.currentTab === 'selfservice') loadSelfService();
+    } else {
+      alert('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع عن الإجراء'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء التراجع: ' + err.message);
   }
 }
 
@@ -8695,24 +8811,56 @@ async function handleRequestStepAction(reqId, step, action) {
   const comment = prompt(`يرجى كتابة ملاحظات ${stepLabel} بشأن ${actionLabel}:`, action === 'approve' || action === 'verify' ? 'معتمد ومطابق للأنظمة' : 'مرفوض لعدم استيفاء الشروط');
   if (comment === null) return;
 
-  const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.username) : 'المسؤول';
+  const approverName = state.currentUser ? (state.currentUser.full_name_ar || state.currentUser.full_name || state.currentUser.username) : 'المسؤول';
 
   try {
     const res = await apiFetch(`/api/requests/${reqId}/action`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ step, action, comment, approverName })
+      body: JSON.stringify({ 
+        step, 
+        action, 
+        comment, 
+        approverName,
+        user: state.currentUser 
+      })
     });
 
     if (res && res.success) {
-      alert('تم توثيق سير الموافقات بنجاح');
+      alert('✓ تم توثيق سير الموافقات بنجاح');
+      await syncDataFromBackend();
       if (typeof loadRequestsView === 'function') loadRequestsView();
       if (state.currentTab === 'selfservice') loadSelfService();
     } else {
-      alert('خطأ: ' + (res?.error || 'فشل في توثيق الموافقة'));
+      alert('خطأ في الصلاحية: ' + (res?.error || res?.message || 'فشل في توثيق الموافقة'));
     }
   } catch (err) {
     alert('حدث خطأ أثناء معالجة الطلب: ' + err.message);
+  }
+}
+
+async function handleRevertRequestAction(reqId) {
+  if (!confirm('هل أنت متأكد من التراجع عن الإجراء المتخذ وإعادة الطلب إلى مرحلة موافقة المدير المباشر؟')) return;
+  const reason = prompt('سبب التراجع عن الإجراء:', 'تراجع بناءً على مراجعة الصلاحيات');
+  if (reason === null) return;
+
+  try {
+    const res = await apiFetch(`/api/requests/${reqId}/revert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason, user: state.currentUser })
+    });
+
+    if (res && res.success) {
+      alert('✓ تم التراجع عن الإجراء بنجاح وأعيد الطلب إلى مرحلة موافقة المدير المباشر.');
+      await syncDataFromBackend();
+      if (typeof loadRequestsView === 'function') loadRequestsView();
+      if (state.currentTab === 'selfservice') loadSelfService();
+    } else {
+      alert('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع عن الإجراء'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء التراجع: ' + err.message);
   }
 }
 
@@ -8748,8 +8896,18 @@ window.exportNoticesExcel = exportNoticesExcel;
 window.acknowledgeNoticeESS = acknowledgeNoticeESS;
 
 window.handleLeaveStepAction = handleLeaveStepAction;
+window.handleRevertLeaveAction = handleRevertLeaveAction;
 window.handleRequestStepAction = handleRequestStepAction;
+window.handleRevertRequestAction = handleRevertRequestAction;
 window.setPenaltyDisplayMode = setPenaltyDisplayMode;
+
+// Global Escape Key Listener for Modals
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modals = document.querySelectorAll('.modal-overlay:not(.hidden)');
+    modals.forEach(m => m.classList.add('hidden'));
+  }
+});
 
 /* =========================================================================
    DEDICATED ABSENCE NOTICES & COMPANY EMAIL STAGING SYSTEM

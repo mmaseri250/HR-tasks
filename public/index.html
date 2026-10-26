@@ -3656,143 +3656,268 @@
   </nav>
 
   <!-- Mobile More Navigation Drawer Modal -->
-  <div id="modalMobileMore" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-overlay hidden">
-    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-layer-group text-brand"></i> كافة أقسام النظام
-        </h3>
-        <button onclick="closeModal('modalMobileMore')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 text-xs">
-        <button id="mobMoreComplianceBtn" onclick="closeModal('modalMobileMore'); switchTab('compliance')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-shield-halved"></i>
+  <div id="modalMobileMore" onclick="if(event.target === this) closeModal('modalMobileMore')" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center modal-overlay hidden">
+    <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-lg w-full flex flex-col max-h-[85vh] sm:max-h-[90vh] shadow-2xl animate-fade-in overflow-hidden border border-slate-200" onclick="event.stopPropagation()">
+      
+      <!-- Fixed Top Header (Always visible) -->
+      <div class="flex justify-between items-center border-b p-4 bg-slate-50 flex-shrink-0">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center font-bold text-lg">
+            <i class="fa-solid fa-layer-group"></i>
           </div>
           <div>
-            <div class="font-black text-slate-800">مؤشر الامتثال</div>
-            <div class="text-[10px] text-slate-400">الإقامات ورخص العمل وقوى</div>
+            <h3 class="text-sm font-black text-slate-800">كافة أقسام ووحدات المنظومة</h3>
+            <p class="text-[10px] text-slate-500">اختر الوحدة المطلوبة للانتقال المباشر إليها</p>
           </div>
-        </button>
-
-        <button id="mobMorePayrollBtn" onclick="closeModal('modalMobileMore'); switchTab('payroll')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-money-check-dollar"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800">الرواتب والمسيرات</div>
-            <div class="text-[10px] text-slate-400">سندات القبض وبنك الراجحي</div>
-          </div>
-        </button>
-
-        <button id="mobMorePenaltiesBtn" onclick="closeModal('modalMobileMore'); switchTab('penalties')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-scale-balanced"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800">لائحة الجزاءات</div>
-            <div class="text-[10px] text-slate-400">الـ 50 مخالفة النظامية</div>
-          </div>
-        </button>
-
-        <button id="mobMoreLeavesBtn" onclick="closeModal('modalMobileMore'); switchTab('leaves')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-calendar-check"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800">إدارة الإجازات</div>
-            <div class="text-[10px] text-slate-400">الأرصدة والموافقات وسير الاعتماد</div>
-          </div>
-        </button>
-
-        <button id="mobMoreTasksBtn" onclick="closeModal('modalMobileMore'); switchTab('tasks')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-list-check"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800">نظام المهام</div>
-            <div class="text-[10px] text-slate-400">المتابعة ونسب الإنجاز</div>
-          </div>
-        </button>
-
-        <button id="mobMoreFormsBtn" onclick="closeModal('modalMobileMore'); switchTab('forms')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-file-word"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800">نماذج Word</div>
-            <div class="text-[10px] text-slate-400">توليد النماذج الرسمية المعتمدة</div>
-          </div>
-        </button>
-
-        <button id="mobMoreOrgBtn" onclick="closeModal('modalMobileMore'); switchTab('organization')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-sitemap"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800">الهيكل التنظيمي</div>
-            <div class="text-[10px] text-slate-400">سلسلة المراتب والمدراء</div>
-          </div>
-        </button>
-
-        <button id="mobMoreBranchesBtn" onclick="closeModal('modalMobileMore'); switchTab('branches')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-code-branch"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800">فروع الشركة</div>
-            <div class="text-[10px] text-slate-400">الفروع والمواقع الميدانية</div>
-          </div>
-        </button>
-
-        <!-- Business mission in mobile drawer -->
-        <button id="mobMoreMissionBtn" onclick="closeModal('modalMobileMore'); switchTab('selfservice'); openModalRequest('مهمة عمل');" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition">
-          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-briefcase"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800" data-i18n="ess_card_mission">طلب مهمة عمل</div>
-            <div class="text-[10px] text-slate-400">انتداب وتكليف وزيارات فروع</div>
-          </div>
-        </button>
-
-        <button id="mobMoreUsersBtn" onclick="closeModal('modalMobileMore'); switchTab('users')" class="p-3.5 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-3 transition col-span-2">
-          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg flex-shrink-0">
-            <i class="fa-solid fa-user-shield"></i>
-          </div>
-          <div>
-            <div class="font-black text-slate-800" data-i18n="nav_users">المستخدمين والصلاحيات</div>
-            <div class="text-[10px] text-slate-400">إدارة حسابات الموظفين وربط الصلاحيات</div>
-          </div>
-        </button>
-      </div>
-
-      <!-- Language Quick Switch in Drawer -->
-      <div class="p-2.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-        <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
-          <span class="flex items-center gap-1.5"><i class="fa-solid fa-globe text-brand"></i> اللغة / Language:</span>
-          <span class="text-[10px] text-slate-400">5 لغات معتمدة</span>
         </div>
-        <div class="flex flex-wrap gap-1 justify-center text-xs font-bold">
-          <button onclick="setLanguage('ar'); closeModal('modalMobileMore');" class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇸🇦 العربية</button>
-          <button onclick="setLanguage('en'); closeModal('modalMobileMore');" class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇬🇧 English</button>
-          <button onclick="setLanguage('bn'); closeModal('modalMobileMore');" class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇧🇩 বাংলা</button>
-          <button onclick="setLanguage('ur'); closeModal('modalMobileMore');" class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇵🇰 اردو</button>
-          <button onclick="setLanguage('hi'); closeModal('modalMobileMore');" class="px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇮🇳 हिन्दी</button>
-        </div>
+        <button onclick="closeModal('modalMobileMore')" class="w-9 h-9 rounded-full bg-white border border-slate-200 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-sm transition active:scale-95" aria-label="إغلاق">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
       </div>
 
-      <div class="pt-3 border-t flex justify-between items-center text-xs">
-        <button onclick="closeModal('modalMobileMore'); triggerPwaInstall();" class="text-brand font-bold flex items-center gap-1.5">
-          <i class="fa-solid fa-mobile-screen"></i> <span data-i18n="install_app">تثبيت التطبيق</span>
+      <!-- Scrollable Drawer Body with All System Modules -->
+      <div class="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
+
+        <!-- Group 1: شؤون الموظفين والامتثال -->
+        <div>
+          <div class="text-[11px] font-black text-slate-400 mb-2 px-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-users-gear text-brand"></i> شؤون الموظفين والامتثال
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button onclick="closeModal('modalMobileMore'); switchTab('employees-db')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-users"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">ملفات الموظفين</div>
+                <div class="text-[9px] text-slate-400">قاعدة البيانات والوثائق</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('compliance')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">مؤشر الامتثال</div>
+                <div class="text-[9px] text-slate-400">الإقامات ومقيم وقوى</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('organization')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-sitemap"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">الهيكل التنظيمي</div>
+                <div class="text-[9px] text-slate-400">المراتب وسلسلة الإدارة</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('branches')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-code-branch"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">فروع الشركة</div>
+                <div class="text-[9px] text-slate-400">المواقع والمكاتب</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 2: الحضور والانصراف والدوام -->
+        <div>
+          <div class="text-[11px] font-black text-slate-400 mb-2 px-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-fingerprint text-brand"></i> الحضور والانصراف والدوام
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button onclick="closeModal('modalMobileMore'); switchTab('attendance')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-fingerprint"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">سجلات البصمة</div>
+                <div class="text-[9px] text-slate-400">أجهزة ومواقيت الدوام</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('notices')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">إشعارات الحضور</div>
+                <div class="text-[9px] text-slate-400">التأخير ونقص البصمات</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('absence')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition col-span-2">
+              <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-envelope-open-text"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">إخطارات الغياب والانقطاع</div>
+                <div class="text-[9px] text-slate-400">إشعارات البريد والمادة 80 ونماذج العمل المعتمدة</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 3: الإجازات والمهام والخدمة الذاتية -->
+        <div>
+          <div class="text-[11px] font-black text-slate-400 mb-2 px-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-calendar-check text-brand"></i> الإجازات والمهام والتكليفات
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button onclick="closeModal('modalMobileMore'); switchTab('leaves')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-calendar-days"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">إدارة الإجازات</div>
+                <div class="text-[9px] text-slate-400">الأرصدة ومسار الاعتماد</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('selfservice')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-hand-holding-hand"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">بوابة طلباتي ESS</div>
+                <div class="text-[9px] text-slate-400">متابعة الطلبات والخدمة الذاتية</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('tasks')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-list-check"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">نظام المهام</div>
+                <div class="text-[9px] text-slate-400">التكليفات ونسب الإنجاز</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('selfservice'); openModalRequest('مهمة عمل');" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-briefcase"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">طلب مهمة عمل</div>
+                <div class="text-[9px] text-slate-400">انتداب وزيارات الفروع</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 4: الرواتب والمالية والمستحقات -->
+        <div>
+          <div class="text-[11px] font-black text-slate-400 mb-2 px-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-coins text-brand"></i> الرواتب والمالية والمستحقات
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button onclick="closeModal('modalMobileMore'); switchTab('payroll')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-money-check-dollar"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">مسير الرواتب</div>
+                <div class="text-[9px] text-slate-400">حماية الأجور ومصرف الراجحي</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('loans')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-hand-holding-dollar"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">السلف والقروض</div>
+                <div class="text-[9px] text-slate-400">الأقساط الشهرية والجدولة</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('terminated')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition col-span-2">
+              <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-user-xmark"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">مستحقات نهاية الخدمة والمخالصات</div>
+                <div class="text-[9px] text-slate-400">احتساب مكافأة نهاية الخدمة وسندات إبراء الذمة</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group 5: اللوائح والنماذج والإدارة -->
+        <div>
+          <div class="text-[11px] font-black text-slate-400 mb-2 px-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-gear text-brand"></i> اللوائح والنماذج والإدارة
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button onclick="closeModal('modalMobileMore'); switchTab('penalties')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">لائحة الجزاءات</div>
+                <div class="text-[9px] text-slate-400">50 مخالفة نظامية</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('forms')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition">
+              <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-file-word"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">نماذج Word</div>
+                <div class="text-[9px] text-slate-400">توليد النماذج الرسمية</div>
+              </div>
+            </button>
+
+            <button onclick="closeModal('modalMobileMore'); switchTab('users')" class="p-3 rounded-2xl border border-slate-200 hover:border-brand hover:bg-brand/5 text-right flex items-center gap-2.5 transition col-span-2">
+              <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-base flex-shrink-0">
+                <i class="fa-solid fa-user-shield"></i>
+              </div>
+              <div>
+                <div class="font-black text-slate-800 text-[11px]">المستخدمين والصلاحيات</div>
+                <div class="text-[9px] text-slate-400">إدارة الحسابات وتوزيع الأدوار</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Language Quick Switch in Drawer -->
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-globe text-brand"></i> اللغة / Language:</span>
+            <span class="text-[10px] text-slate-400 font-normal">5 لغات معتمدة</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 justify-center text-xs font-bold">
+            <button onclick="setLanguage('ar'); closeModal('modalMobileMore');" class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇸🇦 العربية</button>
+            <button onclick="setLanguage('en'); closeModal('modalMobileMore');" class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇬🇧 English</button>
+            <button onclick="setLanguage('bn'); closeModal('modalMobileMore');" class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇧🇩 বাংলা</button>
+            <button onclick="setLanguage('ur'); closeModal('modalMobileMore');" class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇵🇰 اردو</button>
+            <button onclick="setLanguage('hi'); closeModal('modalMobileMore');" class="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition shadow-sm">🇮🇳 हिन्दी</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Fixed Bottom Action Bar (Always visible) -->
+      <div class="p-3.5 bg-slate-50 border-t flex items-center justify-between gap-2 flex-shrink-0">
+        <button onclick="closeModal('modalMobileMore'); promptLogout();" class="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
         </button>
-        <button onclick="closeModal('modalMobileMore'); promptLogout();" class="text-rose-600 font-bold flex items-center gap-1.5">
-          <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="logout">تسجيل الخروج</span>
+        <button onclick="closeModal('modalMobileMore'); triggerPwaInstall();" class="text-xs font-bold text-brand hover:underline flex items-center gap-1.5">
+          <i class="fa-solid fa-mobile-screen"></i> تثبيت التطبيق
+        </button>
+        <button onclick="closeModal('modalMobileMore');" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-black text-xs transition flex items-center gap-1.5 shadow-sm active:scale-95">
+          <i class="fa-solid fa-chevron-down"></i> إغلاق النافذة
         </button>
       </div>
+
     </div>
   </div>
 
