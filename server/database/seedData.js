@@ -195,6 +195,57 @@ function seedDatabase() {
 
   // 9. Seed Disciplinary Regulations (50 clauses)
   seedPenaltyRegulations();
+
+  // 10. Ensure Hierarchy and Workflow Integrity
+  const chairman = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
+  const abdulmalik = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1000'");
+  if (chairman && abdulmalik) {
+    run("UPDATE employees SET manager_id = ?, direct_manager_name = ? WHERE id = ?", [chairman.id, chairman.full_name_ar, abdulmalik.id]);
+    run("UPDATE users SET emp_id = ? WHERE username = 'abdulmalik'", [abdulmalik.id]);
+  }
+  run("UPDATE employees SET direct_manager_name = 'تامر جمعه احمد عبدالله' WHERE direct_manager_name = 'تامر جمعة احمد عبدالله'");
+
+  // 11. Re-establish official request REQ-2026-0001 for Shama Ali Asiri
+  const shama = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1053' OR full_name_ar LIKE '%شامة%'");
+  if (shama && abdulmalik) {
+    run(`
+      INSERT INTO requests (
+        id, request_no, emp_id, request_type, start_date, end_date, days_count,
+        amount, destination_entity, reason, status, manager_id, manager_name,
+        manager_status, hr_verify_status, hr_director_status, created_at, updated_at
+      ) VALUES (
+        26, 'REQ-2026-0001', ?, 'إجازة سنوية', '2026-10-26', '2026-10-26', 1,
+        3000, NULL, 'طلب اجازه ', 'معلق - بانتظار موافقة المدير المباشر', ?, ?,
+        'معلق', 'معلق', 'معلق', datetime('now'), datetime('now')
+      )
+    `, [shama.id, abdulmalik.id, abdulmalik.full_name_ar]);
+
+    run(`
+      INSERT INTO leaves (
+        id, request_no, emp_id, leave_type, start_date, end_date, days_count,
+        reason, status, manager_id, manager_name,
+        manager_status, hr_verify_status, hr_director_status, hr_status, created_at, updated_at
+      ) VALUES (
+        16, 'REQ-2026-0001', ?, 'إجازة سنوية', '2026-10-26', '2026-10-26', 1,
+        'طلب اجازه ', 'معلق - بانتظار موافقة المدير المباشر', ?, ?,
+        'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now')
+      )
+    `, [shama.id, abdulmalik.id, abdulmalik.full_name_ar]);
+
+    run(`INSERT INTO workflow_steps (request_id, step_order, step_name, role_required, status) VALUES (26, 1, 'موافقة المدير المباشر', 'direct_manager', 'معلق')`);
+    run(`INSERT INTO workflow_steps (request_id, step_order, step_name, role_required, status) VALUES (26, 2, 'تدقيق قسم الموارد البشرية', 'hr_specialist', 'مؤجل')`);
+    run(`INSERT INTO workflow_steps (request_id, step_order, step_name, role_required, status) VALUES (26, 3, 'اعتماد مدير الموارد البشرية', 'hr_director', 'مؤجل')`);
+
+    run(`
+      INSERT INTO notifications (user_id, emp_id, title, message, link, is_read, created_at)
+      VALUES (2, ?, 'طلب جديد بانتظار موافقتك', 'قدمت شامة علي محمد عسيري طلب إجازة سنوية برقم REQ-2026-0001 بانتظار موافقتك كمدير مباشر.', '#requests', 0, datetime('now'))
+    `, [abdulmalik.id]);
+
+    run(`
+      INSERT INTO audit_logs (performed_by_id, performed_by_name, performed_by_role, entity_type, entity_id, action, old_status, new_status, comment, created_at)
+      VALUES (NULL, 'نظام الخدمة الذاتية', 'system', 'request', 26, 'CREATE', NULL, 'معلق - بانتظار موافقة المدير المباشر', 'إنشاء طلب الإجازة السنوية للموظفة شامة علي عسيري', datetime('now'))
+    `);
+  }
 }
 
 function seedEmployees() {

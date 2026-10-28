@@ -247,10 +247,13 @@ console.log('\n----------------------------------------------------------------'
 console.log(`Results: ${passedTests} / ${totalTests} tests passed (${Math.round((passedTests/totalTests)*100)}%)`);
 console.log('----------------------------------------------------------------\n');
 
-if (passedTests === totalTests) {
-  console.log('★ ALL AUDIT AND APPROVAL WORKFLOW TESTS PASSED PERFECTLY ★');
-  process.exit(0);
-} else {
+if (passedTests !== totalTests) {
   console.error('SOME TESTS FAILED');
-  process.exit(1);
+  if (require.main === module) process.exit(1);
+  throw new Error(`Approval workflow tests failed: ${passedTests}/${totalTests}`);
+} else {
+  console.log('★ ALL AUDIT AND APPROVAL WORKFLOW TESTS PASSED PERFECTLY ★');
+  if (require.main === module) process.exit(0);
 }
+
+module.exports = { passedTests, totalTests };
