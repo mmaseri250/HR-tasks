@@ -25,36 +25,98 @@ const loansModule = require('./modules/loans');
 const officialTemplates = require('./modules/officialTemplates');
 const absenceNoticesModule = require('./modules/absenceNotices');
 
-// Initialize Seed Data
-seedDatabase();
+// Initialize Seed Data if unseeded
+try {
+  const empCount = get('SELECT COUNT(*) AS total FROM employees')?.total || 0;
+  if (empCount === 0) {
+    seedDatabase();
+  }
+} catch (e) {
+  seedDatabase();
+}
+
+// Ensure organizational hierarchy and manager integrity on startup
+try {
+  const gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
+  if (gm) {
+    run("UPDATE employees SET manager_id = ?, direct_manager_name = ? WHERE emp_code = 'JM-1000'", [gm.id, gm.full_name_ar]);
+  }
+  run("UPDATE employees SET direct_manager_name = 'تامر جمعه احمد عبدالله' WHERE direct_manager_name = 'تامر جمعة احمد عبدالله'");
+} catch (e) {
+  console.error('Hierarchy sync error:', e.message);
+}
 
 // Automatic Workflow Integrity Check & Revert of Erroneous Actions
 try {
-  run(`
-    UPDATE requests
-    SET status = 'معلق - بانتظار موافقة المدير المباشر',
-        manager_status = 'معلق',
-        manager_comment = NULL,
-        manager_name = NULL,
-        manager_approved_at = NULL,
-        manager_action_at = NULL,
-        hr_verify_status = 'معلق',
-        hr_verify_comment = NULL,
-        hr_verify_at = NULL,
-        hr_verifier_name = NULL,
-        hr_director_status = 'معلق',
-        hr_director_comment = NULL,
-        hr_director_action_at = NULL,
-        hr_director_name = NULL,
-        hr_comment = NULL,
-        hr_approved_at = NULL,
-        hr_approver_name = NULL,
-        updated_at = datetime('now')
-    WHERE id = 26 
-       OR emp_id = 7830 
-       OR emp_id IN (SELECT id FROM employees WHERE full_name_ar LIKE '%شامة%');
-  `);
-  console.log('✓ Successfully ensured request REQ-2026-0001 (Shama Ali Asiri) is reverted to pending direct manager approval.');
+  const abdulmalik = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1000'");
+  const shama = get("SELECT id, manager_id, direct_manager_name FROM employees WHERE full_name_ar LIKE '%شامة%'");
+  if (shama) {
+    const existingReq = get("SELECT id, status, manager_status FROM requests WHERE emp_id = ? OR id = 26 OR request_no = 'REQ-2026-0001'", [shama.id]);
+    const mgrId = shama.manager_id || (abdulmalik ? abdulmalik.id : null);
+    const mgrName = shama.direct_manager_name || (abdulmalik ? abdulmalik.full_name_ar : 'عبدالملك سعيد الشريف');
+
+    if (!existingReq) {
+      run(`
+        INSERT INTO requests (
+          id, request_no, emp_id, request_type, start_date, end_date, days_count,
+          amount, destination_entity, reason, status, manager_id, manager_name,
+          manager_status, hr_verify_status, hr_director_status, created_at, updated_at
+        ) VALUES (
+          26, 'REQ-2026-0001', ?, 'إجازة سنوية', '2026-10-26', '2026-10-26', 1,
+          3000, NULL, 'طلب اجازه ', 'معلق - بانتظار موافقة المدير المباشر', ?, ?,
+          'معلق', 'معلق', 'معلق', datetime('now'), datetime('now')
+        )
+      `, [shama.id, mgrId, mgrName]);
+      console.log('✓ Re-established request REQ-2026-0001 for Shama Ali Asiri with direct manager Abdulmalik Saeed Al-Sharif.');
+    } else {
+      run(`
+        UPDATE requests
+        SET manager_id = ?,
+            manager_name = ?,
+            updated_at = datetime('now')
+        WHERE id = ?
+      `, [mgrId, mgrName, existingReq.id]);
+      console.log('✓ Successfully ensured request REQ-2026-0001 has direct manager properly bound.');
+    }
+
+    // Ensure matching leaves record exists
+    const existingLeave = get("SELECT id FROM leaves WHERE request_no = 'REQ-2026-0001' OR (emp_id = ? AND leave_type = 'إجازة سنوية')", [shama.id]);
+    let leaveId = existingLeave ? existingLeave.id : null;
+    if (!existingLeave) {
+      const leaveRes = run(`
+        INSERT INTO leaves (
+          request_no, emp_id, leave_type, start_date, end_date, days_count,
+          reason, status, manager_id, manager_name,
+          manager_status, hr_verify_status, hr_director_status, hr_status, created_at, updated_at
+        ) VALUES (
+          'REQ-2026-0001', ?, 'إجازة سنوية', '2026-10-26', '2026-10-26', 1,
+          'طلب اجازه ', 'معلق - بانتظار موافقة المدير المباشر', ?, ?,
+          'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now')
+        )
+      `, [shama.id, mgrId, mgrName]);
+      leaveId = leaveRes.lastInsertRowid;
+      console.log('✓ Synchronized leaves table record for REQ-2026-0001.');
+    }
+
+    // Ensure workflow_steps exist
+    const reqId = existingReq ? existingReq.id : 26;
+    const stepsCount = get("SELECT COUNT(*) as count FROM workflow_steps WHERE request_id = ?", [reqId])?.count || 0;
+    if (stepsCount === 0) {
+      run(`
+        INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
+        VALUES (?, ?, 1, 'موافقة المدير المباشر', 'direct_manager', ?, ?, 'معلق', datetime('now'), datetime('now'))
+      `, [reqId, leaveId, mgrId, mgrName]);
+      run(`
+        INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
+        VALUES (?, ?, 2, 'تدقيق وتحقق قسم الموارد البشرية', 'hr_specialist', NULL, 'قسم الموارد البشرية', 'مؤجل', datetime('now'), datetime('now'))
+      `, [reqId, leaveId]);
+      run(`
+        INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
+        VALUES (?, ?, 3, 'اعتماد مدير الموارد البشرية', 'hr_director', 9551, 'عبدالملك سعيد الشريف', 'مؤجل', datetime('now'), datetime('now'))
+      `, [reqId, leaveId]);
+      console.log('✓ Created 3-stage workflow_steps pipeline.');
+    }
+  }
 } catch (e) {
   console.warn('Revert migration note:', e.message);
 }
@@ -1707,6 +1769,80 @@ app.post('/api/leaves/:id/revert', (req, res) => {
     res.json({ success: true, message: 'تم التراجع عن إجراء الإجازة بنجاح', data: updated });
   } catch (err) {
     res.status(403).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   PENDING APPROVALS, WORKFLOW & AUDIT TRAIL API
+   ========================================================================= */
+app.get('/api/approvals/pending', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    const pending = requestsModule.getPendingApprovalsForUser(user);
+    res.json({ success: true, count: pending.length, data: pending });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/workflow/:requestId', (req, res) => {
+  try {
+    const wf = requestsModule.getRequestWorkflow(req.params.requestId);
+    res.json({ success: true, data: wf });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/notifications', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    let sql = `SELECT * FROM notifications WHERE 1=1`;
+    const params = [];
+    if (user && user.emp_id) {
+      sql += ` AND (emp_id = ? OR user_id = ?)`;
+      params.push(user.emp_id, user.id);
+    } else if (user && user.id) {
+      sql += ` AND user_id = ?`;
+      params.push(user.id);
+    }
+    sql += ` ORDER BY created_at DESC, id DESC LIMIT 50`;
+    const notifs = query(sql, params);
+    const unreadCount = notifs.filter(n => n.is_read === 0).length;
+    res.json({ success: true, unreadCount, count: notifs.length, data: notifs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/notifications/:id/read', (req, res) => {
+  try {
+    run('UPDATE notifications SET is_read = 1 WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'تم تحديث حالة الإشعار بنجاح' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/audit-logs', (req, res) => {
+  try {
+    const { entity_type, entity_id, limit = 100 } = req.query;
+    let sql = `SELECT * FROM audit_logs WHERE 1=1`;
+    const params = [];
+    if (entity_type) {
+      sql += ` AND entity_type = ?`;
+      params.push(entity_type);
+    }
+    if (entity_id) {
+      sql += ` AND entity_id = ?`;
+      params.push(entity_id);
+    }
+    sql += ` ORDER BY created_at DESC, id DESC LIMIT ?`;
+    params.push(Number(limit) || 100);
+    const logs = query(sql, params);
+    res.json({ success: true, count: logs.length, data: logs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

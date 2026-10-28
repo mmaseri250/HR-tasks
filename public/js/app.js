@@ -3993,6 +3993,14 @@ async function loadSelfService() {
     if (alertBox) alertBox.classList.add('hidden');
   }
 
+  // Always fetch real-time requests directly from SQLite API (Single Source of Truth)
+  try {
+    const reqRes = await apiFetch('/api/requests');
+    if (reqRes && reqRes.success && reqRes.data) {
+      state.allRequests = reqRes.data;
+    }
+  } catch (e) {}
+
   renderSelfServiceRequests();
 }
 
@@ -4180,13 +4188,8 @@ function renderSelfServiceRequests() {
   const tbody = document.getElementById('essRequestsTableBody');
   if (!tbody) return;
 
-  // Combine backend requests with local requests
-  let list = [];
-  if (state.allRequests && state.allRequests.length > 0) {
-    list = [...state.allRequests];
-  } else if (state.myRequests && state.myRequests.length > 0) {
-    list = [...state.myRequests];
-  }
+  // 1. Single Source of Truth from backend requests
+  let list = (state.allRequests && state.allRequests.length > 0) ? [...state.allRequests] : [];
 
   // If current logged-in user is an employee, restrict ESS list to their own requests
   const curUser = state.currentUser || {};
@@ -4258,7 +4261,12 @@ function renderSelfServiceRequests() {
     // Strict Role & Self-Approval Prevention
     const reqEmpId = Number(r.emp_id);
     const isApplicant = curEmpId && reqEmpId && curEmpId === reqEmpId;
-    const isDirectManager = curEmpId && Number(r.manager_id) === curEmpId;
+    const isDirectManager = Boolean(
+      (curEmpId && r.manager_id && Number(r.manager_id) === Number(curEmpId)) ||
+      (curEmpId && r.direct_manager_id && Number(r.direct_manager_id) === Number(curEmpId)) ||
+      (curUser && curUser.full_name && r.direct_manager_name && curUser.full_name.trim() === r.direct_manager_name.trim()) ||
+      (curUser && curUser.full_name && r.manager_name && curUser.full_name.trim() === r.manager_name.trim())
+    );
     const isAdmin = curUser.role === 'admin' || curUser.role === 'general_manager';
     const isHR = isAdmin || curUser.role === 'hr_manager' || (curUser.permissions && curUser.permissions.includes('approvals'));
 
@@ -4677,29 +4685,34 @@ async function handleRequestFormSubmit(e) {
     direct_manager_name: currentEmp ? (state.employees.find(m => m.id === currentEmp.manager_id)?.full_name_ar || 'المدير المباشر') : 'المدير المباشر'
   };
 
-  // Add to state
-  if (!state.myRequests) state.myRequests = [];
-  state.myRequests.unshift(newReq);
-  if (!state.allRequests) state.allRequests = [];
-  state.allRequests.unshift(backendData || newReq);
-
-  // Save to localStorage
+  // Fetch fresh requests directly from backend (Single Source of Truth)
   try {
-    localStorage.setItem('jm_my_requests', JSON.stringify(state.myRequests));
-  } catch (err) {}
+    const reqRes = await apiFetch('/api/requests');
+    if (reqRes && reqRes.success && reqRes.data) {
+      state.allRequests = reqRes.data;
+    } else {
+      if (!state.allRequests) state.allRequests = [];
+      state.allRequests.unshift(backendData || newReq);
+    }
+  } catch (e) {
+    if (!state.allRequests) state.allRequests = [];
+    state.allRequests.unshift(backendData || newReq);
+  }
 
   closeModal('modalNewRequest');
 
   // Success Alert
-  alert(`✓ تم تقديم طلبك بنجاح!\nالرقم المرجعي: ${newReq.request_no}\nالنوع: ${displayType}\nالمدة/المبلغ: ${displayDuration}\n\nالمسار: بانتظار موافقة المدير المباشر أولاً ثم اعتماد الموارد البشرية.`);
+  alert(`✓ تم تقديم طلبك بنجاح!\nالرقم المرجعي: ${backendData ? backendData.request_no : newReq.request_no}\nالنوع: ${displayType}\nالمدة/المبلغ: ${displayDuration}\n\nالمسار: بانتظار موافقة المدير المباشر أولاً ثم اعتماد الموارد البشرية.`);
 
   // Reset form
   const form = document.getElementById('newRequestForm');
   if (form) form.reset();
   clearReqFile();
 
-  // Reload table
+  // Reload tables & badges
   renderSelfServiceRequests();
+  if (typeof loadLeavesView === 'function') loadLeavesView();
+  if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
 }
 
 /* =========================================================================
@@ -4735,12 +4748,11 @@ async function approveRequestManager(id) {
     })
   });
 
-  try {
-    localStorage.setItem('jm_my_requests', JSON.stringify(state.myRequests));
-  } catch (e) {}
-
+  await syncDataFromBackend();
   alert(`✓ تمت موافقة المدير المباشر بنجاح على الطلب!\nانتقل الطلب للمرحلة التالية: [بانتظار اعتماد الموارد البشرية]`);
   renderSelfServiceRequests();
+  if (typeof loadLeavesView === 'function') loadLeavesView();
+  if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
 }
 
 async function approveRequestHr(id) {
@@ -4772,12 +4784,11 @@ async function approveRequestHr(id) {
     })
   });
 
-  try {
-    localStorage.setItem('jm_my_requests', JSON.stringify(state.myRequests));
-  } catch (e) {}
-
+  await syncDataFromBackend();
   alert(`✓ تم الاعتماد النهائي للطلب بنجاح من الموارد البشرية!\nتم توثيق الطلب وإشعار الموظف.`);
   renderSelfServiceRequests();
+  if (typeof loadLeavesView === 'function') loadLeavesView();
+  if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
 }
 
 async function rejectRequest(id, stage = 'manager') {
@@ -4811,9 +4822,12 @@ async function rejectRequest(id, stage = 'manager') {
     })
   });
 
-  try {
-    localStorage.setItem('jm_my_requests', JSON.stringify(state.myRequests));
-  } catch (e) {}
+  await syncDataFromBackend();
+  alert(`تم رفض الطلب وتسجيل سبب الرفض بنجاح.`);
+  renderSelfServiceRequests();
+  if (typeof loadLeavesView === 'function') loadLeavesView();
+  if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
+}
 
   alert(`تم رفض الطلب وتسجيل سبب الرفض بنجاح.`);
   renderSelfServiceRequests();
@@ -6738,11 +6752,24 @@ async function loadLeavesView() {
     const kpiRes = await apiFetch('/api/leaves/kpis');
     if (kpiRes && kpiRes.success && kpiRes.data) {
       const d = kpiRes.data;
-      if (document.getElementById('statLeavesTotal')) document.getElementById('statLeavesTotal').textContent = d.total || 0;
+      if (document.getElementById('statLeavesTotal')) document.getElementById('statLeavesTotal').textContent = d.total || d.totalRequests || 0;
       if (document.getElementById('statLeavesPendingManager')) document.getElementById('statLeavesPendingManager').textContent = d.pendingManager || 0;
       if (document.getElementById('statLeavesPendingHR')) document.getElementById('statLeavesPendingHR').textContent = d.pendingHR || 0;
       if (document.getElementById('statLeavesApproved')) document.getElementById('statLeavesApproved').textContent = d.approved || 0;
-      if (document.getElementById('statLeavesApprovedDays')) document.getElementById('statLeavesApprovedDays').textContent = (d.approvedDays || 0) + ' يوم';
+      if (document.getElementById('statLeavesApprovedDays')) document.getElementById('statLeavesApprovedDays').textContent = (d.approvedDays || d.totalApprovedDays || 0) + ' يوم';
+
+      // Update badgeNavLeaves in sidebar
+      const badge = document.getElementById('badgeNavLeaves');
+      if (badge) {
+        const pendingCount = (d.pendingManager || 0) + (d.pendingHR || 0);
+        if (pendingCount > 0) {
+          badge.textContent = pendingCount;
+          badge.classList.remove('hidden');
+        } else {
+          badge.textContent = '0';
+          badge.classList.add('hidden');
+        }
+      }
     }
 
     // 2. Populate employee dropdowns
@@ -6815,33 +6842,60 @@ function renderLeavesTableRows(leaves) {
       statusBadge = `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">${l.status}</span>`;
     }
 
+    const curUser = state.currentUser || {};
+    const curEmpId = curUser.emp_id ? Number(curUser.emp_id) : null;
+    const isApplicant = curEmpId && Number(l.emp_id) === curEmpId;
+    const isDirectManager = Boolean(
+      (curEmpId && l.manager_id && Number(l.manager_id) === curEmpId) ||
+      (curUser && curUser.full_name && l.direct_manager_name && curUser.full_name.trim() === l.direct_manager_name.trim()) ||
+      (curUser && curUser.full_name && l.manager_name && curUser.full_name.trim() === l.manager_name.trim())
+    );
+    const isAdmin = curUser.role === 'admin' || curUser.role === 'general_manager';
+    const isHR = isAdmin || curUser.role === 'hr_manager' || (curUser.permissions && curUser.permissions.includes('approvals'));
+
     let actions = `<div class="flex items-center justify-center gap-1">`;
 
-    // 4-Step Approval Actions
-    if (l.status.includes('بانتظار موافقة المدير')) {
-      actions += `
-        <button onclick="handleLeaveStepAction(${l.id}, 'manager', 'approve')" title="موافقة المدير المباشر" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
-          <i class="fa-solid fa-check"></i> موافقة مدير
-        </button>
-        <button onclick="handleLeaveStepAction(${l.id}, 'manager', 'reject')" title="رفض الطلب" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
-          <i class="fa-solid fa-xmark"></i> رفض
-        </button>`;
-    } else if (l.status.includes('بانتظار تحقق قسم الموارد')) {
-      actions += `
-        <button onclick="handleLeaveStepAction(${l.id}, 'hr_verify', 'approve')" title="تدقيق وتحقق قسم الموارد البشرية" class="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
-          <i class="fa-solid fa-check-double"></i> تدقيق HR
-        </button>
-        <button onclick="handleLeaveStepAction(${l.id}, 'hr_verify', 'reject')" title="رفض التدقيق" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
-          <i class="fa-solid fa-xmark"></i> رفض
-        </button>`;
-    } else if (l.status.includes('بانتظار اعتماد مدير الموارد') || l.status.includes('بانتظار اعتماد الموارد')) {
-      actions += `
-        <button onclick="handleLeaveStepAction(${l.id}, 'hr_director', 'approve')" title="اعتماد نهائي من مدير الموارد البشرية" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
-          <i class="fa-solid fa-signature"></i> اعتماد نهائي
-        </button>
-        <button onclick="handleLeaveStepAction(${l.id}, 'hr_director', 'reject')" title="رفض الاعتماد" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
-          <i class="fa-solid fa-xmark"></i> رفض
-        </button>`;
+    if (isApplicant) {
+      actions += `<span class="px-2 py-0.5 rounded text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200">طلبك الشخصي</span>`;
+    } else {
+      // 4-Step Approval Actions
+      if (l.status.includes('بانتظار موافقة المدير')) {
+        if (isDirectManager || isAdmin) {
+          actions += `
+            <button onclick="handleLeaveStepAction(${l.id}, 'manager', 'approve')" title="موافقة المدير المباشر" class="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+              <i class="fa-solid fa-check"></i> موافقة مدير
+            </button>
+            <button onclick="handleLeaveStepAction(${l.id}, 'manager', 'reject')" title="رفض الطلب" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+              <i class="fa-solid fa-xmark"></i> رفض
+            </button>`;
+        } else {
+          actions += `<span class="text-[10px] text-slate-400 font-medium">بانتظار موافقة المدير</span>`;
+        }
+      } else if (l.status.includes('بانتظار تحقق قسم الموارد')) {
+        if (isHR) {
+          actions += `
+            <button onclick="handleLeaveStepAction(${l.id}, 'hr_verify', 'approve')" title="تدقيق وتحقق قسم الموارد البشرية" class="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
+              <i class="fa-solid fa-check-double"></i> تدقيق HR
+            </button>
+            <button onclick="handleLeaveStepAction(${l.id}, 'hr_verify', 'reject')" title="رفض التدقيق" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+              <i class="fa-solid fa-xmark"></i> رفض
+            </button>`;
+        } else {
+          actions += `<span class="text-[10px] text-slate-400 font-medium">بانتظار تدقيق HR</span>`;
+        }
+      } else if (l.status.includes('بانتظار اعتماد مدير الموارد') || l.status.includes('بانتظار اعتماد الموارد')) {
+        if (isAdmin || curUser.role === 'hr_manager') {
+          actions += `
+            <button onclick="handleLeaveStepAction(${l.id}, 'hr_director', 'approve')" title="اعتماد نهائي من مدير الموارد البشرية" class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] flex items-center gap-1 transition">
+              <i class="fa-solid fa-signature"></i> اعتماد نهائي
+            </button>
+            <button onclick="handleLeaveStepAction(${l.id}, 'hr_director', 'reject')" title="رفض الاعتماد" class="px-2 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[10px] flex items-center gap-1 transition">
+              <i class="fa-solid fa-xmark"></i> رفض
+            </button>`;
+        } else {
+          actions += `<span class="text-[10px] text-slate-400 font-medium">بانتظار اعتماد مدير HR</span>`;
+        }
+      }
     }
 
     // Official Form JM-HR-F-001 Preview Button
@@ -8770,8 +8824,9 @@ async function handleLeaveStepAction(leaveId, step, action) {
     if (res && res.success) {
       alert('✓ تم تحديث سير الموافقات بنجاح');
       await syncDataFromBackend();
-      await loadLeavesView();
+      if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
+      if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
       alert('خطأ في الصلاحية: ' + (res?.error || res?.message || 'فشل في تحديث سير الموافقة'));
     }
@@ -8794,8 +8849,9 @@ async function handleRevertLeaveAction(leaveId) {
     if (res && res.success) {
       alert('✓ تم التراجع عن الإجراء بنجاح.');
       await syncDataFromBackend();
-      await loadLeavesView();
+      if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
+      if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
       alert('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع عن الإجراء'));
     }
@@ -8829,8 +8885,9 @@ async function handleRequestStepAction(reqId, step, action) {
     if (res && res.success) {
       alert('✓ تم توثيق سير الموافقات بنجاح');
       await syncDataFromBackend();
-      if (typeof loadRequestsView === 'function') loadRequestsView();
+      if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
+      if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
       alert('خطأ في الصلاحية: ' + (res?.error || res?.message || 'فشل في توثيق الموافقة'));
     }
@@ -8854,8 +8911,9 @@ async function handleRevertRequestAction(reqId) {
     if (res && res.success) {
       alert('✓ تم التراجع عن الإجراء بنجاح وأعيد الطلب إلى مرحلة موافقة المدير المباشر.');
       await syncDataFromBackend();
-      if (typeof loadRequestsView === 'function') loadRequestsView();
+      if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
+      if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
       alert('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع عن الإجراء'));
     }

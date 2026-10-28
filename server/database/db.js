@@ -575,6 +575,92 @@ function initSchema() {
   try { db.exec('ALTER TABLE employees ADD COLUMN qualification_major TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN emergency_phone TEXT;'); } catch (e) {}
 
+  // 1. Audit Logs Table (سجل الرقابة والعمليات الشامل)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      performed_by_id INTEGER,
+      performed_by_name TEXT,
+      performed_by_role TEXT,
+      old_status TEXT,
+      new_status TEXT,
+      stage TEXT,
+      comment TEXT,
+      ip_address TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+  `);
+
+  // 2. Multi-Tier Approvals History (سجل الموافقات الفعلي)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS approvals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_id INTEGER,
+      leave_id INTEGER,
+      step_number INTEGER NOT NULL,
+      step_name TEXT NOT NULL,
+      approver_id INTEGER,
+      approver_name TEXT NOT NULL,
+      approver_role TEXT NOT NULL,
+      action TEXT NOT NULL,
+      comment TEXT,
+      action_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
+      FOREIGN KEY (leave_id) REFERENCES leaves(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_approvals_req ON approvals(request_id);
+    CREATE INDEX IF NOT EXISTS idx_approvals_leave ON approvals(leave_id);
+  `);
+
+  // 3. Workflow Steps Pipeline (مراحل سير العمل الرباعي المعتمد)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS workflow_steps (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      request_id INTEGER,
+      leave_id INTEGER,
+      step_order INTEGER NOT NULL,
+      step_name TEXT NOT NULL,
+      role_required TEXT NOT NULL,
+      assigned_to_emp_id INTEGER,
+      assigned_to_name TEXT,
+      status TEXT DEFAULT 'معلق',
+      decision_by_id INTEGER,
+      decision_by_name TEXT,
+      decision_date TEXT,
+      decision_notes TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE CASCADE,
+      FOREIGN KEY (leave_id) REFERENCES leaves(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_wf_req ON workflow_steps(request_id);
+    CREATE INDEX IF NOT EXISTS idx_wf_leave ON workflow_steps(leave_id);
+  `);
+
+  // 4. In-System Notifications (إشعارات النظام اللحظية للمديرين والموظفين)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      emp_id INTEGER,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      link TEXT,
+      type TEXT DEFAULT 'approval',
+      is_read INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_notif_emp ON notifications(emp_id);
+    CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id);
+    CREATE INDEX IF NOT EXISTS idx_notif_read ON notifications(is_read);
+  `);
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS employee_qualifications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
