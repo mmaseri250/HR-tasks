@@ -1902,11 +1902,24 @@
           <div class="flex items-center gap-2 w-full sm:w-auto">
             <input type="text" id="terminatedSearchInput" oninput="filterTerminatedTable()" placeholder="ابحث بالاسم أو الرقم الوظيفي أو الهوية..." class="w-full sm:w-72 text-xs rounded-xl border border-slate-300 py-2 px-3">
             <select id="terminatedTypeFilter" onchange="filterTerminatedTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3">
-              <option value="">جميع أسباب الإنهاء</option>
-              <option value="استقالة">استقالة الموظف (المادة 85)</option>
-              <option value="انتهاء مدة العقد">انتهاء مدة العقد (المادة 74/1)</option>
-              <option value="صاحب العمل">إنهاء صاحب العمل (المادة 77)</option>
-              <option value="مادة 80">فسخ بموجب المادة 80</option>
+              <option value="">جميع أسباب الإنهاء (قوى)</option>
+              <option value="استقالة الموظف">استقالة الموظف (المادة 85)</option>
+              <option value="فترة التجربة">فسخ العقد خلال التجربة (المادة 53)</option>
+              <option value="بإتفاق الطرفين">باتفاق الطرفين (المادة 74/1)</option>
+              <option value="المادة 80">فسخ بموجب المادة 80 (دون مكافأة)</option>
+              <option value="إنتهاء العقد بإنتهاء مدته">انتهاء مدة العقد (المادة 74/2)</option>
+              <option value="سن التقاعد">بلوغ سن التقاعد (المادة 74/4)</option>
+              <option value="إغلاق المنشأة">إغلاق المنشأة نهائياً (المادة 74/6)</option>
+              <option value="إنهاء النشاط">إنهاء النشاط (المادة 74/7)</option>
+              <option value="دون سبب مشروع">إنهاء دون سبب مشروع (المادة 77)</option>
+              <option value="وفاة العامل">وفاة العامل (المادة 79)</option>
+              <option value="عجز العامل">عجز عن العمل لإصابة (المادة 137)</option>
+              <option value="انتقال ملكية">انتقال ملكية المنشأة (المادة 18)</option>
+              <option value="الوضع">إنهاء بسبب الوضع (المادة 87)</option>
+              <option value="الزواج">إنهاء بسبب الزواج (المادة 87)</option>
+              <option value="وفاة صاحب العمل">وفاة صاحب العمل (المادة 79)</option>
+              <option value="المادة 81">فسخ من قبل العامل (المادة 81)</option>
+              <option value="القوة القاهرة">القوة القاهرة (المادة 74/5)</option>
             </select>
           </div>
         </div>
@@ -4796,14 +4809,25 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">نوع وسبب إنهاء الخدمة: *</label>
-            <select id="termFormType" required onchange="calculateLiveSettlement()" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
-              <option value="استقالة الموظف (المادة 85)">استقالة الموظف (المادة 85)</option>
-              <option value="انتهاء مدة العقد المحدد (المادة 74/1)">انتهاء مدة العقد المحدد (المادة 74/1)</option>
-              <option value="إنهاء العقد من قبل صاحب العمل (المادة 77)">إنهاء العقد من قبل صاحب العمل (المادة 77)</option>
-              <option value="فسخ العقد لسبب مشروع (المادة 80)">فسخ العقد لسبب مشروع (المادة 80 - دون مكافأة)</option>
-              <option value="بلوغ سن التقاعد">بلوغ سن التقاعد</option>
-              <option value="ظروف قاهرة / طارئة">ظروف قاهرة / طارئة</option>
+            <label class="block font-bold text-slate-700 mb-1">سبب الإنهاء (وفق حاسبة قوى الرسمية ونظام العمل): *</label>
+            <select id="termFormType" required onchange="calculateLiveSettlement()" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800 text-xs">
+              <option value="استقالة الموظف">استقالة الموظف</option>
+              <option value="فسخ العقد خلال فترة التجربة وفقاً للمادة 53 من نظام العمل">فسخ العقد خلال فترة التجربة وفقاً للمادة 53 من نظام العمل</option>
+              <option value="بإتفاق الطرفين وفقاً للمادة 74 من نظام العمل">بإتفاق الطرفين وفقاً للمادة 74 من نظام العمل</option>
+              <option value="فسخ عقد العمل من قبل صاحب العمل وفقاً للمادة 80 من نظام العمل">فسخ عقد العمل من قبل صاحب العمل وفقاً للمادة 80 من نظام العمل</option>
+              <option value="إنتهاء العقد بإنتهاء مدته">إنتهاء العقد بإنتهاء مدته</option>
+              <option value="بلوغ العامل سن التقاعد وفقاً للمادة 74 من نظام العمل">بلوغ العامل سن التقاعد وفقاً للمادة 74 من نظام العمل</option>
+              <option value="إغلاق المنشأة نهائياً وفقاً للمادة 74 من نظام العمل">إغلاق المنشأة نهائياً وفقاً للمادة 74 من نظام العمل</option>
+              <option value="إنهاء النشاط الذي يعمل فيه العامل وفقاً للمادة 74 من نظام العمل">إنهاء النشاط الذي يعمل فيه العامل وفقاً للمادة 74 من نظام العمل</option>
+              <option value="إنهاء العقد دون سبب مشروع وفقاً للمادة 77 من نظام العمل">إنهاء العقد دون سبب مشروع وفقاً للمادة 77 من نظام العمل</option>
+              <option value="وفاة العامل وفقاً للمادة 79 من نظام العمل">وفاة العامل وفقاً للمادة 79 من نظام العمل</option>
+              <option value="عجز العامل عن العمل (الناتج عن إصابة العمل) وفقاً للمادة 137 من نظام العمل">عجز العامل عن العمل (الناتج عن إصابة العمل) وفقاً للمادة 137 من نظام العمل</option>
+              <option value="إنتقال ملكية المنشأة (الفردية) إلى مالك جديد وفقاً للمادة 18 من نظام العمل">إنتقال ملكية المنشأة (الفردية) إلى مالك جديد وفقاً للمادة 18 من نظام العمل</option>
+              <option value="إنهاء المرأة العاملة العقد بسبب الوضع وفقاً للمادة 87 من نظام العمل">إنهاء المرأة العاملة العقد بسبب الوضع وفقاً للمادة 87 من نظام العمل</option>
+              <option value="إنهاء المرأة العاملة العقد بسبب الزواج وفقاً للمادة 87 من نظام العمل">إنهاء المرأة العاملة العقد بسبب الزواج وفقاً للمادة 87 من نظام العمل</option>
+              <option value="وفاة صاحب العمل وفقاً للمادة 79 من نظام العمل إذا كانت شخصيته قد روعيت في عقد العمل">وفاة صاحب العمل وفقاً للمادة 79 من نظام العمل إذا كانت شخصيته قد روعيت في عقد العمل</option>
+              <option value="فسخ العقد من قبل العامل وفقاً للمادة 81 من نظام العمل">فسخ العقد من قبل العامل وفقاً للمادة 81 من نظام العمل</option>
+              <option value="القوة القاهرة وفقاً للمادة 74 من نظام العمل">القوة القاهرة وفقاً للمادة 74 من نظام العمل</option>
             </select>
           </div>
           <div>
@@ -4813,20 +4837,37 @@
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1">ملاحظات وأسباب الإنهاء:</label>
-          <textarea id="termFormNotes" rows="2" placeholder="أدخل أية تفاصيل إضافية بشأن تسليم العهد وإخلاء الطرف..." class="w-full rounded-xl border border-slate-300 py-2 px-3"></textarea>
+          <label class="block font-bold text-slate-700 mb-1">ملاحظات ومسوغات الإنهاء:</label>
+          <textarea id="termFormNotes" rows="2" placeholder="أدخل أية تفاصيل إضافية بشأن تسليم العهد والمخالصة النهائية..." class="w-full rounded-xl border border-slate-300 py-2 px-3"></textarea>
         </div>
 
-        <!-- Live Settlement Calculation Card -->
-        <div id="termLiveCalcCard" class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2">
-          <div class="flex justify-between items-center border-b border-amber-200/60 pb-1.5 text-amber-900 font-bold">
-            <span><i class="fa-solid fa-calculator ml-1 text-amber-700"></i> الاحتساب الآلي لمستحقات نهاية الخدمة (نظام العمل السعودي)</span>
-            <span id="termLiveServiceYears" class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-mono">0 سنة خدمة</span>
+        <!-- Live Settlement Calculation Card (Qiwa Compatible) -->
+        <div id="termLiveCalcCard" class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-3">
+          <div class="flex justify-between items-center border-b border-amber-200/60 pb-2 text-amber-900 font-bold">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-calculator text-amber-700"></i>
+              الاحتساب الآلي المعتمد لمستحقات نهاية الخدمة (مطابق لحاسبة منصة قوى)
+            </span>
+            <span id="termLiveServiceYears" class="text-xs bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full font-mono">0 سنة خدمة</span>
           </div>
+
+          <!-- Statutory Legal Rule Banner -->
+          <div id="termLiveStatutoryBox" class="p-2.5 rounded-xl bg-white/90 border border-amber-200 text-xs text-amber-950 flex items-start gap-2 shadow-sm">
+            <i class="fa-solid fa-scale-balanced text-amber-600 mt-0.5 text-sm"></i>
+            <div class="space-y-0.5">
+              <div class="font-black text-slate-900" id="termLiveEntitlementPct">نسبة الاستحقاق: 100%</div>
+              <div class="text-slate-600 text-[11px] leading-relaxed" id="termLiveRuleDescription">يتم احتساب المستحقات آلياً وفقاً لمواد نظام العمل السعودي</div>
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] pt-1">
             <div>
               <span class="text-slate-500 block">آخر راتب إجمالي:</span>
               <strong id="termLiveLastSalary" class="text-slate-800 font-mono">0 ر.س</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block">المكافأة الأساسية:</span>
+              <strong id="termLiveBaseGratuity" class="text-slate-700 font-mono">0 ر.س</strong>
             </div>
             <div>
               <span class="text-slate-500 block">مكافأة نهاية الخدمة:</span>
@@ -4836,10 +4877,11 @@
               <span class="text-slate-500 block">تعويض رصيد الإجازات:</span>
               <strong id="termLiveLeaveComp" class="text-blue-700 font-mono">0 ر.س</strong>
             </div>
-            <div>
-              <span class="text-slate-500 block">صافي مبلغ التصفية:</span>
-              <strong id="termLiveNetTotal" class="text-brand font-mono text-sm">0 ر.س</strong>
-            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-amber-200/60">
+            <span class="text-xs font-bold text-slate-700">صافي مبلغ التصفية والمستحقات:</span>
+            <strong id="termLiveNetTotal" class="text-brand font-mono text-base font-black">0 ر.س</strong>
           </div>
         </div>
 

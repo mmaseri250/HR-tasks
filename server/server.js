@@ -1577,6 +1577,18 @@ app.get('/api/employees/terminated', (req, res) => {
   }
 });
 
+app.get('/api/employees/terminated/reasons', (req, res) => {
+  try {
+    res.json({
+      success: true,
+      count: terminatedEmployeesModule.QIWA_TERMINATION_REASONS.length,
+      data: terminatedEmployeesModule.QIWA_TERMINATION_REASONS
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/employees/terminated/kpis', (req, res) => {
   try {
     const kpis = terminatedEmployeesModule.getTerminatedKPIs();

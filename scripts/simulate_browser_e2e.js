@@ -23,6 +23,11 @@ async function testBrowserRuntime() {
 
   const { window } = dom;
 
+  // Bind fetch for API calls in JSDOM
+  if (typeof globalThis.fetch === 'function') {
+    window.fetch = globalThis.fetch.bind(globalThis);
+  }
+
   // Setup localStorage with Admin user
   const adminUser = {
     id: 1,
@@ -122,6 +127,7 @@ async function testBrowserRuntime() {
   ];
 
   console.log('\n--- اختبار فتح وتصيير كافة التبويبات الـ 19 للمستخدم Admin ---');
+  window.state.currentUser = adminUser;
   let tabSuccess = 0;
   let tabFailures = 0;
 

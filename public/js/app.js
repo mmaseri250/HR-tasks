@@ -8329,20 +8329,27 @@ function onTerminatedEmployeeChanged(empId) {
 async function calculateLiveSettlement() {
   const empId = document.getElementById('termFormEmpId')?.value;
   const date = document.getElementById('termFormDate')?.value || new Date().toISOString().split('T')[0];
-  const type = document.getElementById('termFormType')?.value || 'استقالة الموظف (المادة 85)';
+  const type = document.getElementById('termFormType')?.value || 'استقالة الموظف';
   const deductions = Number(document.getElementById('termFormDeductions')?.value) || 0;
 
+  const elY = document.getElementById('termLiveServiceYears');
+  const elS = document.getElementById('termLiveLastSalary');
+  const elB = document.getElementById('termLiveBaseGratuity');
+  const elG = document.getElementById('termLiveGratuity');
+  const elL = document.getElementById('termLiveLeaveComp');
+  const elN = document.getElementById('termLiveNetTotal');
+  const elPct = document.getElementById('termLiveEntitlementPct');
+  const elDesc = document.getElementById('termLiveRuleDescription');
+
   if (!empId) {
-    const elY = document.getElementById('termLiveServiceYears');
-    const elS = document.getElementById('termLiveLastSalary');
-    const elG = document.getElementById('termLiveGratuity');
-    const elL = document.getElementById('termLiveLeaveComp');
-    const elN = document.getElementById('termLiveNetTotal');
     if (elY) elY.textContent = '0 سنة خدمة';
     if (elS) elS.textContent = '0 ر.س';
+    if (elB) elB.textContent = '0 ر.س';
     if (elG) elG.textContent = '0 ر.س';
     if (elL) elL.textContent = '0 ر.س';
     if (elN) elN.textContent = '0 ر.س';
+    if (elPct) elPct.textContent = 'نسبة الاستحقاق: 100%';
+    if (elDesc) elDesc.textContent = 'يرجى اختيار الموظف لبدء احتساب المستحقات آلياً';
     return;
   }
 
@@ -8355,16 +8362,14 @@ async function calculateLiveSettlement() {
 
     if (res && res.success && res.data) {
       const d = res.data;
-      const elY = document.getElementById('termLiveServiceYears');
-      const elS = document.getElementById('termLiveLastSalary');
-      const elG = document.getElementById('termLiveGratuity');
-      const elL = document.getElementById('termLiveLeaveComp');
-      const elN = document.getElementById('termLiveNetTotal');
-      if (elY) elY.textContent = `${d.service_years} سنة خدمة`;
-      if (elS) elS.textContent = `${(d.employee.last_salary || 0).toLocaleString()} ر.س`;
+      if (elY) elY.textContent = d.service_period?.formatted || `${d.service_years} سنة خدمة`;
+      if (elS) elS.textContent = `${(d.employee?.last_salary || 0).toLocaleString()} ر.س`;
+      if (elB) elB.textContent = `${(d.base_gratuity || 0).toLocaleString()} ر.س`;
       if (elG) elG.textContent = `${(d.end_of_service_reward || 0).toLocaleString()} ر.س`;
       if (elL) elL.textContent = `${(d.leave_compensation || 0).toLocaleString()} ر.س`;
       if (elN) elN.textContent = `${(d.total_settlement || 0).toLocaleString()} ر.س`;
+      if (elPct) elPct.textContent = `نسبة الاستحقاق: ${d.entitlement_percentage || '100%'}`;
+      if (elDesc) elDesc.textContent = d.statutory_rule || '';
     }
   } catch (e) {
     console.error('Error calculating settlement:', e);
@@ -8919,6 +8924,7 @@ async function handleRevertRequestAction(reqId) {
 }
 
 // Window global exports
+window.state = state;
 window.openOfficialFormPreview = openOfficialFormPreview;
 window.printOfficialFormModal = printOfficialFormModal;
 
