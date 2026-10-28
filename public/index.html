@@ -103,6 +103,12 @@
           </button>
         </div>
 
+        <!-- Global Cloud Sync & Save Button (أيقونة المزامنة والحفظ السحابي) -->
+        <button id="btnHeaderGlobalSync" onclick="syncAndSaveAllData()" title="مزامنة وحفظ بيانات المستخدمين والمدخلات سحابياً" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95">
+          <i id="globalSyncIcon" class="fa-solid fa-cloud-arrow-up text-emerald-600 text-sm"></i>
+          <span id="globalSyncText" class="hidden sm:inline">حفظ ومزامنة</span>
+        </button>
+
         <!-- User Management Button (For Admins) -->
         <button id="headerUsersBtn" onclick="switchTab('users')" title="إدارة المستخدمين والصلاحيات" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl border border-slate-300 transition flex items-center gap-1.5">
           <i class="fa-solid fa-users-gear text-brand"></i>
@@ -2477,11 +2483,16 @@
               <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
                 <i class="fa-solid fa-users-gear text-brand"></i> إدارة المستخدمين والصلاحيات (RBAC)
               </h2>
-              <p class="text-xs text-slate-500 mt-1">إدارة حسابات الدخول للنظام وتعيين الصلاحيات المخصصة للمدراء والموظفين.</p>
+              <p class="text-xs text-slate-500 mt-1">إدارة حسابات الدخول للنظام وتعيين الصلاحيات المخصصة للمدراء والموظفين، وحفظ المدخلات لمنع فقدان البيانات عند أي تعديل.</p>
             </div>
-            <button onclick="openAddUserModal()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-              <i class="fa-solid fa-user-plus"></i> إضافة مستخدم جديد
-            </button>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="syncUsersNow()" id="btnSyncUsersView" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5 active:scale-95" title="مزامنة وحفظ المستخدمين في قاعدة البيانات والملف الدائم">
+                <i id="syncUsersViewIcon" class="fa-solid fa-cloud-arrow-up"></i> مزامنة وحفظ المستخدمين
+              </button>
+              <button onclick="openAddUserModal()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 active:scale-95">
+                <i class="fa-solid fa-user-plus"></i> إضافة مستخدم جديد
+              </button>
+            </div>
           </div>
 
           <div class="overflow-x-auto">

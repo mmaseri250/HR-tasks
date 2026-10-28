@@ -1,5 +1,91 @@
-// server/modules/users.js
+// server/modules/users.js - User Management, Authentication & Persistent Synchronization
 const { query, get, run } = require('../database/db');
+const fs = require('fs');
+const path = require('path');
+
+const PERSISTED_USERS_FILE = path.join(__dirname, '../database/persisted_users.json');
+
+/**
+ * Persists all current database users to a permanent JSON file backup
+ */
+function persistUsersToDisk() {
+  try {
+    const users = query('SELECT * FROM users ORDER BY id ASC');
+    const cleanUsers = users.map(u => {
+      let perms = [];
+      try {
+        perms = typeof u.permissions === 'string' ? JSON.parse(u.permissions) : (u.permissions || []);
+      } catch (e) {
+        perms = ['all'];
+      }
+      return {
+        id: u.id,
+        username: u.username,
+        password: u.password,
+        full_name: u.full_name,
+        email: u.email,
+        role: u.role,
+        permissions: perms,
+        emp_id: u.emp_id,
+        is_active: u.is_active,
+        created_at: u.created_at
+      };
+    });
+
+    fs.writeFileSync(PERSISTED_USERS_FILE, JSON.stringify(cleanUsers, null, 2), 'utf8');
+    return cleanUsers;
+  } catch (err) {
+    console.error('Error persisting users to disk:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Restores all persisted users from disk to SQLite database
+ * Ensures no custom or administrator-created users are ever lost
+ */
+function restoreUsersFromDisk() {
+  try {
+    if (!fs.existsSync(PERSISTED_USERS_FILE)) {
+      persistUsersToDisk();
+      return;
+    }
+
+    const raw = fs.readFileSync(PERSISTED_USERS_FILE, 'utf8');
+    const users = JSON.parse(raw);
+    if (!Array.isArray(users) || users.length === 0) return;
+
+    for (const u of users) {
+      if (!u.username) continue;
+      const existing = get('SELECT id, password FROM users WHERE username = ?', [u.username.trim()]);
+      const permsStr = typeof u.permissions === 'string' ? u.permissions : JSON.stringify(u.permissions || []);
+      const pass = u.password || 'Jj123';
+      const role = u.role || 'employee';
+      const fullName = u.full_name || u.username;
+      const email = u.email || null;
+      const empId = u.emp_id ? Number(u.emp_id) : null;
+      const isActive = u.is_active !== undefined ? Number(u.is_active) : 1;
+
+      if (!existing) {
+        run(`
+          INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [u.username.trim(), pass, fullName, email, role, permsStr, empId, isActive]);
+      } else {
+        // Keep updated details without losing password if not provided
+        const finalPass = (u.password && u.password.trim() !== '') ? u.password.trim() : existing.password;
+        run(`
+          UPDATE users SET
+            password = ?, full_name = ?, email = ?,
+            role = ?, permissions = ?, emp_id = ?, is_active = ?
+          WHERE id = ?
+        `, [finalPass, fullName, email, role, permsStr, empId, isActive, existing.id]);
+      }
+    }
+  } catch (err) {
+    console.error('Error restoring users from disk:', err.message);
+  }
+}
 
 function login(username, password) {
   if (!username || !password) {
@@ -67,6 +153,10 @@ function createUser(data) {
   } catch (e) {
     newUser.permissions = [];
   }
+
+  // Automatically persist to permanent JSON backup
+  persistUsersToDisk();
+
   return newUser;
 }
 
@@ -102,6 +192,10 @@ function updateUser(id, data) {
   } catch (e) {
     updated.permissions = [];
   }
+
+  // Automatically persist to permanent JSON backup
+  persistUsersToDisk();
+
   return updated;
 }
 
@@ -113,7 +207,60 @@ function deleteUser(id) {
     throw new Error('لا يمكن حذف المستخدم الرئيسي للنظام (admin)');
   }
 
-  return run('DELETE FROM users WHERE id = ?', [id]);
+  const result = run('DELETE FROM users WHERE id = ?', [id]);
+
+  // Automatically persist to permanent JSON backup
+  persistUsersToDisk();
+
+  return result;
+}
+
+/**
+ * Synchronize and consolidate users from client or external payload
+ * Ensures all entries are updated, new users inserted, and persisted safely
+ */
+function syncUsers(incomingUsers = []) {
+  if (!Array.isArray(incomingUsers)) {
+    incomingUsers = [];
+  }
+
+  for (const u of incomingUsers) {
+    if (!u || !u.username) continue;
+    const cleanUsername = u.username.trim();
+    const existing = get('SELECT * FROM users WHERE username = ? OR (id IS NOT NULL AND id = ?)', [cleanUsername, u.id || -1]);
+
+    const permsStr = typeof u.permissions === 'string' ? u.permissions : JSON.stringify(u.permissions || ['requests', 'selfservice']);
+    const pass = (u.password && u.password.trim() !== '') ? u.password.trim() : (existing ? existing.password : 'Jj123');
+    const fullName = u.full_name ? u.full_name.trim() : (existing ? existing.full_name : cleanUsername);
+    const email = u.email ? u.email.trim() : (existing ? existing.email : null);
+    const role = u.role || (existing ? existing.role : 'employee');
+    const empId = u.emp_id ? Number(u.emp_id) : (existing ? existing.emp_id : null);
+    const isActive = u.is_active !== undefined ? Number(u.is_active) : (existing ? existing.is_active : 1);
+
+    if (existing) {
+      run(`
+        UPDATE users SET
+          username = ?, password = ?, full_name = ?, email = ?,
+          role = ?, permissions = ?, emp_id = ?, is_active = ?
+        WHERE id = ?
+      `, [cleanUsername, pass, fullName, email, role, permsStr, empId, isActive, existing.id]);
+    } else {
+      run(`
+        INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [cleanUsername, pass, fullName, email, role, permsStr, empId, isActive]);
+    }
+  }
+
+  persistUsersToDisk();
+  return getAllUsers();
+}
+
+// Ensure persisted users are synchronized upon module load
+try {
+  restoreUsersFromDisk();
+} catch (e) {
+  console.warn('Initial users restore error:', e.message);
 }
 
 module.exports = {
@@ -121,5 +268,8 @@ module.exports = {
   getAllUsers,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  syncUsers,
+  persistUsersToDisk,
+  restoreUsersFromDisk
 };

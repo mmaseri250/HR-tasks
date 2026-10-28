@@ -908,7 +908,26 @@ async function syncDataFromBackend() {
       if (d.employees) state.employees = d.employees;
       if (d.regulations) state.regulations = d.regulations;
       if (d.issuedPenalties) state.issuedPenalties = d.issuedPenalties;
-      if (d.users) state.users = d.users;
+      if (d.users) {
+        // Reconcile with persistent local backup so no custom user is ever lost
+        try {
+          const localBackup = JSON.parse(localStorage.getItem('jm_hrms_users_backup') || '[]');
+          if (Array.isArray(localBackup) && localBackup.length > 0) {
+            const serverUsernames = new Set(d.users.map(u => u.username));
+            const missing = localBackup.filter(u => u && u.username && !serverUsernames.has(u.username));
+            if (missing.length > 0) {
+              d.users.push(...missing);
+              apiFetch('/api/users/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ users: d.users })
+              }).catch(e => console.warn('Background sync error:', e));
+            }
+          }
+        } catch (e) {}
+        state.users = d.users;
+        try { localStorage.setItem('jm_hrms_users_backup', JSON.stringify(state.users)); } catch (e) {}
+      }
       if (d.policies) state.policies = d.policies;
       if (d.allRequests) state.allRequests = d.allRequests;
 
@@ -5769,7 +5788,139 @@ async function handleAddUserSubmit(e) {
     alert(`تم إنشاء حساب المستخدم [${username}] بنجاح وتعيين الصلاحيات`);
   }
 
+  // Immediately persist locally and sync to server so modifications are never lost
+  try {
+    localStorage.setItem('jm_hrms_users_backup', JSON.stringify(state.users));
+    apiFetch('/api/users/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users: state.users })
+    }).catch(err => console.warn('Background sync error:', err));
+  } catch (err) {}
+
   renderUsersTable();
+}
+
+/**
+ * Global Synchronization & Data Persistence Engine
+ * Saves current users and inputs to SQLite & permanent storage
+ */
+async function syncAndSaveAllData(silent = false) {
+  const icon = document.getElementById('globalSyncIcon');
+  const text = document.getElementById('globalSyncText');
+  const btn = document.getElementById('btnHeaderGlobalSync');
+
+  if (icon) {
+    icon.className = 'fa-solid fa-arrows-rotate fa-spin text-amber-600 text-sm';
+  }
+  if (text) {
+    text.textContent = 'جاري المزامنة...';
+  }
+
+  try {
+    // 1. Gather all local users and ensure backup reconciliation
+    let localUsers = [...(state.users || [])];
+    try {
+      const backup = JSON.parse(localStorage.getItem('jm_hrms_users_backup') || '[]');
+      if (Array.isArray(backup) && backup.length > 0) {
+        const existingNames = new Set(localUsers.map(u => u.username));
+        backup.forEach(bu => {
+          if (bu && bu.username && !existingNames.has(bu.username)) {
+            localUsers.push(bu);
+          }
+        });
+      }
+    } catch (e) {}
+
+    // 2. Send synchronization request to backend
+    const res = await apiFetch('/api/users/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users: localUsers })
+    });
+
+    if (res && res.success && res.data) {
+      state.users = res.data;
+      try {
+        localStorage.setItem('jm_hrms_users_backup', JSON.stringify(state.users));
+      } catch (e) {}
+    }
+
+    // 3. Sync full data state from backend
+    await syncDataFromBackend();
+    if (state.currentTab === 'users') {
+      renderUsersTable();
+    }
+
+    // Visual feedback: success checkmark
+    if (icon) {
+      icon.className = 'fa-solid fa-circle-check text-emerald-600 text-sm';
+    }
+    if (text) {
+      text.textContent = 'تم الحفظ بنجاح';
+    }
+
+    if (!silent) {
+      showToastNotification('✓ تم حفظ ومزامنة بيانات المستخدمين والمدخلات بنجاح دون أي فقدان للبيانات');
+    }
+
+    setTimeout(() => {
+      if (icon) icon.className = 'fa-solid fa-cloud-arrow-up text-emerald-600 text-sm';
+      if (text) text.textContent = 'حفظ ومزامنة';
+    }, 2500);
+
+  } catch (err) {
+    console.error('Sync error:', err);
+    if (icon) icon.className = 'fa-solid fa-triangle-exclamation text-rose-600 text-sm';
+    if (text) text.textContent = 'فشلت المزامنة';
+    setTimeout(() => {
+      if (icon) icon.className = 'fa-solid fa-cloud-arrow-up text-emerald-600 text-sm';
+      if (text) text.textContent = 'حفظ ومزامنة';
+    }, 2500);
+  }
+}
+
+async function syncUsersNow() {
+  const btn = document.getElementById('btnSyncUsersView');
+  const icon = document.getElementById('syncUsersViewIcon');
+  if (icon) icon.className = 'fa-solid fa-arrows-rotate fa-spin ml-1';
+  if (btn) btn.disabled = true;
+
+  try {
+    await syncAndSaveAllData(false);
+    renderUsersTable();
+  } finally {
+    if (icon) icon.className = 'fa-solid fa-cloud-arrow-up ml-1';
+    if (btn) btn.disabled = false;
+  }
+}
+
+function showToastNotification(message, type = 'success') {
+  let toast = document.getElementById('globalToastNotification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'globalToastNotification';
+    toast.className = 'fixed bottom-5 left-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none';
+    document.body.appendChild(toast);
+  }
+
+  const bgClass = type === 'error' ? 'bg-rose-900 border-rose-700 text-white' : 'bg-slate-900 border-emerald-500/50 text-white';
+  const iconClass = type === 'error' ? 'fa-solid fa-triangle-exclamation text-rose-400' : 'fa-solid fa-circle-check text-emerald-400';
+
+  toast.innerHTML = `
+    <div class="px-4 py-3 rounded-2xl shadow-2xl border ${bgClass} flex items-center gap-2.5 text-xs font-bold">
+      <i class="${iconClass} text-sm"></i>
+      <span>${message}</span>
+    </div>
+  `;
+
+  toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+  toast.classList.add('translate-y-0', 'opacity-100');
+
+  setTimeout(() => {
+    toast.classList.remove('translate-y-0', 'opacity-100');
+    toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+  }, 3500);
 }
 
 function renderUsersTable() {
@@ -8925,6 +9076,9 @@ async function handleRevertRequestAction(reqId) {
 
 // Window global exports
 window.state = state;
+window.syncAndSaveAllData = syncAndSaveAllData;
+window.syncUsersNow = syncUsersNow;
+window.showToastNotification = showToastNotification;
 window.openOfficialFormPreview = openOfficialFormPreview;
 window.printOfficialFormModal = printOfficialFormModal;
 

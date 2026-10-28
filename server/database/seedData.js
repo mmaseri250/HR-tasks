@@ -66,21 +66,36 @@ function seedDatabase() {
       updated_at = datetime('now')
   `);
 
-  // 2. Users System: Admin and HR Manager users
-  // HR Department permissions: All permissions EXCEPT edit_attendance, edit_balances, and delete
-  run(`DELETE FROM users`);
+  // 2. Users System: Preserve all custom and existing users (NEVER DELETE)
   const hrPermissions = JSON.stringify([
     'requests', 'payslips', 'approvals', 'employees',
     'attendance', 'penalties', 'payroll', 'loans',
     'terminated_employees', 'notices', 'reports'
   ]);
 
-  run(`
-    INSERT INTO users (id, username, password, full_name, email, role, permissions, emp_id, is_active)
-    VALUES 
-    (1, 'admin', 'Jj123', 'مدير النظام (Admin)', 'admin@jalmajd.com', 'admin', '["all"]', NULL, 1),
-    (2, 'abdulmalik', 'Hr123', 'عبدالملك سعيد الشريف', 'abdulmalik.saeed@jalmajd.com', 'hr_manager', ?, NULL, 1)
-  `, [hrPermissions]);
+  const existingAdmin = get("SELECT id FROM users WHERE username = 'admin'");
+  if (!existingAdmin) {
+    run(`
+      INSERT INTO users (id, username, password, full_name, email, role, permissions, emp_id, is_active)
+      VALUES (1, 'admin', 'Jj123', 'مدير النظام (Admin)', 'admin@jalmajd.com', 'admin', '["all"]', NULL, 1)
+    `);
+  }
+
+  const existingHr = get("SELECT id FROM users WHERE username = 'abdulmalik'");
+  if (!existingHr) {
+    run(`
+      INSERT INTO users (id, username, password, full_name, email, role, permissions, emp_id, is_active)
+      VALUES (2, 'abdulmalik', 'Hr123', 'عبدالملك سعيد الشريف', 'abdulmalik.saeed@jalmajd.com', 'hr_manager', ?, NULL, 1)
+    `, [hrPermissions]);
+  }
+
+  // Restore any persisted users from disk backup
+  try {
+    const usersModule = require('../modules/users');
+    usersModule.restoreUsersFromDisk();
+  } catch (e) {
+    console.warn('Could not restore users during seed:', e.message);
+  }
 
   // 3. Departments: Exactly 15 departments matching the Excel file (No empty departments!)
   run(`DELETE FROM departments`);

@@ -315,6 +315,41 @@ app.delete('/api/users/:id', (req, res) => {
   }
 });
 
+app.post('/api/users/sync', (req, res) => {
+  try {
+    const list = req.body && Array.isArray(req.body.users) ? req.body.users : [];
+    const syncedUsers = usersModule.syncUsers(list);
+    res.json({
+      success: true,
+      message: 'تم حفظ ومزامنة كافة بيانات المستخدمين بنجاح',
+      count: syncedUsers.length,
+      data: syncedUsers
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/sync/all', (req, res) => {
+  try {
+    if (req.body && req.body.users && Array.isArray(req.body.users)) {
+      usersModule.syncUsers(req.body.users);
+    } else {
+      usersModule.persistUsersToDisk();
+    }
+    const currentUsers = usersModule.getAllUsers();
+    res.json({
+      success: true,
+      message: 'تمت مزامنة كافة بيانات النظام والمدخلات بنجاح دون أي فقدان للبيانات',
+      timestamp: new Date().toISOString(),
+      usersCount: currentUsers.length,
+      data: { users: currentUsers }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 /* =========================================================================
    2. DASHBOARD & SETTINGS ROUTES
    ========================================================================= */
