@@ -587,13 +587,16 @@ async function handleLoginSubmit(e) {
 
   if (res && res.success && res.user) {
     state.currentUser = res.user;
+    currentEssEmpId = res.user.emp_id ? Number(res.user.emp_id) : null;
   } else {
     // 2. Fallback local credentials check
     const match = state.users.find(usr => usr.username.toLowerCase() === u.toLowerCase() && usr.password === p);
     if (match) {
       state.currentUser = { ...match };
+      currentEssEmpId = match.emp_id ? Number(match.emp_id) : null;
     } else if (u.toLowerCase() === 'admin' && p === 'Jj123') {
       state.currentUser = { ...FALLBACK_DATA.users[0] };
+      currentEssEmpId = null;
     } else {
       if (alertBox) {
         alertText.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة';
@@ -1176,6 +1179,7 @@ function switchTab(tabId) {
       break;
     case 'forms':
       populateFormsEmpSelect();
+      populateFormsActiveEmpSelect();
       break;
     case 'data-exchange':
       break;
@@ -3975,15 +3979,57 @@ let currentEssEmpId = null;
 async function loadSelfService() {
   populateEssEmpSelector();
 
+  if (!state.currentUser) {
+    try {
+      const saved = localStorage.getItem('jm_hrms_user');
+      if (saved) state.currentUser = JSON.parse(saved);
+    } catch (e) {}
+  }
+
+  const curUser = state.currentUser || {};
+  const norm = (s) => (s || '').replace(/\s+/g, ' ').replace(/[إأآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').trim().toLowerCase();
+
   let emp = null;
-  if (currentEssEmpId) {
-    emp = (state.employees || []).find(e => e.id === Number(currentEssEmpId));
-  }
-  if (!emp && state.currentUser && state.currentUser.emp_id) {
-    emp = (state.employees || []).find(e => e.id === state.currentUser.emp_id);
-  }
-  if (!emp && state.employees && state.employees.length > 0) {
-    emp = state.employees[0];
+  const selContainer = document.getElementById('essEmpSelectorContainer');
+
+  if (curUser.role === 'employee') {
+    // For regular employees: ALWAYS lock strictly to their own identity
+    if (selContainer) selContainer.classList.add('hidden');
+
+    if (curUser.emp_id) {
+      emp = (state.employees || []).find(e => e.id === Number(curUser.emp_id));
+    }
+    if (!emp) {
+      emp = (state.employees || []).find(e => 
+        (curUser.emp_code && e.emp_code === curUser.emp_code) ||
+        (curUser.full_name && norm(e.full_name_ar) === norm(curUser.full_name)) ||
+        (curUser.username && (
+          norm(e.full_name_ar).includes(norm(curUser.username)) ||
+          norm(e.emp_code) === norm(curUser.username) ||
+          (curUser.username.includes('shama') && (norm(e.full_name_ar).includes('شامه') || e.emp_code === 'JM-1053'))
+        ))
+      );
+      if (emp) {
+        curUser.emp_id = emp.id;
+        state.currentUser.emp_id = emp.id;
+        try { localStorage.setItem('jm_hrms_user', JSON.stringify(state.currentUser)); } catch (e) {}
+      }
+    }
+    currentEssEmpId = emp ? emp.id : null;
+  } else {
+    // Admin / Manager / HR browsing ESS
+    if (selContainer) selContainer.classList.remove('hidden');
+
+    if (currentEssEmpId) {
+      emp = (state.employees || []).find(e => e.id === Number(currentEssEmpId));
+    }
+    if (!emp && curUser.emp_id) {
+      emp = (state.employees || []).find(e => e.id === Number(curUser.emp_id));
+    }
+    if (!emp && state.employees && state.employees.length > 0) {
+      emp = state.employees[0];
+    }
+    currentEssEmpId = emp ? emp.id : null;
   }
 
   const nameEl = document.getElementById('essEmployeeName');
@@ -3995,7 +4041,17 @@ async function loadSelfService() {
     currentEssEmpId = emp.id;
     if (nameEl) nameEl.textContent = emp.full_name_ar;
     if (titleEl) titleEl.textContent = `${emp.job_title_ar || 'موظف'} • ${emp.department_name_ar || 'شركة جوهرة المجد'}`;
-    const leaveBal = Number(emp.annual_leave_balance || 0);
+    
+    // Fetch live balance from SQLite API (Single Source of Truth)
+    let leaveBal = Number(emp.annual_leave_balance || 0);
+    try {
+      const bRes = await apiFetch(`/api/leaves/balances/${emp.id}`);
+      if (bRes && bRes.success && bRes.data && bRes.data.annual_remaining !== undefined) {
+        leaveBal = Number(bRes.data.annual_remaining);
+        emp.annual_leave_balance = leaveBal;
+      }
+    } catch (e) {}
+
     if (balEl) balEl.textContent = `${leaveBal.toLocaleString('en-US')} يوم`;
     if (selector) selector.value = emp.id;
 
@@ -7980,6 +8036,79 @@ async function deleteTask(id) {
    13. HR WORD FORMS GENERATOR (نماذج Word الرسمية الـ 6)
    ========================================================================= */
 
+let currentFormsActiveEmpId = null;
+
+function populateFormsActiveEmpSelect() {
+  const sel = document.getElementById('formsActiveEmpSelect');
+  if (!sel) return;
+  const emps = state.employees || [];
+  const curUser = state.currentUser || {};
+  let defaultEmpId = curUser.emp_id || currentEssEmpId || (emps[0] ? emps[0].id : null);
+  if (!currentFormsActiveEmpId && defaultEmpId) {
+    currentFormsActiveEmpId = defaultEmpId;
+  }
+
+  sel.innerHTML = emps.map(e => `
+    <option value="${e.id}" ${Number(e.id) === Number(currentFormsActiveEmpId) ? 'selected' : ''}>
+      ${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || 'موظف'})
+    </option>
+  `).join('');
+}
+
+function onFormsActiveEmpChanged(empId) {
+  currentFormsActiveEmpId = Number(empId);
+}
+
+function getEffectiveFormEmpId(empId = null) {
+  if (empId) return Number(empId);
+  if (currentFormsActiveEmpId) return Number(currentFormsActiveEmpId);
+  const curUser = state.currentUser || {};
+  if (curUser.emp_id) return Number(curUser.emp_id);
+  if (currentEssEmpId) return Number(currentEssEmpId);
+  const emps = state.employees || [];
+  return emps[0] ? emps[0].id : 14632;
+}
+
+function downloadWordFormDirect(formType, empId = null) {
+  const targetEmpId = getEffectiveFormEmpId(empId);
+  window.open(`/api/forms/word/${formType}?emp_id=${targetEmpId}`, '_blank');
+}
+
+function previewOfficialHtmlFormDirect(formType, empId = null) {
+  const targetEmpId = getEffectiveFormEmpId(empId);
+  let url = '';
+  switch (formType) {
+    case 'absence_penalty':
+      url = `/api/forms/html/absence-penalty/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    case 'instruction_penalty':
+      url = `/api/forms/html/instruction-penalty/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    case 'clearance':
+      url = `/api/forms/html/clearance/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    case 'contract_non_renewal':
+      url = `/api/forms/html/contract-non-renewal/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    case 'penalty_procedure':
+      url = `/api/forms/html/penalty/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    case 'resignation_termination':
+      url = `/api/forms/html/resignation/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    case 'leave_request':
+      url = `/api/forms/html/leave/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    default:
+      url = `/api/forms/html/leave/${targetEmpId}?emp_id=${targetEmpId}`;
+  }
+  window.open(url, '_blank');
+}
+
+function downloadRawTemplate(formNum) {
+  window.open(`/api/forms/raw-template/${formNum}`, '_blank');
+}
+
 function populateFormsEmpSelect() {
   const sel = document.getElementById('wordFormEmpId');
   if (!sel) return;
@@ -8286,6 +8415,11 @@ window.deleteTask = deleteTask;
 
 window.populateFormsEmpSelect = populateFormsEmpSelect;
 window.openFormModal = openFormModal;
+window.downloadWordFormDirect = downloadWordFormDirect;
+window.previewOfficialHtmlFormDirect = previewOfficialHtmlFormDirect;
+window.downloadRawTemplate = downloadRawTemplate;
+window.onFormsActiveEmpChanged = onFormsActiveEmpChanged;
+window.populateFormsActiveEmpSelect = populateFormsActiveEmpSelect;
 window.onWordFormEmpChanged = onWordFormEmpChanged;
 window.handleGenerateWordFormSubmit = handleGenerateWordFormSubmit;
 

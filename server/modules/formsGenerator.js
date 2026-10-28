@@ -741,19 +741,336 @@ function buildWorkMissionDoc(emp, params = {}) {
   });
 }
 
+// 7. نموذج إشعار عقوبة غياب (الملف رقم 1 - مادة 1/11)
+function buildAbsencePenaltyNoticeDoc(emp, params = {}) {
+  const titleAr = 'إشعار عقوبة غياب عن العمل';
+  const titleEn = 'Absence Penalty Notice';
+  const curDate = params.date || new Date().toISOString().split('T')[0];
+  const days = params.days || 1;
+  const incidentDate = params.incident_date || curDate;
+  const deductionDays = params.deduction_days || days;
+
+  const infoTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: getTableBorders(),
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'التاريخ / Date:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: curDate, font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الرقم الوظيفي / Emp#:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: emp.emp_code, font: 'Arial', size: 18, bold: true })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الاسم / Name:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: emp.full_name_ar, font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الإدارة / Department:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: emp.department_name_ar || 'شركة جوهرة المجد', font: 'Arial', size: 18 })] })] })
+        ]
+      })
+    ]
+  });
+
+  return new Document({
+    sections: [{
+      properties: { rtl: true },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        infoTable,
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [
+          new TextRun({ text: `بالإشارة إلى تقرير إدارتكم الوارد إلينا بشأن غيابكم عن العمل لمدة (${days}) يوم بتاريخ ${incidentDate} دون تقديم أي إذن مسبق أو عذر مقبول، نود إحاطتكم بما يلي:`, font: 'Arial', size: 20 })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [
+          new TextRun({ text: 'استنادًا إلى لائحة العمل، المنصوص عليه في المادة (1/11) الواردة في الفصل الثامن عشر من جدول المخالفات والجزاءات، والتي تنص على أن:', font: 'Arial', size: 20, bold: true })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [
+          new TextRun({ text: `“الغياب دون إذن كتابي أو عذر مقبول لمدة يوم واحد خلال السنة العقدية الواحدة (للمرة الأولى)، فإن الجزاء الوارد فيها خصم (${deductionDays}) يوم بالإضافة إلى خصم أجر مدة الغياب.”`, font: 'Arial', size: 20, italics: true, color: COMPANY_BRAND.primaryColor })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 150 }, children: [
+          new TextRun({ text: 'وبناءً على ذلك، فقد تقرر تطبيق الجزاء المنصوص عليه أعلاه بحقكم، مع التأكيد على ضرورة عدم تكرار هذا السلوك مستقبلاً، وفي حال تكراره سيتم اتخاذ إجراءات أشد وفق ما تقضي به الأنظمة واللوائح المعمول بها.', font: 'Arial', size: 20 })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 50 }, children: [
+          new TextRun({ text: `With reference to the report submitted by your department regarding your absence from work for (${days}) day(s) on ${incidentDate} without prior authorization or an acceptable justification, please be informed that pursuant to Article (1/11) of the Work Regulations, the stated penalty has been applied.`, font: 'Arial', size: 16, italics: true, color: '555555' })
+        ] }),
+        createSignaturesTable('عبدالملك سعيد الشريف (مدير الموارد البشرية)')
+      ]
+    }]
+  });
+}
+
+// 8. نموذج إشعار عقوبة عدم اتباع التعليمات (الملف رقم 2 - مادة 1/15)
+function buildInstructionPenaltyNoticeDoc(emp, params = {}) {
+  const titleAr = 'إشعار عقوبة مخالفة الأوامر والتعليمات';
+  const titleEn = 'Work Instructions Violation Penalty Notice';
+  const curDate = params.date || new Date().toISOString().split('T')[0];
+  const incidentDate = params.incident_date || curDate;
+  const deduction = params.deduction || 'نصف يوم';
+
+  const infoTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: getTableBorders(),
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'التاريخ / Date:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: curDate, font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الرقم الوظيفي / Emp#:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: emp.emp_code, font: 'Arial', size: 18, bold: true })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الاسم / Name:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: emp.full_name_ar, font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 20, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الإدارة / Department:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: emp.department_name_ar || 'شركة جوهرة المجد', font: 'Arial', size: 18 })] })] })
+        ]
+      })
+    ]
+  });
+
+  return new Document({
+    sections: [{
+      properties: { rtl: true },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        infoTable,
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [
+          new TextRun({ text: `بالإشارة إلى تقرير إدارتكم الوارد إلينا بشأن عدم اتباعكم للتعليمات الخاصة بالعمل وذلك في بتاريخ ${incidentDate}م، نود إحاطتكم بما يلي:`, font: 'Arial', size: 20 })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [
+          new TextRun({ text: 'استنادًا إلى لائحة العمل، المنصوص عليه في المادة (1/15) الواردة في الفصل الثامن عشر من جدول المخالفات المتعلقة بتنظيم العمل، والتي تنص على أن:', font: 'Arial', size: 20, bold: true })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [
+          new TextRun({ text: `“عدم إطاعة الأوامر العادية الخاصة بالعمل أو عدم تنفيذ التعليمات الخاصة بالعمل والمعلقة في مكان ظاهر (للمرة الأولى)، فإن الجزاء الوارد فيها خصم (${deduction}) من الأجر اليومي.”`, font: 'Arial', size: 20, italics: true, color: COMPANY_BRAND.primaryColor })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 150 }, children: [
+          new TextRun({ text: 'وبناءً على ذلك، فقد تقرر تطبيق الجزاء المنصوص عليه أعلاه بحقكم، مع التأكيد على ضرورة عدم تكرار هذا السلوك مستقبلاً، وفي حال تكراره سيتم اتخاذ إجراءات أشد وفق ما تقضي به الأنظمة واللوائح المعمول بها.', font: 'Arial', size: 20 })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 50 }, children: [
+          new TextRun({ text: `In accordance with Article (1/15) of Chapter 18 of the Work Regulations, failure to comply with ordinary work instructions results in a deduction from the daily wage. Stricter measures will apply in case of recurrence.`, font: 'Arial', size: 16, italics: true, color: '555555' })
+        ] }),
+        createSignaturesTable('عبدالملك سعيد الشريف (مدير الموارد البشرية)')
+      ]
+    }]
+  });
+}
+
+// 9. نموذج إخلاء طرف موظف (الملف رقم 3 - JM-HR-F-005)
+function buildClearanceDoc(emp, params = {}) {
+  const titleAr = 'نموذج إخلاء طرف موظف (JM-HR-F-005)';
+  const titleEn = 'Employee Clearance Form';
+  const curDate = params.date || new Date().toISOString().split('T')[0];
+  const lastWorkingDay = params.last_working_day || curDate;
+
+  const clearanceTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: getTableBorders(),
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الإدارة التابع لها (المدير المباشر):', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: 'تسليم كافة المهام والملفات والمفاتيح والعهد المكتبية - [معتمد ومكتمل ✓]', font: 'Arial', size: 18 })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'إدارة تقنية المعلومات (IT):', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: 'إلغاء البريد، استلام الأجهزة الإلكترونية وإيقاف كافة الصلاحيات - [معتمد ومكتمل ✓]', font: 'Arial', size: 18 })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الشؤون الإدارية والخدمات:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: 'استلام بطاقة العمل، تسوية التأمين الطبي، استلام عهد السيارات والسكن - [معتمد ومكتمل ✓]', font: 'Arial', size: 18 })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الإدارة المالية:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: 'تسوية السلف وإغلاق العهد النقدية ولا توجد مديونيات - [معتمد ومكتمل ✓]', font: 'Arial', size: 18 })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 30, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الموارد البشرية:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 70, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: 'إسقاط التأمينات GOSI، التوثيق عبر قوى وتصفية المستحقات - [معتمد ومكتمل ✓]', font: 'Arial', size: 18 })] })] })
+        ]
+      })
+    ]
+  });
+
+  return new Document({
+    sections: [{
+      properties: { rtl: true },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [new TextRun({ text: '1. بيانات الموظف المنتهية خدماته', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        createEmployeeInfoTable(emp),
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [new TextRun({ text: '2. اعتمادات الأقسام والإدارات المعنية', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        clearanceTable,
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [new TextRun({ text: '3. إقرار المخالصة النهائية واعتماد الإدارة العليا', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        new Paragraph({ spacing: { before: 50, after: 150 }, children: [
+          new TextRun({ text: `أقر أنا الموظف/ ${emp.full_name_ar} بأنني قمت بتسليم كافة العهد والوثائق والأجهزة العائدة للشركة، واستلمت كامل مستحقاتي النظامية عن فترة عملي، ويعد هذا إخلاء طرف نهائي.`, font: 'Arial', size: 18, italics: true })
+        ] }),
+        createSignaturesTable('عبدالرحمن صالح القحطاني (الرئيس التنفيذي)')
+      ]
+    }]
+  });
+}
+
+// 10. نموذج إشعار عدم رغبة في تجديد العقد (الملف رقم 4 - مادة 55/37)
+function buildContractNonRenewalDoc(emp, params = {}) {
+  const titleAr = 'خطاب إشعار بعدم الرغبة في تجديد عقد العمل';
+  const titleEn = 'Notice of Non-Renewal of Employment Contract';
+  const curDate = params.date || new Date().toISOString().split('T')[0];
+  const contractStart = params.contract_start || emp.join_date || '2025-01-01';
+  const contractEnd = params.contract_end || emp.contract_end_date || '2026-10-31';
+  const lastWorkingDay = params.last_working_day || contractEnd;
+
+  return new Document({
+    sections: [{
+      properties: { rtl: true },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        createEmployeeInfoTable(emp),
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [
+          new TextRun({ text: `بالإشارة الى الموضوع أعلاه وإلى عقد العمل المبرم بيننا والذي يبدأ من تاريخ ${contractStart}م وينتهي في ${contractEnd}م يتجدد لمدة أو مدد مماثلة ما لم يشعر أحد الطرفين الأخر خطياً بعدم رغبته في التجديد قبل (30) يوماً من تاريخ انتهاء العقد.`, font: 'Arial', size: 20 })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [
+          new TextRun({ text: 'واستناداً لأحكام المادة (55) من نظام العمل السعودي والتي نصت على أن: “ينتهي عقد العمل المحدد المدة بانقضاء مدته، فإذا استمر طرفاه في تنفيذه عدّ العقد مجدداً لمدة غير محددة” مع مراعاة ما نصت عليه المادة (37) من هذا النظام بالنسبة إلى غير السعوديين.', font: 'Arial', size: 20, bold: true })
+        ] }),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [
+          new TextRun({ text: `عليه نفيدكم بعدم رغبة الشركة في تجديد العقد معكم علماً بان اخر يوم عمل لكم سيكون بنهاية عقد العمل في تاريخ ${lastWorkingDay}م. نأمل منكم التنسيق فيما يخص إنهاء كافة الاجراءات الخاصة بإخلاء طرفكم وتسليم ما بعهدتكم من متعلقات حسب النظام، مع تمنياتنا لكم بالتوفيق.`, font: 'Arial', size: 20, color: COMPANY_BRAND.primaryColor })
+        ] }),
+        createSignaturesTable('عبدالملك سعيد الشريف (مدير الموارد البشرية)')
+      ]
+    }]
+  });
+}
+
+// 11. نموذج إجراء جزائي (الملف رقم 5 - JM-HR-F-002)
+function buildPenaltyProcedureDoc(emp, params = {}) {
+  const titleAr = 'نموذج إجراء جزائي (JM-HR-F-002)';
+  const titleEn = 'Penalty Procedure Form';
+  const curDate = params.date || new Date().toISOString().split('T')[0];
+
+  const penaltyTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: getTableBorders(),
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'وصف المخالفة:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 75, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: params.violation_text || 'مخالفة أحكام لائحة العمل المعتمدة وتنظيمات العمل الداخلية.', font: 'Arial', size: 18 })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'الإجراء الجزائي المقرر:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 75, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: params.penalty_text || 'خصم من الراتب وفق جدول الجزاءات ولائحة العمل.', font: 'Arial', size: 18, bold: true, color: COMPANY_BRAND.primaryColor })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'تكرار المخالفة:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 75, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: params.repetition_level || 'المرة الأولى', font: 'Arial', size: 18 })] })] })
+        ]
+      })
+    ]
+  });
+
+  return new Document({
+    sections: [{
+      properties: { rtl: true },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [new TextRun({ text: 'بيانات الموظف (Employee Data)', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        createEmployeeInfoTable(emp),
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [new TextRun({ text: 'تفاصيل المخالفة والإجراء التأديبي', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        penaltyTable,
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [new TextRun({ text: 'الاعتمادات وسلسلة التوقيعات', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        createSignaturesTable(emp.manager_name_ar)
+      ]
+    }]
+  });
+}
+
+// 12. نموذج الاستقالة وإنهاء عقد العمل (الملف رقم 6 - JM-HR-F-003)
+function buildResignationTerminationDoc(emp, params = {}) {
+  const titleAr = 'نموذج الاستقالة وإنهاء عقد العمل (JM-HR-F-003)';
+  const titleEn = 'Resignation & Employment Termination Form';
+  const curDate = params.date || new Date().toISOString().split('T')[0];
+
+  const termTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: getTableBorders(),
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'نوع الطلب / الإنهاء:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 75, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: params.termination_type || 'استقالة بموجب المادة 85 من نظام العمل', font: 'Arial', size: 18, bold: true })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'آخر يوم عمل وتاريخ الانتهاء:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 75, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: params.last_working_day || curDate, font: 'Arial', size: 18 })] })] })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({ width: { size: 25, type: WidthType.PERCENTAGE }, shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' }, children: [new Paragraph({ children: [new TextRun({ text: 'توثيق منصة قوى والأنظمة:', font: 'Arial', size: 18, bold: true })] })] }),
+          new TableCell({ width: { size: 75, type: WidthType.PERCENTAGE }, children: [new Paragraph({ children: [new TextRun({ text: 'تم التحقق والرفع على منصة قوى والتأمينات الاجتماعية GOSI [نعم ✓]', font: 'Arial', size: 18, bold: true, color: COMPANY_BRAND.primaryColor })] })] })
+        ]
+      })
+    ]
+  });
+
+  return new Document({
+    sections: [{
+      properties: { rtl: true },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        new Paragraph({ spacing: { before: 100, after: 100 }, children: [new TextRun({ text: '1. بيانات الموظف (Employee Information)', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        createEmployeeInfoTable(emp),
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [new TextRun({ text: '2. معلومات انتهاء الخدمة ومسوغات الطلب', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        termTable,
+        new Paragraph({ spacing: { before: 200, after: 100 }, children: [new TextRun({ text: '3. إقرار الموظف وتوصية المدير واعتماد الموارد البشرية', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        createSignaturesTable(emp.manager_name_ar)
+      ]
+    }]
+  });
+}
+
 /**
  * Main generator dispatcher
  */
 async function generateWordForm(formType, empId, params = {}) {
-  const emp = get(`
+  let emp = null;
+  const baseSql = `
     SELECT e.*, d.name_ar AS department_name_ar, b.name_ar AS branch_name_ar,
            m.full_name_ar AS manager_name_ar
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN branches b ON e.branch_id = b.id
     LEFT JOIN employees m ON e.manager_id = m.id
-    WHERE e.id = ?
-  `, [empId]);
+  `;
+
+  if (empId && !isNaN(Number(empId))) {
+    emp = get(`${baseSql} WHERE e.id = ?`, [Number(empId)]);
+  }
+  if (!emp && empId && typeof empId === 'string') {
+    emp = get(`${baseSql} WHERE e.emp_code = ?`, [empId.trim()]);
+  }
+  if (!emp && params.emp_code) {
+    emp = get(`${baseSql} WHERE e.emp_code = ?`, [params.emp_code.trim()]);
+  }
+  if (!emp) {
+    emp = get(`${baseSql} ORDER BY e.id ASC LIMIT 1`);
+  }
 
   if (!emp) {
     throw new Error('الموظف غير موجود بالنظام');
@@ -766,6 +1083,34 @@ async function generateWordForm(formType, empId, params = {}) {
     case 'leave_request':
       doc = buildLeaveRequestDoc(emp, params);
       filename = `طلب_إجازة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'absence_penalty':
+    case 'penalty_absence':
+      doc = buildAbsencePenaltyNoticeDoc(emp, params);
+      filename = `إشعار_عقوبة_غياب_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'instruction_penalty':
+    case 'penalty_instructions':
+      doc = buildInstructionPenaltyNoticeDoc(emp, params);
+      filename = `إشعار_عقوبة_مخالفة_التعليمات_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'clearance':
+    case 'clearance_form':
+      doc = buildClearanceDoc(emp, params);
+      filename = `إخلاء_طرف_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'contract_non_renewal':
+      doc = buildContractNonRenewalDoc(emp, params);
+      filename = `إشعار_عدم_تجديد_عقد_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'penalty_procedure':
+      doc = buildPenaltyProcedureDoc(emp, params);
+      filename = `إجراء_جزائي_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'resignation_termination':
+    case 'termination_request':
+      doc = buildResignationTerminationDoc(emp, params);
+      filename = `طلب_إنهاء_خدمة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
       break;
     case 'loan_advance':
       doc = buildAdvanceRequestDoc(emp, params);

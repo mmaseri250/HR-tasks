@@ -1025,91 +1025,350 @@
       </section>
 
       <!-- =====================================================================
-           VIEW 2.03: HR WORD FORMS GENERATOR (نماذج الموارد البشرية Word)
+           VIEW 2.03: HR WORD FORMS GENERATOR (نماذج الموارد البشرية Word المحدثة)
            ===================================================================== -->
       <section id="view-forms" class="space-y-6 hidden">
         <div class="card-elevated p-6">
-          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-4">
-            <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl">
-              <i class="fa-solid fa-file-word"></i>
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#700c14] to-[#8B0000] text-amber-300 flex items-center justify-center text-2xl shadow-md border border-amber-400/30">
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-black text-slate-900">نماذج الموارد البشرية الرسمية المعتمدة لشركة جوهرة المجد</h2>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">تحديث واستبدال النماذج الرسمية السبعة (Word .docx & HTML) والربط التلقائي بملف الموظف النشط وسير الموافقات الإلكتروني</p>
+              </div>
             </div>
-            <div>
-              <h2 class="text-xl font-black text-slate-900">نماذج الموارد البشرية الرسمية (Word .docx)</h2>
-              <p class="text-xs text-slate-500 font-semibold mt-0.5">توليد وتصدير النماذج الإدارية المعتمدة بتعبئة تلقائية فورية لبيانات الموظف والشركة</p>
+
+            <!-- Active Employee Selector for Auto-population -->
+            <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-200 text-xs">
+              <span class="font-bold text-slate-700 whitespace-nowrap"><i class="fa-solid fa-user-check text-[#700c14] ml-1"></i>تطبيق النموذج على الموظف:</span>
+              <select id="formsActiveEmpSelect" onchange="onFormsActiveEmpChanged(this.value)" class="rounded-xl border border-slate-300 bg-white font-bold text-xs py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#700c14]">
+                <!-- Populated dynamically via JS -->
+              </select>
             </div>
           </div>
 
-          <!-- 6 Cards Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-            <!-- 1. Leave Form -->
-            <div class="border border-slate-200 rounded-2xl p-5 hover:border-brand hover:shadow-md transition bg-gradient-to-br from-white to-slate-50">
-              <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center text-xl mb-3">
-                <i class="fa-solid fa-calendar-check"></i>
+          <!-- Section A: The 7 Core Official Company Forms (النماذج الرسمية السبعة المعتمدة) -->
+          <div class="mt-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-6 rounded-full bg-[#700c14]"></span>
+                <h3 class="text-sm font-black text-slate-900">خريطة النماذج المعتمدة السبعة ومسارات الربط البرمجي</h3>
               </div>
-              <h3 class="text-sm font-black text-slate-800">نموذج طلب إجازة</h3>
-              <p class="text-xs text-slate-500 mt-1 leading-relaxed">يتضمن رصيد الإجازة وتاريخ البداية والنهاية واسم البديل وموافقة المدير والموارد البشرية.</p>
-              <button onclick="openFormModal('leave_request', 'نموذج طلب إجازة')" class="mt-4 w-full bg-slate-900 hover:bg-brand text-white text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-arrow-down"></i> تعبئة وتوليد المستند (.docx)
-              </button>
+              <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                <i class="fa-solid fa-circle-check"></i> متزامنة مع ملف الموظف النشط والتوقيع الإلكتروني
+              </span>
             </div>
 
-            <!-- 2. Advance Loan Form -->
-            <div class="border border-slate-200 rounded-2xl p-5 hover:border-brand hover:shadow-md transition bg-gradient-to-br from-white to-slate-50">
-              <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center text-xl mb-3">
-                <i class="fa-solid fa-hand-holding-dollar"></i>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              
+              <!-- 1. نموذج إشعار عقوبة غياب (الملف رقم 1) -->
+              <div class="border-2 border-rose-100 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-gradient-to-br from-white via-rose-50/20 to-slate-50 relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full">الملف رقم 1 • مادة 1/11</span>
+                    <span class="text-xs font-bold text-slate-400">JM-HR-F-001/ABS</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg">
+                      <i class="fa-solid fa-user-xmark"></i>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900">نموذج إشعار عقوبة غياب</h4>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج القديم للغياب به، استناداً للمادة (1/11) بالفصل 18 مع سحب بيانات الموظف والغياب والخصم تلقائياً.</p>
+                  <div class="text-[11px] font-bold text-rose-950 bg-rose-50/80 p-2.5 rounded-xl border border-rose-200/60 mb-4 space-y-1">
+                    <div><i class="fa-solid fa-arrow-right-arrow-left text-rose-600 ml-1"></i><strong>المسار البرمجي:</strong> المخالفات والجزاءات - قسم غياب الموظفين</div>
+                    <div><i class="fa-solid fa-signature text-rose-600 ml-1"></i><strong>الاعتماد:</strong> الموارد البشرية وإقرار الموظف</div>
+                  </div>
+                </div>
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('absence_penalty')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> تنزيل Word
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('absence_penalty')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="downloadRawTemplate('1')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
+                      <i class="fa-solid fa-download"></i> النموذج الأصلي
+                    </button>
+                    <button onclick="switchTab('penalties')" class="w-1/2 bg-rose-50 hover:bg-rose-100 text-rose-800 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح صفحة الغياب
+                    </button>
+                  </div>
+                </div>
               </div>
-              <h3 class="text-sm font-black text-slate-800">نموذج طلب سلفة</h3>
-              <p class="text-xs text-slate-500 mt-1 leading-relaxed">تحديد مبلغ السلفة وخطة التقسيط الشهري وإقرار الاستقطاع وسلسلة الموافقات.</p>
-              <button onclick="openFormModal('loan_advance', 'نموذج طلب سلفة')" class="mt-4 w-full bg-slate-900 hover:bg-brand text-white text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-arrow-down"></i> تعبئة وتوليد المستند (.docx)
-              </button>
-            </div>
 
-            <!-- 3. Salary Certificate Form -->
-            <div class="border border-slate-200 rounded-2xl p-5 hover:border-brand hover:shadow-md transition bg-gradient-to-br from-white to-slate-50">
-              <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-xl mb-3">
-                <i class="fa-solid fa-award"></i>
+              <!-- 2. نموذج إشعار عقوبة عدم اتباع التعليمات (الملف رقم 2) -->
+              <div class="border-2 border-amber-100 rounded-3xl p-5 hover:border-amber-600 hover:shadow-lg transition bg-gradient-to-br from-white via-amber-50/20 to-slate-50 relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">الملف رقم 2 • مادة 1/15</span>
+                    <span class="text-xs font-bold text-slate-400">JM-HR-F-002/INS</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900">إشعار مخالفة الأوامر والتعليمات</h4>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج القديم، استناداً للمادة (1/15) بالفصل 18 لمخالفات تنظيم العمل مع تعبئة تلقائية فورية للواقعة والجزاء.</p>
+                  <div class="text-[11px] font-bold text-amber-950 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200/60 mb-4 space-y-1">
+                    <div><i class="fa-solid fa-arrow-right-arrow-left text-amber-600 ml-1"></i><strong>المسار البرمجي:</strong> المخالفات - تنظيم العمل ومخالفة الأوامر</div>
+                    <div><i class="fa-solid fa-signature text-amber-600 ml-1"></i><strong>الاعتماد:</strong> الموارد البشرية وإقرار الموظف</div>
+                  </div>
+                </div>
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('instruction_penalty')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> تنزيل Word
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('instruction_penalty')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="downloadRawTemplate('2')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
+                      <i class="fa-solid fa-download"></i> النموذج الأصلي
+                    </button>
+                    <button onclick="switchTab('penalties')" class="w-1/2 bg-amber-50 hover:bg-amber-100 text-amber-800 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح قسم الأوامر
+                    </button>
+                  </div>
+                </div>
               </div>
-              <h3 class="text-sm font-black text-slate-800">نموذج تعريف بالراتب</h3>
-              <p class="text-xs text-slate-500 mt-1 leading-relaxed">خطاب رسمي معتمد موجه للبنوك أو الجهات الحكومية بمفردات الراتب والبدلات.</p>
-              <button onclick="openFormModal('salary_cert', 'نموذج تعريف بالراتب')" class="mt-4 w-full bg-slate-900 hover:bg-brand text-white text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-arrow-down"></i> تعبئة وتوليد المستند (.docx)
-              </button>
-            </div>
 
-            <!-- 4. Return from Leave Form -->
-            <div class="border border-slate-200 rounded-2xl p-5 hover:border-brand hover:shadow-md transition bg-gradient-to-br from-white to-slate-50">
-              <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center text-xl mb-3">
-                <i class="fa-solid fa-door-open"></i>
+              <!-- 3. نموذج إخلاء طرف موظف (الملف رقم 3) -->
+              <div class="border-2 border-teal-100 rounded-3xl p-5 hover:border-teal-600 hover:shadow-lg transition bg-gradient-to-br from-white via-teal-50/20 to-slate-50 relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full">الملف رقم 3 • نموذج معتمد</span>
+                    <span class="text-xs font-bold text-slate-400">JM-HR-F-005</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-lg">
+                      <i class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900">نموذج إخلاء طرف موظف</h4>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج القديم، مع تفعيل اعتمادات الأقسام الخمسة كاملة (المدير، IT، الخدمات، المالية، الموارد) واعتماد الإدارة العليا.</p>
+                  <div class="text-[11px] font-bold text-teal-950 bg-teal-50/80 p-2.5 rounded-xl border border-teal-200/60 mb-4 space-y-1">
+                    <div><i class="fa-solid fa-arrow-right-arrow-left text-teal-600 ml-1"></i><strong>المسار البرمجي:</strong> إنهاء الخدمة / المخالصات النهائية</div>
+                    <div><i class="fa-solid fa-signature text-teal-600 ml-1"></i><strong>الاعتماد:</strong> الأقسام الـ 5 + الرئيس التنفيذي</div>
+                  </div>
+                </div>
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('clearance')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> تنزيل Word
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('clearance')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="downloadRawTemplate('3')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
+                      <i class="fa-solid fa-download"></i> النموذج الأصلي
+                    </button>
+                    <button onclick="switchTab('terminated')" class="w-1/2 bg-teal-50 hover:bg-teal-100 text-teal-800 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح المخالصات
+                    </button>
+                  </div>
+                </div>
               </div>
-              <h3 class="text-sm font-black text-slate-800">نموذج مباشرة بعد إجازة</h3>
-              <p class="text-xs text-slate-500 mt-1 leading-relaxed">توثيق تاريخ المباشرة الفعلي ومطابقته مع الإجازة المنتهية واعتماد الرئيس المباشر.</p>
-              <button onclick="openFormModal('return_from_leave', 'نموذج مباشرة بعد إجازة')" class="mt-4 w-full bg-slate-900 hover:bg-brand text-white text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-arrow-down"></i> تعبئة وتوليد المستند (.docx)
-              </button>
-            </div>
 
-            <!-- 5. Permission Request Form -->
-            <div class="border border-slate-200 rounded-2xl p-5 hover:border-brand hover:shadow-md transition bg-gradient-to-br from-white to-slate-50">
-              <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center text-xl mb-3">
-                <i class="fa-solid fa-person-walking-arrow-right"></i>
+              <!-- 4. نموذج خطاب عدم رغبة في تجديد العقد (الملف رقم 4) -->
+              <div class="border-2 border-orange-100 rounded-3xl p-5 hover:border-orange-600 hover:shadow-lg transition bg-gradient-to-br from-white via-orange-50/20 to-slate-50 relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-orange-800 px-2.5 py-0.5 rounded-full">الملف رقم 4 • مادة 55 / 37</span>
+                    <span class="text-xs font-bold text-slate-400">JM-HR-F-004/CNR</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center text-lg">
+                      <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900">إشعار عدم رغبة في تجديد العقد</h4>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">اعتماد النموذج الرسمي لإشعار الموظف قبل 30 يوماً من انتهاء العقد المحدد المدة وفق المادة 55 ومراعاة المادة 37 للوافدين.</p>
+                  <div class="text-[11px] font-bold text-orange-950 bg-orange-50/80 p-2.5 rounded-xl border border-orange-200/60 mb-4 space-y-1">
+                    <div><i class="fa-solid fa-arrow-right-arrow-left text-orange-600 ml-1"></i><strong>المسار البرمجي:</strong> العقود / إنهاء العقود محددة المدة</div>
+                    <div><i class="fa-solid fa-signature text-orange-600 ml-1"></i><strong>الاعتماد:</strong> الموارد البشرية وإشعار الموظف</div>
+                  </div>
+                </div>
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('contract_non_renewal')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> تنزيل Word
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('contract_non_renewal')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="downloadRawTemplate('4')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
+                      <i class="fa-solid fa-download"></i> النموذج الأصلي
+                    </button>
+                    <button onclick="switchTab('compliance')" class="w-1/2 bg-orange-50 hover:bg-orange-100 text-orange-800 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> تنبيهات العقود
+                    </button>
+                  </div>
+                </div>
               </div>
-              <h3 class="text-sm font-black text-slate-800">نموذج استئذان</h3>
-              <p class="text-xs text-slate-500 mt-1 leading-relaxed">طلب خروج مؤقت محدد بالساعات والسبب وموافقة المدير والموارد البشرية.</p>
-              <button onclick="openFormModal('permission_request', 'نموذج استئذان')" class="mt-4 w-full bg-slate-900 hover:bg-brand text-white text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-arrow-down"></i> تعبئة وتوليد المستند (.docx)
-              </button>
-            </div>
 
-            <!-- 6. Work Mission Form -->
-            <div class="border border-slate-200 rounded-2xl p-5 hover:border-brand hover:shadow-md transition bg-gradient-to-br from-white to-slate-50">
-              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-xl mb-3">
-                <i class="fa-solid fa-briefcase"></i>
+              <!-- 5. نموذج إجراء جزائي (الملف رقم 5) -->
+              <div class="border-2 border-purple-100 rounded-3xl p-5 hover:border-purple-600 hover:shadow-lg transition bg-gradient-to-br from-white via-purple-50/20 to-slate-50 relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">الملف رقم 5 • السجل الانضباطي</span>
+                    <span class="text-xs font-bold text-slate-400">JM-HR-F-002</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg">
+                      <i class="fa-solid fa-gavel"></i>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900">نموذج إجراء جزائي</h4>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج العام للجزاءات وتحديثه لتوثيق المخالفات وتكرارها، مع توزيع النسخ لشؤون الموظفين وملف الموظف والرواتب.</p>
+                  <div class="text-[11px] font-bold text-purple-950 bg-purple-50/80 p-2.5 rounded-xl border border-purple-200/60 mb-4 space-y-1">
+                    <div><i class="fa-solid fa-arrow-right-arrow-left text-purple-600 ml-1"></i><strong>المسار البرمجي:</strong> السجل الانضباطي / الملف الجزائي للموظف</div>
+                    <div><i class="fa-solid fa-signature text-purple-600 ml-1"></i><strong>الاعتماد:</strong> مدير الإدارة ومدير الموارد البشرية</div>
+                  </div>
+                </div>
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('penalty_procedure')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> تنزيل Word
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('penalty_procedure')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="downloadRawTemplate('5')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
+                      <i class="fa-solid fa-download"></i> النموذج الأصلي
+                    </button>
+                    <button onclick="switchTab('penalties')" class="w-1/2 bg-purple-50 hover:bg-purple-100 text-purple-800 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح السجل الجزائي
+                    </button>
+                  </div>
+                </div>
               </div>
-              <h3 class="text-sm font-black text-slate-800">نموذج مهمة عمل</h3>
-              <p class="text-xs text-slate-500 mt-1 leading-relaxed">أمر تكليف رسمي بمهمة ميدانية أو انتداب خارجي مع تحديد المسار والبدلات.</p>
-              <button onclick="openFormModal('work_mission', 'نموذج مهمة عمل')" class="mt-4 w-full bg-slate-900 hover:bg-brand text-white text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-file-arrow-down"></i> تعبئة وتوليد المستند (.docx)
+
+              <!-- 6. نموذج طلب إنهاء خدمة واستقالة (الملف رقم 6) -->
+              <div class="border-2 border-indigo-100 rounded-3xl p-5 hover:border-indigo-600 hover:shadow-lg transition bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full">الملف رقم 6 • طلبات الموظفين</span>
+                    <span class="text-xs font-bold text-slate-400">JM-HR-F-003</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg">
+                      <i class="fa-solid fa-door-closed"></i>
+                    </div>
+                    <h4 class="text-sm font-black text-slate-900">نموذج طلب إنهاء خدمة واستقالة</h4>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال نموذج الاستقالة/الإنهاء ليشمل خيارات (استقالة، انتهاء عقد، إنهاء خدمة، عدم اجتياز التجربة) مع تدقيق قوى والتأديب.</p>
+                  <div class="text-[11px] font-bold text-indigo-950 bg-indigo-50/80 p-2.5 rounded-xl border border-indigo-200/60 mb-4 space-y-1">
+                    <div><i class="fa-solid fa-arrow-right-arrow-left text-indigo-600 ml-1"></i><strong>المسار البرمجي:</strong> طلبات الموظفين - قسم الاستقالات والإنهاء</div>
+                    <div><i class="fa-solid fa-signature text-indigo-600 ml-1"></i><strong>الاعتماد:</strong> المدير المباشر + مدير الموارد البشرية</div>
+                  </div>
+                </div>
+                <div class="space-y-2 pt-2 border-t border-slate-100">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('resignation_termination')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> تنزيل Word
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('resignation_termination')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="downloadRawTemplate('6')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
+                      <i class="fa-solid fa-download"></i> النموذج الأصلي
+                    </button>
+                    <button onclick="switchTab('requests')" class="w-1/2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح قسم الطلبات
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 7. نموذج طلب إجازة (الملف رقم 7) -->
+              <div class="border-2 border-emerald-100 rounded-3xl p-5 hover:border-emerald-600 hover:shadow-lg transition bg-gradient-to-br from-white via-emerald-50/20 to-slate-50 relative flex flex-col justify-between md:col-span-2 lg:col-span-3">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                      <span class="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">الملف رقم 7 • إجازات ورصيد الموارد</span>
+                      <span class="text-xs font-bold text-slate-400">JM-HR-F-001</span>
+                    </div>
+                    <div class="flex items-center gap-3 mb-2">
+                      <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-calendar-check"></i>
+                      </div>
+                      <h4 class="text-base font-black text-slate-900">نموذج طلب إجازة (سنوية، مرضية، بدون راتب)</h4>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed max-w-3xl">استبدال نموذج الإجازات الحالي بالكامل، وربطه مباشرة بصفحة تقديم الإجازات وبقاعدة بيانات احتساب الرصيد المتبقي الفعلي لدى الموارد البشرية مع البديل والتأشيرات والتذاكر.</p>
+                    <div class="flex flex-wrap items-center gap-4 text-[11px] font-bold text-emerald-950 mt-3">
+                      <span><i class="fa-solid fa-database text-emerald-600 ml-1"></i>الربط الحي: رصيد الإجازة المتبقي وتاريخ آخر عودة</span>
+                      <span><i class="fa-solid fa-signature text-emerald-600 ml-1"></i>الموافقات: اعتماد المدير المباشر + اعتماد مدير الموارد</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-col sm:flex-row md:flex-col gap-2 w-full md:w-56 shrink-0">
+                    <button onclick="downloadWordFormDirect('leave_request')" class="w-full bg-blue-900 hover:bg-blue-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> تنزيل Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('leave_request')" class="w-full bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة HTML
+                    </button>
+                    <div class="flex items-center gap-2">
+                      <button onclick="downloadRawTemplate('7')" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
+                        <i class="fa-solid fa-download"></i> النموذج الأصلي
+                      </button>
+                      <button onclick="switchTab('leaves')" class="w-1/2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> تقديم إجازة
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Section B: Additional Operational Forms -->
+          <div class="mt-8 border-t border-slate-200 pt-6">
+            <h3 class="text-sm font-black text-slate-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-folder-open text-slate-400"></i> النماذج الإدارية والتشغيلية الإضافية
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <button onclick="openFormModal('loan_advance', 'نموذج طلب سلفة مالية')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-brand hover:shadow-xs text-right transition">
+                <i class="fa-solid fa-hand-holding-dollar text-amber-600 block mb-1 text-base"></i>
+                <div class="text-xs font-bold text-slate-800">طلب سلفة مالية</div>
+                <div class="text-[10px] text-slate-400">تقسيط واقتطاع شهري</div>
+              </button>
+              <button onclick="openFormModal('salary_cert', 'نموذج تعريف بالراتب')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-brand hover:shadow-xs text-right transition">
+                <i class="fa-solid fa-award text-emerald-600 block mb-1 text-base"></i>
+                <div class="text-xs font-bold text-slate-800">شهادة تعريف بالراتب</div>
+                <div class="text-[10px] text-slate-400">موجه للبنوك والجهات</div>
+              </button>
+              <button onclick="openFormModal('return_from_leave', 'نموذج مباشرة بعد إجازة')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-brand hover:shadow-xs text-right transition">
+                <i class="fa-solid fa-door-open text-blue-600 block mb-1 text-base"></i>
+                <div class="text-xs font-bold text-slate-800">مباشرة بعد إجازة</div>
+                <div class="text-[10px] text-slate-400">توثيق تاريخ المباشرة</div>
+              </button>
+              <button onclick="openFormModal('permission_request', 'نموذج استئذان')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-brand hover:shadow-xs text-right transition">
+                <i class="fa-solid fa-person-walking-arrow-right text-purple-600 block mb-1 text-base"></i>
+                <div class="text-xs font-bold text-slate-800">طلب استئذان</div>
+                <div class="text-[10px] text-slate-400">خروج مؤقت بالساعات</div>
+              </button>
+              <button onclick="openFormModal('work_mission', 'نموذج مهمة عمل')" class="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-brand hover:shadow-xs text-right transition">
+                <i class="fa-solid fa-briefcase text-indigo-600 block mb-1 text-base"></i>
+                <div class="text-xs font-bold text-slate-800">تكليف بمهمة عمل</div>
+                <div class="text-[10px] text-slate-400">ميداني وانتداب رسمي</div>
               </button>
             </div>
           </div>
@@ -2188,7 +2447,7 @@
                 <span class="text-xs bg-white/20 text-amber-200 px-3 py-0.5 rounded-full font-bold border border-white/20">بوابة الخدمة الذاتية للموظفين (ESS)</span>
                 <h2 id="essEmployeeName" class="text-2xl font-black mt-1 text-white">سارة عبدالله الشهري</h2>
                 <p id="essEmployeeTitle" class="text-xs text-white/90">أخصائية موارد بشرية وعلاقات موظفين • شركة جوهرة المجد</p>
-                <div class="mt-2.5 flex items-center gap-2">
+                <div id="essEmpSelectorContainer" class="mt-2.5 flex items-center gap-2">
                   <span class="text-[11px] font-bold text-amber-200">عرض ملف الموظف:</span>
                   <select id="essEmpSelector" onchange="onEssEmpSelected(this.value)" class="rounded-xl border border-amber-400/40 bg-black/40 text-white font-bold text-xs py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400">
                     <!-- Populated dynamically via JS -->

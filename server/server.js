@@ -35,6 +35,13 @@ try {
   seedDatabase();
 }
 
+// Ensure user-employee links are reconciled on startup
+try {
+  usersModule.reconcileUserEmployeeLinks();
+} catch (e) {
+  console.warn('Reconciliation error on startup:', e.message);
+}
+
 // Ensure organizational hierarchy and manager integrity on startup
 try {
   const gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
@@ -1502,9 +1509,9 @@ app.get('/api/employees/hierarchy', (req, res) => {
 app.get('/api/forms/word/:formType', async (req, res) => {
   try {
     const { formType } = req.params;
-    const empId = req.query.emp_id;
+    let empId = req.query.emp_id;
     if (!empId) {
-      return res.status(400).json({ success: false, error: 'يرجى تحديد الموظف لاستخراج النموذج' });
+      empId = get('SELECT id FROM employees ORDER BY id ASC LIMIT 1')?.id;
     }
 
     const { buffer, filename } = await formsGenerator.generateWordForm(formType, empId, req.query);
@@ -1935,6 +1942,63 @@ app.get('/api/forms/html/notice/:id', (req, res) => {
   } catch (err) {
     res.status(500).send(`<h3>خطأ في توليد النموذج: ${err.message}</h3>`);
   }
+});
+
+app.get('/api/forms/html/absence-penalty/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderAbsencePenaltyNoticeHtml(req.params.id, req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد نموذج عقوبة الغياب: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/forms/html/instruction-penalty/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderInstructionPenaltyNoticeHtml(req.params.id, req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد نموذج مخالفة التعليمات: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/forms/html/clearance/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderClearanceFormHtml(req.params.id, req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد نموذج إخلاء الطرف: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/forms/html/contract-non-renewal/:empId', (req, res) => {
+  try {
+    const html = officialTemplates.renderContractNonRenewalHtml(req.params.empId, req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد إشعار عدم تجديد العقد: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/forms/raw-template/:formNumber', (req, res) => {
+  const formMap = {
+    '1': 'اخطار عقوبة - غياب.docx',
+    '2': 'اخطار عقوبة - مخالفة الأوامر والتعليمات.docx',
+    '3': 'اخلاء طرف جوهرة المجد.docx',
+    '4': 'اشعار عدم= تجديد عقد.docx',
+    '5': 'نموذج اجراء جزائي جوهرة المجد.docx',
+    '6': 'نموذج الاستقالة وإنهاء عقد العمل - جوهرة المجد_v3.docx',
+    '7': 'نموذج طلب إجازة - جوهرة المجد.docx'
+  };
+  const file = formMap[req.params.formNumber];
+  if (file && fs.existsSync(path.join(__dirname, '..', file))) {
+    return res.download(path.join(__dirname, '..', file));
+  }
+  return res.status(404).send('Template file not found');
 });
 
 /* =========================================================================

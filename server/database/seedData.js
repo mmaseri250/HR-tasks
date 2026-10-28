@@ -260,6 +260,32 @@ function seedDatabase() {
       INSERT INTO audit_logs (performed_by_id, performed_by_name, performed_by_role, entity_type, entity_id, action, old_status, new_status, comment, created_at)
       VALUES (NULL, 'نظام الخدمة الذاتية', 'system', 'request', 26, 'CREATE', NULL, 'معلق - بانتظار موافقة المدير المباشر', 'إنشاء طلب الإجازة السنوية للموظفة شامة علي عسيري', datetime('now'))
     `);
+
+    // Seed initial active HR tasks for Shama
+    const taskCount = get("SELECT COUNT(*) AS total FROM tasks")?.total || 0;
+    if (taskCount === 0) {
+      run(`
+        INSERT INTO tasks (
+          task_no, title, description, assigned_to, assigned_by, assigned_by_name,
+          start_date, due_date, priority, progress_percent, status, created_at, updated_at
+        ) VALUES (
+          'TSK-2026-0001', 'مراجعة وتدقيق إشعارات العقود محددة المدة',
+          'مراجعة العقود التي تنتهي خلال 30 يوماً وتجهيز إشعارات عدم التجديد الرسمية وإخلاء الطرف للموظفين.',
+          ?, ?, ?, date('now'), date('now', '+7 days'), 'عالية', 50, 'قيد التنفيذ', datetime('now'), datetime('now')
+        )
+      `, [shama.id, abdulmalik.id, abdulmalik.full_name_ar]);
+
+      run(`
+        INSERT INTO tasks (
+          task_no, title, description, assigned_to, assigned_by, assigned_by_name,
+          start_date, due_date, priority, progress_percent, status, created_at, updated_at
+        ) VALUES (
+          'TSK-2026-0002', 'أرشفة وتوثيق نماذج الموارد البشرية الجديدة',
+          'التحقق من اعتماد نماذج Word الرسمية السبعة وربطها بالسجلات الانضباطية وملفات الموظفين.',
+          ?, ?, ?, date('now'), date('now', '+3 days'), 'متوسطة', 80, 'بانتظار الاعتماد', datetime('now'), datetime('now')
+        )
+      `, [shama.id, abdulmalik.id, abdulmalik.full_name_ar]);
+    }
   }
 }
 

@@ -40,6 +40,45 @@ function persistUsersToDisk() {
   }
 }
 
+function normalizeAr(s) {
+  return (s || '').replace(/\s+/g, ' ').replace(/[إأآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').trim().toLowerCase();
+}
+
+/**
+ * Reconciles user accounts with employees table to ensure emp_id is never stale
+ */
+function reconcileUserEmployeeLinks() {
+  try {
+    const users = query('SELECT * FROM users');
+    const emps = query('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id');
+    let modified = false;
+
+    for (const u of users) {
+      if (u.role === 'admin') continue;
+      let emp = emps.find(e => e.id === u.emp_id);
+      if (!emp) {
+        emp = emps.find(e => normalizeAr(e.full_name_ar) === normalizeAr(u.full_name) || (u.username && normalizeAr(e.emp_code) === normalizeAr(u.username)));
+        if (!emp && u.username === 'shama.asiri') {
+          emp = emps.find(e => normalizeAr(e.full_name_ar).includes('شامه') || e.emp_code === 'JM-1053');
+        }
+        if (!emp && u.username === 'abdulmalik') {
+          emp = emps.find(e => normalizeAr(e.full_name_ar).includes('عبدالملك') || e.emp_code === 'JM-1000');
+        }
+        if (emp) {
+          run('UPDATE users SET emp_id = ? WHERE id = ?', [emp.id, u.id]);
+          u.emp_id = emp.id;
+          modified = true;
+        }
+      }
+    }
+    if (modified) {
+      persistUsersToDisk();
+    }
+  } catch (err) {
+    console.error('Error reconciling user employee links:', err.message);
+  }
+}
+
 /**
  * Restores all persisted users from disk to SQLite database
  * Ensures no custom or administrator-created users are ever lost
@@ -82,6 +121,7 @@ function restoreUsersFromDisk() {
         `, [finalPass, fullName, email, role, permsStr, empId, isActive, existing.id]);
       }
     }
+    reconcileUserEmployeeLinks();
   } catch (err) {
     console.error('Error restoring users from disk:', err.message);
   }
@@ -105,12 +145,45 @@ function login(username, password) {
     throw new Error('هذا الحساب معطل، يرجى التواصل مع إدارة النظام');
   }
 
+  // Ensure emp_id is live and accurate
+  if (user.emp_id) {
+    const checkEmp = get('SELECT id, emp_code, full_name_ar, job_title_ar, department_id, annual_leave_balance FROM employees WHERE id = ?', [user.emp_id]);
+    if (!checkEmp) {
+      reconcileUserEmployeeLinks();
+      const updatedUser = get('SELECT * FROM users WHERE id = ?', [user.id]);
+      if (updatedUser) {
+        user.emp_id = updatedUser.emp_id;
+      }
+    }
+  } else if (user.role !== 'admin') {
+    reconcileUserEmployeeLinks();
+    const updatedUser = get('SELECT * FROM users WHERE id = ?', [user.id]);
+    if (updatedUser && updatedUser.emp_id) {
+      user.emp_id = updatedUser.emp_id;
+    }
+  }
+
   // Return user without password
   const { password: _, ...userSafe } = user;
   try {
     userSafe.permissions = JSON.parse(user.permissions || '[]');
   } catch (e) {
     userSafe.permissions = ['all'];
+  }
+
+  const empDetails = user.emp_id ? get(`
+    SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.department_id, e.annual_leave_balance,
+           d.name_ar AS department_name
+    FROM employees e
+    LEFT JOIN departments d ON e.department_id = d.id
+    WHERE e.id = ?
+  `, [user.emp_id]) : null;
+
+  if (empDetails) {
+    userSafe.emp_code = empDetails.emp_code;
+    userSafe.job_title_ar = empDetails.job_title_ar;
+    userSafe.department_name = empDetails.department_name;
+    userSafe.annual_leave_balance = empDetails.annual_leave_balance;
   }
 
   return userSafe;
@@ -271,5 +344,6 @@ module.exports = {
   deleteUser,
   syncUsers,
   persistUsersToDisk,
-  restoreUsersFromDisk
+  restoreUsersFromDisk,
+  reconcileUserEmployeeLinks
 };

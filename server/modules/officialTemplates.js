@@ -709,9 +709,562 @@ function renderAttendanceNoticeHtml(noticeId) {
   `;
 }
 
+/**
+ * 1. نموذج إشعار عقوبة غياب (الملف رقم 1)
+ * استناداً إلى المادة (1/11) من جدول المخالفات والجزاءات - غياب دون إذن
+ */
+function renderAbsencePenaltyNoticeHtml(identifier, options = {}) {
+  let notice = null;
+  let emp = null;
+
+  if (typeof identifier === 'object') {
+    options = identifier;
+  } else if (!isNaN(Number(identifier))) {
+    notice = get('SELECT * FROM absence_notices WHERE id = ?', [Number(identifier)]);
+    if (!notice) {
+      emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [Number(identifier)]);
+    }
+  }
+
+  if (notice && !emp) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [notice.emp_id]);
+  }
+  if (!emp && options.emp_id) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [options.emp_id]);
+  }
+  if (!emp) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id LIMIT 1');
+  }
+
+  const currentDate = options.date || (notice ? notice.created_at?.split(' ')[0] : new Date().toISOString().split('T')[0]);
+  const daysCount = options.days || (notice ? notice.days_count : 1);
+  const absenceDate = options.absence_date || (notice ? notice.absence_date : currentDate);
+  const deductionDays = options.deduction_days || daysCount;
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>إشعار عقوبة غياب - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles()}
+    </head>
+    <body>
+      <button class="print-btn" onclick="window.print()">🖨️ طباعة النموذج الرسمي</button>
+      
+      <div class="doc-container">
+        <!-- Header -->
+        <div class="doc-header">
+          <div class="doc-header-logo">
+            <h1>${COMPANY.nameAr}</h1>
+            <p>${COMPANY.nameEn}</p>
+            <p>س.ت: ${COMPANY.cr} | الرقم الضريبي: ${COMPANY.vat}</p>
+          </div>
+          <div class="doc-meta">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-001/ABS</span>
+            <span><strong>التاريخ:</strong> ${currentDate}</span>
+            <span><strong>الرقم الوظيفي:</strong> ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="doc-title-box" style="background: #fef2f2; border-color: #fecaca;">
+          <h2 style="color: #991b1b;">إشعار عقوبة غياب عن العمل</h2>
+          <p style="color: #b91c1c;">ABSENCE PENALTY NOTICE</p>
+        </div>
+
+        <!-- Info Table -->
+        <table class="doc-table">
+          <tr>
+            <th>التاريخ / Date:</th>
+            <td><strong>${currentDate}</strong></td>
+            <th>الرقم الوظيفي / Emp#:</th>
+            <td><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <th>الاسم / Name:</th>
+            <td><strong>${emp.full_name_ar}</strong></td>
+            <th>الإدارة / Department:</th>
+            <td>${emp.department_name || 'شركة جوهرة المجد'}</td>
+          </tr>
+          <tr>
+            <th>المسمى الوظيفي / Job Title:</th>
+            <td colspan="3">${emp.job_title_ar || 'موظف'}</td>
+          </tr>
+        </table>
+
+        <!-- Arabic Section -->
+        <div class="box-box" style="line-height: 1.8; margin-top: 15px; font-size: 13px;">
+          <p>بالإشارة إلى تقرير إدارتكم الوارد إلينا بشأن غيابكم عن العمل لمدة (<strong>${daysCount}</strong>) يوم بتاريخ <strong>${absenceDate}</strong> دون تقديم أي إذن مسبق أو عذر مقبول، نود إحاطتكم بما يلي:</p>
+          <p>استنادًا إلى لائحة العمل، المنصوص عليه في <strong>المادة (1/11)</strong> الواردة في الفصل الثامن عشر من جدول المخالفات والجزاءات، والتي تنص على أن:</p>
+          <blockquote style="background: #f8fafc; border-right: 4px solid #ef4444; padding: 10px 15px; margin: 10px 0; font-style: italic; color: #475569;">
+            "الغياب دون إذن كتابي أو عذر مقبول لمدة يوم واحد خلال السنة العقدية الواحدة (للمرة الأولى)، فإن الجزاء الوارد فيها خصم (<strong>${deductionDays}</strong>) يوم بالإضافة إلى خصم أجر مدة الغياب."
+          </blockquote>
+          <p>وبناءً على ذلك، فقد تقرر تطبيق الجزاء المنصوص عليه أعلاه بحقكم، مع التأكيد على ضرورة عدم تكرار هذا السلوك مستقبلاً، وفي حال تكراره سيتم اتخاذ إجراءات أشد وفق ما تقضي به الأنظمة واللوائح المعمول بها.</p>
+        </div>
+
+        <!-- English Section -->
+        <div class="box-box" style="line-height: 1.6; direction: ltr; text-align: left; margin-top: 15px; font-size: 12px; color: #334155;">
+          <p>With reference to the report submitted by your department regarding your absence from work for (<strong>${daysCount}</strong>) day(s) on <strong>${absenceDate}</strong> without prior authorization or an acceptable justification, please be informed of the following:</p>
+          <p>According to the Work Regulations, specifically <strong>Article (1/11)</strong> in Chapter Eighteen of the Violations and Penalties Schedule, <em>“absence without written permission or an acceptable excuse for one day during the contractual year (first occurrence) results in a penalty of deducting (<strong>${deductionDays}</strong>) day(s), in addition to deducting the wage for the period of absence.”</em></p>
+          <p>Accordingly, the stated penalty has been applied. You are reminded to avoid repeating this violation, as any recurrence will result in stricter measures in line with applicable regulations.</p>
+        </div>
+
+        <!-- Signatures Grid -->
+        <div class="signatures-grid" style="grid-template-columns: 1fr 1fr; margin-top: 25px;">
+          <div class="sig-box">
+            <h4>إدارة الموارد البشرية (Human Resources)</h4>
+            <p>شركة جوهرة المجد للتجارة والمقاولات</p>
+            <p><strong>المعتمد:</strong> عبدالملك سعيد الشريف</p>
+            <div class="sig-line"></div>
+            <p><span class="stamp-seal stamp-approved">معتمد إلكترونياً ومختوم رسمياً ✓</span></p>
+          </div>
+
+          <div class="sig-box">
+            <h4>الإقرار للموظف (ACKNOWLEDGEMENT)</h4>
+            <p>أقر أنا الموظف/ <strong>${emp.full_name_ar}</strong> باطلاعي واستلامي لهذا الإشعار وعلمي بمضمونه.</p>
+            <p><strong>التاريخ:</strong> ${currentDate}</p>
+            <div class="sig-line"></div>
+            <p>التوقيع: .....................................................</p>
+          </div>
+        </div>
+
+        <div class="qr-badge">
+          <span>نموذج عقوبة غياب رسمي رقم 1 - جدول المخالفات والجزاءات الفصل 18 المادة 1/11</span>
+          <span>كود الوثيقة: JM-HR-F-001/ABS</span>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * 2. نموذج إشعار عقوبة عدم اتباع التعليمات والأوامر (الملف رقم 2)
+ * استناداً إلى المادة (1/15) من جدول مخالفات تنظيم العمل - الفصل 18
+ */
+function renderInstructionPenaltyNoticeHtml(identifier, options = {}) {
+  let penalty = null;
+  let emp = null;
+
+  if (typeof identifier === 'object') {
+    options = identifier;
+  } else if (!isNaN(Number(identifier))) {
+    penalty = get('SELECT * FROM penalties_issued WHERE id = ?', [Number(identifier)]);
+    if (!penalty) {
+      emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [Number(identifier)]);
+    }
+  }
+
+  if (penalty && !emp) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [penalty.emp_id]);
+  }
+  if (!emp && options.emp_id) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [options.emp_id]);
+  }
+  if (!emp) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id LIMIT 1');
+  }
+
+  const currentDate = options.date || (penalty ? penalty.issued_at?.split(' ')[0] : new Date().toISOString().split('T')[0]);
+  const incidentDate = options.incident_date || (penalty ? penalty.incident_date : currentDate);
+  const deduction = options.deduction || (penalty ? `${penalty.deduction_days || 1} يوم` : 'نصف يوم');
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>إشعار عقوبة مخالفة الأوامر والتعليمات - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles()}
+    </head>
+    <body>
+      <button class="print-btn" onclick="window.print()">🖨️ طباعة النموذج الرسمي</button>
+      
+      <div class="doc-container">
+        <!-- Header -->
+        <div class="doc-header">
+          <div class="doc-header-logo">
+            <h1>${COMPANY.nameAr}</h1>
+            <p>${COMPANY.nameEn}</p>
+            <p>س.ت: ${COMPANY.cr} | الرقم الضريبي: ${COMPANY.vat}</p>
+          </div>
+          <div class="doc-meta">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-002/INS</span>
+            <span><strong>التاريخ:</strong> ${currentDate}</span>
+            <span><strong>الرقم الوظيفي:</strong> ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="doc-title-box" style="background: #fffbeb; border-color: #fde68a;">
+          <h2 style="color: #92400e;">إشعار عقوبة - عدم اتباع التعليمات ومخالفة الأوامر</h2>
+          <p style="color: #b45309;">WORK INSTRUCTIONS VIOLATION PENALTY NOTICE</p>
+        </div>
+
+        <!-- Info Table -->
+        <table class="doc-table">
+          <tr>
+            <th>التاريخ / Date:</th>
+            <td><strong>${currentDate}</strong></td>
+            <th>الرقم الوظيفي / Emp#:</th>
+            <td><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <th>الاسم / Name:</th>
+            <td><strong>${emp.full_name_ar}</strong></td>
+            <th>الإدارة / Department:</th>
+            <td>${emp.department_name || 'شركة جوهرة المجد'}</td>
+          </tr>
+          <tr>
+            <th>المسمى الوظيفي / Job Title:</th>
+            <td colspan="3">${emp.job_title_ar || 'موظف'}</td>
+          </tr>
+        </table>
+
+        <!-- Arabic Section -->
+        <div class="box-box" style="line-height: 1.8; margin-top: 15px; font-size: 13px;">
+          <p>بالإشارة إلى تقرير إدارتكم الوارد إلينا بشأن عدم اتباعكم للتعليمات الخاصة بالعمل وذلك في بتاريخ <strong>${incidentDate}م</strong>، نود إحاطتكم بما يلي:</p>
+          <p>استنادًا إلى لائحة العمل، المنصوص عليه في <strong>المادة (1/15)</strong> الواردة في الفصل الثامن عشر من جدول المخالفات المتعلقة بتنظيم العمل، والتي تنص على أن:</p>
+          <blockquote style="background: #f8fafc; border-right: 4px solid #f59e0b; padding: 10px 15px; margin: 10px 0; font-style: italic; color: #475569;">
+            "عدم إطاعة الأوامر العادية الخاصة بالعمل أو عدم تنفيذ التعليمات الخاصة بالعمل والمعلقة في مكان ظاهر. (للمرة الأولى)، فإن الجزاء الوارد فيها خصم (<strong>${deduction}</strong>) من الأجر اليومي."
+          </blockquote>
+          <p>وبناءً على ذلك، فقد تقرر تطبيق الجزاء المنصوص عليه أعلاه بحقكم، مع التأكيد على ضرورة عدم تكرار هذا السلوك مستقبلاً، وفي حال تكراره سيتم اتخاذ إجراءات أشد وفق ما تقضي به الأنظمة واللوائح المعمول بها.</p>
+        </div>
+
+        <!-- English Section -->
+        <div class="box-box" style="line-height: 1.6; direction: ltr; text-align: left; margin-top: 15px; font-size: 12px; color: #334155;">
+          <p>With reference to the report submitted by your department regarding your failure to follow the work-related instructions on <strong>${incidentDate}</strong>, please be informed of the following:</p>
+          <p>In accordance with the Work Regulations, specifically <strong>Article (1/15)</strong> stated in Chapter Eighteen of the Violations Related to Work Organization, which provides that: <em>“Failure to comply with ordinary work instructions or failure to follow posted work-related directives (first occurrence) shall result in a penalty of deducting (<strong>${deduction}</strong>) from the daily wage.”</em></p>
+          <p>Accordingly, the above-mentioned penalty has been applied to you. You are reminded of the importance of avoiding such conduct in the future, as any recurrence will result in stricter measures in accordance with the applicable regulations and policies.</p>
+        </div>
+
+        <!-- Signatures Grid -->
+        <div class="signatures-grid" style="grid-template-columns: 1fr 1fr; margin-top: 25px;">
+          <div class="sig-box">
+            <h4>إدارة الموارد البشرية (Human Resources)</h4>
+            <p>شركة جوهرة المجد للتجارة والمقاولات</p>
+            <p><strong>المعتمد:</strong> عبدالملك سعيد الشريف</p>
+            <div class="sig-line"></div>
+            <p><span class="stamp-seal stamp-approved">معتمد إلكترونياً ومختوم رسمياً ✓</span></p>
+          </div>
+
+          <div class="sig-box">
+            <h4>الإقرار للموظف (ACKNOWLEDGEMENT)</h4>
+            <p>أقر أنا الموظف/ <strong>${emp.full_name_ar}</strong> باطلاعي واستلامي لهذا الإشعار وعلمي بمضمونه.</p>
+            <p><strong>التاريخ:</strong> ${currentDate}</p>
+            <div class="sig-line"></div>
+            <p>التوقيع: .....................................................</p>
+          </div>
+        </div>
+
+        <div class="qr-badge">
+          <span>نموذج عقوبة مخالفة الأوامر رسمي رقم 2 - جدول المخالفات الفصل 18 المادة 1/15</span>
+          <span>كود الوثيقة: JM-HR-F-002/INS</span>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * 3. نموذج إخلاء طرف موظف (الملف رقم 3)
+ * Form No: JM-HR-F-005 مع تفعيل اعتمادات الأقسام الخمسة كاملة
+ */
+function renderClearanceFormHtml(identifier, options = {}) {
+  let term = null;
+  let emp = null;
+
+  if (typeof identifier === 'object') {
+    options = identifier;
+  } else if (!isNaN(Number(identifier))) {
+    term = get('SELECT * FROM terminated_employees WHERE id = ?', [Number(identifier)]);
+    if (!term) {
+      emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [Number(identifier)]);
+    }
+  }
+
+  if (term && !emp) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [term.emp_id]);
+  }
+  if (!emp && options.emp_id) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [options.emp_id]);
+  }
+  if (!emp) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id LIMIT 1');
+  }
+
+  const currentDate = options.date || (term ? term.termination_date : new Date().toISOString().split('T')[0]);
+  const lastWorkingDay = options.last_working_day || (term ? term.last_working_day || term.termination_date : currentDate);
+  const termReason = options.reason || (term ? term.reason : 'انتهاء عقد العمل المحدد المدة');
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>نموذج إخلاء طرف موظف - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles()}
+    </head>
+    <body>
+      <button class="print-btn" onclick="window.print()">🖨️ طباعة النموذج الرسمي</button>
+      
+      <div class="doc-container">
+        <!-- Header -->
+        <div class="doc-header">
+          <div class="doc-header-logo">
+            <h1>${COMPANY.nameAr}</h1>
+            <p>${COMPANY.nameEn}</p>
+            <p>س.ت: ${COMPANY.cr} | الرقم الضريبي: ${COMPANY.vat}</p>
+          </div>
+          <div class="doc-meta">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-005</span>
+            <span><strong>الإصدار:</strong> 1.0</span>
+            <span><strong>تاريخ الإصدار:</strong> ${currentDate}</span>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="doc-title-box">
+          <h2>نموذج إخلاء طرف موظف</h2>
+          <p>EMPLOYEE CLEARANCE FORM</p>
+        </div>
+
+        <!-- 1. Employee Details -->
+        <div class="section-title">1. بيانات الموظف (Employee Details)</div>
+        <table class="doc-table">
+          <tr>
+            <th>الاسم الكامل:</th>
+            <td><strong>${emp.full_name_ar}</strong></td>
+            <th>الرقم الوظيفي:</th>
+            <td><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <th>الإدارة / القسم:</th>
+            <td>${emp.department_name || 'شركة جوهرة المجد'}</td>
+            <th>المسمى الوظيفي:</th>
+            <td>${emp.job_title_ar || 'موظف'}</td>
+          </tr>
+          <tr>
+            <th>تاريخ التعيين:</th>
+            <td>${emp.join_date || '2024-01-01'}</td>
+            <th>آخر يوم عمل:</th>
+            <td><strong>${lastWorkingDay}</strong></td>
+          </tr>
+          <tr>
+            <th>سبب إنهاء الخدمة:</th>
+            <td colspan="3"><span class="badge" style="background:#e0f2fe; color:#0369a1; padding:3px 8px; border-radius:4px; font-weight:bold;">${termReason}</span></td>
+          </tr>
+        </table>
+
+        <!-- 2. Department Clearances -->
+        <div class="section-title">2. اعتمادات الأقسام والإدارات المعنية (Departmental Clearances)</div>
+        <table class="doc-table">
+          <thead>
+            <tr style="background: #f1f5f9; color: #1e293b; font-weight: 800;">
+              <th style="width: 25%;">القسم / الإدارة</th>
+              <th style="width: 35%;">البنود والالتزامات المسلمة</th>
+              <th style="width: 20%;">حالة الاعتماد</th>
+              <th style="width: 20%;">توقيع واعتماد المسؤول</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. الإدارة التابع لها<br><span style="font-size:10px; color:#64748b;">(المدير المباشر)</span></strong></td>
+              <td>تسليم كافة المهام، الملفات، العهد المكتبية والمفاتيح وتدريب البديل.</td>
+              <td><span class="stamp-seal stamp-approved">معتمد ومكتمل ✓</span></td>
+              <td><strong>عبدالملك سعيد الشريف</strong><br><span style="font-size:10px; color:#64748b;">تاريخ: ${currentDate}</span></td>
+            </tr>
+            <tr>
+              <td><strong>2. إدارة تقنية المعلومات<br><span style="font-size:10px; color:#64748b;">(IT Department)</span></strong></td>
+              <td>إيقاف البريد الرسمي، استلام اللابتوب/الجهاز، إلغاء كافة الصلاحيات.</td>
+              <td><span class="stamp-seal stamp-approved">معتمد ومكتمل ✓</span></td>
+              <td><strong>مسؤول الأنظمة والدعم الفني</strong><br><span style="font-size:10px; color:#64748b;">تاريخ: ${currentDate}</span></td>
+            </tr>
+            <tr>
+              <td><strong>3. الشؤون الإدارية والخدمات<br><span style="font-size:10px; color:#64748b;">(Admin Services)</span></strong></td>
+              <td>استلام بطاقة العمل، تسوية التأمين الطبي، استلام عهد السيارات والسكن.</td>
+              <td><span class="stamp-seal stamp-approved">معتمد ومكتمل ✓</span></td>
+              <td><strong>إدارة الخدمات المساندة</strong><br><span style="font-size:10px; color:#64748b;">تاريخ: ${currentDate}</span></td>
+            </tr>
+            <tr>
+              <td><strong>4. الإدارة المالية<br><span style="font-size:10px; color:#64748b;">(Finance Dept)</span></strong></td>
+              <td>تسوية السلف، إغلاق العهد النقدية، التأكد من عدم وجود مديونيات.</td>
+              <td><span class="stamp-seal stamp-approved">معتمد ومكتمل ✓</span></td>
+              <td><strong>المحاسب المالي العام</strong><br><span style="font-size:10px; color:#64748b;">تاريخ: ${currentDate}</span></td>
+            </tr>
+            <tr>
+              <td><strong>5. الموارد البشرية<br><span style="font-size:10px; color:#64748b;">(HR Department)</span></strong></td>
+              <td>إسقاط التأمينات GOSI، توثيق الإنهاء على منصة قوى، تصفية المستحقات.</td>
+              <td><span class="stamp-seal stamp-approved">معتمد ومكتمل ✓</span></td>
+              <td><strong>مدير الموارد البشرية</strong><br><span style="font-size:10px; color:#64748b;">تاريخ: ${currentDate}</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- 3. Final Employee Declaration -->
+        <div class="section-title">3. إقرار المخالصة النهائية للموظف (Final Clearance Declaration)</div>
+        <div class="box-box" style="line-height: 1.8; font-size: 12px; background: #fafafa; border: 1px solid #cbd5e1;">
+          <p>أقر أنا الموقع أدناه/ <strong>${emp.full_name_ar}</strong>، بأنني قمت بتسليم كافة العهد والوثائق والأجهزة والأدوات والمتعلقات العائدة لشركة جوهرة المجد، كما أقر بأنني استلمت كافة حقوقي ومستحقاتي المالية والنظامية عن فترة عملي كاملة، ولم يعد لي في ذمة الشركة أي حق أو مستحق أو مطالبة من أي نوع كان، ويعد هذا إخلاء طرف تام ونهائي لا رجعة فيه.</p>
+          <div style="display:flex; justify-content:space-between; margin-top:15px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+            <span><strong>اسم الموظف:</strong> ${emp.full_name_ar}</span>
+            <span><strong>التوقيع:</strong> .....................................................</span>
+            <span><strong>التاريخ:</strong> ${currentDate}</span>
+          </div>
+        </div>
+
+        <!-- 4. General Manager Approval -->
+        <div class="signatures-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+          <div class="sig-box" style="text-align: right; padding: 15px 20px;">
+            <h4 style="margin: 0 0 8px; color: #0f766e; font-size: 13px;">4. اعتماد المدير العام / الرئيس التنفيذي (CEO / General Manager Approval)</h4>
+            <p style="margin: 0 0 10px; font-size: 12px;">بناءً على اعتمادات الإدارات المعنية وإقرار الموظف المذكور أعلاه، يعتمد إخلاء الطرف وإصدار المخالصة النهائية وإسقاط الاسم رسمياً.</p>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <p><strong>الرئيس التنفيذي / المدير العام:</strong> عبدالرحمن صالح القحطاني</p>
+                <p><strong>التاريخ:</strong> ${currentDate}</p>
+              </div>
+              <div>
+                <span class="stamp-seal stamp-approved" style="font-size: 11px; padding: 6px 14px;">معتمد ومختوم رسمياً بختم الشركة ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qr-badge">
+          <span>نموذج إخلاء طرف رسمي معتمد رقم 3 - شركة جوهرة المجد للتجارة والمقاولات</span>
+          <span>رمز الوثيقة: JM-HR-F-005</span>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * 4. نموذج إشعار عدم رغبة في تجديد العقد (الملف رقم 4)
+ * استناداً إلى المادة (55) والمادة (37) من نظام العمل السعودي - إشعار قبل 30 يوماً
+ */
+function renderContractNonRenewalHtml(empId, options = {}) {
+  let emp = null;
+  if (!isNaN(Number(empId))) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = ?', [Number(empId)]);
+  }
+  if (!emp) {
+    emp = get('SELECT e.*, d.name_ar AS department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id LIMIT 1');
+  }
+
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+  const contractStart = options.contract_start || emp.join_date || '2025-01-01';
+  const contractEnd = options.contract_end || emp.contract_end_date || '2026-10-31';
+  const lastWorkingDay = options.last_working_day || contractEnd;
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>إشعار عدم رغبة في تجديد عقد عمل - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles()}
+    </head>
+    <body>
+      <button class="print-btn" onclick="window.print()">🖨️ طباعة النموذج الرسمي</button>
+      
+      <div class="doc-container">
+        <!-- Header -->
+        <div class="doc-header">
+          <div class="doc-header-logo">
+            <h1>${COMPANY.nameAr}</h1>
+            <p>${COMPANY.nameEn}</p>
+            <p>س.ت: ${COMPANY.cr} | الرقم الضريبي: ${COMPANY.vat}</p>
+          </div>
+          <div class="doc-meta">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-004/CNR</span>
+            <span><strong>التاريخ:</strong> ${currentDate}</span>
+            <span><strong>الرقم الوظيفي:</strong> ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <!-- Title -->
+        <div class="doc-title-box" style="background: #fff7ed; border-color: #ffedd5;">
+          <h2 style="color: #9a3412;">خطاب إشعار بعدم الرغبة في تجديد عقد العمل</h2>
+          <p style="color: #c2410c;">NOTICE OF NON-RENEWAL OF EMPLOYMENT CONTRACT</p>
+        </div>
+
+        <!-- Info Table -->
+        <table class="doc-table">
+          <tr>
+            <th>التاريخ / Date:</th>
+            <td><strong>${currentDate}</strong></td>
+            <th>الرقم الوظيفي / Emp#:</th>
+            <td><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <th>الاسم / Name:</th>
+            <td><strong>${emp.full_name_ar}</strong></td>
+            <th>الإدارة / Department:</th>
+            <td>${emp.department_name || 'شركة جوهرة المجد'}</td>
+          </tr>
+          <tr>
+            <th>المسمى الوظيفي:</th>
+            <td>${emp.job_title_ar || 'موظف'}</td>
+            <th>تاريخ انتهاء العقد:</th>
+            <td><strong style="color:#b91c1c;">${contractEnd}</strong></td>
+          </tr>
+        </table>
+
+        <!-- Arabic Section -->
+        <div class="box-box" style="line-height: 1.8; margin-top: 15px; font-size: 13px;">
+          <p>بالإشارة الى الموضوع أعلاه وإلى عقد العمل المبرم بيننا والذي يبدأ من تاريخ <strong>${contractStart}م</strong> وينتهي في <strong>${contractEnd}م</strong> يتجدد لمدة أو مدد مماثلة ما لم يشعر أحد الطرفين الأخر خطياً بعدم رغبته في التجديد قبل (30) يوماً من تاريخ انتهاء العقد.</p>
+          <p>واستناداً لأحكام <strong>المادة (55)</strong> من نظام العمل السعودي والتي نصت على: <em>"ينتهي عقد العمل المحدد المدة بانقضاء مدته، فإذا استمر طرفاه في تنفيذه عدّ العقد مجدداً لمدة غير محددة"</em> مع مراعاة ما نصت عليه <strong>المادة (37)</strong> من هذا النظام بالنسبة إلى غير السعوديين.</p>
+          <p>عليه نفيدكم بعدم رغبة الشركة في تجديد العقد معكم علماً بان اخر يوم عمل لكم سيكون بنهاية عقد العمل في تاريخ <strong>${lastWorkingDay}م</strong>.</p>
+          <p>نأمل منكم التنسيق فيما يخص إنهاء كافة الاجراءات الخاصة بإخلاء طرفكم وتسليم ما بعهدتكم من متعلقات حسب النظام، مع تمنياتنا لكم بالتوفيق والنجاح في مسيرتكم المهنية.</p>
+        </div>
+
+        <!-- English Section -->
+        <div class="box-box" style="line-height: 1.6; direction: ltr; text-align: left; margin-top: 15px; font-size: 12px; color: #334155;">
+          <p>With reference to the above-mentioned subject and to the employment contract concluded between us, which commenced on <strong>${contractStart}</strong> and will expire on <strong>${contractEnd}</strong>, and which is renewable for a similar term(s) unless either party notifies the other in writing of their desire not to renew at least thirty (30) days prior to the contract’s expiry;</p>
+          <p>and pursuant to the provisions of <strong>Article (55)</strong> of the Saudi Labor Law, which states that <em>“a fixed-term employment contract shall terminate upon the expiry of its term, and if both parties continue to implement it, it shall be deemed renewed for an indefinite period”</em>, taking into consideration the provisions of <strong>Article (37)</strong> of the same Law with respect to non-Saudis,</p>
+          <p>We hereby inform you that the company does not wish to renew your employment contract. Accordingly, your last working day will be <strong>${lastWorkingDay}</strong>.</p>
+          <p>We kindly request you to coordinate with the Human Resources Department to finalize all clearance procedures and to hand over any company property in your possession, in accordance with applicable regulations.</p>
+        </div>
+
+        <!-- Signatures Grid -->
+        <div class="signatures-grid" style="grid-template-columns: 1fr 1fr; margin-top: 25px;">
+          <div class="sig-box">
+            <h4>إدارة الموارد البشرية (Human Resources)</h4>
+            <p>شركة جوهرة المجد للتجارة والمقاولات</p>
+            <p><strong>المعتمد:</strong> عبدالملك سعيد الشريف</p>
+            <div class="sig-line"></div>
+            <p><span class="stamp-seal stamp-approved">معتمد إلكترونياً ومختوم رسمياً ✓</span></p>
+          </div>
+
+          <div class="sig-box">
+            <h4>الإقرار للموظف (ACKNOWLEDGEMENT)</h4>
+            <p>أقر أنا الموظف/ <strong>${emp.full_name_ar}</strong> باطلاعي واستلامي لهذا الإشعار الرسمي.</p>
+            <p><strong>التاريخ:</strong> ${currentDate}</p>
+            <div class="sig-line"></div>
+            <p>التوقيع: .....................................................</p>
+          </div>
+        </div>
+
+        <div class="qr-badge">
+          <span>نموذج إشعار عدم تجديد عقد عمل رقم 4 - متوافق مع المادة 55 و 37 من نظام العمل السعودي</span>
+          <span>كود الوثيقة: JM-HR-F-004/CNR</span>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 module.exports = {
   renderLeaveFormHtml,
   renderPenaltyFormHtml,
   renderResignationTerminationFormHtml,
-  renderAttendanceNoticeHtml
+  renderAttendanceNoticeHtml,
+  renderAbsencePenaltyNoticeHtml,
+  renderInstructionPenaltyNoticeHtml,
+  renderClearanceFormHtml,
+  renderContractNonRenewalHtml
 };
