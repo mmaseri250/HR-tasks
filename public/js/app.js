@@ -4829,10 +4829,6 @@ async function rejectRequest(id, stage = 'manager') {
   if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
 }
 
-  alert(`تم رفض الطلب وتسجيل سبب الرفض بنجاح.`);
-  renderSelfServiceRequests();
-}
-
 /* =========================================================================
    8. OFFICIAL SALARY CERTIFICATE (خطاب تعريف بالراتب)
    ========================================================================= */

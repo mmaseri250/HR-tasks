@@ -5,6 +5,7 @@ const { runEmployeeAndRequestTests } = require('./employees.test');
 const { runLeavesTasksHierarchyTests } = require('./leaves-tasks-hierarchy.test');
 const { runMuqeemAndEssTests } = require('./test-muqeem-ess');
 const { runComprehensiveSystemTests } = require('./full_system_integration.test');
+const { runAllModulesCrudTests } = require('./crud_all_modules.test');
 
 console.log('================================================================');
 console.log('  تشغيل الحزمة الكاملة لاختبارات نظام موارد بشرية جوهرة المجد  ');
@@ -23,6 +24,7 @@ async function main() {
     require('./approval_workflow_audit.test');
     require('./page-connectivity.test');
     await runComprehensiveSystemTests();
+    runAllModulesCrudTests();
 
     console.log('================================================================');
     console.log('  جميع الاختبارات المعتمدة والشاملة اجتازت بنجاح فائق ودقة مطابقة 100%!   ');

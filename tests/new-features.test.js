@@ -131,6 +131,7 @@ console.log('✓ نجح: اكتمال مسار الاعتمادات الرباع
 // Clean up test data
 db.run('DELETE FROM attendance_notices WHERE id = ?', [notice.id]);
 db.run('DELETE FROM terminated_employees WHERE id = ?', [termRecord.id]);
+db.run("UPDATE employees SET status = 'نشط' WHERE id = ?", [sampleEmp.id]);
 db.run('DELETE FROM loans WHERE id = ?', [newLoan.id]);
 db.run('DELETE FROM requests WHERE id = ?', [stepReq.id]);
 

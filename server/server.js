@@ -1290,7 +1290,8 @@ app.get('/api/leaves/balances/:empId', (req, res) => {
     const balance = leavesModule.getEmployeeLeaveBalance(req.params.empId);
     res.json({ success: true, data: balance });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    const status = err.message === 'الموظف غير موجود' ? 404 : 500;
+    res.status(status).json({ success: false, error: err.message });
   }
 });
 
