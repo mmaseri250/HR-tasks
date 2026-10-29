@@ -25,7 +25,7 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 20280,
+    "emp_id": 20973,
     "is_active": 1,
     "created_at": "2026-10-28 22:34:23"
   },
@@ -40,7 +40,7 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 20171,
+    "emp_id": 20864,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
   },
@@ -59,7 +59,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 20169,
+    "emp_id": 20862,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
   },
@@ -77,7 +77,7 @@
       "attendance",
       "tasks"
     ],
-    "emp_id": 20170,
+    "emp_id": 20863,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
   }
