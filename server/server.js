@@ -24,6 +24,7 @@ const terminatedEmployeesModule = require('./modules/terminatedEmployees');
 const loansModule = require('./modules/loans');
 const officialTemplates = require('./modules/officialTemplates');
 const absenceNoticesModule = require('./modules/absenceNotices');
+const auditModule = require('./modules/audit');
 
 // Initialize Seed Data if unseeded
 try {
@@ -280,9 +281,32 @@ app.post('/api/auth/login', (req, res) => {
   try {
     const { username, password } = req.body;
     const user = usersModule.login(username, password);
+    auditModule.logAuditEvent(req, {
+      action: 'LOGIN',
+      entity_type: 'user',
+      entity_id: user.id,
+      performed_by_id: user.id,
+      performed_by_name: user.full_name || user.username,
+      performed_by_role: user.role,
+      emp_code: user.emp_code,
+      comment: 'تسجيل دخول ناجح للنظام'
+    });
     res.json({ success: true, message: 'تم تسجيل الدخول بنجاح', user });
   } catch (err) {
     res.status(401).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  try {
+    auditModule.logAuditEvent(req, {
+      action: 'LOGOUT',
+      entity_type: 'user',
+      comment: 'تسجيل خروج من النظام'
+    });
+    res.json({ success: true, message: 'تم تسجيل الخروج بنجاح' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -298,6 +322,13 @@ app.get('/api/users', (req, res) => {
 app.post('/api/users', (req, res) => {
   try {
     const user = usersModule.createUser(req.body);
+    auditModule.logAuditEvent(req, {
+      action: 'CREATE_USER',
+      entity_type: 'user',
+      entity_id: user.id,
+      new_values: { username: user.username, full_name: user.full_name, role: user.role, permissions: user.permissions },
+      comment: `إنشاء مستخدم جديد: ${user.username}`
+    });
     res.status(201).json({ success: true, message: 'تم إنشاء المستخدم وتعيين الصلاحيات بنجاح', data: user });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -307,6 +338,13 @@ app.post('/api/users', (req, res) => {
 app.put('/api/users/:id', (req, res) => {
   try {
     const user = usersModule.updateUser(req.params.id, req.body);
+    auditModule.logAuditEvent(req, {
+      action: 'UPDATE_USER',
+      entity_type: 'user',
+      entity_id: req.params.id,
+      new_values: req.body,
+      comment: `تحديث بيانات وصلاحيات المستخدم: ${user.username}`
+    });
     res.json({ success: true, message: 'تم تحديث بيانات المستخدم بنجاح', data: user });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -316,6 +354,12 @@ app.put('/api/users/:id', (req, res) => {
 app.delete('/api/users/:id', (req, res) => {
   try {
     usersModule.deleteUser(req.params.id);
+    auditModule.logAuditEvent(req, {
+      action: 'DELETE_USER',
+      entity_type: 'user',
+      entity_id: req.params.id,
+      comment: `حذف مستخدم بالنظام معرّف ${req.params.id}`
+    });
     res.json({ success: true, message: 'تم حذف المستخدم بنجاح' });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -326,6 +370,11 @@ app.post('/api/users/sync', (req, res) => {
   try {
     const list = req.body && Array.isArray(req.body.users) ? req.body.users : [];
     const syncedUsers = usersModule.syncUsers(list);
+    auditModule.logAuditEvent(req, {
+      action: 'SYNC_USERS',
+      entity_type: 'user',
+      comment: `مزامنة وحفظ قائمة المستخدمين الدائمة (${syncedUsers.length} مستخدم)`
+    });
     res.json({
       success: true,
       message: 'تم حفظ ومزامنة كافة بيانات المستخدمين بنجاح',
@@ -345,6 +394,11 @@ app.post('/api/sync/all', (req, res) => {
       usersModule.persistUsersToDisk();
     }
     const currentUsers = usersModule.getAllUsers();
+    auditModule.logAuditEvent(req, {
+      action: 'SYNC_ALL_DATA',
+      entity_type: 'system',
+      comment: 'مزامنة وحفظ سحابي شامل لبيانات النظام'
+    });
     res.json({
       success: true,
       message: 'تمت مزامنة كافة بيانات النظام والمدخلات بنجاح دون أي فقدان للبيانات',
@@ -352,6 +406,40 @@ app.post('/api/sync/all', (req, res) => {
       usersCount: currentUsers.length,
       data: { users: currentUsers }
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   AUDIT LOG API ROUTES (سجل الرقابة والعمليات - محمي وغير قابل للتعديل)
+   ========================================================================= */
+
+app.get('/api/audit-logs', (req, res) => {
+  try {
+    const logs = auditModule.getAuditLogs(req.query);
+    res.json({ success: true, data: logs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/audit-logs/stats', (req, res) => {
+  try {
+    const stats = auditModule.getAuditStats();
+    res.json({ success: true, data: stats });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/audit-logs/export/excel', (req, res) => {
+  try {
+    const buffer = auditModule.exportAuditLogsExcel(req.query);
+    const filename = `JM_HRMS_AUDIT_LOG_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -855,6 +943,15 @@ app.get('/api/employees/:id', (req, res, next) => {
 app.post('/api/employees', (req, res) => {
   try {
     const newEmp = employeesModule.createEmployee(req.body);
+    auditModule.logAuditEvent(req, {
+      action: 'CREATE_EMPLOYEE',
+      entity_type: 'employee',
+      entity_id: newEmp.id,
+      emp_code: newEmp.emp_code,
+      department_name: newEmp.department_name,
+      new_values: req.body,
+      comment: `إضافة موظف جديد: ${newEmp.full_name_ar} (${newEmp.emp_code})`
+    });
     res.status(201).json({ success: true, message: 'تم إضافة الموظف بنجاح', data: newEmp });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -863,7 +960,18 @@ app.post('/api/employees', (req, res) => {
 
 app.put('/api/employees/:id', (req, res) => {
   try {
+    const beforeEmp = employeesModule.getEmployeeById(req.params.id);
     const updated = employeesModule.updateEmployee(req.params.id, req.body);
+    auditModule.logAuditEvent(req, {
+      action: 'UPDATE_EMPLOYEE',
+      entity_type: 'employee',
+      entity_id: req.params.id,
+      emp_code: updated ? updated.emp_code : null,
+      department_name: updated ? updated.department_name : null,
+      old_values: beforeEmp,
+      new_values: req.body,
+      comment: `تعديل بيانات الموظف: ${updated ? updated.full_name_ar : req.params.id}`
+    });
     res.json({ success: true, message: 'تم تحديث بيانات الموظف بنجاح', data: updated });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -872,7 +980,16 @@ app.put('/api/employees/:id', (req, res) => {
 
 app.delete('/api/employees/:id', (req, res) => {
   try {
+    const beforeEmp = employeesModule.getEmployeeById(req.params.id);
     employeesModule.deleteEmployee(req.params.id);
+    auditModule.logAuditEvent(req, {
+      action: 'DELETE_EMPLOYEE',
+      entity_type: 'employee',
+      entity_id: req.params.id,
+      emp_code: beforeEmp ? beforeEmp.emp_code : null,
+      old_values: beforeEmp,
+      comment: `حذف موظف: ${beforeEmp ? beforeEmp.full_name_ar : req.params.id}`
+    });
     res.json({ success: true, message: 'تم حذف الموظف بنجاح' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1057,6 +1174,12 @@ app.post('/api/payroll/calculate', (req, res) => {
       return res.status(400).json({ success: false, error: 'يرجى تحديد شهر المسير (مثال: 2026-09)' });
     }
     const result = payrollModule.calculateMonthlyPayroll(period_month);
+    auditModule.logAuditEvent(req, {
+      action: 'CALCULATE_PAYROLL',
+      entity_type: 'payroll',
+      entity_id: result ? result.period_id : null,
+      comment: `احتساب مسير رواتب شهر ${period_month}`
+    });
     res.json({ success: true, message: 'تم احتساب مسير الرواتب بنجاح', data: result });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -1067,6 +1190,12 @@ app.post('/api/payroll/periods/:id/approve', (req, res) => {
   try {
     const { approver_name } = req.body;
     const result = payrollModule.approvePayrollPeriod(req.params.id, approver_name);
+    auditModule.logAuditEvent(req, {
+      action: 'APPROVE_PAYROLL',
+      entity_type: 'payroll',
+      entity_id: req.params.id,
+      comment: `اعتماد مسير الرواتب رقم ${req.params.id} وتوليد ملف حماية الأجور (WPS)`
+    });
     res.json({ success: true, message: 'تم اعتماد مسير الرواتب وتوليد ملف حماية الأجور', data: result });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

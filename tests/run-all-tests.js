@@ -24,6 +24,7 @@ async function main() {
     require('./test_all_8_official_forms');
     require('./approval_workflow_audit.test');
     require('./page-connectivity.test');
+    require('./emergency_recovery_audit.test');
     await runComprehensiveSystemTests();
     runAllModulesCrudTests();
 

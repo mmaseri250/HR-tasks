@@ -1302,7 +1302,7 @@ function renderPenaltyFormHtml(identifier, options = {}) {
 
         <!-- Routing -->
         <div class="doc-verification-bar">
-          <span>توزيع النسخ: • الأصل لملف الموظف • صورة لشؤون الموظفين • س.ت: ${COMPANY.cr}</span>
+          <span>شركة جوهرة المجد • توزيع النسخ: • الأصل لملف الموظف • صورة لشؤون الموظفين • س.ت: ${COMPANY.cr}</span>
           <span>رمز القرار: <strong>JM-PEN-${emp.emp_code}</strong></span>
         </div>
       </div>

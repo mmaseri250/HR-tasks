@@ -490,6 +490,65 @@ const safeFetch = apiFetch;
 window.apiFetch = apiFetch;
 window.safeFetch = apiFetch;
 
+/* =========================================================================
+   UI HELPERS: SKELETON LOADERS, PROFESSIONAL EMPTY & ERROR STATES
+   ========================================================================= */
+
+function renderSkeletonTable(tbodyId, cols = 6, rows = 5) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  let html = '';
+  for (let r = 0; r < rows; r++) {
+    html += '<tr class="animate-pulse bg-slate-50/60 border-b border-slate-100">';
+    for (let c = 0; c < cols; c++) {
+      html += `<td class="py-3.5 px-3"><div class="h-3.5 bg-slate-200 rounded ${c === 0 ? 'w-10' : c === 1 ? 'w-32' : 'w-20'}"></div></td>`;
+    }
+    html += '</tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function renderEmptyState(tbodyId, cols = 6, icon = 'fa-folder-open', message = 'لا توجد بيانات متاحة حالياً', actionHtml = '') {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="${cols}" class="py-12 px-4 text-center">
+        <div class="max-w-md mx-auto flex flex-col items-center justify-center text-slate-400">
+          <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl text-slate-400 mb-3 shadow-inner">
+            <i class="fa-solid ${icon}"></i>
+          </div>
+          <p class="font-bold text-sm text-slate-700 mb-1">${message}</p>
+          <p class="text-xs text-slate-400 max-w-sm mb-3">النظام متصل وجاهز، يمكنك إضافة سجل جديد للمتابعة</p>
+          ${actionHtml}
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function renderErrorState(tbodyId, cols = 6, errorMsg = 'حدث خطأ أثناء تحميل البيانات') {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="${cols}" class="py-10 px-4 text-center">
+        <div class="max-w-md mx-auto flex flex-col items-center justify-center text-rose-500">
+          <div class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center text-xl text-rose-600 mb-2 border border-rose-200">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <p class="font-bold text-xs text-rose-700">${errorMsg}</p>
+          <button onclick="window.location.reload()" class="mt-3 text-xs bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold px-3 py-1.5 rounded-lg transition shadow-sm">إعادة المحاولة</button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+window.renderSkeletonTable = renderSkeletonTable;
+window.renderEmptyState = renderEmptyState;
+window.renderErrorState = renderErrorState;
+
 // App Initialization
 document.addEventListener('DOMContentLoaded', async () => {
   initLanguage();
@@ -797,13 +856,13 @@ function applyRolePermissions() {
   }
 
   // 4. Desktop Aside navigation items
-  const adminTabs = ['employees-db', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const adminTabs = ['employees-db', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
   
   if (!hasAll) {
     adminTabs.forEach(t => {
       const el = document.getElementById(`nav-${t}`);
       if (el) {
-        if (isHr && t !== 'users') {
+        if (isHr && t !== 'users' && t !== 'audit-log') {
           // HR Department has access to all operational modules
           el.classList.remove('hidden');
         } else if (t === 'employees-db' && (perms.includes('employees') || role === 'dept_manager')) {
@@ -817,6 +876,8 @@ function applyRolePermissions() {
         } else if (t === 'attendance' && perms.includes('attendance')) {
           el.classList.remove('hidden');
         } else if (t === 'users' && perms.includes('users')) {
+          el.classList.remove('hidden');
+        } else if (t === 'audit-log' && perms.includes('audit')) {
           el.classList.remove('hidden');
         } else if (t === 'organization' && (perms.includes('organization') || role === 'dept_manager')) {
           el.classList.remove('hidden');
@@ -1096,7 +1157,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -1170,6 +1231,9 @@ function switchTab(tabId) {
       break;
     case 'users':
       renderUsersTable();
+      break;
+    case 'audit-log':
+      loadAuditLog(1);
       break;
     case 'leaves':
       loadLeavesView();
@@ -2534,95 +2598,7 @@ function deleteCurrentPreviewPenalty() {
 }
 
 function previewPenaltyForm(id) {
-  currentPreviewPenaltyId = Number(id);
-  const dec = state.issuedPenalties.find(x => x.id === Number(id));
-  if (!dec) return;
-
-  const container = document.getElementById('printablePenaltyContent');
-  container.innerHTML = `
-    <!-- Header matching Company Identity -->
-    <div class="flex justify-between items-start border-b-2 border-brand pb-3">
-      <div class="flex items-center gap-3">
-        <img src="assets/logo.png" class="h-14 w-auto object-contain">
-        <div>
-          <h3 class="font-black text-brand text-base">شركة جوهرة المجد</h3>
-          <p class="text-[11px] text-slate-400">إدارة الموارد البشرية والشؤون الإدارية • نموذج إجراء جزائي رسمي</p>
-        </div>
-      </div>
-      <div class="text-left font-mono text-xs">
-        <div class="font-bold text-brand text-sm">${dec.decision_no}</div>
-        <div class="text-slate-500 mt-1">تاريخ الإصدار: ${dec.incident_date}</div>
-      </div>
-    </div>
-
-    <!-- Title -->
-    <div class="text-center py-2 bg-slate-100 rounded-xl">
-      <h4 class="font-black text-slate-900 text-sm">قرار إداري بتطبيق جزاء تأديبي</h4>
-      <p class="text-[11px] text-slate-600 mt-0.5">وفقاً لأحكام نظام العمل السعودي ولائحة تنظيم العمل والجزاءات المعتمدة</p>
-    </div>
-
-    <!-- Employee Information Strip -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 border p-3 rounded-xl bg-slate-50 font-semibold text-xs">
-      <div><span class="text-slate-400 block text-[10px]">اسم الموظف:</span>${dec.full_name_ar}</div>
-      <div><span class="text-slate-400 block text-[10px]">الرقم الوظيفي:</span>${dec.emp_code}</div>
-      <div><span class="text-slate-400 block text-[10px]">الهوية / الإقامة:</span>${dec.national_id || '-'}</div>
-      <div><span class="text-slate-400 block text-[10px]">المسمى الوظيفي:</span>${dec.job_title_ar}</div>
-    </div>
-
-    <!-- Violation Details -->
-    <div class="border rounded-xl p-3 space-y-2">
-      <div class="flex justify-between border-b pb-2">
-        <span class="font-bold text-slate-800">بند وتصنيف المخالفة:</span>
-        <span class="font-mono font-bold text-brand">[${dec.violation_code}] ${dec.category}</span>
-      </div>
-      <div>
-        <span class="text-slate-400 block text-[11px]">نص المخالفة المرتكبة:</span>
-        <p class="font-bold text-slate-900 text-xs mt-1">${dec.violation_text}</p>
-      </div>
-      <div class="pt-2 border-t text-[11px]">
-        <span class="text-slate-400 block">ملخص الواقعة وإفادة التحقيق الإداري:</span>
-        <p class="text-slate-700 mt-1 leading-relaxed">${dec.investigation_details}</p>
-      </div>
-    </div>
-
-    <!-- Imposed Penalty Box -->
-    <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 flex justify-between items-center">
-      <div>
-        <span class="text-rose-800 font-bold block text-xs">الجزاء التأديبي المعتمد تطبيقاً للائحة:</span>
-        <span class="text-rose-600 text-[11px]">درجة التكرار: ${dec.repetition_level}</span>
-      </div>
-      <div class="text-sm font-black text-rose-800 bg-white px-3 py-1.5 rounded-lg border border-rose-300">
-        ${dec.penalty_text}
-      </div>
-    </div>
-
-    <!-- Signatures and Stamp -->
-    <div class="grid grid-cols-3 gap-4 pt-4 border-t text-center text-xs">
-      <div>
-        <span class="font-bold block text-slate-700">توقيع الموظف بالعلم</span>
-        <p class="text-[10px] text-slate-400 mt-1">أقر باطلاعي على القرار</p>
-        <div class="h-10 mt-2 border-b border-dashed border-slate-400"></div>
-      </div>
-      <div>
-        <span class="font-bold block text-slate-700">لجنة التحقيق والموارد البشرية</span>
-        <p class="text-[10px] text-slate-400 mt-1">${dec.issued_by}</p>
-        <div class="h-10 mt-2 border-b border-dashed border-slate-400"></div>
-      </div>
-      <div class="flex flex-col items-center justify-center">
-        <img src="assets/company-stamp.png" alt="ختم شركة جوهرة المجد" class="h-20 w-20 object-contain">
-        <span class="text-[9px] text-slate-500 font-mono mt-0.5">س.ت: 5850121321</span>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="pt-3 border-t text-[10px] text-slate-400 flex justify-between">
-      <span>شركة جوهرة المجد • أبها (مول سيتي بارك)</span>
-      <span>هاتف: 920012405</span>
-      <span>info@jalmajd.com</span>
-    </div>
-  `;
-
-  openModal('modalPrintPenaltyForm');
+  openOfficialFormPreview('penalty', id);
 }
 
 function exportPenaltiesCsv() {
@@ -2904,7 +2880,7 @@ async function executeGpsPunch(type) {
 }
 
 /* =========================================================================
-   6. PAYROLL & WPS CONTROLLER
+   6. PAYROLL & WPS CONTROLLER (معالجة جذرية لمسيرات الرواتب وعرض السجلات)
    ========================================================================= */
 
 async function loadPayroll() {
@@ -2920,71 +2896,157 @@ async function loadPayroll() {
     console.error('Failed to load payroll periods:', e);
   }
 
+  let selectedId = null;
   if (select) {
     if (periods.length > 0) {
+      const defaultPeriod = periods.find(p => p.period_month === '2026-10') || periods[0];
+      selectedId = defaultPeriod.id;
       select.innerHTML = periods.map(p => `
-        <option value="${p.id}" ${p.period_month === '2026-10' ? 'selected' : ''}>
-          مسير رواتب ${p.period_month} (${p.status}) - ${Number(p.total_net).toLocaleString('en-US')} ر.س
+        <option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>
+          مسير رواتب ${p.period_month} (${p.status}) - ${Number(p.total_net || 0).toLocaleString('en-US')} ر.س
         </option>
       `).join('');
     } else {
       select.innerHTML = `
-        <option value="default_oct" selected>مسير رواتب شهر أكتوبر 2026م (قيد الإعداد والاحتساب)</option>
+        <option value="default" selected>مسير رواتب شهر أكتوبر 2026م (قيد الإعداد والاحتساب)</option>
       `;
     }
   }
 
-  const strip = document.getElementById('payrollTotalsStrip');
-  if (strip) {
-    let totalBasic = 0, totalGosi = 0, totalAllowances = 0, totalNet = 0;
-    state.employees.forEach(emp => {
-      const basic = emp.basic_salary || 0;
-      const h = emp.housing_allowance || 0;
-      const t = emp.transport_allowance || 0;
-      const o = emp.other_allowance || 0;
-      const gosi = emp.is_saudi ? Math.round((basic + h) * 0.0975) : 0;
-      const gross = basic + h + t + o;
-      totalBasic += basic;
-      totalGosi += gosi;
-      totalAllowances += (h + t + o);
-      totalNet += (gross - gosi);
-    });
+  await loadPayrollPeriodDetails(selectedId);
+}
 
-    strip.innerHTML = `
-      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${totalBasic.toLocaleString('en-US')} ر.س</span></div>
-      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">تأمينات GOSI</span><span class="font-mono font-bold text-rose-600">${totalGosi.toLocaleString('en-US')} ر.س</span></div>
-      <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">البدلات</span><span class="font-mono font-bold text-emerald-600">${totalAllowances.toLocaleString('en-US')} ر.س</span></div>
-      <div class="bg-brand/10 border border-brand/30 p-2.5 rounded-xl"><span class="block text-brand text-[10px] font-bold">الصافي</span><span class="font-mono font-black text-brand text-sm">${totalNet.toLocaleString('en-US')} ر.س</span></div>
-    `;
+async function loadPayrollPeriodDetails(periodId) {
+  const tbody = document.getElementById('payrollItemsTableBody');
+  const strip = document.getElementById('payrollTotalsStrip');
+  const badge = document.getElementById('payrollStatusBadge');
+
+  if (tbody) {
+    renderSkeletonTable('payrollItemsTableBody', 12, 6);
   }
 
-  const tbody = document.getElementById('payrollItemsTableBody');
-  if (tbody) {
-    tbody.innerHTML = '';
-    if (state.employees.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="12" class="py-8 text-center text-slate-400 font-semibold">
-            <i class="fa-solid fa-money-bill-wave text-2xl text-slate-300 block mb-2"></i>
-            لا يوجد موظفون لاحتساب مسير الرواتب حالياً. عند إضافة موظفين جدد، سيتم احتساب رواتبهم تلقائياً هنا وفق نظام العمل ونظام حماية الأجور (WPS).
-          </td>
-        </tr>
-      `;
+  try {
+    let details = null;
+    if (periodId && periodId !== 'default' && periodId !== 'default_oct') {
+      const res = await apiFetch(`/api/payroll/periods/${periodId}`);
+      if (res && res.success && res.data) {
+        details = res.data;
+      }
+    }
+
+    if (details && details.period) {
+      const p = details.period;
+      if (badge) {
+        if (p.status === 'معتمد') {
+          badge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800';
+          badge.textContent = 'معتمد';
+        } else {
+          badge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800';
+          badge.textContent = 'مسودة (قيد التدقيق)';
+        }
+      }
+
+      if (strip) {
+        const totalBasic = Number(p.total_basic || 0);
+        const totalGosi = Number(p.total_gosi_employee || 0);
+        const totalAllowances = Number((p.total_housing || 0) + (p.total_transport || 0) + (p.total_allowances || 0));
+        const totalNet = Number(p.total_net || 0);
+
+        strip.innerHTML = `
+          <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${totalBasic.toLocaleString('en-US')} ر.س</span></div>
+          <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">تأمينات GOSI</span><span class="font-mono font-bold text-rose-600">${totalGosi.toLocaleString('en-US')} ر.س</span></div>
+          <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">البدلات</span><span class="font-mono font-bold text-emerald-600">${totalAllowances.toLocaleString('en-US')} ر.س</span></div>
+          <div class="bg-brand/10 border border-brand/30 p-2.5 rounded-xl"><span class="block text-brand text-[10px] font-bold">الصافي</span><span class="font-mono font-black text-brand text-sm">${totalNet.toLocaleString('en-US')} ر.س</span></div>
+        `;
+      }
+
+      const items = details.items || [];
+      if (!tbody) return;
+      if (items.length === 0) {
+        renderEmptyState('payrollItemsTableBody', 12, 'fa-money-bill-wave', 'لا توجد سجلات رواتب مسجلة في هذا المسير');
+        return;
+      }
+
+      const rows = items.map(emp => {
+        const basic = Number(emp.basic_salary || 0);
+        const housing = Number(emp.housing_allowance || 0);
+        const transport = Number(emp.transport_allowance || 0);
+        const other = Number(emp.other_allowance || 0) + Number(emp.overtime_pay || 0) + Number(emp.bonus_pay || 0);
+        const gross = Number(emp.gross_salary || (basic + housing + transport + other));
+        const gosi = Number(emp.gosi_employee_share || 0);
+        const compGosi = Number(emp.gosi_company_share || 0);
+        const deductions = Number(emp.total_deductions || 0);
+        const net = Number(emp.net_salary || (gross - deductions));
+
+        return `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+            <td class="py-3 px-3 font-mono font-bold text-slate-700">${emp.emp_code || 'JM-0000'}</td>
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-900">${emp.full_name_ar || ''}</div>
+              <div class="text-[11px] text-slate-400">${emp.job_title_ar || emp.department_name || ''}</div>
+            </td>
+            <td class="py-3 px-3 font-mono font-bold text-slate-700">${basic.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-600">${housing.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-600">${transport.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-600">${other.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono font-bold text-slate-800">${gross.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-rose-600 font-bold">${gosi.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-500">${compGosi.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono text-slate-400">${deductions.toLocaleString('en-US')}</td>
+            <td class="py-3 px-3 font-mono font-black text-brand text-sm">${net.toLocaleString('en-US')} ر.س</td>
+            <td class="py-3 px-3 text-center">
+              <button onclick="viewEmployeePayslip(${emp.emp_id || emp.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] px-2.5 py-1 rounded-lg transition shadow-sm">القسيمة</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rows.join('');
     } else {
-      state.employees.forEach(emp => {
-        const basic = emp.basic_salary || 0;
-        const housing = emp.housing_allowance || 0;
-        const transport = emp.transport_allowance || 0;
-        const other = emp.other_allowance || 0;
+      // Fallback: render from state.employees if period details not yet created
+      if (strip) {
+        let totalBasic = 0, totalGosi = 0, totalAllowances = 0, totalNet = 0;
+        state.employees.forEach(emp => {
+          const basic = Number(emp.basic_salary || 0);
+          const h = Number(emp.housing_allowance || 0);
+          const t = Number(emp.transport_allowance || 0);
+          const o = Number(emp.other_allowance || 0);
+          const gosi = emp.is_saudi ? Math.round((basic + h) * 0.0975) : 0;
+          const gross = basic + h + t + o;
+          totalBasic += basic;
+          totalGosi += gosi;
+          totalAllowances += (h + t + o);
+          totalNet += (gross - gosi);
+        });
+
+        strip.innerHTML = `
+          <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${totalBasic.toLocaleString('en-US')} ر.س</span></div>
+          <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">تأمينات GOSI</span><span class="font-mono font-bold text-rose-600">${totalGosi.toLocaleString('en-US')} ر.س</span></div>
+          <div class="bg-slate-50 border p-2.5 rounded-xl"><span class="block text-slate-400 text-[10px]">البدلات</span><span class="font-mono font-bold text-emerald-600">${totalAllowances.toLocaleString('en-US')} ر.س</span></div>
+          <div class="bg-brand/10 border border-brand/30 p-2.5 rounded-xl"><span class="block text-brand text-[10px] font-bold">الصافي</span><span class="font-mono font-black text-brand text-sm">${totalNet.toLocaleString('en-US')} ر.س</span></div>
+        `;
+      }
+
+      if (!tbody) return;
+      if (state.employees.length === 0) {
+        renderEmptyState('payrollItemsTableBody', 12, 'fa-money-bill-wave', 'لا يوجد موظفون لاحتساب مسير الرواتب حالياً');
+        return;
+      }
+
+      const rows = state.employees.map(emp => {
+        const basic = Number(emp.basic_salary || 0);
+        const housing = Number(emp.housing_allowance || 0);
+        const transport = Number(emp.transport_allowance || 0);
+        const other = Number(emp.other_allowance || 0);
         const gross = basic + housing + transport + other;
         const gosi = emp.is_saudi ? Math.round((basic + housing) * 0.0975) : 0;
         const compGosi = emp.is_saudi ? Math.round((basic + housing) * 0.1175) : Math.round((basic + housing) * 0.02);
         const net = gross - gosi;
 
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50 transition">
+        return `
+          <tr class="hover:bg-slate-50 transition border-b border-slate-100">
             <td class="py-3 px-3 font-mono font-bold text-slate-700">${emp.emp_code}</td>
-            <td class="py-3 px-3"><div class="font-bold text-slate-900">${emp.full_name_ar}</div><div class="text-[11px] text-slate-400">${emp.job_title_ar}</div></td>
+            <td class="py-3 px-3"><div class="font-bold text-slate-900">${emp.full_name_ar}</div><div class="text-[11px] text-slate-400">${emp.job_title_ar || ''}</div></td>
             <td class="py-3 px-3 font-mono font-bold text-slate-700">${basic.toLocaleString('en-US')}</td>
             <td class="py-3 px-3 font-mono text-slate-600">${housing.toLocaleString('en-US')}</td>
             <td class="py-3 px-3 font-mono text-slate-600">${transport.toLocaleString('en-US')}</td>
@@ -2995,14 +3057,24 @@ async function loadPayroll() {
             <td class="py-3 px-3 font-mono text-slate-400">0.00</td>
             <td class="py-3 px-3 font-mono font-black text-brand text-sm">${net.toLocaleString('en-US')} ر.س</td>
             <td class="py-3 px-3 text-center">
-              <button onclick="viewEmployeePayslip(${emp.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] px-2.5 py-1 rounded-lg">القسيمة</button>
+              <button onclick="viewEmployeePayslip(${emp.id})" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] px-2.5 py-1 rounded-lg transition shadow-sm">القسيمة</button>
             </td>
           </tr>
         `;
       });
+
+      tbody.innerHTML = rows.join('');
     }
+  } catch (err) {
+    console.error('Error loading payroll period details:', err);
+    renderErrorState('payrollItemsTableBody', 12, 'تعذر تحميل بيانات مسير الرواتب: ' + err.message);
   }
 }
+
+window.loadPayrollPeriodDetails = loadPayrollPeriodDetails;
+window.loadAttendanceData = function(dateVal) {
+  return loadAttendance(dateVal);
+};
 
 async function executeCalculatePayroll() {
   const monthInput = document.getElementById('calcPayrollMonthInput');
@@ -4908,9 +4980,9 @@ async function rejectRequest(id, stage = 'manager') {
    8. OFFICIAL SALARY CERTIFICATE (خطاب تعريف بالراتب)
    ========================================================================= */
 
-function openSalaryCertificateModal() {
-  const empId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : (state.employees && state.employees[0] ? state.employees[0].id : 15321);
-  previewSalaryCertificateForEmp(empId);
+function openSalaryCertificateModal(empId) {
+  const targetId = empId || (state.currentUser && state.currentUser.emp_id) || (state.employees && state.employees[0] ? state.employees[0].id : 1);
+  openOfficialFormPreview('salary_cert', targetId);
 }
 
 function previewSalaryCertificateForEmp(empId) {
@@ -5675,17 +5747,53 @@ function onUserRoleChanged(role) {
   }
 }
 
-function toggleAllPermissions(checked) {
-  const perms = [
-    'requests', 'payslips', 'approvals', 'employees',
-    'attendance', 'penalties', 'payroll', 'users',
-    'edit_attendance', 'edit_balances', 'delete'
-  ];
-  perms.forEach(p => {
-    const el = document.getElementById(`perm_${p}`);
-    if (el) el.checked = checked;
+const ALL_RBAC_PERM_KEYS = [
+  'requests', 'payslips', 'approvals', 'employees',
+  'attendance', 'penalties', 'payroll', 'tasks', 'loans',
+  'notices', 'compliance', 'users', 'audit',
+  'edit_attendance', 'edit_balances', 'delete'
+];
+
+function applyRbacPreset(preset) {
+  ALL_RBAC_PERM_KEYS.forEach(k => {
+    const el = document.getElementById(`perm_${k}`);
+    if (!el) return;
+    el.disabled = false;
+    if (preset === 'admin') {
+      el.checked = true;
+    } else if (preset === 'hr') {
+      const hrExcluded = ['edit_attendance', 'edit_balances', 'delete', 'users', 'audit'];
+      el.checked = !hrExcluded.includes(k);
+      if (hrExcluded.includes(k)) el.disabled = true;
+    } else if (preset === 'manager') {
+      const mgrAllowed = ['requests', 'payslips', 'approvals', 'employees', 'tasks', 'attendance'];
+      el.checked = mgrAllowed.includes(k);
+    } else if (preset === 'employee') {
+      const empAllowed = ['requests', 'payslips'];
+      el.checked = empAllowed.includes(k);
+    }
   });
 }
+
+function onUserRoleChanged(role) {
+  if (role === 'admin') applyRbacPreset('admin');
+  else if (role === 'hr_manager') applyRbacPreset('hr');
+  else if (role === 'dept_manager') applyRbacPreset('manager');
+  else applyRbacPreset('employee');
+}
+
+function toggleAllPermissions(checked) {
+  ALL_RBAC_PERM_KEYS.forEach(p => {
+    const el = document.getElementById(`perm_${p}`);
+    if (el) {
+      el.disabled = false;
+      el.checked = checked;
+    }
+  });
+}
+
+window.applyRbacPreset = applyRbacPreset;
+window.toggleAllPermissions = toggleAllPermissions;
 
 function openAddUserModal() {
   const title = document.getElementById('userModalTitle');
@@ -5748,13 +5856,8 @@ function editUserAccount(userId) {
 
   const perms = Array.isArray(user.permissions) ? user.permissions : [];
   const isSuper = user.role === 'admin' || perms.includes('all');
-  const permKeys = [
-    'requests', 'payslips', 'approvals', 'employees',
-    'attendance', 'penalties', 'payroll', 'users',
-    'edit_attendance', 'edit_balances', 'delete'
-  ];
 
-  permKeys.forEach(k => {
+  ALL_RBAC_PERM_KEYS.forEach(k => {
     const chk = document.getElementById(`perm_${k}`);
     if (chk) {
       chk.checked = isSuper || perms.includes(k);
@@ -5782,12 +5885,7 @@ async function handleAddUserSubmit(e) {
   }
 
   const perms = [];
-  const permKeys = [
-    'requests', 'payslips', 'approvals', 'employees',
-    'attendance', 'penalties', 'payroll', 'users',
-    'edit_attendance', 'edit_balances', 'delete'
-  ];
-  permKeys.forEach(k => {
+  ALL_RBAC_PERM_KEYS.forEach(k => {
     const chk = document.getElementById(`perm_${k}`);
     if (chk && chk.checked) perms.push(k);
   });
@@ -6105,6 +6203,243 @@ if ('serviceWorker' in navigator) {
       .catch((err) => console.log('PWA Service Worker Registration Failed:', err));
   });
 }
+
+/* =========================================================================
+   AUDIT LOG CLIENT CONTROLLER (سجل الرقابة والعمليات الإدارية)
+   ========================================================================= */
+
+const auditState = {
+  page: 1,
+  limit: 25,
+  total: 0,
+  logs: [],
+  stats: null
+};
+
+async function loadAuditLog(page = 1) {
+  auditState.page = page;
+  const tbody = document.getElementById('auditLogsTableBody');
+  if (tbody) {
+    renderSkeletonTable('auditLogsTableBody', 8, 8);
+  }
+
+  const searchInput = document.getElementById('auditSearchInput');
+  const actionFilter = document.getElementById('auditActionFilter');
+  const entityFilter = document.getElementById('auditEntityFilter');
+  const dateFrom = document.getElementById('auditDateFrom');
+
+  const q = new URLSearchParams({
+    page: String(page),
+    limit: String(auditState.limit),
+    search: searchInput ? searchInput.value.trim() : '',
+    action: actionFilter ? actionFilter.value : 'all',
+    entity_type: entityFilter ? entityFilter.value : 'all',
+    date_from: dateFrom ? dateFrom.value : ''
+  });
+
+  try {
+    const [res, statsRes] = await Promise.all([
+      apiFetch(`/api/audit-logs?${q.toString()}`),
+      apiFetch('/api/audit-logs/stats')
+    ]);
+
+    if (statsRes && statsRes.success && statsRes.data) {
+      auditState.stats = statsRes.data;
+      const kpiTotal = document.getElementById('auditKpiTotal');
+      const kpiToday = document.getElementById('auditKpiToday');
+      const kpiApprovals = document.getElementById('auditKpiApprovals');
+      if (kpiTotal) kpiTotal.textContent = Number(statsRes.data.total_events || 0).toLocaleString('en-US');
+      if (kpiToday) kpiToday.textContent = Number(statsRes.data.today_events || 0).toLocaleString('en-US');
+      if (kpiApprovals) {
+        const appCount = (statsRes.data.top_actions || []).find(a => a.action === 'APPROVE');
+        kpiApprovals.textContent = Number(appCount ? appCount.c : 0).toLocaleString('en-US');
+      }
+    }
+
+    if (res && res.success && res.data) {
+      auditState.logs = res.data.logs || [];
+      auditState.total = res.data.total || 0;
+      renderAuditLogsTable();
+      renderAuditPagination(res.data.page, res.data.total_pages, res.data.total);
+    } else {
+      renderErrorState('auditLogsTableBody', 8, 'تعذر جلب سجلات العمليات');
+    }
+  } catch (err) {
+    console.error('Error loading audit logs:', err);
+    renderErrorState('auditLogsTableBody', 8, err.message);
+  }
+}
+
+let auditSearchTimeout = null;
+function filterAuditLogLive() {
+  clearTimeout(auditSearchTimeout);
+  auditSearchTimeout = setTimeout(() => {
+    loadAuditLog(1);
+  }, 250);
+}
+
+function renderAuditLogsTable() {
+  const tbody = document.getElementById('auditLogsTableBody');
+  if (!tbody) return;
+
+  if (auditState.logs.length === 0) {
+    renderEmptyState('auditLogsTableBody', 8, 'fa-clipboard-check', 'لا توجد سجلات تطابق معايير البحث المحددة');
+    return;
+  }
+
+  const actionStyles = {
+    'LOGIN': 'bg-purple-100 text-purple-800 border-purple-200',
+    'LOGOUT': 'bg-slate-100 text-slate-700 border-slate-200',
+    'CREATE': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    'CREATE_EMPLOYEE': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    'CREATE_REQUEST': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    'CREATE_LEAVE_REQUEST': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    'CREATE_USER': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    'UPDATE': 'bg-blue-100 text-blue-800 border-blue-200',
+    'UPDATE_EMPLOYEE': 'bg-blue-100 text-blue-800 border-blue-200',
+    'UPDATE_USER': 'bg-blue-100 text-blue-800 border-blue-200',
+    'APPROVE': 'bg-teal-100 text-teal-800 border-teal-200',
+    'APPROVE_PAYROLL': 'bg-teal-100 text-teal-800 border-teal-200',
+    'REJECT': 'bg-rose-100 text-rose-800 border-rose-200',
+    'DELETE': 'bg-rose-100 text-rose-800 border-rose-200',
+    'DELETE_EMPLOYEE': 'bg-rose-100 text-rose-800 border-rose-200',
+    'DELETE_USER': 'bg-rose-100 text-rose-800 border-rose-200',
+    'CALCULATE_PAYROLL': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    'SYNC_USERS': 'bg-amber-100 text-amber-800 border-amber-200',
+    'SYNC_ALL_DATA': 'bg-amber-100 text-amber-800 border-amber-200'
+  };
+
+  const rows = auditState.logs.map(log => {
+    const badgeCls = actionStyles[log.action] || 'bg-slate-100 text-slate-700 border-slate-200';
+    const actor = log.performed_by_name || 'النظام';
+    const roleBadge = log.performed_by_role ? `<span class="text-[10px] text-slate-400 font-semibold block">${log.performed_by_role}</span>` : '';
+    const entityText = `${log.entity_type || 'نظام'} #${log.entity_id || '-'}`;
+    const comment = log.comment || (log.new_status ? `الحالة: ${log.new_status}` : '-');
+    const deviceBadge = log.device ? `<span class="text-[9px] bg-slate-100 px-1 rounded text-slate-500 font-mono">${log.device}</span>` : '';
+
+    return `
+      <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+        <td class="py-2.5 px-3 font-mono text-slate-400 font-bold text-[11px]">${log.id}</td>
+        <td class="py-2.5 px-3 whitespace-nowrap">
+          <div class="font-mono font-bold text-slate-700 text-[11px]">${log.created_at || '-'}</div>
+        </td>
+        <td class="py-2.5 px-3">
+          <div class="font-bold text-slate-900">${actor}</div>
+          ${roleBadge}
+        </td>
+        <td class="py-2.5 px-3">
+          <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeCls}">${log.action}</span>
+        </td>
+        <td class="py-2.5 px-3">
+          <span class="font-mono font-bold text-slate-700">${entityText}</span>
+        </td>
+        <td class="py-2.5 px-3 max-w-xs truncate text-slate-600 font-medium" title="${comment}">
+          ${comment}
+        </td>
+        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">
+          <div>${log.ip_address || '127.0.0.1'}</div>
+          <div>${deviceBadge} <span class="text-[9px] text-slate-400">${log.browser || ''}</span></div>
+        </td>
+        <td class="py-2.5 px-3 text-center">
+          <button onclick="viewAuditLogDetails(${log.id})" class="text-purple-600 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 font-bold text-[11px] px-2.5 py-1 rounded-lg transition shadow-sm">
+            عرض
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = rows.join('');
+}
+
+function renderAuditPagination(currentPage, totalPages, totalCount) {
+  const infoEl = document.getElementById('auditPaginationInfo');
+  const btnsEl = document.getElementById('auditPaginationButtons');
+  if (infoEl) {
+    infoEl.textContent = `عرض الصفحة ${currentPage} من ${totalPages || 1} (إجمالي السجلات: ${totalCount})`;
+  }
+  if (!btnsEl) return;
+
+  btnsEl.innerHTML = '';
+  if (totalPages <= 1) return;
+
+  if (currentPage > 1) {
+    btnsEl.innerHTML += `<button onclick="loadAuditLog(${currentPage - 1})" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition">السابق</button>`;
+  }
+
+  for (let p = Math.max(1, currentPage - 2); p <= Math.min(totalPages, currentPage + 2); p++) {
+    btnsEl.innerHTML += `
+      <button onclick="loadAuditLog(${p})" class="px-2.5 py-1 rounded text-xs font-bold transition ${p === currentPage ? 'bg-purple-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}">
+        ${p}
+      </button>
+    `;
+  }
+
+  if (currentPage < totalPages) {
+    btnsEl.innerHTML += `<button onclick="loadAuditLog(${currentPage + 1})" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition">التالي</button>`;
+  }
+}
+
+function viewAuditLogDetails(logId) {
+  const log = auditState.logs.find(l => l.id === logId);
+  if (!log) return;
+
+  const content = document.getElementById('auditLogDetailsContent');
+  if (!content) return;
+
+  let oldFormatted = log.old_values ? `<pre class="bg-slate-50 p-2 rounded text-[11px] font-mono border overflow-x-auto">${log.old_values}</pre>` : '<span class="text-slate-400">لا توجد قيم سابقة</span>';
+  let newFormatted = log.new_values ? `<pre class="bg-emerald-50/50 p-2 rounded text-[11px] font-mono border border-emerald-200 overflow-x-auto text-emerald-950">${log.new_values}</pre>` : '<span class="text-slate-400">لا توجد قيم جديدة مسجلة</span>';
+
+  content.innerHTML = `
+    <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border text-xs">
+      <div><span class="text-slate-400 block font-semibold text-[10px]">رقم السجل:</span><span class="font-mono font-bold text-slate-800">#${log.id}</span></div>
+      <div><span class="text-slate-400 block font-semibold text-[10px]">التاريخ والوقت:</span><span class="font-mono font-bold text-slate-800">${log.created_at}</span></div>
+      <div><span class="text-slate-400 block font-semibold text-[10px]">المستخدم:</span><span class="font-bold text-slate-800">${log.performed_by_name || 'النظام'} (${log.performed_by_role || '-'})</span></div>
+      <div><span class="text-slate-400 block font-semibold text-[10px]">نوع العملية:</span><span class="font-bold text-purple-700">${log.action}</span></div>
+      <div><span class="text-slate-400 block font-semibold text-[10px]">الوحدة المتأثرة:</span><span class="font-mono font-bold text-slate-800">${log.entity_type} #${log.entity_id}</span></div>
+      <div><span class="text-slate-400 block font-semibold text-[10px]">عنوان IP:</span><span class="font-mono text-slate-700">${log.ip_address || '-'} (${log.device || '-'} - ${log.browser || '-'})</span></div>
+    </div>
+
+    <div>
+      <h4 class="font-bold text-slate-800 text-xs mb-1">الملاحظات والبيان:</h4>
+      <div class="bg-white p-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold">${log.comment || 'لا توجد ملاحظات إضافية'}</div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <h4 class="font-bold text-slate-700 text-xs mb-1">القيم قبل العملية (Before):</h4>
+        ${oldFormatted}
+      </div>
+      <div>
+        <h4 class="font-bold text-emerald-800 text-xs mb-1">القيم بعد العملية (After):</h4>
+        ${newFormatted}
+      </div>
+    </div>
+  `;
+
+  openModal('modalAuditLogDetails');
+}
+
+function exportAuditLogExcel() {
+  const searchInput = document.getElementById('auditSearchInput');
+  const actionFilter = document.getElementById('auditActionFilter');
+  const entityFilter = document.getElementById('auditEntityFilter');
+  const dateFrom = document.getElementById('auditDateFrom');
+
+  const q = new URLSearchParams({
+    search: searchInput ? searchInput.value.trim() : '',
+    action: actionFilter ? actionFilter.value : 'all',
+    entity_type: entityFilter ? entityFilter.value : 'all',
+    date_from: dateFrom ? dateFrom.value : ''
+  });
+
+  window.open(`/api/audit-logs/export/excel?${q.toString()}`, '_blank');
+}
+
+window.loadAuditLog = loadAuditLog;
+window.filterAuditLogLive = filterAuditLogLive;
+window.viewAuditLogDetails = viewAuditLogDetails;
+window.exportAuditLogExcel = exportAuditLogExcel;
 
 // Global PWA Install Prompt State
 let deferredInstallPrompt = null;
@@ -8478,7 +8813,7 @@ window.goToLeaveBalancePage = goToLeaveBalancePage;
 // =============================================================================
 
 // --- 1. OFFICIAL FORM PREVIEW HANDLER ---
-function openOfficialFormPreview(type, id) {
+function openOfficialFormPreview(type, id, options = {}) {
   const iframe = document.getElementById('officialFormIframe');
   const title = document.getElementById('officialFormPreviewTitle');
   if (!iframe) return;
@@ -8492,12 +8827,30 @@ function openOfficialFormPreview(type, id) {
   } else if (type === 'penalty') {
     url = `/api/forms/html/penalty/${id}`;
     titleText = 'قرار جزائي إداري رسمي (JM-HR-F-002) - شركة جوهرة المجد';
+  } else if (type === 'resignation') {
+    url = `/api/forms/html/resignation/${id}`;
+    titleText = 'نموذج طلب إنهاء خدمة واستقالة (JM-HR-F-003) - شركة جوهرة المجد';
   } else if (type === 'termination') {
     url = `/api/forms/html/termination/${id}`;
     titleText = 'نموذج إنهاء عقد ومخالصة نهائية (JM-HR-F-003/v3) - شركة جوهرة المجد';
+  } else if (type === 'clearance') {
+    url = `/api/forms/html/clearance/${id}`;
+    titleText = 'نموذج إخلاء طرف موظف (JM-HR-F-005) - شركة جوهرة المجد';
   } else if (type === 'notice') {
     url = `/api/forms/html/notice/${id}`;
     titleText = 'خطاب إشعار / إنذار دوام رسمي موثق - شركة جوهرة المجد';
+  } else if (type === 'salary_cert' || type === 'salary-cert') {
+    url = `/api/forms/html/salary-cert/${id}`;
+    titleText = 'شهادة تعريف بالراتب معتمدة رسمياً (JM-HR-F-008) - شركة جوهرة المجد';
+  } else if (type === 'absence_penalty' || type === 'absence-penalty') {
+    url = `/api/forms/html/absence-penalty/${id}`;
+    titleText = 'إشعار عقوبة غياب رسمي (JM-HR-F-001/ABS) - شركة جوهرة المجد';
+  } else if (type === 'instruction_penalty' || type === 'instruction-penalty') {
+    url = `/api/forms/html/instruction-penalty/${id}`;
+    titleText = 'إشعار مخالفة الأوامر والتعليمات (JM-HR-F-002/INS) - شركة جوهرة المجد';
+  } else if (type === 'contract_non_renewal' || type === 'contract-non-renewal') {
+    url = `/api/forms/html/contract-non-renewal/${id}`;
+    titleText = 'إشعار عدم رغبة في تجديد العقد (JM-HR-F-004/CNR) - شركة جوهرة المجد';
   }
 
   if (title) title.innerHTML = `<i class="fa-solid fa-file-invoice text-teal-700"></i> ${titleText}`;

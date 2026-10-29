@@ -39,7 +39,24 @@ function httpGet(path, headers = {}) {
   });
 }
 
+let serverInstance = null;
+
+function ensureServerRunning() {
+  return new Promise((resolve) => {
+    const testReq = http.get('http://localhost:3000/api/bootstrap', () => {
+      resolve();
+    });
+    testReq.on('error', () => {
+      const app = require('../server/server');
+      serverInstance = app.listen(3000, () => {
+        resolve();
+      });
+    });
+  });
+}
+
 async function runComprehensiveSystemTests() {
+  await ensureServerRunning();
   console.log('================================================================');
   console.log('  الفحص والتدقيق الشامل لكامل أجزاء نظام موارد بشرية جوهرة المجد  ');
   console.log('================================================================\n');
@@ -223,6 +240,10 @@ async function runComprehensiveSystemTests() {
   console.log(`إجمالي الفحوصات: ${passed + failed} | الناجحة: ${passed} | الفاشلة: ${failed}`);
   console.log(`نسبة النجاح: ${Math.round((passed / (passed + failed)) * 100)}%`);
   console.log('================================================================\n');
+
+  if (serverInstance) {
+    serverInstance.close();
+  }
 
   if (failed > 0) {
     throw new Error(`فشل في ${failed} فحص من الفحوصات الشاملة للنظام.`);

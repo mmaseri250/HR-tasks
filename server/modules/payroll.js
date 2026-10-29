@@ -176,7 +176,16 @@ function calculateMonthlyPayroll(periodMonth) {
 }
 
 function getPayrollPeriods() {
-  return query(`SELECT * FROM payroll_periods ORDER BY period_month DESC`);
+  let periods = query(`SELECT * FROM payroll_periods ORDER BY period_month DESC`);
+  if (!periods || periods.length === 0) {
+    try {
+      calculateMonthlyPayroll('2026-10');
+      periods = query(`SELECT * FROM payroll_periods ORDER BY period_month DESC`);
+    } catch (e) {
+      console.warn('Auto-initialize payroll period notice:', e.message);
+    }
+  }
+  return periods || [];
 }
 
 function getPayrollPeriodDetails(periodId) {

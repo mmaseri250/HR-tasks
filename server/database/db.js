@@ -568,6 +568,14 @@ function initSchema() {
   try { db.exec('ALTER TABLE employees ADD COLUMN branch_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE biometric_devices ADD COLUMN branch_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE biometric_devices ADD COLUMN is_active INTEGER DEFAULT 1;'); } catch (e) {}
+
+  // Enhanced Audit Logs Columns
+  try { db.exec('ALTER TABLE audit_logs ADD COLUMN emp_code TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE audit_logs ADD COLUMN department_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE audit_logs ADD COLUMN old_values TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE audit_logs ADD COLUMN new_values TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE audit_logs ADD COLUMN browser TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE audit_logs ADD COLUMN device TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE attendance_policies ADD COLUMN min_hours REAL DEFAULT 3.0;'); } catch (e) {}
   try { db.exec('ALTER TABLE attendance_policies ADD COLUMN is_default INTEGER DEFAULT 0;'); } catch (e) {}
   try { db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;'); } catch (e) {}
