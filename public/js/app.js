@@ -4909,17 +4909,19 @@ async function rejectRequest(id, stage = 'manager') {
    ========================================================================= */
 
 function openSalaryCertificateModal() {
-  refreshSalaryCertificate(document.getElementById('certDestinationSelect').value);
-  openModal('modalSalaryCertificate');
+  const empId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : (state.employees && state.employees[0] ? state.employees[0].id : 15321);
+  previewSalaryCertificateForEmp(empId);
 }
 
 function previewSalaryCertificateForEmp(empId) {
-  refreshSalaryCertificateForEmp(empId, 'إلى من يهمه الأمر');
-  openModal('modalSalaryCertificate');
+  const targetId = empId || (state.currentUser && state.currentUser.emp_id) || (state.employees && state.employees[0] ? state.employees[0].id : 15321);
+  const destElem = document.getElementById('certDestinationSelect');
+  const dest = destElem ? encodeURIComponent(destElem.value) : encodeURIComponent('إلى من يهمه الأمر');
+  window.open(`/api/forms/html/salary-cert/${targetId}?emp_id=${targetId}&destination=${dest}`, '_blank');
 }
 
 function refreshSalaryCertificate(destination) {
-  const empId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : 3;
+  const empId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : (state.employees && state.employees[0] ? state.employees[0].id : 15321);
   refreshSalaryCertificateForEmp(empId, destination);
 }
 
@@ -4939,9 +4941,9 @@ function refreshSalaryCertificateForEmp(empId, destination) {
         <div class="flex items-center gap-3">
           <img src="assets/logo.png" class="h-16 w-auto object-contain">
           <div>
-            <h3 class="font-black text-brand text-lg">شركة جوهرة المجد للتجارة</h3>
-            <p class="text-xs text-slate-500 font-sans">Jawharat Al-Majd Trading Co.</p>
-            <p class="text-[11px] text-slate-500 font-mono mt-0.5">س.ت: 5850121321 • الرقم الموحد: 7004872169</p>
+            <h3 class="font-black text-brand text-lg">شركة جوهرة المجد للتجارة والمقاولات</h3>
+            <p class="text-xs text-slate-500 font-sans">Jawharat Al-Majd Trading & Contracting Co.</p>
+            <p class="text-[11px] text-slate-500 font-mono mt-0.5">س.ت: 7004872169 • الرقم الضريبي: 310492837400003</p>
           </div>
         </div>
         <div class="text-left text-xs space-y-1">
@@ -8098,6 +8100,9 @@ function previewOfficialHtmlFormDirect(formType, empId = null) {
       break;
     case 'leave_request':
       url = `/api/forms/html/leave/${targetEmpId}?emp_id=${targetEmpId}`;
+      break;
+    case 'salary_cert':
+      url = `/api/forms/html/salary-cert/${targetEmpId}?emp_id=${targetEmpId}`;
       break;
     default:
       url = `/api/forms/html/leave/${targetEmpId}?emp_id=${targetEmpId}`;

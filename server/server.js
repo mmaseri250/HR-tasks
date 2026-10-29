@@ -1906,7 +1906,7 @@ app.get('/api/audit-logs', (req, res) => {
    ========================================================================= */
 app.get('/api/forms/html/leave/:id', (req, res) => {
   try {
-    const html = officialTemplates.renderLeaveFormHtml(req.params.id);
+    const html = officialTemplates.renderLeaveFormHtml(req.params.id, req.query);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   } catch (err) {
@@ -1916,7 +1916,7 @@ app.get('/api/forms/html/leave/:id', (req, res) => {
 
 app.get('/api/forms/html/penalty/:id', (req, res) => {
   try {
-    const html = officialTemplates.renderPenaltyFormHtml(req.params.id);
+    const html = officialTemplates.renderPenaltyFormHtml(req.params.id, req.query);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   } catch (err) {
@@ -1926,7 +1926,7 @@ app.get('/api/forms/html/penalty/:id', (req, res) => {
 
 app.get('/api/forms/html/resignation/:id', (req, res) => {
   try {
-    const html = officialTemplates.renderResignationTerminationFormHtml(req.params.id);
+    const html = officialTemplates.renderResignationTerminationFormHtml(req.params.id, req.query);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   } catch (err) {
@@ -1934,9 +1934,19 @@ app.get('/api/forms/html/resignation/:id', (req, res) => {
   }
 });
 
+app.get('/api/forms/html/salary-cert/:id', (req, res) => {
+  try {
+    const html = officialTemplates.renderSalaryCertHtml(req.params.id, req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد شهادة تعريف الراتب: ${err.message}</h3>`);
+  }
+});
+
 app.get('/api/forms/html/notice/:id', (req, res) => {
   try {
-    const html = officialTemplates.renderAttendanceNoticeHtml(req.params.id);
+    const html = officialTemplates.renderAttendanceNoticeHtml(req.params.id, req.query);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   } catch (err) {
@@ -1985,6 +1995,9 @@ app.get('/api/forms/html/contract-non-renewal/:empId', (req, res) => {
 });
 
 app.get('/api/forms/raw-template/:formNumber', (req, res) => {
+  if (req.params.formNumber === '8') {
+    return res.redirect('/api/forms/word/salary_cert');
+  }
   const formMap = {
     '1': 'اخطار عقوبة - غياب.docx',
     '2': 'اخطار عقوبة - مخالفة الأوامر والتعليمات.docx',

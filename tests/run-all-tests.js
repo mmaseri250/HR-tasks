@@ -21,6 +21,7 @@ async function main() {
     await runMuqeemAndEssTests();
     require('./new-features.test');
     require('./absence-notices.test');
+    require('./test_all_8_official_forms');
     require('./approval_workflow_audit.test');
     require('./page-connectivity.test');
     await runComprehensiveSystemTests();
