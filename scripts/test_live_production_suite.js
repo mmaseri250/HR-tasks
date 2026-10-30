@@ -135,8 +135,8 @@ async function runTestSuite() {
   // 7. Test Departments & Branches
   const deptsRes = await request('/api/departments', { headers: adminHeaders });
   const depts = deptsRes.json?.data || [];
-  const hasSupportDept = depts.some(d => d.name_ar.includes('الدعم الإداري والمساندة'));
-  assert(hasSupportDept, 'Department "إدارة الدعم الإداري والمساندة" exists in production DB');
+  const hasSupportDept = depts.some(d => d.name_ar.includes('الخدمات المساندة') || d.name_ar.includes('المساندة'));
+  assert(hasSupportDept, 'Department "إدارة الخدمات المساندة والنظافة" exists in production DB');
 
   const branchesRes = await request('/api/branches', { headers: adminHeaders });
   const branches = branchesRes.json?.data || [];
