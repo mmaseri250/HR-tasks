@@ -45,28 +45,75 @@ try {
 
 // Ensure organizational hierarchy and manager integrity on startup
 try {
-  let gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
-  if (!gm) {
-    const dept = get("SELECT id FROM departments WHERE name_ar = 'الإدارة العامة'") || get("SELECT id FROM departments LIMIT 1");
-    const branch = get("SELECT id FROM branches WHERE is_main = 1") || get("SELECT id FROM branches LIMIT 1");
-    run(`
-      INSERT INTO employees (
-        emp_code, full_name_ar, full_name_en, national_id, nationality,
-        is_saudi, gender, email, phone, department_id, branch_id, section,
-        job_title_ar, job_title_en, grade_level, basic_salary, housing_allowance,
-        transport_allowance, other_allowance, bank_name, bank_code, iban,
-        annual_leave_balance, direct_manager_name, shift_type, join_date, status, role
-      ) VALUES (
-        'JM-0001', 'عبدالرحمن صالح القحطاني', 'Abdulrahman Saleh Al-Qahtani', '1001122331', 'سعودي',
-        1, 'M', 'chairman@jalmajd.com', '920012405', ?, ?, 'الإدارة العامة',
-        'رئيس مجلس الإدارة', 'Chairman', 'P-1', 0, 0,
-        0, 0, 'مصرف الراجحي', 'RJHI', '',
-        0, NULL, 'دوام صباحي', '2015-01-01', 'نشط', 'employee'
-      )
-    `, [dept ? dept.id : null, branch ? branch.id : null]);
-    gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
-    console.log('Restored Chairman JM-0001 to employees table');
+  const executives = [
+    {
+      emp_code: 'JM-0001',
+      full_name_ar: 'عبدالرحمن صالح القحطاني',
+      full_name_en: 'Abdulrahman Saleh Al-Qahtani',
+      national_id: '1001122331',
+      job_title_ar: 'رئيس مجلس الإدارة',
+      job_title_en: 'Chairman',
+      email: 'chairman@jalmajd.com',
+      direct_manager_name: null
+    },
+    {
+      emp_code: 'JM-0002',
+      full_name_ar: 'سعيد محمد القحطاني',
+      full_name_en: 'Saeed Mohammed Al-Qahtani',
+      national_id: '1001122332',
+      job_title_ar: 'نائب رئيس مجلس الإدارة',
+      job_title_en: 'Vice Chairman',
+      email: 'vice.chair@jalmajd.com',
+      direct_manager_name: 'عبدالرحمن صالح القحطاني'
+    },
+    {
+      emp_code: 'JM-0003',
+      full_name_ar: 'صالح سعيد القحطاني',
+      full_name_en: 'Salih Saeed Al-Qahtani',
+      national_id: '1001122333',
+      job_title_ar: 'المدير العام',
+      job_title_en: 'General Manager',
+      email: 'gm@jalmajd.com',
+      direct_manager_name: 'عبدالرحمن صالح القحطاني'
+    },
+    {
+      emp_code: 'JM-0004',
+      full_name_ar: 'فارس عبدالرحمن القحطاني',
+      full_name_en: 'Faris Abdulrahman Al-Qahtani',
+      national_id: '1001122334',
+      job_title_ar: 'مدير المشاريع',
+      job_title_en: 'Projects Manager',
+      email: 'projects.dir@jalmajd.com',
+      direct_manager_name: 'صالح سعيد القحطاني'
+    }
+  ];
+
+  const dept = get("SELECT id FROM departments WHERE name_ar = 'الإدارة العامة'") || get("SELECT id FROM departments LIMIT 1");
+  const branch = get("SELECT id FROM branches WHERE is_main = 1") || get("SELECT id FROM branches LIMIT 1");
+
+  for (const exec of executives) {
+    const exists = get("SELECT id FROM employees WHERE emp_code = ?", [exec.emp_code]);
+    if (!exists) {
+      run(`
+        INSERT INTO employees (
+          emp_code, full_name_ar, full_name_en, national_id, nationality,
+          is_saudi, gender, email, phone, department_id, branch_id, section,
+          job_title_ar, job_title_en, grade_level, basic_salary, housing_allowance,
+          transport_allowance, other_allowance, bank_name, bank_code, iban,
+          annual_leave_balance, direct_manager_name, shift_type, join_date, status, role
+        ) VALUES (
+          ?, ?, ?, ?, 'سعودي',
+          1, 'M', ?, '920012405', ?, ?, 'الإدارة العامة',
+          ?, ?, 'P-1', 0, 0,
+          0, 0, 'مصرف الراجحي', 'RJHI', '',
+          0, ?, 'دوام صباحي', '2015-01-01', 'نشط', 'employee'
+        )
+      `, [exec.emp_code, exec.full_name_ar, exec.full_name_en, exec.national_id, exec.email, dept ? dept.id : null, branch ? branch.id : null, exec.job_title_ar, exec.job_title_en, exec.direct_manager_name]);
+      console.log('Restored Executive', exec.emp_code, exec.full_name_ar);
+    }
   }
+
+  const gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
   if (gm) {
     run("UPDATE employees SET manager_id = ?, direct_manager_name = ? WHERE emp_code = 'JM-1000'", [gm.id, gm.full_name_ar]);
   }
