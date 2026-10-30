@@ -45,7 +45,28 @@ try {
 
 // Ensure organizational hierarchy and manager integrity on startup
 try {
-  const gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
+  let gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
+  if (!gm) {
+    const dept = get("SELECT id FROM departments WHERE name_ar = 'الإدارة العامة'") || get("SELECT id FROM departments LIMIT 1");
+    const branch = get("SELECT id FROM branches WHERE is_main = 1") || get("SELECT id FROM branches LIMIT 1");
+    run(`
+      INSERT INTO employees (
+        emp_code, full_name_ar, full_name_en, national_id, nationality,
+        is_saudi, gender, email, phone, department_id, branch_id, section,
+        job_title_ar, job_title_en, grade_level, basic_salary, housing_allowance,
+        transport_allowance, other_allowance, bank_name, bank_code, iban,
+        annual_leave_balance, direct_manager_name, shift_type, join_date, status, role
+      ) VALUES (
+        'JM-0001', 'عبدالرحمن صالح القحطاني', 'Abdulrahman Saleh Al-Qahtani', '1001122331', 'سعودي',
+        1, 'M', 'chairman@jalmajd.com', '920012405', ?, ?, 'الإدارة العامة',
+        'رئيس مجلس الإدارة', 'Chairman', 'P-1', 0, 0,
+        0, 0, 'مصرف الراجحي', 'RJHI', '',
+        0, NULL, 'دوام صباحي', '2015-01-01', 'نشط', 'employee'
+      )
+    `, [dept ? dept.id : null, branch ? branch.id : null]);
+    gm = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
+    console.log('Restored Chairman JM-0001 to employees table');
+  }
   if (gm) {
     run("UPDATE employees SET manager_id = ?, direct_manager_name = ? WHERE emp_code = 'JM-1000'", [gm.id, gm.full_name_ar]);
   }
@@ -1960,6 +1981,16 @@ app.post('/api/leaves/:id/revert', (req, res) => {
    PENDING APPROVALS, WORKFLOW & AUDIT TRAIL API
    ========================================================================= */
 app.get('/api/approvals/pending', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    const pending = requestsModule.getPendingApprovalsForUser(user);
+    res.json({ success: true, count: pending.length, data: pending });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/requests/pending-approvals', (req, res) => {
   try {
     const user = extractUserContext(req);
     const pending = requestsModule.getPendingApprovalsForUser(user);
