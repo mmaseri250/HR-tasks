@@ -363,9 +363,8 @@ const FALLBACK_DATA = {
     { id: 1, username: 'admin', password: 'Jj123', full_name: 'مدير النظام (Admin)', role: 'admin', permissions: ['all'], is_active: 1, created_at: '2026-09-30', emp_id: null }
   ],
   departments: [
-    { id: 1, code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager_name: 'صالح سعيد القحطاني', employee_count: 0, location: 'مقر أبها - الطابق الإداري' },
     { id: 2, code: 'ENG', name_ar: 'الادارة الهندسية', name_en: 'Engineering Department', manager_name: 'فارس عبدالرحمن القحطاني', employee_count: 0, location: 'مقر أبها - المبنى الهندسي' },
-    { id: 3, code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager_name: 'عبدالملك سعيد القحطاني', employee_count: 0, location: 'مقر أبها - مبنى الإدارة' },
+    { id: 3, code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager_name: 'عبدالملك سعيد الشريف', employee_count: 0, location: 'مقر أبها - مبنى الإدارة' },
     { id: 4, code: 'FIN', name_ar: 'الادارة المالية', name_en: 'Finance Department', manager_name: 'هاني عبدالرحمن صالح القحطاني', employee_count: 0, location: 'مقر أبها - الإدارة المالية' },
     { id: 5, code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager_name: 'هاني عبدالله عبدالكريم', employee_count: 0, location: 'مقر أبها - قسم المشتريات' },
     { id: 6, code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager_name: 'مشرف المبيعات', employee_count: 0, location: 'مقر أبها - الإدارة التجارية' },

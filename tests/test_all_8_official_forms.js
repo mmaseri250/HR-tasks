@@ -9,8 +9,10 @@ async function runTests() {
   console.log('🧪 TESTING ALL 8 OFFICIAL HR FORMS (WORD & HTML)');
   console.log('===============================================================');
 
-  const testEmpId1 = 15321; // Chairman عبدالرحمن صالح القحطاني (no existing leave/penalty records)
-  const testEmpId2 = 15325; // HR Specialist شامة علي محمد عسيري (has leave record id 16)
+  const testEmp1 = db.get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1000'") || db.get("SELECT id, full_name_ar FROM employees LIMIT 1");
+  const testEmpId1 = testEmp1.id; // HR Executive Director عبدالملك سعيد الشريف
+  const testEmp2 = db.get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1053'") || db.get("SELECT id, full_name_ar FROM employees WHERE id != ?", [testEmpId1]);
+  const testEmpId2 = testEmp2.id; // HR Specialist شامة علي محمد عسيري
 
   // 1. Test All 8 Word Form Generations
   console.log('\n--- 1. Testing Word (.docx) Generation for 8 Forms ---');
@@ -52,7 +54,7 @@ async function runTests() {
     assert(html.includes('/images/company_letterhead.png'), `${r.name} must reference company letterhead`);
     assert(html.includes(r.code), `${r.name} must contain form code ${r.code}`);
     assert(html.includes('7004872169'), `${r.name} must contain company CR 7004872169`);
-    assert(html.includes('عبدالرحمن صالح القحطاني'), `${r.name} must contain employee name`);
+    assert(html.includes(testEmp1.full_name_ar) || html.includes('عبدالملك سعيد الشريف'), `${r.name} must contain employee name`);
     console.log(`✓ [HTML by EmpID] ${r.name} (${r.code}): Generated ${html.length} chars (100% Valid & Pre-filled)`);
   }
 

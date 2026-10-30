@@ -49,7 +49,7 @@ async function testShamaEss() {
   window.eval(appJs);
 
   window.state.employees = [
-    { id: 14620, emp_code: 'JM-0001', full_name_ar: 'عبدالرحمن صالح القحطاني', job_title_ar: 'رئيس مجلس الإدارة', annual_leave_balance: 0 },
+    { id: 14620, emp_code: 'JM-1000', full_name_ar: 'عبدالملك سعيد الشريف', job_title_ar: 'المدير التنفيذي للموارد البشرية', annual_leave_balance: 30 },
     { id: 14632, emp_code: 'JM-1053', full_name_ar: 'شامة علي  محمد عسيري', job_title_ar: 'موظفة موارد بشرية', annual_leave_balance: 20, department_name_ar: 'إدارة الموارد البشرية' }
   ];
 

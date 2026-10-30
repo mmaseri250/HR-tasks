@@ -10,9 +10,9 @@ function runEmployeeAndRequestTests() {
 
   seedDatabase();
 
-  // Test 1: Verify Initial Database State (114 official employees, 0 demo biometric devices)
+  // Test 1: Verify Initial Database State (111 official employees, 0 demo biometric devices)
   const initialEmployees = employeesModule.getAllEmployees();
-  assert.strictEqual(initialEmployees.length, 114, 'يجب أن تحتوي قاعدة البيانات على 114 موظفاً معتمداً (109 من الإكسل + 5 قياديين)');
+  assert.strictEqual(initialEmployees.length, 111, 'يجب أن تحتوي قاعدة البيانات على 111 موظفاً معتمداً (110 من الإكسل + مدير المشاريع JM-0004)');
   
   const depts = db.query('SELECT * FROM departments');
   assert.strictEqual(depts.length, 15, 'يجب أن تتوفر الإدارات الـ 15 المعتمدة في البيان التنظيمي');
@@ -30,16 +30,16 @@ function runEmployeeAndRequestTests() {
 
   // Verify Compliance Metrics for Official Employees
   const compMetrics = employeesModule.getComplianceMetrics();
-  assert.strictEqual(compMetrics.metrics.totalEmployees, 114, 'يجب أن يكون إجمالي الموظفين 114 موظفاً معتمداً');
+  assert.strictEqual(compMetrics.metrics.totalEmployees, 111, 'يجب أن يكون إجمالي الموظفين 111 موظفاً معتمداً');
   assert.strictEqual(compMetrics.metrics.expatCount, 80, 'يجب أن يكون عدد غير السعوديين 80 موظفاً من واقع ملفات إكسل');
-  assert.strictEqual(compMetrics.metrics.saudiCount, 34, 'يجب أن يكون عدد السعوديين 34 موظفاً');
+  assert.strictEqual(compMetrics.metrics.saudiCount, 31, 'يجب أن يكون عدد السعوديين 31 موظفاً بعد استبعاد الإدارة التنفيذية');
   assert.strictEqual(compMetrics.metrics.workPermits.active, 80, 'يجب أن تتوفر 80 رخصة عمل في قوى للمقيمين');
   assert.strictEqual(compMetrics.metrics.iqama.valid, 19, 'يجب أن يكون عدد الإقامات السارية 19 (تشمل السارية والتي قاربت على الانتهاء)');
   assert.strictEqual(compMetrics.metrics.iqama.expired, 61, 'يجب أن يكون عدد الإقامات المنتهية 61');
   assert.strictEqual(compMetrics.metrics.workPermits.valid, 19, 'يجب أن يكون عدد رخص العمل السارية 19');
   assert.strictEqual(compMetrics.metrics.wps.complianceRate, 100, 'نسبة الالتزام بحماية الأجور يجب أن تكون 100%');
 
-  console.log('✓ نجح: التحقق من استيراد 114 موظف رسمي (34 سعودي + 80 مقيم)، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');
+  console.log('✓ نجح: التحقق من استيراد 111 موظف رسمي (31 سعودي + 80 مقيم)، 0 أجهزة بصمة تجريبية، ومؤشر الامتثال الوزاري بنجاح');
 
   // Test 2: Create Real Employee with branch and department
   const branch1 = branches[0];
@@ -118,8 +118,8 @@ function runEmployeeAndRequestTests() {
   // Test 8: Delete Employee (Clean up after test)
   employeesModule.deleteEmployee(created.id);
   const remaining = employeesModule.getAllEmployees();
-  assert.strictEqual(remaining.length, 114, 'يجب حذف الموظف التجريبي بنجاح ليبقى في النظام الـ 114 موظف رسمي');
-  console.log('✓ نجح: حذف الموظف وإعادة قاعدة البيانات لحالة الـ 114 موظف رسمي المعتمدين');
+  assert.strictEqual(remaining.length, 111, 'يجب حذف الموظف التجريبي بنجاح ليبقى في النظام الـ 111 موظف رسمي');
+  console.log('✓ نجح: حذف الموظف وإعادة قاعدة البيانات لحالة الـ 111 موظف رسمي المعتمدين');
 
   console.log('--- اكتملت اختبارات شؤون الموظفين والخدمة الذاتية بنجاح 100% ---\n');
 }

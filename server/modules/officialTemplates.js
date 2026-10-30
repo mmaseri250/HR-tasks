@@ -997,8 +997,8 @@ function renderClearanceFormHtml(identifier, options = {}) {
         <div class="sig-box" style="text-align: right; padding: 10px 14px; margin-top: 6px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <p style="margin: 0 0 3px; font-weight:800; color:var(--primary); font-size:11.5px;">الرئيس التنفيذي / المدير العام (CEO / General Manager)</p>
-              <p style="margin: 0; font-size:11px;"><strong>عبدالرحمن صالح القحطاني</strong></p>
+              <p style="margin: 0 0 3px; font-weight:800; color:var(--primary); font-size:11.5px;">المدير التنفيذي للموارد البشرية (Executive Director of HR)</p>
+              <p style="margin: 0; font-size:11px;"><strong>عبدالملك سعيد الشريف</strong></p>
               <p style="margin: 2px 0 0; font-size:10px; color:#64748b;">التاريخ: ${currentDate}م</p>
             </div>
             <div>

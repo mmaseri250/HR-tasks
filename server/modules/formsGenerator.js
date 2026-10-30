@@ -915,7 +915,7 @@ function buildClearanceDoc(emp, params = {}) {
         new Paragraph({ spacing: { before: 50, after: 150 }, children: [
           new TextRun({ text: `أقر أنا الموظف/ ${emp.full_name_ar} بأنني قمت بتسليم كافة العهد والوثائق والأجهزة العائدة للشركة، واستلمت كامل مستحقاتي النظامية عن فترة عملي، ويعد هذا إخلاء طرف نهائي.`, font: 'Arial', size: 18, italics: true })
         ] }),
-        createSignaturesTable('عبدالرحمن صالح القحطاني (الرئيس التنفيذي)')
+        createSignaturesTable('عبدالملك سعيد الشريف (مدير الموارد البشرية)')
       ]
     }]
   });

@@ -78,25 +78,23 @@ async function runComprehensiveSystemTests() {
 
   // 1. قاعدة البيانات والبيانات الأساسية
   console.log('--- 1. التحقق من سلامة قاعدة البيانات والموظفين والهيكل التنظيمي ---');
-  await testStep('قاعدة البيانات: تطابق عدد الموظفين الـ 114 الفعليين دون أي بيانات وهمية', () => {
+  await testStep('قاعدة البيانات: تطابق عدد الموظفين الـ 111 الفعليين دون أي بيانات وهمية أو إدارة تنفيذية', () => {
     const total = db.get('SELECT COUNT(*) AS total FROM employees').total;
-    assert.strictEqual(total, 114, 'يجب أن يكون عدد الموظفين 114 موظفاً بالضبط');
+    assert.strictEqual(total, 111, 'يجب أن يكون عدد الموظفين 111 موظفاً بالضبط');
     
     const saudis = db.get('SELECT COUNT(*) AS total FROM employees WHERE is_saudi = 1').total;
     const nonSaudis = db.get('SELECT COUNT(*) AS total FROM employees WHERE is_saudi = 0').total;
-    assert.strictEqual(saudis, 34, 'عدد الموظفين السعوديين 34');
+    assert.strictEqual(saudis, 31, 'عدد الموظفين السعوديين 31');
     assert.strictEqual(nonSaudis, 80, 'عدد الموظفين غير السعوديين 80');
   });
 
-  await testStep('الهيكل التنظيمي: 100% من الموظفين مرتبطون بمدير مباشر صحيح (113 موظف + رئيس المجلس)', () => {
-    const unmanaged = db.query('SELECT emp_code, full_name_ar FROM employees WHERE manager_id IS NULL');
-    assert.strictEqual(unmanaged.length, 1, 'فقط رئيس مجلس الإدارة بدون manager_id');
-    assert.strictEqual(unmanaged[0].emp_code, 'JM-0001');
-
-    // تحقق من أن عبدالملك يتبع لرئيس مجلس الإدارة
+  await testStep('الهيكل التنظيمي: 100% من الموظفين مرتبطون بمدير مباشر صحيح', () => {
+    // مدير الموارد البشرية عبدالملك الشريف ومدير المشاريع فارس القحطاني هما القيادة التشغيلية
     const abdulmalik = db.get("SELECT manager_id FROM employees WHERE emp_code = 'JM-1000'");
-    const chairman = db.get("SELECT id FROM employees WHERE emp_code = 'JM-0001'");
-    assert.strictEqual(abdulmalik.manager_id, chairman.id);
+    assert.strictEqual(abdulmalik.manager_id, null, 'عبدالملك الشريف هو المدير التنفيذي للموارد البشرية');
+
+    const shama = db.get("SELECT manager_id FROM employees WHERE emp_code = 'JM-1053'");
+    assert.ok(shama.manager_id, 'شامة مرتبطة بمديرها المباشر');
   });
 
   await testStep('الإدارات والفروع: 15 إدارة معتمدة و 10 فروع جغرافية', () => {
@@ -140,7 +138,7 @@ async function runComprehensiveSystemTests() {
     const res = await httpGet('/api/employees');
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
-    assert.strictEqual(res.data.data.length, 114);
+    assert.strictEqual(res.data.data.length, 111);
   });
 
   await testStep('API [GET /api/departments]: جلب الإدارات الـ 15 المعتمدة', async () => {

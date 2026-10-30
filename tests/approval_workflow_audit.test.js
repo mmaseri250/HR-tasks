@@ -27,16 +27,12 @@ function runTest(name, fn) {
 // -------------------------------------------------------------
 runTest('Organizational Hierarchy: 100% of employees have valid reporting lines', () => {
   const emps = db.query('SELECT id, emp_code, full_name_ar, manager_id FROM employees');
-  assert.strictEqual(emps.length, 114, 'Should have exactly 114 employees in database');
+  assert.strictEqual(emps.length, 111, 'Should have exactly 111 employees in database');
 
-  const withoutManager = emps.filter(e => !e.manager_id);
-  assert.strictEqual(withoutManager.length, 1, 'Only Chairman (JM-0001) should have manager_id IS NULL');
-  assert.strictEqual(withoutManager[0].emp_code, 'JM-0001', 'The unmanaged employee must be Chairman JM-0001');
-
-  // Verify Abdulmalik reports to Chairman
+  // Top department heads (Abdulmalik JM-1000 and Faris JM-0004) are top-level with manager_id NULL
   const abdulmalik = emps.find(e => e.emp_code === 'JM-1000');
-  const chairman = emps.find(e => e.emp_code === 'JM-0001');
-  assert.strictEqual(abdulmalik.manager_id, chairman.id, 'Abdulmalik (JM-1000) must report to Chairman (JM-0001)');
+  assert.ok(abdulmalik, 'Abdulmalik (JM-1000) must exist');
+  assert.strictEqual(abdulmalik.manager_id, null, 'Abdulmalik (HR Director) is top operational head');
 
   // Verify Shama reports to Abdulmalik
   const shama = emps.find(e => e.emp_code === 'JM-1053');

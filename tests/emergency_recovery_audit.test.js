@@ -16,8 +16,8 @@ const testEvent = {
   action_type: 'TEST_AUDIT',
   module_name: 'RECOVERY_VERIFICATION',
   record_id: '999',
-  emp_code: 'JM-0001',
-  department_name: 'الإدارة العامة',
+  emp_code: 'JM-1000',
+  department_name: 'الموارد البشرية',
   details: 'اختبار التدقيق والتعافي الشامل لنظام الموارد البشرية',
   status: 'SUCCESS',
   ip_address: '127.0.0.1'

@@ -212,10 +212,9 @@ function seedDatabase() {
   seedPenaltyRegulations();
 
   // 10. Ensure Hierarchy and Workflow Integrity
-  const chairman = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
   const abdulmalik = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1000'");
-  if (chairman && abdulmalik) {
-    run("UPDATE employees SET manager_id = ?, direct_manager_name = ? WHERE id = ?", [chairman.id, chairman.full_name_ar, abdulmalik.id]);
+  if (abdulmalik) {
+    run("UPDATE employees SET manager_id = NULL, direct_manager_name = NULL WHERE id = ?", [abdulmalik.id]);
     run("UPDATE users SET emp_id = ? WHERE username = 'abdulmalik'", [abdulmalik.id]);
   }
   run("UPDATE employees SET direct_manager_name = 'تامر جمعه احمد عبدالله' WHERE direct_manager_name = 'تامر جمعة احمد عبدالله'");
@@ -319,80 +318,8 @@ function seedEmployees() {
   const defaultDeptId = deptMap['الإدارة العامة'] || deptRows[0]?.id || 1;
   const defaultBranchId = branchMap['الإدارة العامة'] || branchRows[0]?.id || 1;
 
-  // The 4 Top Executive Leaders of Jawharat Al-Majd
+  // Operational Projects Manager
   const executives = [
-    {
-      emp_code: 'JM-0001',
-      full_name_ar: 'عبدالرحمن صالح القحطاني',
-      full_name_en: 'Abdulrahman Saleh Al-Qahtani',
-      job_title_ar: 'رئيس مجلس الإدارة',
-      dept_name: 'الإدارة العامة',
-      branch_name: 'الإدارة العامة',
-      section: 'الإدارة العامة',
-      direct_manager_name: null,
-      national_id: '1001122331',
-      nationality: 'سعودي',
-      gender: 'M',
-      is_saudi: 1,
-      basic_salary: 0,
-      housing_allowance: 0,
-      transport_allowance: 0,
-      other_allowance: 0,
-      leave_balance: 0,
-      join_date: '2015-01-01',
-      iban: '',
-      iqama_expiry: null,
-      phone: '',
-      email: 'chairman@jalmajd.com'
-    },
-    {
-      emp_code: 'JM-0002',
-      full_name_ar: 'سعيد محمد القحطاني',
-      full_name_en: 'Saeed Mohammed Al-Qahtani',
-      job_title_ar: 'نائب رئيس مجلس الإدارة',
-      dept_name: 'الإدارة العامة',
-      branch_name: 'الإدارة العامة',
-      section: 'الإدارة العامة',
-      direct_manager_name: 'عبدالرحمن صالح القحطاني',
-      national_id: '1001122332',
-      nationality: 'سعودي',
-      gender: 'M',
-      is_saudi: 1,
-      basic_salary: 0,
-      housing_allowance: 0,
-      transport_allowance: 0,
-      other_allowance: 0,
-      leave_balance: 0,
-      join_date: '2015-01-01',
-      iban: '',
-      iqama_expiry: null,
-      phone: '',
-      email: 'vice_chairman@jalmajd.com'
-    },
-    {
-      emp_code: 'JM-0003',
-      full_name_ar: 'صالح سعيد القحطاني',
-      full_name_en: 'Saleh Saeed Al-Qahtani',
-      job_title_ar: 'المدير العام',
-      dept_name: 'الإدارة العامة',
-      branch_name: 'الإدارة العامة',
-      section: 'الإدارة العامة',
-      direct_manager_name: 'سعيد محمد القحطاني',
-      national_id: '1001122333',
-      nationality: 'سعودي',
-      gender: 'M',
-      is_saudi: 1,
-      basic_salary: 0,
-      housing_allowance: 0,
-      transport_allowance: 0,
-      other_allowance: 0,
-      leave_balance: 0,
-      join_date: '2016-01-01',
-      iban: '',
-      iqama_expiry: null,
-      phone: '',
-      email: 'gm@jalmajd.com'
-    },
     {
       emp_code: 'JM-0004',
       full_name_ar: 'فارس عبدالرحمن القحطاني',
@@ -401,16 +328,16 @@ function seedEmployees() {
       dept_name: 'إدارة المشاريع والمقاولات',
       branch_name: 'إدارة المشاريع والمقاولات',
       section: 'المقاولات',
-      direct_manager_name: 'صالح سعيد القحطاني',
+      direct_manager_name: null,
       national_id: '1001122334',
       nationality: 'سعودي',
       gender: 'M',
       is_saudi: 1,
-      basic_salary: 0,
-      housing_allowance: 0,
-      transport_allowance: 0,
+      basic_salary: 12000,
+      housing_allowance: 3000,
+      transport_allowance: 1000,
       other_allowance: 0,
-      leave_balance: 0,
+      leave_balance: 21,
       join_date: '2017-01-01',
       iban: '',
       iqama_expiry: null,

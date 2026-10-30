@@ -14,7 +14,7 @@ while ((m = getRouteRegex.exec(serverContent)) !== null) {
   let testUrl = r
     .replace(':id', '1')
     .replace(':month', '2026-10')
-    .replace(':code', 'JM-0001')
+    .replace(':code', 'JM-1000')
     .replace(':year', '2026')
     .replace(':requestId', '26')
     .replace(':entityType', 'employee');

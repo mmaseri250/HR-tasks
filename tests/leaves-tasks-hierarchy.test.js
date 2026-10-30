@@ -14,7 +14,7 @@ async function runLeavesTasksHierarchyTests() {
   seedDatabase();
 
   const employees = employeesModule.getAllEmployees();
-  assert.strictEqual(employees.length, 114, 'يجب أن يكون عدد الموظفين 114 موظفاً معتمداً');
+  assert.strictEqual(employees.length, 111, 'يجب أن يكون عدد الموظفين 111 موظفاً معتمداً');
 
   // =========================================================================
   // 1. Leave Accrual & Balance Rules (نظام الإجازات والاستحقاق اليومي)

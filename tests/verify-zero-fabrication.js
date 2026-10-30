@@ -31,7 +31,7 @@ console.log('JM-0004 (Screenshot 1 & 4 Employee):', jm0004);
 console.log('JM-1000 (Screenshot 3 Employee):', jm1000);
 console.log('JM-1003 (Expat without Muqeem entry):', jm1003);
 
-if (dummyPhoneNumbers === 0 && dummyNationalIds === 0 && dummyEmails === 0 && total === 114) {
+if (dummyPhoneNumbers === 0 && dummyNationalIds === 0 && dummyEmails === 0 && total === 111) {
   console.log('\n>>> SUCCESS: ALL DATA FABRICATION ELIMINATED! SINGLE SOURCE OF TRUTH VERIFIED! <<<');
   process.exit(0);
 } else {

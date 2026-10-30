@@ -40,7 +40,7 @@ function runAllModulesCrudTests() {
         (SELECT COUNT(*) FROM branches) AS totalBranches,
         (SELECT COUNT(*) FROM leaves WHERE status LIKE '%بانتظار%') AS pendingLeaves
     `);
-    assert.strictEqual(stats.activeEmps, 114);
+    assert.strictEqual(stats.activeEmps, 111);
     assert.strictEqual(stats.totalDepts, 15);
     assert.strictEqual(stats.totalBranches, 10);
   });
@@ -99,11 +99,11 @@ function runAllModulesCrudTests() {
   // 3. وحدة الحضور والانصراف (Attendance & Biometrics)
   runSubTest('الوحدة 3 (الحضور والانصراف): تسجيل بصمة داخل النطاق وحساب ساعات العمل', () => {
     const today = new Date().toISOString().split('T')[0];
-    const chairman = db.get("SELECT id FROM employees WHERE emp_code = 'JM-0001'");
+    const testManager = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1000'");
 
     // Record punch
     const punch = attendanceModule.recordPunch({
-      emp_id: chairman.id,
+      emp_id: testManager.id,
       punch_time: `${today} 08:05:00`,
       punch_type: 'CHECK_IN',
       lat: 18.2164,
@@ -117,7 +117,7 @@ function runAllModulesCrudTests() {
     assert.ok(Array.isArray(daily));
 
     // Clean up
-    db.run("DELETE FROM attendance_logs WHERE emp_id = ? AND punch_time LIKE ?", [chairman.id, `${today}%`]);
+    db.run("DELETE FROM attendance_logs WHERE emp_id = ? AND punch_time LIKE ?", [testManager.id, `${today}%`]);
   });
 
   // 4. وحدة الإجازات وسير الموافقات (Leaves & Workflows)
@@ -255,7 +255,7 @@ function runAllModulesCrudTests() {
 
   // 10. وحدة إشعارات الغياب الرسمية (Absence Notices)
   runSubTest('الوحدة 10 (إشعارات الغياب): إصدار إشعار غياب رسمي وتوثيق الإقرار', () => {
-    const emp = db.get("SELECT id FROM employees WHERE emp_code = 'JM-0002'");
+    const emp = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1053'");
     const notice = absenceNoticesModule.createAbsenceNotice({
       emp_id: emp.id,
       absence_type: 'single',
