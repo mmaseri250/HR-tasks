@@ -366,7 +366,7 @@ const FALLBACK_DATA = {
     { id: 1, code: 'EXEC', name_ar: 'الادارة التنفيذيه', name_en: 'Executive Management', manager_name: 'صالح سعيد القحطاني', employee_count: 0, location: 'مقر أبها - الطابق الإداري' },
     { id: 2, code: 'ENG', name_ar: 'الادارة الهندسية', name_en: 'Engineering Department', manager_name: 'فارس عبدالرحمن القحطاني', employee_count: 0, location: 'مقر أبها - المبنى الهندسي' },
     { id: 3, code: 'HR', name_ar: 'ادارة الموارد البشرية', name_en: 'Human Resources', manager_name: 'عبدالملك سعيد القحطاني', employee_count: 0, location: 'مقر أبها - مبنى الإدارة' },
-    { id: 4, code: 'FIN', name_ar: 'الادارة المالية', name_en: 'Finance Department', manager_name: 'هاني عبدالرحمن القحطاني', employee_count: 0, location: 'مقر أبها - الإدارة المالية' },
+    { id: 4, code: 'FIN', name_ar: 'الادارة المالية', name_en: 'Finance Department', manager_name: 'هاني عبدالرحمن صالح القحطاني', employee_count: 0, location: 'مقر أبها - الإدارة المالية' },
     { id: 5, code: 'PROC', name_ar: 'ادارة المشتريات', name_en: 'Procurement & Purchasing', manager_name: 'هاني عبدالله عبدالكريم', employee_count: 0, location: 'مقر أبها - قسم المشتريات' },
     { id: 6, code: 'SALES', name_ar: 'ادارة المبيعات', name_en: 'Sales Department', manager_name: 'مشرف المبيعات', employee_count: 0, location: 'مقر أبها - الإدارة التجارية' },
     { id: 7, code: 'IT', name_ar: 'ادارة تقنية المعلومات', name_en: 'Information Technology', manager_name: 'محمد شكيل', employee_count: 0, location: 'مقر أبها - مركز العمليات الرقمية' },
@@ -4986,140 +4986,18 @@ function openSalaryCertificateModal(empId) {
 }
 
 function previewSalaryCertificateForEmp(empId) {
-  const targetId = empId || (state.currentUser && state.currentUser.emp_id) || (state.employees && state.employees[0] ? state.employees[0].id : 15321);
-  const destElem = document.getElementById('certDestinationSelect');
-  const dest = destElem ? encodeURIComponent(destElem.value) : encodeURIComponent('إلى من يهمه الأمر');
-  window.open(`/api/forms/html/salary-cert/${targetId}?emp_id=${targetId}&destination=${dest}`, '_blank');
+  const targetId = empId || (state.currentUser && state.currentUser.emp_id) || (state.employees && state.employees[0] ? state.employees[0].id : 1);
+  openOfficialFormPreview('salary_cert', targetId);
 }
 
 function refreshSalaryCertificate(destination) {
-  const empId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : (state.employees && state.employees[0] ? state.employees[0].id : 15321);
-  refreshSalaryCertificateForEmp(empId, destination);
+  const targetId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : (state.employees && state.employees[0] ? state.employees[0].id : 1);
+  openOfficialFormPreview('salary_cert', targetId);
 }
 
 function refreshSalaryCertificateForEmp(empId, destination) {
-  const emp = state.employees.find(e => e.id === empId) || state.employees[0];
-  if (!emp) return;
-  const gross = (emp.basic_salary || 0) + (emp.housing_allowance || 0) + (emp.transport_allowance || 0) + (emp.other_allowance || 0);
-  const certId = `JM-CERT-2026-${String(emp.id).padStart(4, '0')}${Math.floor(100 + Math.random() * 900)}`;
-
-  const approverName = (state.currentUser && state.currentUser.full_name) ? state.currentUser.full_name : 'المفوض بالاعتماد';
-  const approverRole = (state.currentUser && state.currentUser.role === 'admin') ? 'مدير الموارد البشرية' : 'المفوض بالاعتماد';
-
-  const container = document.getElementById('certificateContainer');
-  container.innerHTML = `
-    <div class="space-y-6">
-      <div class="flex justify-between items-start border-b-2 border-[#d4af37] pb-4">
-        <div class="flex items-center gap-3">
-          <img src="assets/logo.png" class="h-16 w-auto object-contain">
-          <div>
-            <h3 class="font-black text-brand text-lg">شركة جوهرة المجد للتجارة والمقاولات</h3>
-            <p class="text-xs text-slate-500 font-sans">Jawharat Al-Majd Trading & Contracting Co.</p>
-            <p class="text-[11px] text-slate-500 font-mono mt-0.5">س.ت: 7004872169 • الرقم الضريبي: 310492837400003</p>
-          </div>
-        </div>
-        <div class="text-left text-xs space-y-1">
-          <div class="font-mono"><span class="text-slate-400">الرقم المرجعي: </span><span class="font-bold text-brand">${certId}</span></div>
-          <div><span class="text-slate-400">التاريخ: </span><span class="font-semibold">${new Date().toISOString().split('T')[0]}</span></div>
-        </div>
-      </div>
-
-      <div class="space-y-2 pt-2">
-        <h4 class="font-bold text-slate-900 text-sm">السادة / ${destination} المحترمين</h4>
-        <p class="text-xs font-bold text-slate-700">السلام عليكم ورحمة الله وبركاته،،،</p>
-      </div>
-
-      <div class="text-xs leading-relaxed text-slate-700 text-justify">
-        تشهد <strong>شركة جوهرة المجد للتجارة</strong> بأن الموظف الموضحة بياناته أدناه يعمل لدينا وعلى رأس العمل حتى تاريخه:
-      </div>
-
-      <div class="border border-slate-300 rounded-xl overflow-hidden">
-        <table class="w-full text-xs text-right divide-y divide-slate-200">
-          <tbody class="divide-y divide-slate-200 bg-slate-50/50">
-            <tr>
-              <td class="py-2.5 px-4 font-bold text-slate-600 bg-slate-100 w-1/4">اسم الموظف:</td>
-              <td class="py-2.5 px-4 font-black text-slate-900 w-1/4">${emp.full_name_ar}</td>
-              <td class="py-2.5 px-4 font-bold text-slate-600 bg-slate-100 w-1/4">الرقم الوظيفي:</td>
-              <td class="py-2.5 px-4 font-mono font-bold text-slate-900 w-1/4">${emp.emp_code}</td>
-            </tr>
-            <tr>
-              <td class="py-2.5 px-4 font-bold text-slate-600 bg-slate-100">رقم الهوية / الإقامة:</td>
-              <td class="py-2.5 px-4 font-mono font-bold text-slate-900">${emp.national_id || 'غير متوفر'}</td>
-              <td class="py-2.5 px-4 font-bold text-slate-600 bg-slate-100">الجنسية:</td>
-              <td class="py-2.5 px-4 font-semibold text-slate-900">${emp.nationality || 'غير محدد'}</td>
-            </tr>
-            <tr>
-              <td class="py-2.5 px-4 font-bold text-slate-600 bg-slate-100">المسمى الوظيفي:</td>
-              <td class="py-2.5 px-4 font-bold text-slate-900">${emp.job_title_ar || 'غير محدد'}</td>
-              <td class="py-2.5 px-4 font-bold text-slate-600 bg-slate-100">تاريخ الالتحاق:</td>
-              <td class="py-2.5 px-4 font-mono text-slate-900">${emp.join_date || 'غير متوفر'}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div>
-        <span class="font-bold text-xs text-slate-700 block mb-2">تفاصيل ومفردات الراتب الشهري (ريال سعودي):</span>
-        <div class="grid grid-cols-5 gap-2 border border-slate-300 rounded-xl p-3 text-center text-xs">
-          <div><span class="text-slate-400 block text-[10px]">الأساسي</span><span class="font-mono font-bold text-slate-800">${(emp.basic_salary || 0).toLocaleString('en-US')}</span></div>
-          <div><span class="text-slate-400 block text-[10px]">بدل السكن</span><span class="font-mono font-bold text-slate-800">${(emp.housing_allowance || 0).toLocaleString('en-US')}</span></div>
-          <div><span class="text-slate-400 block text-[10px]">بدل النقل</span><span class="font-mono font-bold text-slate-800">${(emp.transport_allowance || 0).toLocaleString('en-US')}</span></div>
-          <div><span class="text-slate-400 block text-[10px]">بدلات أخرى</span><span class="font-mono font-bold text-slate-800">${(emp.other_allowance || 0).toLocaleString('en-US')}</span></div>
-          <div class="bg-brand/10 rounded-lg p-1"><span class="text-brand font-bold block text-[10px]">الراتب الإجمالي</span><span class="font-mono font-black text-brand text-sm">${gross.toLocaleString('en-US')} ر.س</span></div>
-        </div>
-      </div>
-
-      <div class="pt-4 flex justify-between items-end border-t border-slate-200">
-        <div class="flex items-center gap-3">
-          <div id="certQrContainer" class="p-1.5 border border-slate-300 rounded-lg bg-white shadow-sm"></div>
-          <div class="text-[10px] text-slate-500 leading-tight">
-            <span class="font-bold text-slate-700 block text-[11px]"><i class="fa-solid fa-lock text-brand"></i> وثيقة موثقة رقمياً</span>
-            امسح الرمز للتحقق الفوري<br>من صحة وموثوقية الخطاب
-          </div>
-        </div>
-        <div class="flex items-center gap-6">
-          <div class="flex flex-col items-center justify-center">
-            <img src="assets/company-stamp.png" alt="الختم الرسمي لشركة جوهرة المجد" class="h-28 w-28 object-contain">
-            <span class="text-[9px] text-slate-500 font-mono mt-0.5">ختم رسمي معتمد</span>
-          </div>
-          <div class="text-center text-xs">
-            <span class="font-bold text-slate-800 block">${approverRole}</span>
-            <span class="text-slate-600 block text-[11px] mt-1">${approverName}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="pt-3 border-t border-slate-200 text-[10px] text-slate-500 flex justify-between items-center font-semibold">
-        <span>المملكة العربية السعودية، منطقة عسير، أبها (مول سيتي بارك)</span>
-        <span>خدمة العملاء: 920012405</span>
-        <span>info@jalmajd.com</span>
-      </div>
-    </div>
-  `;
-
-  setTimeout(() => {
-    const qrDiv = document.getElementById('certQrContainer');
-    if (qrDiv && typeof QRCode !== 'undefined') {
-      qrDiv.innerHTML = '';
-      new QRCode(qrDiv, {
-        text: JSON.stringify({ 
-          ref: certId, 
-          company: 'شركة جوهرة المجد للتجارة', 
-          cr: '5850121321', 
-          unified_no: '7004872169',
-          emp: emp.full_name_ar, 
-          emp_code: emp.emp_code,
-          national_id: emp.national_id || 'غير متوفر',
-          total: gross,
-          date: new Date().toISOString().split('T')[0]
-        }),
-        width: 70,
-        height: 70,
-        colorDark: '#700c14',
-        colorLight: '#ffffff'
-      });
-    }
-  }, 100);
+  const targetId = empId || (state.currentUser && state.currentUser.emp_id) || (state.employees && state.employees[0] ? state.employees[0].id : 1);
+  openOfficialFormPreview('salary_cert', targetId);
 }
 
 /* =========================================================================

@@ -56,7 +56,7 @@
        TOP GLOBAL HEADER (Clean, Spacious, No Overcrowding)
        ========================================================================= -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between gap-3">
+    <div class="w-full max-w-none px-4 sm:px-8 lg:px-10 h-18 sm:h-20 flex items-center justify-between gap-3">
       
       <!-- Brand & Company Title -->
       <div class="flex items-center gap-2.5 sm:gap-4 flex-shrink-0">
@@ -123,7 +123,7 @@
   <!-- =========================================================================
        MAIN CONTENT CONTAINER
        ========================================================================= -->
-  <div class="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 flex-1 flex flex-col md:flex-row gap-4 md:gap-6 items-start">
+  <div class="w-full max-w-none px-4 sm:px-8 lg:px-10 py-3 sm:py-6 flex-1 flex flex-col md:flex-row gap-4 md:gap-6 items-start">
 
     <!-- =========================================================================
          SIDEBAR NAVIGATION (Desktop)
@@ -1369,7 +1369,7 @@
                     <button onclick="downloadRawTemplate('8')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold py-1.5 rounded-lg transition text-center" title="تحميل ملف Word الأصلي المرفوع">
                       <i class="fa-solid fa-download"></i> النموذج الأصلي
                     </button>
-                    <button onclick="openSalaryCertificateModal()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
+                    <button onclick="openOfficialFormPreview('salary_cert')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 text-[10px] font-bold py-1.5 rounded-lg transition text-center">
                       <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح في النظام
                     </button>
                   </div>
@@ -3012,7 +3012,7 @@
        FOOTER (Strictly "شركة جوهرة المجد" without التجاره والخدمات)
        ========================================================================= -->
   <footer class="bg-white border-t border-slate-200 mt-auto py-4 text-xs text-slate-500">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-2 text-center sm:text-right">
+    <div class="w-full max-w-none px-4 sm:px-8 lg:px-10 flex flex-col sm:flex-row justify-between items-center gap-2 text-center sm:text-right">
       <div class="flex items-center gap-2 flex-wrap justify-center">
         <span class="font-black text-brand text-sm">شركة جوهرة المجد</span>
         <span>• س.ت: 7004872169</span>
@@ -3515,36 +3515,6 @@
     </div>
   </div>
 
-  <!-- Salary Certificate Modal -->
-  <div id="modalSalaryCertificate" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
-    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 max-h-[95vh] overflow-y-auto space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b pb-3 no-print">
-        <div class="flex items-center gap-3">
-          <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
-            <i class="fa-solid fa-certificate text-brand"></i> خطاب تعريف بالراتب موثق برمز QR
-          </h3>
-          <select id="certDestinationSelect" onchange="refreshSalaryCertificate(this.value)" class="text-xs rounded-lg border border-slate-300 py-1 px-2 font-bold">
-            <option value="إلى من يهمه الأمر">إلى من يهمه الأمر</option>
-            <option value="مصرف الراجحي (لطلب تمويل)">مصرف الراجحي</option>
-            <option value="بنك الرياض">بنك الرياض</option>
-            <option value="البنك الأهلي السعودي">البنك الأهلي السعودي</option>
-            <option value="السفارة البريطانية">السفارة البريطانية</option>
-          </select>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="window.print()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-3.5 py-1.5 rounded-lg flex items-center gap-1.5">
-            <i class="fa-solid fa-print"></i> طباعة الخطاب
-          </button>
-          <button onclick="closeModal('modalSalaryCertificate')" class="text-slate-400 hover:text-slate-600 text-lg">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      </div>
-      <div id="certificateContainer" class="p-6 border border-slate-300 rounded-xl bg-white shadow-sm space-y-5 text-sm">
-        <!-- JS populated -->
-      </div>
-    </div>
-  </div>
 
   <!-- Payslip Modal -->
   <div id="modalPayslip" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">

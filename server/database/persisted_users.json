@@ -25,7 +25,7 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 20973,
+    "emp_id": 22359,
     "is_active": 1,
     "created_at": "2026-10-28 22:34:23"
   },
@@ -40,7 +40,7 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 20864,
+    "emp_id": 22250,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
   },
@@ -59,7 +59,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 20862,
+    "emp_id": 22248,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
   },
@@ -77,8 +77,198 @@
       "attendance",
       "tasks"
     ],
-    "emp_id": 20863,
+    "emp_id": 22249,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
+  },
+  {
+    "id": 7,
+    "username": "khaled.raee",
+    "password": "Mgr123",
+    "full_name": "خالد احمد محمد راعي",
+    "email": "khaled.raee@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22270,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 8,
+    "username": "ali.boshra",
+    "password": "Mgr123",
+    "full_name": "علي سعد حسين البشري",
+    "email": "ali.boshra@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22294,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 9,
+    "username": "ahmed.yeanallah",
+    "password": "Mgr123",
+    "full_name": "احمد عبدالرحمن علي يعن الله",
+    "email": "ahmed.yeanallah@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22265,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 10,
+    "username": "fayrouz.ali",
+    "password": "Mgr123",
+    "full_name": "فيروز علي جان محمد",
+    "email": "fayrouz.ali@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22337,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 11,
+    "username": "tamer.gomaa",
+    "password": "Mgr123",
+    "full_name": "تامر جمعه احمد عبدالله",
+    "email": "tamer.gomaa@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22341,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 12,
+    "username": "hani.asiri",
+    "password": "Mgr123",
+    "full_name": "هاني علي شامي عسيري",
+    "email": "hani.asiri@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22326,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 13,
+    "username": "rayan.yahya",
+    "password": "Mgr123",
+    "full_name": "ريان يحي عبدالله",
+    "email": "rayan.yahya@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22306,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 14,
+    "username": "fahmi.baameer",
+    "password": "Mgr123",
+    "full_name": "فهمي سالم عبيد باعمير",
+    "email": "fahmi.baameer@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22313,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 15,
+    "username": "fahd.aowari",
+    "password": "Mgr123",
+    "full_name": "فهد إبراهيم جعفر الاعوري",
+    "email": "fahd.aowari@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22349,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
+  },
+  {
+    "id": 16,
+    "username": "hani.qahtani",
+    "password": "Mgr123",
+    "full_name": "هاني عبدالرحمن صالح القحطاني",
+    "email": "hani.qahtani@jalmajd.com",
+    "role": "dept_manager",
+    "permissions": [
+      "requests",
+      "approvals",
+      "employees",
+      "attendance",
+      "tasks",
+      "reports"
+    ],
+    "emp_id": 22347,
+    "is_active": 1,
+    "created_at": "2026-10-30 22:38:45"
   }
 ]

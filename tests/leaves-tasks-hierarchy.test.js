@@ -88,7 +88,7 @@ async function runLeavesTasksHierarchyTests() {
   assert.strictEqual(mgrApproved.manager_status, 'موافق');
 
   // Step 2: HR Manager Final Approval
-  const hrApproved = leavesModule.approveLeave(leaveReq.id, 'approve', 'hr', 'اعتماد نهائي وتحديث الرصيد', 'هاني عبدالرحمن القحطاني');
+  const hrApproved = leavesModule.approveLeave(leaveReq.id, 'approve', 'hr', 'اعتماد نهائي وتحديث الرصيد', 'عبدالملك سعيد الشريف');
   assert.strictEqual(hrApproved.status, 'معتمد نهائياً');
   assert.strictEqual(hrApproved.hr_status, 'موافق');
 

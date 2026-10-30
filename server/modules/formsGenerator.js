@@ -228,7 +228,7 @@ function createSignaturesTable(managerName = 'المدير المباشر') {
         children: [
           makeSigCell('توقيع مقدم الطلب (الموظف)'),
           makeSigCell('اعتماد وتوقيع المدير المباشر', managerName),
-          makeSigCell('اعتماد إدارة الموارد البشرية', 'هاني عبدالرحمن القحطاني')
+          makeSigCell('اعتماد إدارة الموارد البشرية', 'عبدالملك سعيد الشريف')
         ]
       })
     ]
@@ -493,7 +493,7 @@ function buildSalaryCertDoc(emp, params = {}) {
           alignment: AlignmentType.LEFT,
           spacing: { before: 100 },
           children: [
-            new TextRun({ text: 'مدير الموارد البشرية:\nهاني عبدالرحمن القحطاني\n\nالختم الرسمي:', font: 'Arial', size: 18, bold: true })
+            new TextRun({ text: 'مدير عام الموارد البشرية:\nعبدالملك سعيد الشريف\n\nالختم الرسمي:', font: 'Arial', size: 18, bold: true })
           ]
         })
       ]
