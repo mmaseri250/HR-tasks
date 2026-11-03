@@ -298,6 +298,14 @@ body {
   }
 }
 
+/* Universal High-Priority Hidden Rule */
+.hidden,
+.auth-gate-modal.hidden,
+.modal-overlay.hidden,
+[hidden] {
+  display: none !important;
+}
+
 /* Auth Gate (Login protection full cover) */
 .auth-gate-modal {
   position: fixed;
@@ -310,6 +318,39 @@ body {
   padding: 1rem;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+.auth-gate-modal:not(.hidden) {
+  display: flex !important;
+}
+
+/* LTR Language Layout Support */
+html[dir="ltr"] {
+  text-align: left;
+}
+html[dir="ltr"] .text-right {
+  text-align: left !important;
+}
+html[dir="ltr"] .text-left {
+  text-align: right !important;
+}
+html[dir="ltr"] #loginForm {
+  text-align: left !important;
+}
+html[dir="ltr"] #loginForm .relative i {
+  left: 0.875rem !important;
+  right: auto !important;
+}
+html[dir="ltr"] #loginForm input {
+  padding-left: 2.5rem !important;
+  padding-right: 0.75rem !important;
+}
+html[dir="rtl"] #loginForm .relative i {
+  right: 0.875rem !important;
+  left: auto !important;
+}
+html[dir="rtl"] #loginForm input {
+  padding-right: 2.5rem !important;
+  padding-left: 0.75rem !important;
 }
 
 /* Language Switcher Pills */

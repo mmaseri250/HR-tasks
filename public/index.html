@@ -62,8 +62,8 @@
       <div class="flex items-center gap-2.5 sm:gap-4 flex-shrink-0">
         <img src="assets/logo.png" alt="شركة جوهرة المجد" class="h-11 sm:h-14 w-auto object-contain cursor-pointer" onclick="switchTab('dashboard')">
         <div class="border-r border-slate-200 pr-2.5 sm:pr-4">
-          <h1 class="text-base sm:text-xl font-black text-brand leading-none">شركة جوهرة المجد</h1>
-          <p class="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1">نظام إدارة الموارد البشرية المتكامل • أبها، عسير</p>
+          <h1 class="text-base sm:text-xl font-black text-brand leading-none" data-i18n="brand_name">شركة جوهرة المجد</h1>
+          <p class="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1" data-i18n="header_subtitle">نظام إدارة الموارد البشرية المتكامل • أبها، عسير</p>
         </div>
       </div>
 
@@ -106,7 +106,7 @@
         <!-- Global Cloud Sync & Save Button (أيقونة المزامنة والحفظ السحابي) -->
         <button id="btnHeaderGlobalSync" onclick="syncAndSaveAllData()" title="مزامنة وحفظ بيانات المستخدمين والمدخلات سحابياً" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95">
           <i id="globalSyncIcon" class="fa-solid fa-cloud-arrow-up text-emerald-600 text-sm"></i>
-          <span id="globalSyncText" class="hidden sm:inline">حفظ ومزامنة</span>
+          <span id="globalSyncText" class="hidden sm:inline" data-i18n="sync_and_save">حفظ ومزامنة</span>
         </button>
 
         <!-- User Management Button (For Admins) -->
@@ -138,76 +138,76 @@
         <!-- 1. Dashboard -->
         <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand nav-item-active">
           <i class="fa-solid fa-chart-pie w-5 text-center text-base"></i>
-          <span>لوحة المؤشرات العامة</span>
+          <span data-i18n="nav_dashboard">لوحة المؤشرات</span>
         </button>
 
         <!-- 2. Employee Database (Requested) -->
         <button onclick="switchTab('employees-db')" id="nav-employees-db" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-database w-5 text-center text-base text-brand"></i>
-          <span>قاعدة بيانات الموظفين</span>
+          <span data-i18n="nav_employees">قاعدة بيانات الموظفين</span>
         </button>
 
         <!-- 2.01 Leaves Management & Approvals (إدارة الإجازات وسير الموافقات) -->
         <button onclick="switchTab('leaves')" id="nav-leaves" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-calendar-check w-5 text-center text-base text-teal-600"></i>
-          <span class="flex-1 text-right">إدارة الإجازات والموافقات</span>
+          <span class="flex-1 text-right" data-i18n="nav_leaves">إدارة الإجازات والموافقات</span>
           <span id="badgeNavLeaves" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-teal-100 text-teal-800 hidden">0</span>
         </button>
 
         <!-- 2.02 Independent Tasks System (نظام المهام والمتابعة) -->
         <button onclick="switchTab('tasks')" id="nav-tasks" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-list-check w-5 text-center text-base text-amber-600"></i>
-          <span class="flex-1 text-right">نظام المهام والمتابعة</span>
+          <span class="flex-1 text-right" data-i18n="nav_tasks">نظام المهام والمتابعة</span>
           <span id="badgeNavTasks" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 hidden">0</span>
         </button>
 
         <!-- 2.03 Official HR Forms Word (نماذج الموارد البشرية Word) -->
         <button onclick="switchTab('forms')" id="nav-forms" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-file-word w-5 text-center text-base text-blue-700"></i>
-          <span>نماذج الموارد البشرية Word</span>
+          <span data-i18n="nav_forms">نماذج الموارد البشرية Word</span>
         </button>
 
         <!-- 2.1 Compliance Index (مؤشر الامتثال المؤسسي وتجديد الإقامات ورخص العمل) -->
         <button onclick="switchTab('compliance')" id="nav-compliance" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-shield-halved w-5 text-center text-base text-emerald-600"></i>
-          <span class="flex-1 text-right">مؤشر الامتثال والإقامات</span>
+          <span class="flex-1 text-right" data-i18n="nav_compliance">مؤشر الامتثال والإقامات</span>
           <span id="badgeNavCompliance" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 font-mono" title="61 إقامة منتهية تتطلب التجديد">61</span>
         </button>
 
         <!-- 3. Disciplinary Penalties (Requested Desktop Items) -->
         <button onclick="switchTab('penalties')" id="nav-penalties" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-gavel w-5 text-center text-base text-amber-600"></i>
-          <span>القرارات الجزائية ولائحة الجزاءات</span>
+          <span data-i18n="nav_penalties">القرارات الجزائية ولائحة الجزاءات</span>
         </button>
 
         <!-- 4. Attendance -->
         <button onclick="switchTab('attendance')" id="nav-attendance" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-fingerprint w-5 text-center text-base text-blue-600"></i>
-          <span>الحضور والبصمة الحيوية</span>
+          <span data-i18n="nav_attendance">الحضور والبصمة الحيوية</span>
         </button>
 
         <!-- 5. Payroll & WPS -->
         <button onclick="switchTab('payroll')" id="nav-payroll" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-money-check-dollar w-5 text-center text-base text-emerald-600"></i>
-          <span>مسيرات الرواتب وحماية الأجور</span>
+          <span data-i18n="nav_payroll">مسيرات الرواتب وحماية الأجور</span>
         </button>
 
         <!-- 5.1 Loans & Advance Deductions (إدارة واستيراد السلف) -->
         <button onclick="switchTab('loans')" id="nav-loans" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-hand-holding-dollar w-5 text-center text-base text-emerald-700"></i>
-          <span class="flex-1 text-right">إدارة واستيراد السلف</span>
+          <span class="flex-1 text-right" data-i18n="nav_loans">إدارة واستيراد السلف</span>
         </button>
 
         <!-- 5.2 Terminated Employees (الموظفون المنهي خدماتهم) -->
         <button onclick="switchTab('terminated')" id="nav-terminated" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-user-xmark w-5 text-center text-base text-slate-700"></i>
-          <span class="flex-1 text-right">الموظفون المنهي خدماتهم</span>
+          <span class="flex-1 text-right" data-i18n="nav_terminated">الموظفون المنهي خدماتهم</span>
         </button>
 
         <!-- 5.3 Attendance & Disciplinary Notices (إشعارات وإنذارات الدوام الرسمية) -->
         <button onclick="switchTab('attendance-notices')" id="nav-attendance-notices" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-triangle-exclamation w-5 text-center text-base text-rose-600"></i>
-          <span class="flex-1 text-right">إشعارات وإنذارات الدوام الرسمية</span>
+          <span class="flex-1 text-right" data-i18n="nav_notices">إشعارات وإنذارات الدوام الرسمية</span>
           <span id="badgeNavNotices" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 hidden">0</span>
         </button>
         <button onclick="switchTab('absence')" id="nav-absence" class="hidden"></button>
@@ -215,7 +215,7 @@
         <!-- 6. Self-Service -->
         <button onclick="switchTab('selfservice')" id="nav-selfservice" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-user-shield w-5 text-center text-base text-indigo-600"></i>
-          <span>بوابة الخدمة الذاتية (ESS)</span>
+          <span data-i18n="nav_selfservice">بوابة الخدمة الذاتية (ESS)</span>
         </button>
 
         <div class="pt-3 border-t border-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -225,44 +225,47 @@
         <!-- 7. Organization -->
         <button onclick="switchTab('organization')" id="nav-organization" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-sitemap w-5 text-center text-base"></i>
-          <span>الهيكل التنظيمي والمدير المباشر</span>
+          <span data-i18n="nav_org">الهيكل التنظيمي والمدير المباشر</span>
         </button>
 
         <!-- 7.1 Branches (فروع الشركة) -->
         <button onclick="switchTab('branches')" id="nav-branches" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-code-branch w-5 text-center text-base text-amber-600"></i>
-          <span>فروع الشركة والمواقع</span>
+          <span data-i18n="nav_branches">فروع الشركة والمواقع</span>
         </button>
 
         <!-- 8. Users & Permissions (Requested) -->
         <button onclick="switchTab('users')" id="nav-users" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-shield-halved w-5 text-center text-base text-purple-600"></i>
-          <span>المستخدمون والصلاحيات</span>
+          <span data-i18n="nav_users">المستخدمون والصلاحيات</span>
         </button>
 
         <!-- 8.5 Audit Log (سجل العمليات والرقابة الشاملة) -->
         <button onclick="switchTab('audit-log')" id="nav-audit-log" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-clipboard-list w-5 text-center text-base text-purple-700"></i>
-          <span class="flex-1 text-right">سجل الرقابة (Audit Log)</span>
+          <span class="flex-1 text-right" data-i18n="nav_audit">سجل الرقابة (Audit Log)</span>
           <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-purple-100 text-purple-800">مشفر</span>
         </button>
 
         <!-- 9. Data Center -->
         <button onclick="switchTab('data-exchange')" id="nav-data-exchange" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-file-import w-5 text-center text-base"></i>
-          <span>الاستيراد والتصدير المتقدم</span>
+          <span data-i18n="nav_data">الاستيراد والتصدير المتقدم</span>
         </button>
 
         <!-- 10. System Docs -->
         <button onclick="switchTab('docs')" id="nav-docs" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-book-bookmark w-5 text-center text-base"></i>
-          <span>التوثيق والتقارير الهندسية</span>
+          <span data-i18n="nav_docs">التوثيق والتقارير الهندسية</span>
         </button>
 
         <!-- Desktop Sidebar Logout Button -->
         <div class="pt-2 border-t border-slate-100">
           <button onclick="promptLogout()" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer">
             <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-sm"></i>
+            <span data-i18n="logout">تسجيل الخروج</span>
+          </button>
+        </div>
             <span data-i18n="logout">تسجيل الخروج</span>
           </button>
         </div>
@@ -302,7 +305,7 @@
           <div class="card-elevated p-5">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400">إجمالي القوى العاملة</p>
+                <p class="text-xs font-bold text-slate-400" data-i18n="kpi_total_employees">إجمالي القوى العاملة</p>
                 <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono">114</h3>
                 <p class="text-xs text-emerald-600 font-bold mt-1"><i class="fa-solid fa-arrow-trend-up"></i> 100% موظفون نشطون</p>
               </div>
@@ -316,7 +319,7 @@
             <div class="flex justify-between items-start">
               <div>
                 <div class="flex items-center gap-1.5">
-                  <p class="text-xs font-bold text-slate-400">مؤشر الامتثال النظامي</p>
+                  <p class="text-xs font-bold text-slate-400" data-i18n="kpi_compliance">مؤشر الامتثال النظامي</p>
                   <span class="text-[9px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded-full">الإقامات ورخص العمل</span>
                 </div>
                 <h3 id="statComplianceRate" class="text-3xl font-black text-amber-600 mt-2 font-mono">54%</h3>
@@ -333,7 +336,7 @@
           <div class="card-elevated p-5">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400">نسبة الحضور اليومي</p>
+                <p class="text-xs font-bold text-slate-400" data-i18n="kpi_attendance">نسبة الحضور اليومي</p>
                 <h3 id="statAttendanceRate" class="text-3xl font-black text-blue-600 mt-2 font-mono">100%</h3>
                 <p id="statAttendanceSummaryText" class="text-xs text-slate-500 font-bold mt-1">114 حاضر • 0 في إجازة</p>
               </div>
@@ -346,7 +349,7 @@
           <div class="card-elevated p-5">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400" id="statPayrollPeriodTitle">مسير الأجور الشهري</p>
+                <p class="text-xs font-bold text-slate-400" id="statPayrollPeriodTitle" data-i18n="kpi_payroll">مسير الأجور الشهري</p>
                 <h3 id="statPayrollAmount" class="text-2xl font-black text-amber-600 mt-2 font-mono">367,000 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
                 <p class="text-xs text-emerald-600 font-bold mt-1" id="statPayrollStatusSubtitle"><i class="fa-solid fa-circle-check"></i> جاهز للاحتساب والصرف</p>
               </div>
@@ -3560,7 +3563,7 @@
         <div>
           <label class="block font-bold text-slate-700 mb-1" data-i18n="username_label">اسم المستخدم (Username):</label>
           <div class="relative">
-            <input type="text" id="loginUsername" required placeholder="اسم المستخدم" class="w-full rounded-xl border border-slate-300 py-3 pr-10 pl-3 font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand">
+            <input type="text" id="loginUsername" required placeholder="اسم المستخدم" data-i18n-placeholder="username_placeholder" class="w-full rounded-xl border border-slate-300 py-3 pr-10 pl-3 font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand">
             <i class="fa-solid fa-user absolute right-3.5 top-3.5 text-slate-400"></i>
           </div>
         </div>
@@ -3568,7 +3571,7 @@
         <div>
           <label class="block font-bold text-slate-700 mb-1" data-i18n="password_label">كلمة المرور (Password):</label>
           <div class="relative">
-            <input type="password" id="loginPassword" required placeholder="كلمة المرور" class="w-full rounded-xl border border-slate-300 py-3 pr-10 pl-3 font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand">
+            <input type="password" id="loginPassword" required placeholder="كلمة المرور" data-i18n-placeholder="password_placeholder" class="w-full rounded-xl border border-slate-300 py-3 pr-10 pl-3 font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand">
             <i class="fa-solid fa-lock absolute right-3.5 top-3.5 text-slate-400"></i>
           </div>
         </div>
@@ -4165,23 +4168,23 @@
   <nav id="mobileBottomNav" class="mobile-bottom-nav">
     <button class="mobile-nav-btn active" data-tab="dashboard" id="mobNavDashboard" onclick="handleMobDashboardClick()">
       <i id="mobNavDashboardIcon" class="fa-solid fa-chart-pie"></i>
-      <span id="mobNavDashboardLabel">الرئيسية</span>
+      <span id="mobNavDashboardLabel" data-i18n="nav_dashboard">الرئيسية</span>
     </button>
     <button class="mobile-nav-btn" data-tab="employees-db" id="mobNavEmployees" onclick="switchTab('employees-db')">
       <i class="fa-solid fa-users"></i>
-      <span>الموظفين</span>
+      <span data-i18n="nav_employees">الموظفين</span>
     </button>
     <button class="mobile-nav-btn" data-tab="selfservice" id="mobNavSelfService" onclick="switchTab('selfservice')">
       <i class="fa-solid fa-hand-holding-hand"></i>
-      <span id="mobNavSelfServiceLabel">طلباتي</span>
+      <span id="mobNavSelfServiceLabel" data-i18n="nav_selfservice">طلباتي</span>
     </button>
     <button class="mobile-nav-btn" data-tab="attendance" id="mobNavAttendance" onclick="handleMobAttendanceClick()">
       <i class="fa-solid fa-fingerprint"></i>
-      <span>البصمة</span>
+      <span data-i18n="nav_attendance">البصمة</span>
     </button>
     <button class="mobile-nav-btn" id="mobNavMore" onclick="openModal('modalMobileMore')">
       <i class="fa-solid fa-grip"></i>
-      <span>المزيد</span>
+      <span data-i18n="nav_more">المزيد</span>
     </button>
   </nav>
 
