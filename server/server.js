@@ -25,6 +25,7 @@ const loansModule = require('./modules/loans');
 const officialTemplates = require('./modules/officialTemplates');
 const absenceNoticesModule = require('./modules/absenceNotices');
 const auditModule = require('./modules/audit');
+const rbacEngine = require('./modules/rbacEngine');
 
 // Initialize Seed Data if unseeded
 try {
@@ -46,8 +47,11 @@ try {
 // Ensure organizational hierarchy and manager integrity on startup
 try {
   // Completely purge Executive Leadership (JM-0001, JM-0002, JM-0003) from operational employee roster
-  run("DELETE FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003')");
-  run("DELETE FROM users WHERE username = 'salih.qahtani' OR full_name LIKE '%صالح سعيد القحطاني%'");
+  // Note: Only exact names of the 3 board members - do NOT delete operational managers like Hani Abdulrahman (JM-1041)
+  run("DELETE FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003') OR full_name_ar = 'عبدالرحمن صالح القحطاني' OR full_name_ar = 'سعيد محمد القحطاني' OR full_name_ar = 'صالح سعيد القحطاني'");
+  run("DELETE FROM users WHERE emp_id IN ('JM-0001', 'JM-0002', 'JM-0003') OR username IN ('abdulrahman.qahtani', 'saeed.qahtani', 'salih.qahtani', 'admin.qahtani') OR full_name = 'عبدالرحمن صالح القحطاني' OR full_name = 'سعيد محمد القحطاني' OR full_name = 'صالح سعيد القحطاني'");
+  run("UPDATE branches SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
+  run("UPDATE departments SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
 
   const dept = get("SELECT id FROM departments WHERE name_ar = 'إدارة المشاريع والمقاولات'") || get("SELECT id FROM departments LIMIT 1");
   const branch = get("SELECT id FROM branches WHERE is_main = 1") || get("SELECT id FROM branches LIMIT 1");
@@ -156,6 +160,10 @@ try {
 
 // User context extractor for strict role & ownership checking
 function extractUserContext(req) {
+  if (req.user && req.user.id) {
+    return req.user;
+  }
+
   const headerId = req.headers['x-user-id'];
   const headerRole = req.headers['x-user-role'];
   const headerEmpId = req.headers['x-user-emp-id'];
@@ -167,7 +175,7 @@ function extractUserContext(req) {
   let user = null;
   if (userId) {
     try {
-      user = get('SELECT id, username, full_name, role, permissions, emp_id FROM users WHERE id = ?', [userId]);
+      user = get('SELECT id, username, full_name, role, permissions, emp_id, custom_data_scope FROM users WHERE id = ?', [userId]);
       if (user) {
         try { user.permissions = JSON.parse(user.permissions || '[]'); } catch (_) { user.permissions = []; }
       }
@@ -181,7 +189,8 @@ function extractUserContext(req) {
       full_name: headerName || bodyUser.full_name || bodyUser.name || req.body?.approverName || '',
       role: headerRole || bodyUser.role || 'employee',
       emp_id: headerEmpId ? Number(headerEmpId) : (bodyUser.emp_id ? Number(bodyUser.emp_id) : null),
-      permissions: bodyUser.permissions || []
+      permissions: bodyUser.permissions || [],
+      custom_data_scope: null
     };
   }
 
@@ -195,6 +204,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(rbacEngine.authenticateAndScope);
 
 // Anti-stale Cache Control Middleware: ensures browsers and mobile PWAs never receive outdated data
 app.use((req, res, next) => {
@@ -335,7 +345,7 @@ app.post('/api/auth/logout', (req, res) => {
   }
 });
 
-app.get('/api/users', (req, res) => {
+app.get('/api/users', rbacEngine.requirePermission('users.view'), (req, res) => {
   try {
     const users = usersModule.getAllUsers();
     res.json({ success: true, data: users });
@@ -344,7 +354,7 @@ app.get('/api/users', (req, res) => {
   }
 });
 
-app.post('/api/users', (req, res) => {
+app.post('/api/users', rbacEngine.requirePermission('users.create'), (req, res) => {
   try {
     const user = usersModule.createUser(req.body);
     auditModule.logAuditEvent(req, {
@@ -360,7 +370,7 @@ app.post('/api/users', (req, res) => {
   }
 });
 
-app.put('/api/users/:id', (req, res) => {
+app.put('/api/users/:id', rbacEngine.requirePermission('users.edit'), (req, res) => {
   try {
     const user = usersModule.updateUser(req.params.id, req.body);
     auditModule.logAuditEvent(req, {
@@ -376,7 +386,7 @@ app.put('/api/users/:id', (req, res) => {
   }
 });
 
-app.delete('/api/users/:id', (req, res) => {
+app.delete('/api/users/:id', rbacEngine.requirePermission('users.delete'), (req, res) => {
   try {
     usersModule.deleteUser(req.params.id);
     auditModule.logAuditEvent(req, {
@@ -386,6 +396,77 @@ app.delete('/api/users/:id', (req, res) => {
       comment: `حذف مستخدم بالنظام معرّف ${req.params.id}`
     });
     res.json({ success: true, message: 'تم حذف المستخدم بنجاح' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   RBAC & PERMISSIONS MANAGEMENT ROUTES
+   ========================================================================= */
+app.get('/api/rbac/permissions', (req, res) => {
+  try {
+    const permissions = rbacEngine.getAllPermissions();
+    res.json({ success: true, data: permissions });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/rbac/roles', (req, res) => {
+  try {
+    const roles = rbacEngine.getAllRoles();
+    const rolesWithPerms = roles.map(r => ({
+      ...r,
+      permissions: rbacEngine.getRolePermissions(r.code)
+    }));
+    res.json({ success: true, data: rolesWithPerms });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/rbac/effective-permissions/:userId', (req, res) => {
+  try {
+    const detailed = rbacEngine.getEffectiveUserPermissionsDetailed(req.params.userId);
+    res.json({ success: true, data: detailed });
+  } catch (err) {
+    res.status(404).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/rbac/my-permissions', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false, error: 'يجب تسجيل الدخول أولاً' });
+    }
+    const detailed = rbacEngine.getEffectiveUserPermissionsDetailed(user.id);
+    res.json({ success: true, data: detailed });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/rbac/user-permissions', rbacEngine.requirePermission('permissions.manage'), (req, res) => {
+  try {
+    const { user_id, grants = [], revokes = [] } = req.body;
+    const actor = extractUserContext(req);
+    const updated = rbacEngine.updateUserPermissions(user_id, grants, revokes, actor);
+    usersModule.persistUsersToDisk();
+    res.json({ success: true, message: 'تم تحديث الصلاحيات المخصصة للمستخدم بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/rbac/user-role', rbacEngine.requirePermission('permissions.manage'), (req, res) => {
+  try {
+    const { user_id, role, data_scope } = req.body;
+    const actor = extractUserContext(req);
+    const updated = rbacEngine.updateUserRoleAndScope(user_id, role, data_scope, actor);
+    usersModule.persistUsersToDisk();
+    res.json({ success: true, message: 'تم تحديث دور المستخدم ونطاق صلاحياته بنجاح', data: updated });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
@@ -440,7 +521,7 @@ app.post('/api/sync/all', (req, res) => {
    AUDIT LOG API ROUTES (سجل الرقابة والعمليات - محمي وغير قابل للتعديل)
    ========================================================================= */
 
-app.get('/api/audit-logs', (req, res) => {
+app.get('/api/audit-logs', rbacEngine.requirePermission('audit.view'), (req, res) => {
   try {
     const logs = auditModule.getAuditLogs(req.query);
     res.json({ success: true, data: logs });
@@ -449,7 +530,7 @@ app.get('/api/audit-logs', (req, res) => {
   }
 });
 
-app.get('/api/audit-logs/stats', (req, res) => {
+app.get('/api/audit-logs/stats', rbacEngine.requirePermission('audit.view'), (req, res) => {
   try {
     const stats = auditModule.getAuditStats();
     res.json({ success: true, data: stats });
@@ -458,7 +539,7 @@ app.get('/api/audit-logs/stats', (req, res) => {
   }
 });
 
-app.get('/api/audit-logs/export/excel', (req, res) => {
+app.get('/api/audit-logs/export/excel', rbacEngine.requirePermission('audit.view'), (req, res) => {
   try {
     const buffer = auditModule.exportAuditLogsExcel(req.query);
     const filename = `JM_HRMS_AUDIT_LOG_${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -857,10 +938,11 @@ app.get('/api/penalties/export/csv', (req, res) => {
 
 app.get('/api/employees', (req, res) => {
   try {
-    const employees = employeesModule.getAllEmployees(req.query);
+    const user = extractUserContext(req);
+    const employees = employeesModule.getAllEmployees(req.query, user);
     res.json({ success: true, count: employees.length, data: employees });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 
@@ -955,13 +1037,14 @@ app.get('/api/employees/:id', (req, res, next) => {
     return next();
   }
   try {
-    const emp = employeesModule.getEmployeeById(req.params.id);
+    const user = extractUserContext(req);
+    const emp = employeesModule.getEmployeeById(req.params.id, user);
     if (!emp) {
       return res.status(404).json({ success: false, error: 'الموظف غير موجود' });
     }
     res.json({ success: true, data: emp });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 
@@ -1173,7 +1256,7 @@ app.delete('/api/policies/:id', (req, res) => {
    6. PAYROLL & WPS ROUTES
    ========================================================================= */
 
-app.get('/api/payroll/periods', (req, res) => {
+app.get('/api/payroll/periods', rbacEngine.requirePermission('payroll.view'), (req, res) => {
   try {
     const periods = payrollModule.getPayrollPeriods();
     res.json({ success: true, data: periods });
@@ -1182,7 +1265,7 @@ app.get('/api/payroll/periods', (req, res) => {
   }
 });
 
-app.get('/api/payroll/periods/:id', (req, res) => {
+app.get('/api/payroll/periods/:id', rbacEngine.requirePermission('payroll.view'), (req, res) => {
   try {
     const data = payrollModule.getPayrollPeriodDetails(req.params.id);
     if (!data) return res.status(404).json({ success: false, error: 'مسير الرواتب غير موجود' });
@@ -1192,7 +1275,7 @@ app.get('/api/payroll/periods/:id', (req, res) => {
   }
 });
 
-app.post('/api/payroll/calculate', (req, res) => {
+app.post('/api/payroll/calculate', rbacEngine.requirePermission('payroll.calculate'), (req, res) => {
   try {
     const { period_month } = req.body;
     if (!period_month) {
@@ -1211,7 +1294,7 @@ app.post('/api/payroll/calculate', (req, res) => {
   }
 });
 
-app.post('/api/payroll/periods/:id/approve', (req, res) => {
+app.post('/api/payroll/periods/:id/approve', rbacEngine.requirePermission('payroll.approve'), (req, res) => {
   try {
     const { approver_name } = req.body;
     const result = payrollModule.approvePayrollPeriod(req.params.id, approver_name);
@@ -1229,6 +1312,12 @@ app.post('/api/payroll/periods/:id/approve', (req, res) => {
 
 app.get('/api/payroll/periods/:id/payslip/:empId', (req, res) => {
   try {
+    const user = extractUserContext(req);
+    const isOwn = user && user.emp_id && Number(user.emp_id) === Number(req.params.empId);
+    const hasPerm = rbacEngine.hasPermission(user, 'payroll.view') || rbacEngine.hasPermission(user, 'payroll.print_payslip');
+    if (!isOwn && !hasPerm) {
+      return res.status(403).json({ success: false, error: 'غير مصرح: لا تملك صلاحية الاطلاع على قسيمة راتب موظف آخر', code: 'FORBIDDEN' });
+    }
     const payslip = payrollModule.getEmployeePayslip(req.params.id, req.params.empId);
     res.json({ success: true, data: payslip });
   } catch (err) {
@@ -1297,20 +1386,22 @@ app.get('/api/payroll/periods/:id/export/csv', (req, res) => {
 
 app.get('/api/requests', (req, res) => {
   try {
-    const requests = requestsModule.getAllRequests(req.query);
+    const user = extractUserContext(req);
+    const requests = requestsModule.getAllRequests(req.query, user);
     res.json({ success: true, count: requests.length, data: requests });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 
 app.get('/api/requests/:id', (req, res) => {
   try {
-    const request = requestsModule.getRequestById(req.params.id);
+    const user = extractUserContext(req);
+    const request = requestsModule.getRequestById(req.params.id, user);
     if (!request) return res.status(404).json({ success: false, error: 'الطلب غير موجود' });
     res.json({ success: true, data: request });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 
@@ -1523,10 +1614,11 @@ app.get('/api/leaves/kpis', (req, res) => {
 
 app.get('/api/leaves', (req, res) => {
   try {
-    const leaves = leavesModule.getAllLeaves(req.query);
+    const user = extractUserContext(req);
+    const leaves = leavesModule.getAllLeaves(req.query, user);
     res.json({ success: true, data: leaves });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 
@@ -1541,11 +1633,12 @@ app.post('/api/leaves', (req, res) => {
 
 app.get('/api/leaves/:id', (req, res) => {
   try {
-    const leave = leavesModule.getLeaveById(req.params.id);
+    const user = extractUserContext(req);
+    const leave = leavesModule.getLeaveById(req.params.id, user);
     if (!leave) return res.status(404).json({ success: false, error: 'طلب الإجازة غير موجود' });
     res.json({ success: true, data: leave });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 
@@ -1589,10 +1682,11 @@ app.get('/api/tasks/dashboard', (req, res) => {
 
 app.get('/api/tasks', (req, res) => {
   try {
-    const tasks = tasksModule.getAllTasks(req.query);
+    const user = extractUserContext(req);
+    const tasks = tasksModule.getAllTasks(req.query, user);
     res.json({ success: true, data: tasks });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 
@@ -1607,11 +1701,12 @@ app.post('/api/tasks', (req, res) => {
 
 app.get('/api/tasks/:id', (req, res) => {
   try {
-    const task = tasksModule.getTaskById(req.params.id);
+    const user = extractUserContext(req);
+    const task = tasksModule.getTaskById(req.params.id, user);
     if (!task) return res.status(404).json({ success: false, error: 'المهمة غير موجودة' });
     res.json({ success: true, data: task });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message, code: err.code });
   }
 });
 

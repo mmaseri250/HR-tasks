@@ -1,5 +1,6 @@
 // server/modules/tasks.js - Independent Tasks System & Manager Dashboard
 const { query, get, run } = require('../database/db');
+const rbacEngine = require('./rbacEngine');
 
 /**
  * Auto-update overdue tasks
@@ -16,9 +17,9 @@ function updateOverdueTasksStatus() {
 }
 
 /**
- * Get all tasks with filters
+ * Get all tasks with filters and Data Scoping
  */
-function getAllTasks(filters = {}) {
+function getAllTasks(filters = {}, user = null) {
   updateOverdueTasksStatus();
 
   let sql = `
@@ -36,6 +37,13 @@ function getAllTasks(filters = {}) {
     WHERE 1=1
   `;
   const params = [];
+
+  // Enforce Data Scoping
+  if (user) {
+    const scopeFilter = rbacEngine.getTaskScopeFilter(user, 't');
+    sql += ` AND (${scopeFilter.sql})`;
+    params.push(...scopeFilter.params);
+  }
 
   if (filters.assigned_to) {
     sql += ` AND t.assigned_to = ?`;
@@ -69,9 +77,9 @@ function getAllTasks(filters = {}) {
 }
 
 /**
- * Get task by ID
+ * Get task by ID with IDOR protection
  */
-function getTaskById(id) {
+function getTaskById(id, user = null) {
   updateOverdueTasksStatus();
   const sql = `
     SELECT t.*,
@@ -88,7 +96,33 @@ function getTaskById(id) {
     WHERE t.id = ?
   `;
   const row = get(sql, [id]);
-  return row ? { ...row, progress_percentage: row.progress_percent } : null;
+  if (!row) return null;
+
+  if (user) {
+    const scope = rbacEngine.getDataScope(user);
+    const userEmpId = user.emp_id ? Number(user.emp_id) : null;
+    if (scope === 'OWN' && userEmpId) {
+      if (Number(row.assigned_to) !== userEmpId && Number(row.assigned_by) !== userEmpId) {
+        const err = new Error('غير مصرح: لا يحق لك الاطلاع على هذه المهمة (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    } else if (scope === 'DIRECT_SUBORDINATES' && userEmpId) {
+      const subIds = rbacEngine.getSubordinateEmpIds(userEmpId);
+      const isAllowed = Number(row.assigned_to) === userEmpId ||
+                        Number(row.assigned_by) === userEmpId ||
+                        subIds.includes(Number(row.assigned_to));
+      if (!isAllowed) {
+        const err = new Error('غير مصرح: هذه المهمة ليست ضمن فريقك المباشر (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    }
+  }
+
+  return { ...row, progress_percentage: row.progress_percent };
 }
 
 /**

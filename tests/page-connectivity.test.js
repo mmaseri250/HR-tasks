@@ -104,7 +104,9 @@ async function testEndpoints() {
   ];
 
   for (const ep of endpoints) {
-    const res = await fetch(`${baseUrl}${ep.url}`);
+    const res = await fetch(`${baseUrl}${ep.url}`, {
+      headers: { 'x-user-id': '1', 'x-user-role': 'admin' }
+    });
     assert.strictEqual(res.status, 200, `فشل الاتصال بنقطة النهاية: ${ep.url} (الكود: ${res.status})`);
     const data = await res.json();
     assert(data.success !== false, `استجابة خاطئة من ${ep.url}`);

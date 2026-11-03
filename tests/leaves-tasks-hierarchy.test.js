@@ -87,10 +87,14 @@ async function runLeavesTasksHierarchyTests() {
   assert(mgrApproved.status.includes('الموارد البشرية'), 'حالة الطلب يجب أن تنتقل إلى الموارد البشرية');
   assert.strictEqual(mgrApproved.manager_status, 'موافق');
 
-  // Step 2: HR Manager Final Approval
-  const hrApproved = leavesModule.approveLeave(leaveReq.id, 'approve', 'hr', 'اعتماد نهائي وتحديث الرصيد', 'عبدالملك سعيد الشريف');
+  // Step 2: HR Specialist Verification
+  const hrVerified = leavesModule.approveLeave(leaveReq.id, 'approve', 'hr_specialist', 'تدقيق وتحقق قسم الموارد', 'شامة علي عسيري');
+  assert(hrVerified.status.includes('اعتماد مدير الموارد البشرية'), 'حالة الطلب يجب أن تنتقل إلى مدير الموارد البشرية');
+
+  // Step 3: HR Manager Final Approval
+  const hrApproved = leavesModule.approveLeave(leaveReq.id, 'approve', 'hr_director', 'اعتماد نهائي وتحديث الرصيد', 'عبدالملك سعيد الشريف');
   assert.strictEqual(hrApproved.status, 'معتمد نهائياً');
-  assert.strictEqual(hrApproved.hr_status, 'موافق');
+  assert.strictEqual(hrApproved.hr_director_status, 'معتمد');
 
   // Verify leave days deducted from balance
   const balAfterLeave = leavesModule.getEmployeeLeaveBalance(empJunior.id);
@@ -121,8 +125,8 @@ async function runLeavesTasksHierarchyTests() {
     title: 'تجهيز مستندات الأيزو لفرع محايل عسير',
     description: 'مراجعة إجراءات الجودة والتأكد من مطابقة السجلات الميدانية',
     assigned_to: empSenior.id,
-    start_date: '2026-10-10',
-    due_date: '2026-10-30',
+    start_date: '2026-11-01',
+    due_date: '2026-12-30',
     priority: 'عالية'
   });
 

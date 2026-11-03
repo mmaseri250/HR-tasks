@@ -1,5 +1,6 @@
 // server/modules/leaves.js - Dedicated Leave Management System with Daily Accrual & 2-Tier Approvals
 const { query, get, run } = require('../database/db');
+const rbacEngine = require('./rbacEngine');
 
 /**
  * Calculate actual service years between join_date and target date
@@ -237,11 +238,24 @@ function submitLeaveRequest(data) {
   const managerId = emp.manager_id || null;
   const managerName = emp.direct_manager_name || emp.manager_full_name || 'المدير المباشر';
 
-  // Validate balance for annual leave
+  // 1. Mandatory Direct Manager Check
+  if (!emp.manager_id && emp.emp_code !== 'JM-1000' && emp.emp_code !== 'JM-0004') {
+    throw new Error('لا يمكن تقديم الطلب: لا يوجد مدير مباشر معين للموظف في قاعدة البيانات. يرجى مراجعة إدارة الموارد البشرية لربط المدير المباشر.');
+  }
+
+  // 2. Strict Server-side Overdraft Prevention with Pending Reserved Days
   if (leave_type === 'إجازة سنوية') {
     const balInfo = getEmployeeLeaveBalance(emp_id);
-    if (days > balInfo.current_balance) {
-      throw new Error(`رصيد إجازاتك الحالي (${balInfo.current_balance} يوم) لا يغطي مدة الإجازة المطلوبة (${days} يوم)`);
+    const pendingRow = get(`
+      SELECT COALESCE(SUM(days_count), 0) AS total_pending
+      FROM leaves
+      WHERE emp_id = ? AND leave_type = 'إجازة سنوية' AND (status LIKE '%معلق%' OR status LIKE '%بانتظار%')
+    `, [emp_id]);
+    const pendingDays = pendingRow ? Number(pendingRow.total_pending) : 0;
+    const availableNetBalance = balInfo.current_balance - pendingDays;
+
+    if (days > availableNetBalance) {
+      throw new Error(`لا يمكن تقديم الطلب؛ عدد الأيام المطلوبة (${days} يوم) يتجاوز رصيد الإجازة السنوية المتاح (${availableNetBalance} يوم). الرصيد الإجمالي: ${balInfo.current_balance} يوم، المحجوز بطلبات معلقة: ${pendingDays} يوم.`);
     }
   }
 
@@ -283,6 +297,8 @@ function submitLeaveRequest(data) {
 
   // 2. Initialize Workflow Pipeline Steps
   try {
+    const hrDirector = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1000'") || { id: 9551, full_name_ar: 'عبدالملك سعيد الشريف' };
+
     run(`
       INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
       VALUES (?, ?, 1, 'موافقة المدير المباشر', 'direct_manager', ?, ?, 'معلق', datetime('now'), datetime('now'))
@@ -295,8 +311,8 @@ function submitLeaveRequest(data) {
 
     run(`
       INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
-      VALUES (?, ?, 3, 'اعتماد مدير الموارد البشرية', 'hr_director', 9551, 'عبدالملك سعيد الشريف', 'مؤجل', datetime('now'), datetime('now'))
-    `, [reqId, leaveId]);
+      VALUES (?, ?, 3, 'اعتماد مدير الموارد البشرية', 'hr_director', ?, ?, 'مؤجل', datetime('now'), datetime('now'))
+    `, [reqId, leaveId, hrDirector.id, hrDirector.full_name_ar]);
   } catch (e) {
     console.warn('Workflow steps error in leaves:', e.message);
   }
@@ -323,9 +339,9 @@ function submitLeaveRequest(data) {
 }
 
 /**
- * Get leave details by ID
+ * Get leave details by ID with IDOR protection
  */
-function getLeaveById(id) {
+function getLeaveById(id, user = null) {
   const sql = `
     SELECT l.*,
            e.emp_code, e.full_name_ar, e.job_title_ar, e.join_date, e.annual_leave_balance,
@@ -340,13 +356,40 @@ function getLeaveById(id) {
     LEFT JOIN employees sub ON l.substitute_emp_id = sub.id
     WHERE l.id = ?
   `;
-  return get(sql, [id]);
+  const leave = get(sql, [id]);
+  if (!leave) return null;
+
+  if (user) {
+    const scope = rbacEngine.getDataScope(user);
+    const userEmpId = user.emp_id ? Number(user.emp_id) : null;
+    if (scope === 'OWN' && userEmpId) {
+      if (Number(leave.emp_id) !== userEmpId) {
+        const err = new Error('غير مصرح: لا يحق لك الاطلاع على طلب إجازة خاص بموظف آخر (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    } else if (scope === 'DIRECT_SUBORDINATES' && userEmpId) {
+      const subIds = rbacEngine.getSubordinateEmpIds(userEmpId);
+      const isAllowed = Number(leave.emp_id) === userEmpId ||
+                        Number(leave.manager_id) === userEmpId ||
+                        subIds.includes(Number(leave.emp_id));
+      if (!isAllowed) {
+        const err = new Error('غير مصرح: لا يحق لك الاطلاع على طلب إجازة خارج نطاق مرؤوسيك المباشرين (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    }
+  }
+
+  return leave;
 }
 
 /**
- * Get all leave requests with filters
+ * Get all leave requests with filters and Data Scoping
  */
-function getAllLeaves(filters = {}) {
+function getAllLeaves(filters = {}, user = null) {
   let sql = `
     SELECT l.*,
            e.emp_code, e.full_name_ar, e.job_title_ar,
@@ -362,6 +405,13 @@ function getAllLeaves(filters = {}) {
     WHERE 1=1
   `;
   const params = [];
+
+  // Enforce Data Scoping
+  if (user) {
+    const scopeFilter = rbacEngine.getLeaveScopeFilter(user, 'l');
+    sql += ` AND (${scopeFilter.sql})`;
+    params.push(...scopeFilter.params);
+  }
 
   if (filters.emp_id) {
     sql += ` AND l.emp_id = ?`;
@@ -441,9 +491,9 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
 
   if (role === 'manager' || role === 'direct_manager') {
     const isDirectManager = userEmpId && Number(userEmpId) === Number(leave.manager_id);
-    const isAdmin = userRole === 'admin' || userRole === 'general_manager';
+    const isAdmin = userRole === 'admin';
     if (userContext && !isDirectManager && !isAdmin) {
-      throw new Error(`غير مصرح: اعتماد هذه الخطوة مقتصر على المدير المباشر (${leave.direct_manager_name || 'المدير المباشر'}) أو مدير النظام.`);
+      throw new Error(`غير مصرح: اعتماد هذه الخطوة مقتصر على المدير المباشر (${leave.direct_manager_name || 'المدير المباشر'}) ولا يحق لمدير آخر اعتماده.`);
     }
 
     if (action === 'approve') {
@@ -470,7 +520,12 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
       `, [approverName || leave.direct_manager_name || 'المدير المباشر', comment || 'تم رفض الطلب من قبل المدير المباشر', id]);
     }
   } else if (role === 'hr_verify' || role === 'hr_specialist') {
-    const isHR = userRole === 'admin' || userRole === 'hr_manager' || userPerms.includes('approvals') || userPerms.includes('leaves');
+    // Sequential Step 2 Enforcement: Step 1 MUST be approved
+    if (leave.manager_status !== 'موافق') {
+      throw new Error('لا يمكن تدقيق الطلب: الطلب بانتظار موافقة المدير المباشر أولاً (المرحلة 1).');
+    }
+
+    const isHR = userRole === 'admin' || userRole === 'hr_manager' || userRole === 'hr_specialist' || userPerms.includes('approvals') || userPerms.includes('leaves') || userPerms.includes('leaves.approve');
     if (userContext && !isHR) {
       throw new Error('غير مصرح: هذه الخطوة مخصصة لتدقيق قسم الموارد البشرية أو مدير النظام.');
     }
@@ -499,8 +554,16 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
       `, [approverName || 'قسم الموارد البشرية', comment || 'تم رفض الطلب من قبل قسم الموارد البشرية', id]);
     }
   } else {
+    // Sequential Step 3 Enforcement: Step 1 AND Step 2 MUST be completed
+    if (leave.manager_status !== 'موافق') {
+      throw new Error('لا يمكن الاعتماد النهائي: الطلب بانتظار موافقة المدير المباشر أولاً (المرحلة 1).');
+    }
+    if (leave.hr_verify_status !== 'تم التحقق') {
+      throw new Error('لا يمكن الاعتماد النهائي: الطلب بانتظار تدقيق وتحقق قسم الموارد البشرية أولاً (المرحلة 2).');
+    }
+
     // HR Director / Admin (Final Step)
-    const isDirector = userRole === 'admin' || userRole === 'hr_manager' || userRole === 'general_manager';
+    const isDirector = userRole === 'admin' || userRole === 'hr_manager' || userRole === 'general_manager' || (userEmpId && userEmpId === 9551);
     if (userContext && !isDirector) {
       throw new Error('غير مصرح: هذه الخطوة مخصصة لاعتماد مدير الموارد البشرية أو مدير النظام.');
     }

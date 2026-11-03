@@ -3310,9 +3310,21 @@
             <label class="block font-bold text-slate-700 mb-1">الدور الوظيفي الأساسي: *</label>
             <select id="userFormRole" required onchange="onUserRoleChanged(this.value)" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold bg-white">
               <option value="employee">موظف (Employee - بوابة الخدمة الذاتية والطلبات فقط)</option>
-              <option value="dept_manager">مدير إدارة / مشرف (اعتماد ومتابعة الفريق والمهام)</option>
-              <option value="hr_manager">مسؤول موارد بشرية (إدارة تشغيلية شاملة)</option>
+              <option value="direct_manager">مدير مباشر (Direct Manager - اعتماد ومتابعة الفريق المباشر)</option>
+              <option value="dept_manager">مدير إدارة / مشرف (Department Manager - متابعة إدارة كاملة)</option>
+              <option value="hr_specialist">أخصائي موارد بشرية (HR Specialist - تدقيق ومراجعة الطلبات)</option>
+              <option value="hr_manager">مدير موارد بشرية (HR Manager - اعتماد نهائي وإدارة شاملة)</option>
               <option value="admin">مدير عام النظام (Super Admin - صلاحية كاملة 100%)</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">نطاق عزل البيانات المخصص (Data Scope):</label>
+            <select id="userFormDataScope" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold bg-white text-slate-800">
+              <option value="">افتراضي تلقائي حسب الدور (Default Scope)</option>
+              <option value="ALL">ALL - كامل الشركة (إدارة عليا وموارد بشرية)</option>
+              <option value="DEPARTMENT">DEPARTMENT - موظفو الإدارة/القسم فقط</option>
+              <option value="DIRECT_SUBORDINATES">DIRECT_SUBORDINATES - المرؤوسون المباشرون فقط</option>
+              <option value="OWN">OWN - السجلات الشخصية فقط</option>
             </select>
           </div>
         </div>
@@ -3454,6 +3466,61 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       EFFECTIVE PERMISSIONS INSPECTOR MODAL (أداة فحص الصلاحيات الفعلية)
+       ===================================================================== -->
+  <div id="modalPermissionsInspector" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
+      <div class="flex justify-between items-center border-b pb-3 flex-shrink-0">
+        <div>
+          <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-purple-700"></i> فحص الصلاحيات الفعلية (Effective Permissions Inspector)
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">تحليل دقيق ومباشر لجميع الصلاحيات الفعلية الناتجة عن الدور، المنح، والحجب، ونطاق عزل البيانات.</p>
+        </div>
+        <button onclick="closeModal('modalPermissionsInspector')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+      </div>
+
+      <!-- User & Scope Summary Card -->
+      <div id="inspectorSummaryCard" class="bg-slate-50 rounded-2xl p-4 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <!-- JS Populated -->
+      </div>
+
+      <!-- Quick Filter -->
+      <div class="flex items-center justify-between gap-3 flex-wrap">
+        <input type="text" id="inspectorSearchInput" oninput="filterInspectorTable(this.value)" placeholder="بحث في الصلاحيات أو الوحدات..." class="rounded-xl border border-slate-300 py-1.5 px-3 text-xs font-bold w-full sm:w-72 bg-white">
+        <div class="flex items-center gap-2 text-xs">
+          <span id="inspectorAllowedBadge" class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-lg text-[11px]">0 مسموح</span>
+          <span id="inspectorDeniedBadge" class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-lg text-[11px]">0 محجوب</span>
+        </div>
+      </div>
+
+      <!-- Permissions Table -->
+      <div class="overflow-x-auto border border-slate-200 rounded-2xl max-h-96 overflow-y-auto">
+        <table class="w-full text-xs text-right">
+          <thead class="bg-slate-100 text-slate-600 font-bold sticky top-0 border-b border-slate-200">
+            <tr>
+              <th class="py-2.5 px-3">الوحدة (Module)</th>
+              <th class="py-2.5 px-3">رمز الصلاحية</th>
+              <th class="py-2.5 px-3">الاسم باللغة العربية</th>
+              <th class="py-2.5 px-3 text-center">الحالة الفعلية</th>
+              <th class="py-2.5 px-3 text-center">المصدر</th>
+            </tr>
+          </thead>
+          <tbody id="inspectorTableBody" class="divide-y divide-slate-100">
+            <!-- JS Populated -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t">
+        <button onclick="closeModal('modalPermissionsInspector')" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 font-bold text-slate-800 rounded-xl transition text-xs">
+          إغلاق
+        </button>
+      </div>
     </div>
   </div>
 

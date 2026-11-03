@@ -196,7 +196,7 @@ function getPayrollPeriodDetails(periodId) {
     SELECT pi.*, e.emp_code, e.full_name_ar, e.full_name_en, e.national_id, e.nationality,
            e.is_saudi, e.job_title_ar, d.name_ar AS department_name
     FROM payroll_items pi
-    JOIN employees e ON pi.emp_id = e.id
+    LEFT JOIN employees e ON pi.emp_id = e.id
     LEFT JOIN departments d ON e.department_id = d.id
     WHERE pi.payroll_period_id = ?
     ORDER BY e.id ASC
@@ -236,7 +236,7 @@ function getEmployeePayslip(periodId, empId) {
            e.is_saudi, e.job_title_ar, e.job_title_en, e.join_date, e.gosi_number,
            d.name_ar AS department_name
     FROM payroll_items pi
-    JOIN employees e ON pi.emp_id = e.id
+    LEFT JOIN employees e ON pi.emp_id = e.id
     LEFT JOIN departments d ON e.department_id = d.id
     WHERE pi.payroll_period_id = ? AND pi.emp_id = ?
   `, [periodId, empId]);

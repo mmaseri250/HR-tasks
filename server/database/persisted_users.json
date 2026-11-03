@@ -11,6 +11,7 @@
       "selfservice"
     ],
     "emp_id": null,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-28 22:34:23"
   },
@@ -25,7 +26,8 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 24493,
+    "emp_id": 29669,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-28 22:34:23"
   },
@@ -40,7 +42,8 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 24384,
+    "emp_id": 29560,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
   },
@@ -58,7 +61,8 @@
       "attendance",
       "tasks"
     ],
-    "emp_id": 24383,
+    "emp_id": 29559,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
   },
@@ -77,7 +81,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24404,
+    "emp_id": 29580,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -96,7 +101,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24428,
+    "emp_id": 29604,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -115,7 +121,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24399,
+    "emp_id": 29575,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -134,7 +141,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24471,
+    "emp_id": 29647,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -153,7 +161,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24475,
+    "emp_id": 29651,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -172,7 +181,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24460,
+    "emp_id": 29636,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -191,7 +201,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24440,
+    "emp_id": 29616,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -210,7 +221,8 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24447,
+    "emp_id": 29623,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
@@ -229,12 +241,13 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24483,
+    "emp_id": 29659,
+    "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
   },
   {
-    "id": 16,
+    "id": 18,
     "username": "hani.qahtani",
     "password": "Mgr123",
     "full_name": "هاني عبدالرحمن صالح القحطاني",
@@ -248,8 +261,9 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 24481,
+    "emp_id": 29657,
+    "custom_data_scope": null,
     "is_active": 1,
-    "created_at": "2026-10-30 22:38:45"
+    "created_at": "2026-11-03 16:37:48"
   }
 ]

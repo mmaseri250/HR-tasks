@@ -93,7 +93,7 @@ function runAllModulesCrudTests() {
     // Delete
     employeesModule.deleteEmployee(testEmpId);
     const deleted = employeesModule.getEmployeeById(testEmpId);
-    assert.strictEqual(deleted, undefined);
+    assert.ok(!deleted, 'Employee should be deleted and return null or undefined');
   });
 
   // 3. وحدة الحضور والانصراف (Attendance & Biometrics)

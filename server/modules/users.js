@@ -2,6 +2,7 @@
 const { query, get, run } = require('../database/db');
 const fs = require('fs');
 const path = require('path');
+const rbacEngine = require('./rbacEngine');
 
 const PERSISTED_USERS_FILE = path.join(__dirname, '../database/persisted_users.json');
 
@@ -27,6 +28,7 @@ function persistUsersToDisk() {
         role: u.role,
         permissions: perms,
         emp_id: u.emp_id,
+        custom_data_scope: u.custom_data_scope,
         is_active: u.is_active,
         created_at: u.created_at
       };
@@ -186,23 +188,28 @@ function login(username, password) {
     userSafe.annual_leave_balance = empDetails.annual_leave_balance;
   }
 
+  userSafe.effective_permissions = rbacEngine.getUserEffectivePermissions(user.id);
+  userSafe.data_scope = rbacEngine.getDataScope(user);
+
   return userSafe;
 }
 
 function getAllUsers() {
-  const users = query('SELECT id, username, full_name, email, role, permissions, emp_id, is_active, created_at FROM users ORDER BY id ASC');
+  const users = query('SELECT id, username, full_name, email, role, permissions, emp_id, custom_data_scope, is_active, created_at FROM users ORDER BY id ASC');
   return users.map(u => {
     try {
       u.permissions = JSON.parse(u.permissions || '[]');
     } catch (e) {
       u.permissions = [];
     }
+    u.effective_permissions = rbacEngine.getUserEffectivePermissions(u.id);
+    u.data_scope = rbacEngine.getDataScope(u);
     return u;
   });
 }
 
 function createUser(data) {
-  const { username, password, full_name, email = null, role = 'employee', permissions = [], emp_id = null } = data;
+  const { username, password, full_name, email = null, role = 'employee', permissions = [], emp_id = null, custom_data_scope = null } = data;
 
   if (!username || !password || !full_name) {
     throw new Error('اسم المستخدم، كلمة المرور، والاسم الكامل حقول مطلوبة');
@@ -216,9 +223,9 @@ function createUser(data) {
   const permsStr = typeof permissions === 'string' ? permissions : JSON.stringify(permissions);
 
   const result = run(`
-    INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-  `, [username.trim(), password, full_name.trim(), email ? email.trim() : null, role, permsStr, emp_id ? Number(emp_id) : null]);
+    INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, custom_data_scope, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+  `, [username.trim(), password, full_name.trim(), email ? email.trim() : null, role, permsStr, emp_id ? Number(emp_id) : null, custom_data_scope || null]);
 
   const newUser = get('SELECT id, username, full_name, email, role, permissions, emp_id, is_active, created_at FROM users WHERE id = ?', [result.lastInsertRowid]);
   try {
@@ -247,6 +254,8 @@ function updateUser(id, data) {
   const empId = data.emp_id !== undefined ? (data.emp_id ? Number(data.emp_id) : null) : existing.emp_id;
   const isActive = data.is_active !== undefined ? Number(data.is_active) : existing.is_active;
 
+  const customDataScope = data.custom_data_scope !== undefined ? (data.custom_data_scope || null) : (existing.custom_data_scope || null);
+
   let permsStr = existing.permissions;
   if (data.permissions !== undefined) {
     permsStr = typeof data.permissions === 'string' ? data.permissions : JSON.stringify(data.permissions);
@@ -255,9 +264,9 @@ function updateUser(id, data) {
   run(`
     UPDATE users SET
       username = ?, password = ?, full_name = ?, email = ?,
-      role = ?, permissions = ?, emp_id = ?, is_active = ?
+      role = ?, permissions = ?, emp_id = ?, custom_data_scope = ?, is_active = ?
     WHERE id = ?
-  `, [username, password, fullName, email, role, permsStr, empId, isActive, id]);
+  `, [username, password, fullName, email, role, permsStr, empId, customDataScope, isActive, id]);
 
   const updated = get('SELECT id, username, full_name, email, role, permissions, emp_id, is_active, created_at FROM users WHERE id = ?', [id]);
   try {

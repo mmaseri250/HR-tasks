@@ -1,7 +1,8 @@
 // server/modules/employees.js
 const { query, get, run } = require('../database/db');
+const rbacEngine = require('./rbacEngine');
 
-function getAllEmployees(filters = {}) {
+function getAllEmployees(filters = {}, user = null) {
   let sql = `
     SELECT e.*, 
            COALESCE(lb.current_balance, e.annual_leave_balance, 0) AS annual_leave_balance,
@@ -16,6 +17,13 @@ function getAllEmployees(filters = {}) {
     WHERE 1=1
   `;
   const params = [];
+
+  // Enforce Data Scoping
+  if (user) {
+    const scopeFilter = rbacEngine.getEmployeeScopeFilter(user, 'e');
+    sql += ` AND (${scopeFilter.sql})`;
+    params.push(...scopeFilter.params);
+  }
 
   if (filters.department_id) {
     sql += ` AND e.department_id = ?`;
@@ -47,7 +55,7 @@ function getAllEmployees(filters = {}) {
   return query(sql, params);
 }
 
-function getEmployeeById(id) {
+function getEmployeeById(id, user = null) {
   const sql = `
     SELECT e.*, 
            COALESCE(lb.current_balance, e.annual_leave_balance, 0) AS annual_leave_balance,
@@ -61,7 +69,31 @@ function getEmployeeById(id) {
     LEFT JOIN leave_balances lb ON e.id = lb.emp_id
     WHERE e.id = ?
   `;
-  return get(sql, [id]);
+  const emp = get(sql, [id]);
+  if (!emp) return null;
+
+  if (user) {
+    const scope = rbacEngine.getDataScope(user);
+    const userEmpId = user.emp_id ? Number(user.emp_id) : null;
+    if (scope === 'OWN' && userEmpId) {
+      if (Number(emp.id) !== userEmpId) {
+        const err = new Error('غير مصرح: لا يحق لك الاطلاع على بيانات هذا الموظف (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    } else if (scope === 'DIRECT_SUBORDINATES' && userEmpId) {
+      const subIds = rbacEngine.getSubordinateEmpIds(userEmpId);
+      if (Number(emp.id) !== userEmpId && !subIds.includes(Number(emp.id))) {
+        const err = new Error('غير مصرح: لا يحق لك الاطلاع على بيانات موظف خارج نطاق مرؤوسيك المباشرين (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    }
+  }
+
+  return emp;
 }
 
 function createEmployee(data) {

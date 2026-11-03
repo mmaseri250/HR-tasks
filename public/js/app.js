@@ -827,111 +827,121 @@ window.canEditAttendance = canEditAttendance;
 window.canEditBalances = canEditBalances;
 window.canDelete = canDelete;
 
+const TAB_PERMISSION_MAP = {
+  'dashboard': ['dashboard.view', 'dashboard'],
+  'employees-db': ['employees.view', 'employees'],
+  'leaves': ['leaves.view', 'leaves', 'requests.view', 'requests'],
+  'tasks': ['tasks.view', 'tasks'],
+  'forms': ['forms.view', 'forms'],
+  'compliance': ['compliance.view', 'compliance'],
+  'penalties': ['penalties.view', 'penalties'],
+  'attendance': ['attendance.view', 'attendance'],
+  'payroll': ['payroll.view', 'payroll'],
+  'loans': ['loans.view', 'loans'],
+  'terminated': ['terminated.view', 'terminated'],
+  'attendance-notices': ['attendance.view', 'attendance'],
+  'absence': ['attendance.view', 'attendance'],
+  'selfservice': ['selfservice.view', 'selfservice'],
+  'organization': ['hierarchy.view', 'organization'],
+  'branches': ['branches.view', 'branches'],
+  'users': ['users.view', 'users'],
+  'audit-log': ['audit.view', 'audit'],
+  'data-exchange': ['data_exchange.view', 'data_exchange'],
+  'docs': ['docs.view', 'docs']
+};
+
+function userHasPermissionForTab(tabId) {
+  if (!state.currentUser) return false;
+  const role = state.currentUser.role;
+  if (role === 'admin') return true;
+
+  // ESS portal is always accessible to all authenticated users
+  if (tabId === 'selfservice') return true;
+
+  const effPerms = state.currentUser.effective_permissions || state.currentUser.permissions || [];
+  if (effPerms.includes('all') || effPerms.includes('*')) return true;
+
+  // HR Manager has access to all operational modules except users and audit
+  if (role === 'hr_manager') {
+    if (tabId === 'users' && !effPerms.includes('users.view') && !effPerms.includes('users')) return false;
+    if (tabId === 'audit-log' && !effPerms.includes('audit.view') && !effPerms.includes('audit')) return false;
+    return true;
+  }
+
+  // Dept Manager has access to department scopes
+  if (role === 'dept_manager') {
+    const deptAllowedTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'attendance', 'compliance', 'organization', 'forms', 'selfservice'];
+    if (deptAllowedTabs.includes(tabId)) return true;
+  }
+
+  // Direct Manager
+  if (role === 'direct_manager') {
+    const dmAllowedTabs = ['leaves', 'tasks', 'forms', 'selfservice'];
+    if (dmAllowedTabs.includes(tabId)) return true;
+  }
+
+  // Regular Employee is locked to ESS unless specifically granted
+  if (role === 'employee') {
+    const empAllowedTabs = ['selfservice'];
+    if (empAllowedTabs.includes(tabId)) return true;
+  }
+
+  const required = TAB_PERMISSION_MAP[tabId];
+  if (!required) return true;
+
+  return required.some(req => effPerms.includes(req));
+}
+
 function applyRolePermissions() {
   if (!state.currentUser) return;
   const role = state.currentUser.role;
-  const perms = state.currentUser.permissions || [];
-  const hasAll = role === 'admin' || perms.includes('all');
-  const isHr = role === 'hr_manager';
+  const effPerms = state.currentUser.effective_permissions || state.currentUser.permissions || [];
+  const hasAll = role === 'admin' || effPerms.includes('all');
 
-  // 1. Dashboard Desktop Navigation item
-  const navDashboard = document.getElementById('nav-dashboard');
-  if (navDashboard) {
-    if (role === 'employee' && !perms.includes('dashboard')) {
-      navDashboard.classList.add('hidden');
-    } else {
-      navDashboard.classList.remove('hidden');
-    }
-  }
-
-  // 3. Header Users Button - only Admin or explicit 'users' permission
+  // Header Users Button - only Admin or explicit 'users.view' / 'users' permission
   const headerUsers = document.getElementById('headerUsersBtn');
   if (headerUsers) {
-    if (hasAll || perms.includes('users')) {
+    if (hasAll || effPerms.includes('users.view') || effPerms.includes('users')) {
       headerUsers.classList.remove('hidden');
     } else {
       headerUsers.classList.add('hidden');
     }
   }
 
-  // 4. Desktop Aside navigation items
-  const adminTabs = ['employees-db', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'penalties', 'attendance', 'compliance', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
-  
-  if (!hasAll) {
-    adminTabs.forEach(t => {
-      const el = document.getElementById(`nav-${t}`);
-      if (el) {
-        if (isHr && t !== 'users' && t !== 'audit-log') {
-          // HR Department has access to all operational modules
-          el.classList.remove('hidden');
-        } else if (t === 'employees-db' && (perms.includes('employees') || role === 'dept_manager')) {
-          el.classList.remove('hidden');
-        } else if (t === 'compliance' && (perms.includes('compliance') || role === 'dept_manager')) {
-          el.classList.remove('hidden');
-        } else if (t === 'payroll' && perms.includes('payroll')) {
-          el.classList.remove('hidden');
-        } else if (t === 'penalties' && perms.includes('penalties')) {
-          el.classList.remove('hidden');
-        } else if (t === 'attendance' && perms.includes('attendance')) {
-          el.classList.remove('hidden');
-        } else if (t === 'users' && perms.includes('users')) {
-          el.classList.remove('hidden');
-        } else if (t === 'audit-log' && perms.includes('audit')) {
-          el.classList.remove('hidden');
-        } else if (t === 'organization' && (perms.includes('organization') || role === 'dept_manager')) {
-          el.classList.remove('hidden');
-        } else if ((t === 'branches' || t === 'data-exchange' || t === 'docs') && isHr) {
-          el.classList.remove('hidden');
-        } else {
-          el.classList.add('hidden');
-        }
-      }
-    });
+  // Desktop Aside navigation items - strictly driven by RBAC permissions
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
 
-    // Mobile Bottom Nav customization
-    const mobEmp = document.getElementById('mobNavEmployees');
-    if (mobEmp) mobEmp.style.display = (isHr || perms.includes('employees') || role === 'dept_manager') ? '' : 'none';
-    
-    const mobAtt = document.getElementById('mobNavAttendance');
-    if (mobAtt) {
-      if (role === 'employee') {
-        mobAtt.style.display = 'none';
+  allTabs.forEach(t => {
+    const el = document.getElementById(`nav-${t}`);
+    if (el) {
+      if (userHasPermissionForTab(t)) {
+        el.classList.remove('hidden');
       } else {
-        mobAtt.style.display = '';
+        el.classList.add('hidden');
       }
     }
+  });
 
-    const mobUsers = document.getElementById('mobMoreUsersBtn');
-    if (mobUsers) mobUsers.style.display = perms.includes('users') ? '' : 'none';
+  // Mobile Bottom Nav customization
+  const mobEmp = document.getElementById('mobNavEmployees');
+  if (mobEmp) mobEmp.style.display = userHasPermissionForTab('employees-db') ? '' : 'none';
 
-    const mobPayroll = document.getElementById('mobMorePayrollBtn');
-    if (mobPayroll) mobPayroll.style.display = (isHr || perms.includes('payroll')) ? '' : 'none';
+  const mobAtt = document.getElementById('mobNavAttendance');
+  if (mobAtt) mobAtt.style.display = userHasPermissionForTab('attendance') ? '' : 'none';
 
-    const mobCompliance = document.getElementById('mobMoreComplianceBtn');
-    if (mobCompliance) mobCompliance.style.display = (isHr || perms.includes('compliance') || role === 'dept_manager') ? '' : 'none';
+  const mobUsers = document.getElementById('mobMoreUsersBtn');
+  if (mobUsers) mobUsers.style.display = userHasPermissionForTab('users') ? '' : 'none';
 
-    const mobPenalties = document.getElementById('mobMorePenaltiesBtn');
-    if (mobPenalties) mobPenalties.style.display = (isHr || perms.includes('penalties')) ? '' : 'none';
-  } else {
-    adminTabs.forEach(t => {
-      const el = document.getElementById(`nav-${t}`);
-      if (el) el.classList.remove('hidden');
-    });
-    const mobEmp = document.getElementById('mobNavEmployees');
-    if (mobEmp) mobEmp.style.display = '';
-    const mobAtt = document.getElementById('mobNavAttendance');
-    if (mobAtt) mobAtt.style.display = '';
-    const mobUsers = document.getElementById('mobMoreUsersBtn');
-    if (mobUsers) mobUsers.style.display = '';
-    const mobPayroll = document.getElementById('mobMorePayrollBtn');
-    if (mobPayroll) mobPayroll.style.display = '';
-    const mobCompliance = document.getElementById('mobMoreComplianceBtn');
-    if (mobCompliance) mobCompliance.style.display = '';
-    const mobPenalties = document.getElementById('mobMorePenaltiesBtn');
-    if (mobPenalties) mobPenalties.style.display = '';
-  }
+  const mobPayroll = document.getElementById('mobMorePayrollBtn');
+  if (mobPayroll) mobPayroll.style.display = userHasPermissionForTab('payroll') ? '' : 'none';
 
-  // 5. Mobile Home Tab Button Icon & Label
+  const mobCompliance = document.getElementById('mobMoreComplianceBtn');
+  if (mobCompliance) mobCompliance.style.display = userHasPermissionForTab('compliance') ? '' : 'none';
+
+  const mobPenalties = document.getElementById('mobMorePenaltiesBtn');
+  if (mobPenalties) mobPenalties.style.display = userHasPermissionForTab('penalties') ? '' : 'none';
+
+  // Mobile Home Tab Button Icon & Label
   const mobDashboardIcon = document.getElementById('mobNavDashboardIcon');
   const mobDashboardLabel = document.getElementById('mobNavDashboardLabel');
   const mobDashboardBtn = document.getElementById('mobNavDashboard');
@@ -1131,27 +1141,14 @@ function populateDropdowns() {
 
 // Navigation Tabs
 function switchTab(tabId) {
-  // Security guard for regular employee:
-  if (state.currentUser && state.currentUser.role === 'employee') {
-    const perms = state.currentUser.permissions || [];
-    const forbiddenTabs = ['dashboard', 'payroll', 'penalties', 'compliance', 'organization', 'branches', 'users', 'data-exchange', 'docs'];
-    if (forbiddenTabs.includes(tabId) && !perms.includes(tabId)) {
-      tabId = 'selfservice';
+  // Enforce central RBAC permission gate for tab navigation
+  if (!userHasPermissionForTab(tabId)) {
+    if (typeof showToast === 'function') {
+      showToast(`غير مصرح لك بالوصول إلى هذه الصفحة (${tabId}) - تم توجيهك إلى بوابتك الذاتية.`, 'error');
+    } else {
+      alert(`غير مصرح لك بالوصول إلى هذه الصفحة (${tabId}) - لا تملك الصلاحية الكافية.`);
     }
-    if (tabId === 'employees-db' && !perms.includes('employees')) {
-      tabId = 'selfservice';
-    }
-    if (tabId === 'attendance' && !perms.includes('attendance')) {
-      tabId = 'selfservice';
-    }
-  }
-
-  // Security guard for HR Department (users tab restricted to admin):
-  if (state.currentUser && state.currentUser.role === 'hr_manager') {
-    const perms = state.currentUser.permissions || [];
-    if (tabId === 'users' && !perms.includes('users')) {
-      tabId = 'dashboard';
-    }
+    tabId = 'selfservice';
   }
 
   state.currentTab = tabId;
@@ -4048,8 +4045,6 @@ let currentAttachedFileName = null;
 let currentEssEmpId = null;
 
 async function loadSelfService() {
-  populateEssEmpSelector();
-
   if (!state.currentUser) {
     try {
       const saved = localStorage.getItem('jm_hrms_user');
@@ -4057,8 +4052,23 @@ async function loadSelfService() {
     } catch (e) {}
   }
 
+  // Ensure employees are loaded
+  if (!state.employees || state.employees.length === 0) {
+    try {
+      const res = await apiFetch('/api/employees');
+      if (res && res.success && res.data) {
+        state.employees = res.data;
+      }
+    } catch (e) {}
+  }
+
+  populateEssEmpSelector();
+
   const curUser = state.currentUser || {};
   const norm = (s) => (s || '').replace(/\s+/g, ' ').replace(/[إأآا]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').trim().toLowerCase();
+
+  // Strict operational employee list without board members
+  const validEmps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
 
   let emp = null;
   const selContainer = document.getElementById('essEmpSelectorContainer');
@@ -4068,16 +4078,16 @@ async function loadSelfService() {
     if (selContainer) selContainer.classList.add('hidden');
 
     if (curUser.emp_id) {
-      emp = (state.employees || []).find(e => e.id === Number(curUser.emp_id));
+      emp = validEmps.find(e => e.id === Number(curUser.emp_id));
     }
     if (!emp) {
-      emp = (state.employees || []).find(e => 
+      emp = validEmps.find(e => 
         (curUser.emp_code && e.emp_code === curUser.emp_code) ||
         (curUser.full_name && norm(e.full_name_ar) === norm(curUser.full_name)) ||
         (curUser.username && (
           norm(e.full_name_ar).includes(norm(curUser.username)) ||
           norm(e.emp_code) === norm(curUser.username) ||
-          (curUser.username.includes('shama') && (norm(e.full_name_ar).includes('شامه') || e.emp_code === 'JM-1053'))
+          (curUser.username.includes('shama') && (norm(e.full_name_ar).includes('شام') || e.emp_code === 'JM-1053'))
         ))
       );
       if (emp) {
@@ -4092,13 +4102,13 @@ async function loadSelfService() {
     if (selContainer) selContainer.classList.remove('hidden');
 
     if (currentEssEmpId) {
-      emp = (state.employees || []).find(e => e.id === Number(currentEssEmpId));
+      emp = validEmps.find(e => e.id === Number(currentEssEmpId));
     }
     if (!emp && curUser.emp_id) {
-      emp = (state.employees || []).find(e => e.id === Number(curUser.emp_id));
+      emp = validEmps.find(e => e.id === Number(curUser.emp_id));
     }
-    if (!emp && state.employees && state.employees.length > 0) {
-      emp = state.employees[0];
+    if (!emp && validEmps.length > 0) {
+      emp = validEmps[0];
     }
     currentEssEmpId = emp ? emp.id : null;
   }
@@ -4152,8 +4162,10 @@ async function loadSelfService() {
 
 function populateEssEmpSelector() {
   const sel = document.getElementById('essEmpSelector');
-  if (!sel || (sel.children.length > 1 && sel.children.length === (state.employees || []).length)) return;
-  sel.innerHTML = (state.employees || []).map(e => `
+  if (!sel) return;
+  const validEmps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
+  if (sel.children.length > 1 && sel.children.length === validEmps.length) return;
+  sel.innerHTML = validEmps.map(e => `
     <option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>
   `).join('');
 }
@@ -5726,6 +5738,9 @@ function editUserAccount(userId) {
   const roleSelect = document.getElementById('userFormRole');
   if (roleSelect) roleSelect.value = user.role;
 
+  const scopeSelect = document.getElementById('userFormDataScope');
+  if (scopeSelect) scopeSelect.value = user.custom_data_scope || '';
+
   const empSelect = document.getElementById('userFormEmpLink');
   if (empSelect) empSelect.value = user.emp_id || '';
 
@@ -5755,6 +5770,7 @@ async function handleAddUserSubmit(e) {
   const password = document.getElementById('userFormPassword').value.trim();
   const fullName = document.getElementById('userFormFullName').value.trim();
   const role = document.getElementById('userFormRole').value;
+  const customScope = document.getElementById('userFormDataScope') ? document.getElementById('userFormDataScope').value : '';
 
   if (!username || !fullName || (!isEditing && !password)) {
     alert('يرجى تعبئة كافة الحقول المطلوبة');
@@ -5774,6 +5790,7 @@ async function handleAddUserSubmit(e) {
     role,
     permissions: perms,
     emp_id: empId ? Number(empId) : null,
+    custom_data_scope: customScope || null,
     is_active: 1
   };
   if (password) {
@@ -5796,6 +5813,7 @@ async function handleAddUserSubmit(e) {
     if (state.currentUser && state.currentUser.id === userId) {
       state.currentUser = { ...state.currentUser, ...updated };
       sessionStorage.setItem('jawharat_auth_user', JSON.stringify(state.currentUser));
+      localStorage.setItem('jm_hrms_user', JSON.stringify(state.currentUser));
       updateHeaderUserDisplay();
       applyRolePermissions();
     }
@@ -5965,8 +5983,17 @@ function renderUsersTable() {
     const perms = Array.isArray(u.permissions) ? u.permissions : [];
     let roleBadge = '<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px]">موظف</span>';
     if (u.role === 'admin') roleBadge = '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold text-[10px]">مدير عام النظام</span>';
+    else if (u.role === 'hr_manager') roleBadge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">مدير الموارد البشرية</span>';
+    else if (u.role === 'hr_specialist') roleBadge = '<span class="px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 font-bold text-[10px]">أخصائي موارد بشرية</span>';
     else if (u.role === 'dept_manager') roleBadge = '<span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-bold text-[10px]">مدير إدارة</span>';
-    else if (u.role === 'hr_manager') roleBadge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold text-[10px]">موارد بشرية</span>';
+    else if (u.role === 'direct_manager') roleBadge = '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">مدير مباشر</span>';
+
+    // Resolved Scope Badge
+    const scope = u.custom_data_scope || (u.role === 'admin' || u.role === 'hr_manager' || u.role === 'hr_specialist' ? 'ALL' : (u.role === 'dept_manager' ? 'DEPARTMENT' : (u.role === 'direct_manager' ? 'DIRECT_SUBORDINATES' : 'OWN')));
+    let scopeBadge = '<span class="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold">شخصي</span>';
+    if (scope === 'ALL') scopeBadge = '<span class="text-[9px] bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-bold">نطاق شامل</span>';
+    else if (scope === 'DEPARTMENT') scopeBadge = '<span class="text-[9px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-bold">نطاق الإدارة</span>';
+    else if (scope === 'DIRECT_SUBORDINATES') scopeBadge = '<span class="text-[9px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold">المرؤوسين المباشرين</span>';
 
     const permLabels = {
       all: 'كامل الصلاحيات',
@@ -5991,17 +6018,23 @@ function renderUsersTable() {
     tbody.innerHTML += `
       <tr class="hover:bg-slate-50 transition">
         <td class="py-3 px-4 font-mono font-bold text-brand">${u.username}</td>
-        <td class="py-3 px-4 font-bold text-slate-900">${u.full_name}</td>
+        <td class="py-3 px-4">
+          <div class="font-bold text-slate-900">${u.full_name}</div>
+          <div class="mt-0.5">${scopeBadge}</div>
+        </td>
         <td class="py-3 px-4">${roleBadge}</td>
         <td class="py-3 px-4 flex flex-wrap gap-1 max-w-xs">${permsBadges}</td>
         <td class="py-3 px-4"><span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> نشط</span></td>
         <td class="py-3 px-4 text-center">
-          <div class="flex items-center justify-center gap-1.5">
-            <button onclick="editUserAccount(${u.id})" class="text-blue-600 hover:text-blue-800 font-bold text-xs px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 transition shadow-sm" title="تعديل الصلاحيات والحساب">
-              <i class="fa-solid fa-user-pen"></i> تعديل الصلاحيات
+          <div class="flex items-center justify-center gap-1.5 flex-wrap">
+            <button onclick="openEffectivePermissionsInspector(${u.id})" class="text-purple-600 hover:text-purple-800 font-bold text-xs px-2 py-1 rounded bg-purple-50 hover:bg-purple-100 transition shadow-xs" title="كاشف الصلاحيات الفعلية">
+              <i class="fa-solid fa-shield-halved"></i> كاشف الصلاحيات
+            </button>
+            <button onclick="editUserAccount(${u.id})" class="text-blue-600 hover:text-blue-800 font-bold text-xs px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 transition shadow-xs" title="تعديل الصلاحيات والحساب">
+              <i class="fa-solid fa-user-pen"></i> تعديل
             </button>
             ${(u.username === 'admin' || !canDelete()) ? '' : `
-              <button onclick="deleteUserAccount(${u.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 transition" title="حذف المستخدم">
+              <button onclick="deleteUserAccount(${u.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs px-2 py-1 rounded bg-rose-50 hover:bg-rose-100 transition shadow-xs" title="حذف المستخدم">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             `}
@@ -6011,6 +6044,180 @@ function renderUsersTable() {
     `;
   });
 }
+
+async function openEffectivePermissionsInspector(userId) {
+  const user = state.users.find(u => u.id === Number(userId));
+  if (!user) {
+    alert('لم يتم العثور على المستخدم');
+    return;
+  }
+
+  const card = document.getElementById('inspectorSummaryCard');
+  const tbody = document.getElementById('inspectorTableBody');
+  const countBadge = document.getElementById('inspectorTotalCount');
+  const allowedBadge = document.getElementById('inspectorAllowedCount');
+  const deniedBadge = document.getElementById('inspectorDeniedCount');
+
+  if (card) {
+    card.innerHTML = `<div class="p-6 text-center text-slate-500 font-bold"><i class="fa-solid fa-spinner fa-spin text-purple-600 text-lg mb-2 block"></i>جاري استعلام وتحليل الصلاحيات الفعلية الموروثة والمباشرة...</div>`;
+  }
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">جاري الفحص...</td></tr>`;
+  }
+
+  openModal('modalPermissionsInspector');
+
+  try {
+    const res = await apiFetch(`/api/rbac/effective-permissions/${userId}`);
+    if (!res || !res.success || !res.data) {
+      throw new Error((res && res.error) || 'تعذر جلب تفاصيل الصلاحيات');
+    }
+
+    const data = res.data;
+    window._currentInspectorData = data;
+
+    const roleNames = {
+      'admin': 'مدير عام النظام (Super Admin)',
+      'hr_manager': 'مدير الموارد البشرية (HR Manager)',
+      'hr_specialist': 'أخصائي موارد بشرية (HR Specialist)',
+      'dept_manager': 'مدير إدارة (Department Manager)',
+      'direct_manager': 'مدير مباشر (Direct Manager)',
+      'employee': 'موظف (Employee)'
+    };
+
+    const scopeLabels = {
+      'ALL': 'شامل لكافة موظفي الشركة (ALL)',
+      'DEPARTMENT': 'نطاق الإدارة والأقسام التابعة (DEPARTMENT)',
+      'DIRECT_SUBORDINATES': 'المرؤوسين المباشرين فقط (DIRECT_SUBORDINATES)',
+      'OWN': 'السجلات الشخصية فقط (OWN)'
+    };
+
+    if (card) {
+      card.innerHTML = `
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center text-xl font-black shadow-md flex-shrink-0">
+              <i class="fa-solid fa-id-card-clip"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="text-base font-black text-slate-900">${data.user.full_name}</h4>
+                <span class="font-mono text-xs bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-bold">${data.user.username}</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-0.5">الدور المعين: <strong class="text-slate-800">${roleNames[data.user.role] || data.user.role}</strong> ${data.user.emp_code ? `• كود الموظف: <strong class="font-mono text-purple-700">${data.user.emp_code}</strong>` : ''}</p>
+            </div>
+          </div>
+          <div class="bg-white/80 p-3 rounded-xl border border-purple-200 text-xs">
+            <span class="block text-slate-500 text-[10px] font-bold mb-0.5">نطاق استعراض البيانات الفعلي (Data Scope):</span>
+            <span class="inline-flex items-center gap-1.5 font-black text-purple-900 bg-purple-100 px-2.5 py-1 rounded-lg">
+              <i class="fa-solid fa-layer-group text-purple-600"></i> ${scopeLabels[data.resolved_data_scope] || data.resolved_data_scope}
+            </span>
+          </div>
+        </div>
+      `;
+    }
+
+    const effList = data.effective_permissions || [];
+    const allowedCount = effList.filter(p => p.allowed).length;
+    const deniedCount = effList.length - allowedCount;
+
+    if (countBadge) countBadge.textContent = `${effList.length} صلاحية نظام`;
+    if (allowedBadge) allowedBadge.textContent = `${allowedCount} مصرح بها`;
+    if (deniedBadge) deniedBadge.textContent = `${deniedCount} محجوبة`;
+
+    renderInspectorTableRows(effList);
+  } catch (err) {
+    if (card) {
+      card.innerHTML = `<div class="p-4 text-center text-rose-600 font-bold">خطأ: ${err.message}</div>`;
+    }
+  }
+}
+
+function renderInspectorTableRows(list) {
+  const tbody = document.getElementById('inspectorTableBody');
+  if (!tbody) return;
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-bold">لا توجد صلاحيات مطابقة لنتائج البحث</td></tr>`;
+    return;
+  }
+
+  const moduleNamesAr = {
+    'employees': 'الموظفون',
+    'leaves': 'الإجازات',
+    'attendance': 'الحضور والبصمة',
+    'payroll': 'الرواتب والأجور',
+    'loans': 'السلف والأقساط',
+    'penalties': 'الجزاءات والمخالفات',
+    'terminated': 'إنهاء الخدمة والمخالصات',
+    'tasks': 'نظام المهام',
+    'requests': 'الطلبات العامة',
+    'selfservice': 'الخدمة الذاتية',
+    'compliance': 'الامتثال والإقامات',
+    'forms': 'النماذج الرسمية',
+    'hierarchy': 'الهيكل التنظيمي',
+    'branches': 'الفروع والمواقع',
+    'users': 'المستخدمون والصلاحيات',
+    'audit': 'سجل الرقابة',
+    'reports': 'التقارير والإحصائيات',
+    'data_exchange': 'الاستيراد والتصدير',
+    'docs': 'التوثيق الهندسي',
+    'dashboard': 'لوحة المؤشرات',
+    'settings': 'إعدادات النظام',
+    'all': 'النظام الشامل'
+  };
+
+  tbody.innerHTML = list.map(p => {
+    let sourceBadge = '';
+    if (p.direct_granted !== null) {
+      sourceBadge = p.direct_granted 
+        ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full"><i class="fa-solid fa-wrench"></i> مخصص للمستخدم</span>`
+        : `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-rose-100 text-rose-900 px-2 py-0.5 rounded-full"><i class="fa-solid fa-ban"></i> حجب مخصص</span>`;
+    } else if (p.role_granted) {
+      sourceBadge = `<span class="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-100 text-blue-900 px-2 py-0.5 rounded-full"><i class="fa-solid fa-sitemap"></i> موروث من الدور</span>`;
+    } else {
+      sourceBadge = `<span class="text-slate-400 text-xs">-</span>`;
+    }
+
+    const statusBadge = p.allowed
+      ? `<span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200"><i class="fa-solid fa-circle-check"></i> مصرح ومتاح</span>`
+      : `<span class="inline-flex items-center gap-1 text-xs font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200"><i class="fa-solid fa-circle-xmark"></i> محجوب</span>`;
+
+    return `
+      <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+        <td class="py-2.5 px-3">
+          <span class="inline-block text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">${moduleNamesAr[p.module] || p.module}</span>
+        </td>
+        <td class="py-2.5 px-3">
+          <div class="font-bold text-slate-900 text-xs">${p.name_ar}</div>
+          <div class="text-[10px] text-slate-400">${p.description_ar || ''}</div>
+        </td>
+        <td class="py-2.5 px-3 font-mono text-[11px] font-bold text-purple-800">${p.code}</td>
+        <td class="py-2.5 px-3 text-center">${sourceBadge}</td>
+        <td class="py-2.5 px-3 text-center">${statusBadge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterInspectorTable(query) {
+  if (!window._currentInspectorData || !window._currentInspectorData.effective_permissions) return;
+  const q = (query || '').trim().toLowerCase();
+  if (!q) {
+    renderInspectorTableRows(window._currentInspectorData.effective_permissions);
+    return;
+  }
+  const filtered = window._currentInspectorData.effective_permissions.filter(p => 
+    (p.code && p.code.toLowerCase().includes(q)) ||
+    (p.name_ar && p.name_ar.toLowerCase().includes(q)) ||
+    (p.module && p.module.toLowerCase().includes(q)) ||
+    (p.description_ar && p.description_ar.toLowerCase().includes(q))
+  );
+  renderInspectorTableRows(filtered);
+}
+
+window.openEffectivePermissionsInspector = openEffectivePermissionsInspector;
+window.filterInspectorTable = filterInspectorTable;
 
 async function deleteUserAccount(id) {
   if (!canDelete()) {
@@ -8255,7 +8462,7 @@ let currentFormsActiveEmpId = null;
 function populateFormsActiveEmpSelect() {
   const sel = document.getElementById('formsActiveEmpSelect');
   if (!sel) return;
-  const emps = state.employees || [];
+  const emps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
   const curUser = state.currentUser || {};
   let defaultEmpId = curUser.emp_id || currentEssEmpId || (emps[0] ? emps[0].id : null);
   if (!currentFormsActiveEmpId && defaultEmpId) {
@@ -8279,8 +8486,8 @@ function getEffectiveFormEmpId(empId = null) {
   const curUser = state.currentUser || {};
   if (curUser.emp_id) return Number(curUser.emp_id);
   if (currentEssEmpId) return Number(currentEssEmpId);
-  const emps = state.employees || [];
-  return emps[0] ? emps[0].id : 14632;
+  const emps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
+  return emps[0] ? emps[0].id : 28208;
 }
 
 function downloadWordFormDirect(formType, empId = null) {

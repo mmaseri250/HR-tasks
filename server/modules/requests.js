@@ -1,7 +1,8 @@
 // server/modules/requests.js
 const { query, get, run } = require('../database/db');
+const rbacEngine = require('./rbacEngine');
 
-function getAllRequests(filters = {}) {
+function getAllRequests(filters = {}, user = null) {
   let sql = `
     SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar, e.manager_id,
            d.name_ar AS department_name, m.full_name_ar AS direct_manager_name
@@ -12,6 +13,22 @@ function getAllRequests(filters = {}) {
     WHERE 1=1
   `;
   const params = [];
+
+  // Enforce Data Scoping
+  if (user) {
+    const scope = rbacEngine.getDataScope(user);
+    const empId = user.emp_id ? Number(user.emp_id) : null;
+    if (scope === 'DIRECT_SUBORDINATES' && empId) {
+      const subIds = rbacEngine.getSubordinateEmpIds(empId);
+      const allowed = [empId, ...subIds];
+      const placeholders = allowed.map(() => '?').join(',');
+      sql += ` AND (r.emp_id IN (${placeholders}) OR r.manager_id = ?)`;
+      params.push(...allowed, empId);
+    } else if (scope === 'OWN' && empId) {
+      sql += ` AND r.emp_id = ?`;
+      params.push(empId);
+    }
+  }
 
   if (filters.emp_id) {
     sql += ` AND r.emp_id = ?`;
@@ -32,7 +49,7 @@ function getAllRequests(filters = {}) {
   return query(sql, params);
 }
 
-function getRequestById(id) {
+function getRequestById(id, user = null) {
   const sql = `
     SELECT r.*, e.emp_code, e.full_name_ar, e.full_name_en, e.job_title_ar, e.manager_id,
            e.national_id, e.nationality, e.is_saudi, e.join_date, e.basic_salary,
@@ -44,7 +61,34 @@ function getRequestById(id) {
     LEFT JOIN employees m ON e.manager_id = m.id
     WHERE r.id = ?
   `;
-  return get(sql, [id]);
+  const reqRow = get(sql, [id]);
+  if (!reqRow) return null;
+
+  if (user) {
+    const scope = rbacEngine.getDataScope(user);
+    const userEmpId = user.emp_id ? Number(user.emp_id) : null;
+    if (scope === 'OWN' && userEmpId) {
+      if (Number(reqRow.emp_id) !== userEmpId) {
+        const err = new Error('غير مصرح: لا يحق لك الاطلاع على هذا الطلب (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    } else if (scope === 'DIRECT_SUBORDINATES' && userEmpId) {
+      const subIds = rbacEngine.getSubordinateEmpIds(userEmpId);
+      const isAllowed = Number(reqRow.emp_id) === userEmpId ||
+                        Number(reqRow.manager_id) === userEmpId ||
+                        subIds.includes(Number(reqRow.emp_id));
+      if (!isAllowed) {
+        const err = new Error('غير مصرح: لا يحق لك الاطلاع على طلب خارج نطاق مرؤوسيك المباشرين (حماية البيانات IDOR)');
+        err.status = 403;
+        err.code = 'FORBIDDEN_IDOR';
+        throw err;
+      }
+    }
+  }
+
+  return reqRow;
 }
 
 function submitRequest(data) {
