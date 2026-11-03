@@ -336,7 +336,11 @@ function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
   run(sql, params);
 
   // 1. Two-way Synchronous Mirroring with Leaves Table
-  const leave = get('SELECT id, emp_id, leave_type, days_count FROM leaves WHERE request_no = ? OR (emp_id = ? AND start_date = ?)', [req.request_no, req.emp_id, req.start_date]);
+  const leave = get(`
+    SELECT id, emp_id, leave_type, days_count
+    FROM leaves
+    WHERE request_no = ? OR (emp_id = ? AND start_date = ? AND leave_type LIKE '%إجازة%')
+  `, [req.request_no, req.emp_id, req.start_date]);
   if (leave) {
     if (role === 'reset' || role === 'revert') {
       run(`
@@ -444,23 +448,57 @@ function updateRequestStatus(id, newStatus, role, comment, approverName = '') {
     console.warn('Audit log notice:', e.message);
   }
 
-  // 5. In-System Notifications
+  // 5. Automated Real-Time In-System Notifications across all workflow steps
   try {
+    const hrUsers = query("SELECT id FROM users WHERE role IN ('admin', 'hr_manager') OR permissions LIKE '%approvals%'");
+    const hrUserIds = hrUsers.map(u => u.id);
+    const hrDirectorRow = get("SELECT id FROM users WHERE role = 'hr_manager' OR emp_id = 'JM-1000' OR full_name LIKE '%عبدالملك%' LIMIT 1");
+    const hrDirectorUserId = hrDirectorRow ? hrDirectorRow.id : 2;
+
     if (newStatus.includes('معتمد نهائياً')) {
+      // Step 3 Approved: Final Approval
       run(`
         INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
-        VALUES (?, 'تم اعتماد طلبك نهائياً', ?, '/#leaves', 'approval', 0, datetime('now'))
+        VALUES (?, 'تم اعتماد طلبك نهائياً', ?, '/#selfservice', 'approval', 0, datetime('now'))
       `, [req.emp_id, `تم اعتماد طلبك (${req.request_type}) برقم ${req.request_no} نهائياً من قبل إدارة الموارد البشرية.`]);
     } else if (newStatus.includes('مرفوض')) {
+      // Rejection at any step
       run(`
         INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
-        VALUES (?, 'تم رفض طلبك', ?, '/#leaves', 'approval', 0, datetime('now'))
-      `, [req.emp_id, `نعتذر، تم رفض طلبك (${req.request_type}) برقم ${req.request_no}. السبب: ${comment || 'لم يحدد'}`]);
+        VALUES (?, 'تم رفض طلبك', ?, '/#selfservice', 'approval', 0, datetime('now'))
+      `, [req.emp_id, `نعتذر، تم رفض طلبك (${req.request_type}) برقم ${req.request_no} من قبل (${stepLabel}). الملاحظات: ${comment || 'لم تحدد'}`]);
     } else if ((role === 'manager' || role === 'dept_manager') && !isRej) {
+      // Step 1 Approved: Direct Manager
+      // Notify HR team
+      hrUserIds.forEach(uId => {
+        run(`
+          INSERT INTO notifications (user_id, title, message, link, type, is_read, created_at)
+          VALUES (?, 'طلب جديد بانتظار تدقيق الموارد البشرية', ?, '/#leaves', 'approval', 0, datetime('now'))
+        `, [uId, `تمت موافقة المدير المباشر (${approverName || 'المدير المباشر'}) على طلب (${req.request_type}) برقم ${req.request_no} للموظف ${req.full_name_ar || 'الموظف'}، وبانتظار تدقيق HR.`]);
+      });
+      // Notify Requester
+      run(`
+        INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
+        VALUES (?, 'موافقة المدير المباشر على طلبك', ?, '/#selfservice', 'approval', 0, datetime('now'))
+      `, [req.emp_id, `تمت موافقة مديرك المباشر (${approverName || 'المدير المباشر'}) على طلب (${req.request_type}) برقم ${req.request_no}، والطلب حالياً لدى قسم الموارد البشرية للتدقيق.`]);
+    } else if (role === 'hr_verify' && !isRej) {
+      // Step 2 Approved: HR Specialist verified
+      // Notify HR Director & Admin
       run(`
         INSERT INTO notifications (user_id, title, message, link, type, is_read, created_at)
-        VALUES (2, 'طلب جديد بانتظار تدقيق الموارد البشرية', ?, '/#leaves', 'approval', 0, datetime('now'))
-      `, [`تمت موافقة المدير المباشر على طلب (${req.request_type}) برقم ${req.request_no} للموظف ${req.full_name_ar}، وهو بانتظار تدقيق HR.`]);
+        VALUES (?, 'طلب جاهز للاعتماد النهائي من مدير HR', ?, '/#leaves', 'approval', 0, datetime('now'))
+      `, [hrDirectorUserId, `تم تدقيق طلب (${req.request_type}) برقم ${req.request_no} للموظف ${req.full_name_ar || 'الموظف'} من قسم الموارد البشرية وهو بانتظار اعتمادك النهائي.`]);
+      // Notify Requester
+      run(`
+        INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
+        VALUES (?, 'اكتمال تدقيق طلبك من الموارد البشرية', ?, '/#selfservice', 'approval', 0, datetime('now'))
+      `, [req.emp_id, `تم تدقيق طلبك برقم ${req.request_no} من قسم الموارد البشرية بنجاح، وهو بانتظار الاعتماد النهائي من مدير الموارد البشرية.`]);
+    } else if (role === 'reset' || role === 'revert') {
+      // Reverted
+      run(`
+        INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
+        VALUES (?, 'تمت إعادة طلبك للمرحلة الأولى', ?, '/#selfservice', 'approval', 0, datetime('now'))
+      `, [req.emp_id, `تم التراجع عن الإجراء وإعادة طلبك برقم ${req.request_no} إلى مرحلة موافقة المدير المباشر.`]);
     }
   } catch (e) {
     console.warn('Notification send notice:', e.message);

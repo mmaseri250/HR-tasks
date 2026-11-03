@@ -22,6 +22,7 @@ const COMPANY = {
  */
 function getEmployeeDetails(empIdOrCode) {
   if (!empIdOrCode) return null;
+  if (['JM-0001', 'JM-0002', 'JM-0003'].includes(String(empIdOrCode).trim())) return null;
   const emp = get(`
     SELECT e.*,
            d.name_ar AS department_name, d.name_en AS department_name_en,
@@ -31,7 +32,9 @@ function getEmployeeDetails(empIdOrCode) {
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN branches b ON e.branch_id = b.id
     LEFT JOIN employees m ON e.manager_id = m.id
-    WHERE e.id = ? OR e.emp_code = ?
+    WHERE (e.id = ? OR e.emp_code = ?)
+      AND e.emp_code NOT IN ('JM-0001', 'JM-0002', 'JM-0003')
+      AND e.full_name_ar NOT IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')
   `, [empIdOrCode, String(empIdOrCode)]);
 
   return emp ? enrichEmployeeSalary(emp) : null;
@@ -50,6 +53,9 @@ function getDefaultEmployee() {
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN branches b ON e.branch_id = b.id
     LEFT JOIN employees m ON e.manager_id = m.id
+    WHERE e.emp_code NOT IN ('JM-0001', 'JM-0002', 'JM-0003')
+      AND e.full_name_ar NOT IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')
+      AND (e.status IS NULL OR e.status != 'منهي خدماته')
     ORDER BY e.id ASC LIMIT 1
   `);
   return emp ? enrichEmployeeSalary(emp) : null;

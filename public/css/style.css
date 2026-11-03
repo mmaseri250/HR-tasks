@@ -536,5 +536,38 @@ html[dir="ltr"] #headerLangMenu {
   box-shadow: 0 10px 20px -5px rgba(139, 0, 0, 0.12);
 }
 
+/* =========================================================================
+   DESKTOP ENTERPRISE SIDEBAR & MAIN CONTENT SIDE-BY-SIDE GUARANTEE
+   ========================================================================= */
+.main-layout-container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.sidebar-desktop-container {
+  width: 16rem !important; /* 256px */
+  min-width: 16rem !important;
+  max-width: 16rem !important;
+  flex-shrink: 0 !important;
+}
+
+main.flex-1 {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  width: auto !important;
+}
+
+@media (max-width: 768px) {
+  .main-layout-container {
+    flex-direction: column !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+}
+
+
 
 

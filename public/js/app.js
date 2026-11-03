@@ -4803,8 +4803,9 @@ async function handleRequestFormSubmit(e) {
     displayDuration = 'تصريح خروج';
   }
 
-  const currentEmpId = (state.currentUser && state.currentUser.emp_id) ? state.currentUser.emp_id : 3;
-  const currentEmp = state.employees.find(e => e.id === currentEmpId) || state.employees[0];
+  const validEmps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
+  const currentEmpId = (state.currentUser && state.currentUser.emp_id) ? Number(state.currentUser.emp_id) : (currentEssEmpId ? Number(currentEssEmpId) : (validEmps[0] ? validEmps[0].id : 28208));
+  const currentEmp = validEmps.find(e => e.id === currentEmpId) || validEmps[0] || {};
 
   const payload = {
     emp_id: currentEmpId,
@@ -4840,7 +4841,7 @@ async function handleRequestFormSubmit(e) {
     emp_code: currentEmp ? currentEmp.emp_code : 'JM-1003',
     full_name_ar: currentEmp ? currentEmp.full_name_ar : 'الموظف',
     department_name: currentEmp ? currentEmp.department_name_ar : 'الموارد البشرية',
-    direct_manager_name: currentEmp ? (state.employees.find(m => m.id === currentEmp.manager_id)?.full_name_ar || 'المدير المباشر') : 'المدير المباشر'
+    direct_manager_name: currentEmp ? (validEmps.find(m => m.id === currentEmp.manager_id)?.full_name_ar || 'المدير المباشر') : 'المدير المباشر'
   };
 
   // Fetch fresh requests directly from backend (Single Source of Truth)
@@ -4874,117 +4875,19 @@ async function handleRequestFormSubmit(e) {
 }
 
 /* =========================================================================
-   7.1 APPROVAL WORKFLOW ACTIONS (سير الموافقات متعدد المراحل)
+   7.1 APPROVAL WORKFLOW ACTIONS (سير الموافقات الموحد متعدد المراحل)
    ========================================================================= */
 
 async function approveRequestManager(id) {
-  const approver = state.currentUser ? state.currentUser.full_name : 'م. فهد عبدالعزيز القحطاني (المدير المباشر)';
-  const newStatus = 'موافقة مبدئية - بانتظار اعتماد الموارد البشرية';
-
-  // Update in state
-  const r = (state.allRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
-  if (r) {
-    r.status = newStatus;
-    r.manager_name = approver;
-    r.manager_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  }
-  const mr = (state.myRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
-  if (mr) {
-    mr.status = newStatus;
-    mr.manager_name = approver;
-    mr.manager_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  }
-
-  await apiFetch(`/api/requests/${id}/status`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      status: newStatus,
-      role: 'manager',
-      approver_name: approver,
-      comment: 'تمت الموافقة المبدئية من قبل المدير المباشر'
-    })
-  });
-
-  await syncDataFromBackend();
-  alert(`✓ تمت موافقة المدير المباشر بنجاح على الطلب!\nانتقل الطلب للمرحلة التالية: [بانتظار اعتماد الموارد البشرية]`);
-  renderSelfServiceRequests();
-  if (typeof loadLeavesView === 'function') loadLeavesView();
-  if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
+  return handleRequestStepAction(id, 'manager', 'approve');
 }
 
 async function approveRequestHr(id) {
-  const approver = (state.currentUser && state.currentUser.full_name) ? `${state.currentUser.full_name} (إدارة الموارد البشرية)` : 'المفوض بالاعتماد (إدارة الموارد البشرية)';
-  const newStatus = 'معتمد نهائياً';
-
-  // Update in state
-  const r = (state.allRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
-  if (r) {
-    r.status = newStatus;
-    r.hr_approver_name = approver;
-    r.hr_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  }
-  const mr = (state.myRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
-  if (mr) {
-    mr.status = newStatus;
-    mr.hr_approver_name = approver;
-    mr.hr_approved_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
-  }
-
-  await apiFetch(`/api/requests/${id}/status`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      status: newStatus,
-      role: 'admin',
-      approver_name: approver,
-      comment: 'تم الاعتماد النهائي من إدارة الموارد البشرية'
-    })
-  });
-
-  await syncDataFromBackend();
-  alert(`✓ تم الاعتماد النهائي للطلب بنجاح من الموارد البشرية!\nتم توثيق الطلب وإشعار الموظف.`);
-  renderSelfServiceRequests();
-  if (typeof loadLeavesView === 'function') loadLeavesView();
-  if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
+  return handleRequestStepAction(id, 'hr_director', 'approve');
 }
 
 async function rejectRequest(id, stage = 'manager') {
-  const reason = prompt('يرجى كتابة سبب رفض الطلب:', 'لا يتوافق مع خطة العمل الحالية');
-  if (reason === null) return;
-
-  const newStatus = stage === 'manager' ? 'مرفوض من المدير المباشر' : 'مرفوض من الموارد البشرية';
-  const approver = state.currentUser ? state.currentUser.full_name : (stage === 'manager' ? 'المدير المباشر' : 'الموارد البشرية');
-
-  const r = (state.allRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
-  if (r) {
-    r.status = newStatus;
-    if (stage === 'manager') r.manager_name = approver;
-    else r.hr_approver_name = approver;
-  }
-  const mr = (state.myRequests || []).find(x => String(x.id) === String(id) || String(x.request_no) === String(id));
-  if (mr) {
-    mr.status = newStatus;
-    if (stage === 'manager') mr.manager_name = approver;
-    else mr.hr_approver_name = approver;
-  }
-
-  await apiFetch(`/api/requests/${id}/status`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      status: newStatus,
-      role: stage,
-      approver_name: approver,
-      comment: reason
-    })
-  });
-
-  await syncDataFromBackend();
-  alert(`تم رفض الطلب وتسجيل سبب الرفض بنجاح.`);
-  renderSelfServiceRequests();
-  if (typeof loadLeavesView === 'function') loadLeavesView();
-  if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
+  return handleRequestStepAction(id, stage || 'manager', 'reject');
 }
 
 /* =========================================================================

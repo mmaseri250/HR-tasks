@@ -613,7 +613,11 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
   }
 
   // 1. Two-way Synchronous Mirroring with requests table
-  const reqRow = get('SELECT id, status, request_type FROM requests WHERE request_no = ? OR (emp_id = ? AND start_date = ?)', [leave.request_no, leave.emp_id, leave.start_date]);
+  const reqRow = get(`
+    SELECT id, status, request_type
+    FROM requests
+    WHERE request_no = ? OR (emp_id = ? AND start_date = ? AND request_type LIKE '%إجازة%')
+  `, [leave.request_no, leave.emp_id, leave.start_date]);
   if (reqRow) {
     if (role === 'reset' || role === 'revert') {
       run(`
@@ -699,25 +703,61 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
     `, [id, actionType.toUpperCase(), approverName || 'النظام', role, leave.status, (action === 'approve' ? 'موافق' : 'إجراء'), stepLabel, comment]);
   } catch (e) {}
 
-  // 5. In-System Notifications
+  // 5. Automated Real-Time In-System Notifications across all workflow steps
   try {
-    if (action === 'approve' && role !== 'manager' && role !== 'hr_verify') {
+    const hrUsers = query("SELECT id FROM users WHERE role IN ('admin', 'hr_manager') OR permissions LIKE '%approvals%'");
+    const hrUserIds = hrUsers.map(u => u.id);
+    const hrDirectorRow = get("SELECT id FROM users WHERE role = 'hr_manager' OR emp_id = 'JM-1000' OR full_name LIKE '%عبدالملك%' LIMIT 1");
+    const hrDirectorUserId = hrDirectorRow ? hrDirectorRow.id : 2;
+
+    if (action === 'approve' && (role === 'hr_director' || role === 'final' || role === 'admin')) {
+      // Step 3 Approved: Final Approval
       run(`
         INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
         VALUES (?, 'تم اعتماد إجازتك نهائياً', ?, '/#leaves', 'approval', 0, datetime('now'))
-      `, [leave.emp_id, `تم اعتماد طلب إجازتك (${leave.leave_type}) برقم ${leave.request_no} نهائياً بنجاح.`]);
+      `, [leave.emp_id, `تهانينا! تم اعتماد طلب إجازتك (${leave.leave_type}) برقم ${leave.request_no} نهائياً بنجاح، وتم تحديث رصيدك تلقائياً.`]);
     } else if (isRej) {
+      // Rejection at any step
       run(`
         INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
         VALUES (?, 'تم رفض طلب الإجازة', ?, '/#leaves', 'approval', 0, datetime('now'))
-      `, [leave.emp_id, `تم رفض طلب إجازتك (${leave.leave_type}) برقم ${leave.request_no}. السبب: ${comment || 'لم يحدد'}`]);
+      `, [leave.emp_id, `تم رفض طلب إجازتك (${leave.leave_type}) برقم ${leave.request_no} من قبل (${stepLabel}). الملاحظات: ${comment || 'لم تحدد'}`]);
     } else if ((role === 'manager' || role === 'direct_manager') && action === 'approve') {
+      // Step 1 Approved: Direct Manager
+      // Notify HR team
+      hrUserIds.forEach(uId => {
+        run(`
+          INSERT INTO notifications (user_id, title, message, link, type, is_read, created_at)
+          VALUES (?, 'طلب إجازة جديد بانتظار تدقيق الموارد البشرية', ?, '/#leaves', 'approval', 0, datetime('now'))
+        `, [uId, `تمت موافقة المدير المباشر (${approverName || 'المدير المباشر'}) على طلب إجازة (${leave.leave_type}) برقم ${leave.request_no} للموظف ${leave.full_name_ar || 'الموظف'}.`]);
+      });
+      // Notify employee
+      run(`
+        INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
+        VALUES (?, 'موافقة المدير المباشر على الإجازة', ?, '/#leaves', 'approval', 0, datetime('now'))
+      `, [leave.emp_id, `تمت موافقة مديرك المباشر (${approverName || 'المدير المباشر'}) على طلب إجازتك برقم ${leave.request_no}، وانتقل الطلب لمرحلة تدقيق قسم الموارد البشرية.`]);
+    } else if ((role === 'hr_verify' || role === 'hr_specialist') && (action === 'approve' || action === 'verify')) {
+      // Step 2 Approved: HR Specialist verified
+      // Notify HR Director & Admin
       run(`
         INSERT INTO notifications (user_id, title, message, link, type, is_read, created_at)
-        VALUES (2, 'طلب إجازة جديد بانتظار تدقيق الموارد البشرية', ?, '/#leaves', 'approval', 0, datetime('now'))
-      `, [`تمت موافقة المدير المباشر على طلب إجازة (${leave.leave_type}) برقم ${leave.request_no} للموظف ${leave.full_name_ar || 'الموظف'}.`]);
+        VALUES (?, 'طلب إجازة جاهز للاعتماد النهائي', ?, '/#leaves', 'approval', 0, datetime('now'))
+      `, [hrDirectorUserId, `تم تدقيق وتحقق قسم الموارد البشرية من طلب إجازة (${leave.leave_type}) برقم ${leave.request_no} للموظف ${leave.full_name_ar || 'الموظف'} وهو بانتظار اعتمادك النهائي.`]);
+      // Notify employee
+      run(`
+        INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
+        VALUES (?, 'اكتمال تدقيق إجازتك من الموارد البشرية', ?, '/#leaves', 'approval', 0, datetime('now'))
+      `, [leave.emp_id, `تم تدقيق إجازتك برقم ${leave.request_no} من قسم الموارد البشرية بنجاح، والطلب حالياً بانتظار الاعتماد النهائي من مدير الموارد البشرية.`]);
+    } else if (role === 'reset' || role === 'revert') {
+      // Reverted
+      run(`
+        INSERT INTO notifications (emp_id, title, message, link, type, is_read, created_at)
+        VALUES (?, 'تمت إعادة طلب الإجازة للمرحلة الأولى', ?, '/#leaves', 'approval', 0, datetime('now'))
+      `, [leave.emp_id, `تم التراجع عن الإجراء وإعادة طلب إجازتك برقم ${leave.request_no} إلى مرحلة موافقة المدير المباشر.`]);
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Leaves notification notice:', e.message);
+  }
 
   return getLeaveById(id);
 }
