@@ -26,7 +26,7 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 30346,
+    "emp_id": 31024,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-28 22:34:23"
@@ -42,7 +42,7 @@
       "requests",
       "selfservice"
     ],
-    "emp_id": 30237,
+    "emp_id": 30915,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
@@ -61,7 +61,7 @@
       "attendance",
       "tasks"
     ],
-    "emp_id": 30236,
+    "emp_id": 30914,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-28 23:09:39"
@@ -81,7 +81,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30257,
+    "emp_id": 30935,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -101,7 +101,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30281,
+    "emp_id": 30959,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -121,7 +121,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30252,
+    "emp_id": 30930,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -141,7 +141,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30324,
+    "emp_id": 31002,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -161,7 +161,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30328,
+    "emp_id": 31006,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -181,7 +181,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30313,
+    "emp_id": 30991,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -201,7 +201,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30293,
+    "emp_id": 30971,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -221,7 +221,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30300,
+    "emp_id": 30978,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -241,7 +241,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30336,
+    "emp_id": 31014,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-10-30 22:38:45"
@@ -261,7 +261,7 @@
       "tasks",
       "reports"
     ],
-    "emp_id": 30334,
+    "emp_id": 31012,
     "custom_data_scope": null,
     "is_active": 1,
     "created_at": "2026-11-03 16:37:48"

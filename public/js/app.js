@@ -1105,8 +1105,8 @@ function userHasPermissionForTab(tabId) {
   const role = state.currentUser.role;
   if (role === 'admin') return true;
 
-  // ESS portal is always accessible to all authenticated users
-  if (tabId === 'selfservice') return true;
+  // Dashboard and ESS portals are universally accessible to all authenticated users
+  if (tabId === 'dashboard' || tabId === 'selfservice') return true;
 
   const effPerms = state.currentUser.effective_permissions || state.currentUser.permissions || [];
   if (effPerms.includes('all') || effPerms.includes('*')) return true;
@@ -1126,13 +1126,13 @@ function userHasPermissionForTab(tabId) {
 
   // Direct Manager
   if (role === 'direct_manager') {
-    const dmAllowedTabs = ['leaves', 'tasks', 'forms', 'selfservice'];
+    const dmAllowedTabs = ['dashboard', 'leaves', 'tasks', 'forms', 'selfservice'];
     if (dmAllowedTabs.includes(tabId)) return true;
   }
 
-  // Regular Employee is locked to ESS unless specifically granted
+  // Regular Employee has dashboard and selfservice access
   if (role === 'employee') {
-    const empAllowedTabs = ['selfservice'];
+    const empAllowedTabs = ['dashboard', 'selfservice'];
     if (empAllowedTabs.includes(tabId)) return true;
   }
 

@@ -53,17 +53,22 @@
 <body class="bg-slate-50 text-slate-800 antialiased flex flex-col min-h-screen">
 
   <!-- =========================================================================
-       TOP GLOBAL HEADER (Clean, Spacious, No Overcrowding)
+       TOP GLOBAL HEADER (Executive Royal Styling, 100% Reliable)
        ========================================================================= -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm border-t-4 border-brand">
     <div class="w-full max-w-none px-4 sm:px-8 lg:px-10 h-18 sm:h-20 flex items-center justify-between gap-3">
       
       <!-- Brand & Company Title -->
       <div class="flex items-center gap-2.5 sm:gap-4 flex-shrink-0">
-        <img src="assets/logo.png" alt="شركة جوهرة المجد" class="h-11 sm:h-14 w-auto object-contain cursor-pointer" onclick="switchTab('dashboard')">
+        <img src="assets/logo.png" alt="شركة جوهرة المجد" class="h-11 sm:h-14 w-auto object-contain cursor-pointer transition hover:scale-105" onclick="switchTab('dashboard')">
         <div class="border-r border-slate-200 pr-2.5 sm:pr-4">
-          <h1 class="text-base sm:text-xl font-black text-brand leading-none" data-i18n="brand_name">شركة جوهرة المجد</h1>
-          <p class="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1" data-i18n="header_subtitle">نظام إدارة الموارد البشرية المتكامل • أبها، عسير</p>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-xl font-black text-brand leading-none" data-i18n="brand_name">شركة جوهرة المجد</h1>
+            <span class="hidden xl:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300 shadow-xs">
+              <i class="fa-solid fa-crown text-amber-500 text-[10px]"></i> المنظومة المؤسسية
+            </span>
+          </div>
+          <p class="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1" data-i18n="header_subtitle">نظام إدارة الموارد البشرية والتحكم الإداري • أبها، عسير</p>
         </div>
       </div>
 
@@ -87,12 +92,15 @@
         </div>
 
         <!-- User Badge & Integrated Always-Visible Logout Button -->
-        <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 p-1 sm:p-1.5 sm:pr-2.5 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200/90 p-1 sm:p-1.5 sm:pr-2.5 rounded-2xl shadow-xs">
           <div class="w-8 h-8 rounded-xl bg-brand text-amber-300 flex items-center justify-center text-sm font-black shadow-inner flex-shrink-0">
             <i class="fa-solid fa-user-shield"></i>
           </div>
           <div class="text-right hidden sm:block">
-            <span id="activeUserName" class="text-xs font-black text-slate-800 block leading-tight">admin</span>
+            <div class="flex items-center gap-1.5">
+              <span id="activeUserName" class="text-xs font-black text-slate-800 block leading-tight">admin</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" title="متصل الآن"></span>
+            </div>
             <span id="activeUserRoleBadge" class="text-[10px] font-bold text-brand block leading-tight">مدير عام النظام</span>
           </div>
           
@@ -126,13 +134,30 @@
   <div class="main-layout-container w-full max-w-none px-4 sm:px-8 lg:px-10 py-3 sm:py-6 flex-1 flex flex-row gap-4 md:gap-6 items-start">
 
     <!-- =========================================================================
-         SIDEBAR NAVIGATION (Desktop)
+         SIDEBAR NAVIGATION (Desktop - Executive Redesign)
          ========================================================================= -->
-    <aside class="sidebar-desktop-container hidden md:block w-64 flex-shrink-0">
-      <div class="bg-white rounded-2xl border border-slate-200 p-3.5 shadow-sm sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto space-y-1 scrollbar-thin">
+    <aside class="sidebar-desktop-container flex-shrink-0">
+      <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-sm sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto space-y-1.5 scrollbar-thin">
         
-        <div class="px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-          الوحدات الأساسية
+        <!-- Executive Sidebar Header Badge -->
+        <div class="flex items-center justify-between px-3 py-2.5 mb-2 bg-gradient-to-r from-brand/10 via-amber-500/10 to-transparent rounded-xl border border-brand/15 shadow-xs">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-brand text-amber-300 flex items-center justify-center text-xs shadow-xs">
+              <i class="fa-solid fa-gauge-high"></i>
+            </div>
+            <div>
+              <span class="text-xs font-black text-slate-800 block leading-tight">لوحة التحكم</span>
+              <span class="text-[9px] font-bold text-brand leading-tight">الإدارة والتشغيل</span>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span> نشط
+          </span>
+        </div>
+
+        <div class="px-3 py-1 text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group text-brand text-[10px]"></i>
+          <span>الوحدات الأساسية</span>
         </div>
 
         <!-- 1. Dashboard -->
@@ -218,8 +243,9 @@
           <span data-i18n="nav_selfservice">بوابة الخدمة الذاتية (ESS)</span>
         </button>
 
-        <div class="pt-3 border-t border-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-          الإدارة والتحكم
+        <div class="pt-3 border-t border-slate-100 px-3 py-1 text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved text-brand text-[10px]"></i>
+          <span>الإدارة والتحكم</span>
         </div>
 
         <!-- 7. Organization -->
@@ -259,15 +285,18 @@
           <span data-i18n="nav_docs">التوثيق والتقارير الهندسية</span>
         </button>
 
-        <!-- Desktop Sidebar Logout Button -->
-        <div class="pt-2 border-t border-slate-100">
-          <button onclick="promptLogout()" class="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer">
-            <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-sm"></i>
+        <!-- Desktop Sidebar Logout & Trust Badge -->
+        <div class="pt-3 border-t border-slate-100 mt-2 space-y-2">
+          <button onclick="promptLogout()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer border border-rose-200">
+            <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
             <span data-i18n="logout">تسجيل الخروج</span>
           </button>
-        </div>
-            <span data-i18n="logout">تسجيل الخروج</span>
-          </button>
+          <div class="px-2.5 py-2 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
+            <p class="text-[10px] font-black text-slate-700 flex items-center justify-center gap-1">
+              <i class="fa-solid fa-shield-halved text-brand"></i> شركة جوهرة المجد
+            </p>
+            <p class="text-[9px] text-slate-500 font-mono mt-0.5">HRMS Enterprise v2.4 🔒</p>
+          </div>
         </div>
 
       </div>
@@ -283,81 +312,106 @@
            ===================================================================== -->
       <section id="view-dashboard" class="space-y-6">
         
-        <!-- Welcome Hero -->
-        <div class="brand-gradient text-white rounded-2xl p-6 shadow-md relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div class="relative z-10">
-            <span class="inline-block bg-white/20 backdrop-blur-md text-amber-200 text-xs px-3 py-1 rounded-full font-bold mb-2">
-              <i class="fa-solid fa-star text-amber-300 ml-1"></i> منظومة الموارد البشرية الذكية 2026
-            </span>
-            <h2 class="text-2xl font-black">مرحباً بك في نظام موارد بشرية شركة جوهرة المجد</h2>
-            <p class="text-white/80 text-xs sm:text-sm mt-1">إدارة متكاملة للموظفين، أجهزة البصمة، لائحة الجزاءات، ونظام حماية الأجور السعودي.</p>
+        <!-- Welcome Hero (Executive Redesign) -->
+        <div class="brand-gradient text-white rounded-2xl p-6 sm:p-7 shadow-md relative overflow-hidden flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 border border-brand-gold/30">
+          <div class="relative z-10 max-w-2xl">
+            <div class="flex items-center gap-2 mb-2 flex-wrap">
+              <span class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-amber-200 text-xs px-3 py-1 rounded-full font-bold border border-white/20">
+                <i class="fa-solid fa-star text-amber-300"></i> منظومة جوهرة المجد الذكية 2026
+              </span>
+              <span class="inline-flex items-center gap-1 bg-amber-400/20 text-amber-100 text-[11px] px-2.5 py-0.5 rounded-full font-bold border border-amber-300/30">
+                <i class="fa-solid fa-shield-check text-emerald-400"></i> الربط المؤسسي نشط
+              </span>
+            </div>
+            <h2 class="text-xl sm:text-2xl lg:text-3xl font-black leading-tight">مرحباً بك في لوحة القيادة والتحكم الإداري الموحد</h2>
+            <p class="text-white/85 text-xs sm:text-sm mt-1.5 leading-relaxed">
+              منظومة متكاملة لإدارة شؤون الموظفين، الحضور الحي بالبصمة، سير الموافقات الإلكتروني، ومسيرات الأجور المتوافقة مع متطلبات وزارة الموارد البشرية.
+            </p>
           </div>
-          <div class="relative z-10 flex gap-2 flex-wrap">
-            <button onclick="triggerBiometricSimulation()" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-              <i class="fa-solid fa-rotate"></i> محاكاة نبضات البصمة الحية
+          <div class="relative z-10 flex gap-2.5 flex-wrap items-center">
+            <button onclick="triggerBiometricSimulation()" class="bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/30 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <i class="fa-solid fa-fingerprint text-amber-300"></i> محاكاة نبضات البصمة
+            </button>
+            <button onclick="switchTab('employees-db'); setTimeout(() => openModal('modalAddEmployee'), 150);" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-brand font-black text-xs px-3.5 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
+              <i class="fa-solid fa-user-plus"></i> إضافة موظف
+            </button>
+            <button onclick="switchTab('leaves'); setTimeout(() => openModal('modalNewLeave'), 150);" class="bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/30 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <i class="fa-solid fa-calendar-plus text-teal-300"></i> طلب إجازة
             </button>
           </div>
         </div>
 
-        <!-- KPI Cards Grid -->
+        <!-- KPI Cards Grid (Executive Redesign) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          <div class="card-elevated p-5">
+          <!-- KPI 1: Workforce -->
+          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-brand/40 transition" onclick="switchTab('employees-db')">
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-xs font-bold text-slate-400" data-i18n="kpi_total_employees">إجمالي القوى العاملة</p>
-                <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono">114</h3>
-                <p class="text-xs text-emerald-600 font-bold mt-1"><i class="fa-solid fa-arrow-trend-up"></i> 100% موظفون نشطون</p>
+                <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono">111</h3>
+                <p class="text-[11px] text-emerald-700 font-bold mt-1.5 flex items-center gap-1">
+                  <i class="fa-solid fa-circle-check text-emerald-600"></i> 100% موظفون نشطون (31 سعودي • 80 مقيم)
+                </p>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-rose-50 text-brand flex items-center justify-center text-xl">
+              <div class="w-12 h-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
                 <i class="fa-solid fa-users"></i>
               </div>
             </div>
           </div>
 
-          <div class="card-elevated p-5 cursor-pointer hover:border-amber-300 transition" onclick="switchTab('compliance')">
+          <!-- KPI 2: Compliance -->
+          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-amber-400 transition" onclick="switchTab('compliance')">
             <div class="flex justify-between items-start">
               <div>
                 <div class="flex items-center gap-1.5">
-                  <p class="text-xs font-bold text-slate-400" data-i18n="kpi_compliance">مؤشر الامتثال النظامي</p>
-                  <span class="text-[9px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded-full">الإقامات ورخص العمل</span>
+                  <p class="text-xs font-bold text-slate-400" data-i18n="kpi_compliance">مؤشر الامتثال والإقامات</p>
+                  <span class="text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded-full">قوى ومقيم</span>
                 </div>
                 <h3 id="statComplianceRate" class="text-3xl font-black text-amber-600 mt-2 font-mono">54%</h3>
-                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
-                  <span id="statComplianceSub" class="text-[10px] text-amber-800 font-bold">3 سارية • 61 إقامة منتهية</span>
+                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  <span id="statComplianceSub" class="text-[11px] text-amber-800 font-bold">3 سارية • 61 إقامة تتطلب تجديد</span>
                 </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+              <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
                 <i class="fa-solid fa-shield-halved"></i>
               </div>
             </div>
           </div>
 
-          <div class="card-elevated p-5">
+          <!-- KPI 3: Attendance -->
+          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-blue-400 transition" onclick="switchTab('attendance')">
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-xs font-bold text-slate-400" data-i18n="kpi_attendance">نسبة الحضور اليومي</p>
                 <h3 id="statAttendanceRate" class="text-3xl font-black text-blue-600 mt-2 font-mono">100%</h3>
-                <p id="statAttendanceSummaryText" class="text-xs text-slate-500 font-bold mt-1">114 حاضر • 0 في إجازة</p>
+                <p id="statAttendanceSummaryText" class="text-[11px] text-slate-600 font-bold mt-1.5 flex items-center gap-1">
+                  <i class="fa-solid fa-fingerprint text-blue-600"></i> 110 حاضر • 0 في إجازة
+                </p>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+              <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
                 <i class="fa-solid fa-user-check"></i>
               </div>
             </div>
           </div>
 
-          <div class="card-elevated p-5">
+          <!-- KPI 4: Payroll & WPS -->
+          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-emerald-400 transition" onclick="switchTab('payroll')">
             <div class="flex justify-between items-start">
               <div>
                 <p class="text-xs font-bold text-slate-400" id="statPayrollPeriodTitle" data-i18n="kpi_payroll">مسير الأجور الشهري</p>
-                <h3 id="statPayrollAmount" class="text-2xl font-black text-amber-600 mt-2 font-mono">367,000 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
-                <p class="text-xs text-emerald-600 font-bold mt-1" id="statPayrollStatusSubtitle"><i class="fa-solid fa-circle-check"></i> جاهز للاحتساب والصرف</p>
+                <h3 id="statPayrollAmount" class="text-2xl font-black text-emerald-700 mt-2 font-mono">367,000 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
+                <p class="text-[11px] text-emerald-700 font-bold mt-1.5 flex items-center gap-1" id="statPayrollStatusSubtitle">
+                  <i class="fa-solid fa-circle-check text-emerald-600"></i> حماية الأجور (WPS) ومصرف الراجحي
+                </p>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
               </div>
             </div>
           </div>
+
+        </div>
 
         </div>
 

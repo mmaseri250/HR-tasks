@@ -52,10 +52,10 @@ try {
   run("DELETE FROM users WHERE emp_id IN ('JM-0001', 'JM-0002', 'JM-0003') OR username IN ('abdulrahman.qahtani', 'saeed.qahtani', 'salih.qahtani', 'admin.qahtani') OR full_name = 'عبدالرحمن صالح القحطاني' OR full_name = 'سعيد محمد القحطاني' OR full_name = 'صالح سعيد القحطاني'");
   run("DELETE FROM absence_notices WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003') OR emp_name IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
   run("DELETE FROM penalties_issued WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
-  run("DELETE FROM requests WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003')) OR employee_name IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
+  run("DELETE FROM requests WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
   run("DELETE FROM leaves WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
   run("DELETE FROM leave_balances WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
-  run("DELETE FROM payroll_items WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003') OR full_name_ar IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
+  run("DELETE FROM payroll_items WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
   run("UPDATE branches SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
   run("UPDATE departments SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
 
