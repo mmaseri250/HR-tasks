@@ -32,6 +32,7 @@ const { eosCalculatorService, SAUDI_EOS_TERMINATION_CASES } = require('./modules
 const atsRecruitmentService = require('./modules/atsRecruitmentService');
 const fleetService = require('./modules/fleetService');
 const healthInsuranceService = require('./modules/healthInsuranceService');
+const generalAdminService = require('./modules/generalAdminService');
 
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
@@ -3126,6 +3127,189 @@ app.post('/api/company-email/settings', (req, res) => {
     res.json({ success: true, message: 'تم حفظ إعدادات بريد الشركة بنجاح', data: updated });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   MODULE 6: GENERAL ADMIN, TRANSFERS, CIRCULARS, LICENSES & UNIFIED REPORTS
+   ========================================================================= */
+
+// 1. Transfer Requests
+app.get('/api/general/transfers', (req, res) => {
+  try {
+    const list = generalAdminService.getTransferRequests(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/general/transfers/:id', (req, res) => {
+  try {
+    const item = generalAdminService.getTransferRequestById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, error: 'طلب النقل غير موجود' });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/general/transfers', (req, res) => {
+  try {
+    const created = generalAdminService.createTransferRequest(req.body);
+    res.status(201).json({ success: true, message: 'تم رفع طلب النقل الإداري بنجاح', data: created });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/general/transfers/:id/approve', (req, res) => {
+  try {
+    const { stage, action, comment, approver_name } = req.body;
+    const updated = generalAdminService.processTransferApproval(req.params.id, stage, { action, comment, approver_name });
+    res.json({ success: true, message: 'تم تحديث حالة طلب النقل بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/general/transfers/:id/print', (req, res) => {
+  try {
+    const html = generalAdminService.generateTransferDecisionPrintHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في طباعة قرار النقل: ${err.message}</h3>`);
+  }
+});
+
+// 2. Administrative Circulars
+app.get('/api/general/circulars', (req, res) => {
+  try {
+    const list = generalAdminService.getCirculars(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/general/circulars/:id', (req, res) => {
+  try {
+    const empId = req.query.emp_id || null;
+    const item = generalAdminService.getCircularById(req.params.id, empId);
+    if (!item) return res.status(404).json({ success: false, error: 'التعميم غير موجود' });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/general/circulars', (req, res) => {
+  try {
+    const created = generalAdminService.createCircular(req.body);
+    res.status(201).json({ success: true, message: 'تم نشر التعميم الإداري بنجاح', data: created });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/general/circulars/:id/acknowledge', (req, res) => {
+  try {
+    const { emp_id } = req.body;
+    if (!emp_id) return res.status(400).json({ success: false, error: 'يرجى تحديد الموظف المقر' });
+    const result = generalAdminService.acknowledgeCircular(req.params.id, emp_id);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/general/circulars/:id/print', (req, res) => {
+  try {
+    const html = generalAdminService.generateCircularPrintHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في طباعة التعميم: ${err.message}</h3>`);
+  }
+});
+
+// 3. Company Licenses
+app.get('/api/general/licenses', (req, res) => {
+  try {
+    const list = generalAdminService.getLicenses(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/general/licenses/:id', (req, res) => {
+  try {
+    const item = generalAdminService.getLicenseById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, error: 'الترخيص غير موجود' });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/general/licenses', (req, res) => {
+  try {
+    const created = generalAdminService.createLicense(req.body);
+    res.status(201).json({ success: true, message: 'تمت إضافة الترخيص/السجل بنجاح', data: created });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/general/licenses/:id', (req, res) => {
+  try {
+    const updated = generalAdminService.updateLicense(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث بيانات الترخيص بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/general/licenses/:id', (req, res) => {
+  try {
+    const result = generalAdminService.deleteLicense(req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/general/licenses-report/print', (req, res) => {
+  try {
+    const html = generalAdminService.generateLicensesReportHtml();
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في طباعة تقرير التراخيص: ${err.message}</h3>`);
+  }
+});
+
+// 4. Unified Multi-Module Reports
+app.get('/api/general/reports/summary', (req, res) => {
+  try {
+    const summary = generalAdminService.getUnifiedReportSummary(req.query);
+    res.json({ success: true, data: summary });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/general/reports/export/csv', (req, res) => {
+  try {
+    const csv = generalAdminService.exportUnifiedReportCsv();
+    const filename = `unified_hrms_report_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

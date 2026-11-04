@@ -265,6 +265,27 @@
           <span data-i18n="nav_selfservice">بوابة الخدمة الذاتية (ESS)</span>
         </button>
 
+        <!-- 6.1 Administrative Circulars (التعاميم والقرارات الإدارية) -->
+        <button onclick="switchTab('circulars')" id="nav-circulars" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-bullhorn w-5 text-center text-base text-rose-700"></i>
+          <span class="flex-1 text-right" data-i18n="nav_circulars">التعاميم والقرارات الإدارية</span>
+          <span id="badgeNavCirculars" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-900 border border-rose-300">تعاميم</span>
+        </button>
+
+        <!-- 6.2 Company Licenses & Registrations (السجلات والتراخيص الحكومية) -->
+        <button onclick="switchTab('licenses')" id="nav-licenses" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-file-shield w-5 text-center text-base text-teal-700"></i>
+          <span class="flex-1 text-right" data-i18n="nav_licenses">السجلات والتراخيص الحكومية</span>
+          <span id="badgeNavLicenses" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-teal-100 text-teal-900 border border-teal-300">تراخيص</span>
+        </button>
+
+        <!-- 6.3 Unified Multi-Module Reports (التقارير المؤسسية الشاملة) -->
+        <button onclick="switchTab('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-chart-pie w-5 text-center text-base text-amber-600"></i>
+          <span class="flex-1 text-right" data-i18n="nav_reports">التقارير المؤسسية الشاملة</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">6 وحدات</span>
+        </button>
+
         <div class="pt-3 border-t border-slate-100 px-3 py-1 text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
           <i class="fa-solid fa-shield-halved text-brand text-[10px]"></i>
           <span>الإدارة والتحكم</span>
@@ -4829,6 +4850,15 @@
             <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_cert" title="خطاب تعريف QR">خطاب تعريف QR</h4>
             <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_cert_sub" title="موثق إلكترونياً للبنوك">موثق إلكترونياً للبنوك</p>
           </button>
+
+          <!-- 7. طلب نقل إداري (ESS Transfer Request) -->
+          <button type="button" onclick="openModalTransferRequest()" class="ess-action-card group" title="طلب نقل إداري: تغيير القسم أو الفرع بسير موافقات ثلاثي">
+            <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 mx-auto flex items-center justify-center text-xl group-hover:scale-110 transition shadow-xs mb-2">
+              <i class="fa-solid fa-arrows-split-up-and-left"></i>
+            </div>
+            <h4 class="text-xs font-black text-slate-800 whitespace-nowrap overflow-hidden text-ellipsis w-full" data-i18n="ess_card_transfer" title="طلب نقل إداري">طلب نقل إداري</h4>
+            <p class="text-[11px] text-slate-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis w-full" title="سير موافقات ثلاثي">سير موافقات ثلاثي</p>
+          </button>
         </div>
 
         <!-- Section 2: Assigned Tasks to Current Employee -->
@@ -4924,6 +4954,364 @@
                 </tr>
               </thead>
               <tbody id="essRequestsTableBody" class="divide-y divide-slate-100">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 4: Administrative Transfer Requests & 3-Tier Dynamic Workflow -->
+        <div class="card-elevated p-6 space-y-4 w-full border-t-4 border-teal-600">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-arrows-split-up-and-left text-teal-600"></i> طلبات النقل الإداري الداخلي وسير الموافقات (3-Tier Workflow)
+                <span id="transfersCountBadge" class="bg-teal-100 text-teal-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full font-mono">0 طلب</span>
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">مسار اعتماد رقمي آلي متسلسل: المدير المباشر ➔ الموارد البشرية ➔ الإدارة العليا (مع التحديث التلقائي لبيانات الموظف عند الاعتماد النهائي).</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="openModalTransferRequest()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-plus"></i> تقديم طلب نقل جديد
+              </button>
+              <button type="button" onclick="loadEssTransferRequests()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-arrows-rotate"></i> تحديث
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-right whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3">رقم الطلب</th>
+                  <th class="py-3 px-3">الموظف المنقول</th>
+                  <th class="py-3 px-3">القسم والفرع الحالي</th>
+                  <th class="py-3 px-3">القسم والفرع المنقول إليه</th>
+                  <th class="py-3 px-3">تاريخ النقل المطلوب</th>
+                  <th class="py-3 px-3 text-center">سير الموافقات الثلاثي</th>
+                  <th class="py-3 px-3 text-center">الحالة النهائية</th>
+                  <th class="py-3 px-3 text-center">القرارات والطباعة</th>
+                </tr>
+              </thead>
+              <tbody id="essTransfersTableBody" class="divide-y divide-slate-100">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- =====================================================================
+           VIEW: ADMINISTRATIVE CIRCULARS (التعاميم والقرارات الإدارية الرسمية)
+           ===================================================================== -->
+      <section id="view-circulars" class="space-y-6 hidden">
+        <!-- Header & Action Toolbar -->
+        <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-[#700c14] to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-400/30 flex items-center gap-1.5">
+                  <i class="fa-solid fa-bullhorn text-[11px] animate-pulse"></i> التعاميم الإدارية الرسمية
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                  إلزامية الإقرار والاطلاع الرقمي
+                </span>
+              </div>
+              <h1 class="text-2xl font-black text-white">منظومة التعاميم والقرارات التنظيمية</h1>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                نشر القرارات الإدارية والتنظيمية الصادرة وتوثيق إقرارات الموظفين بالعلم والاطلاع إلكترونياً مع إمكانية طباعة النماذج الرسمية A4.
+              </p>
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <button onclick="openModalAddCircular()" class="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center gap-2 transition shadow-md cursor-pointer">
+                <i class="fa-solid fa-plus-circle"></i> نشر تعميم إداري جديد
+              </button>
+              <button onclick="loadCircularsView()" class="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer">
+                <i class="fa-solid fa-arrows-rotate"></i> تحديث التعاميم
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 KPI Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="card-elevated p-4 bg-white rounded-2xl border border-slate-200">
+            <span class="text-[11px] font-bold text-slate-500 block mb-1">إجمالي التعاميم الصادرة</span>
+            <span id="circStatTotal" class="text-2xl font-black font-mono text-slate-900">0</span>
+            <span class="text-[10px] text-slate-400 block mt-1">كافة القرارات المنشورة</span>
+          </div>
+          <div class="card-elevated p-4 bg-rose-50/60 rounded-2xl border border-rose-200">
+            <span class="text-[11px] font-bold text-rose-800 block mb-1">تعاميم عاجلة وهامة جداً</span>
+            <span id="circStatUrgent" class="text-2xl font-black font-mono text-rose-900">0</span>
+            <span class="text-[10px] text-rose-600 block mt-1">تتطلب إشعاراً فورياً</span>
+          </div>
+          <div class="card-elevated p-4 bg-teal-50/60 rounded-2xl border border-teal-200">
+            <span class="text-[11px] font-bold text-teal-800 block mb-1">إقرارات الاطلاع المسجلة</span>
+            <span id="circStatAcks" class="text-2xl font-black font-mono text-teal-900">0</span>
+            <span class="text-[10px] text-teal-600 block mt-1">إقرار موظف موثق</span>
+          </div>
+          <div class="card-elevated p-4 bg-amber-50/60 rounded-2xl border border-amber-200">
+            <span class="text-[11px] font-bold text-amber-800 block mb-1">متوسط نسبة التزام الكادر</span>
+            <span id="circStatAckRate" class="text-2xl font-black font-mono text-amber-900">0%</span>
+            <span class="text-[10px] text-amber-600 block mt-1">معدل الإقرار الرقمي</span>
+          </div>
+        </div>
+
+        <!-- Filters & Search Toolbar -->
+        <div class="card-elevated p-4 bg-white rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3">
+          <div class="flex items-center gap-2 flex-1">
+            <div class="relative flex-1 max-w-md">
+              <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-xs"></i>
+              <input type="text" id="searchCircularsInput" oninput="filterCircularsCards()" placeholder="بحث في عنوان التعميم، المحتوى، أو رقم التعميم..." class="w-full pl-3 pr-9 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-brand focus:outline-none">
+            </div>
+            <select id="filterCircularsCategory" onchange="filterCircularsCards()" class="rounded-xl border border-slate-200 text-xs py-2 px-3 font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand">
+              <option value="">كافة التصنيفات</option>
+              <option value="إداري وتنظيمي">إداري وتنظيمي</option>
+              <option value="سلامة وصحة مهنية">سلامة وصحة مهنية</option>
+              <option value="مواعيد الدوام والعمل">مواعيد الدوام والعمل</option>
+              <option value="رعاية صحية وتأمين">رعاية صحية وتأمين</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Circulars Cards Grid -->
+        <div id="circularsCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW: COMPANY LICENSES & REGISTRATIONS (السجلات والتراخيص الحكومية)
+           ===================================================================== -->
+      <section id="view-licenses" class="space-y-6 hidden">
+        <!-- Header Banner -->
+        <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-teal-950 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-teal-500/20 text-teal-300 border border-teal-400/30 flex items-center gap-1.5">
+                  <i class="fa-solid fa-file-shield text-[11px]"></i> حوكمة السجلات والتراخيص الرسمية
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                  منصات بلدي، التجارة، وقوى
+                </span>
+              </div>
+              <h1 class="text-2xl font-black text-white">إدارة السجلات والتراخيص والشهادات النظامية</h1>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                متابعة السجلات التجارية، رخص بلدي، شهادات الدفاع المدني، شهادات الزكاة، والتأمينات الاجتماعية مع تنبيهات الانتهاء المبكرة (60 يوماً).
+              </p>
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <button onclick="openModalAddLicense()" class="px-4 py-2.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-xs flex items-center gap-2 transition shadow-md cursor-pointer">
+                <i class="fa-solid fa-plus-circle"></i> إضافة ترخيص / سجل جديد
+              </button>
+              <button onclick="printLicensesReport()" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer">
+                <i class="fa-solid fa-print text-amber-300"></i> طباعة التقرير الرسمي A4
+              </button>
+              <button onclick="loadLicensesView()" class="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer">
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expiry Alert Banner (Shown dynamically if licenses expiring/expired) -->
+        <div id="licensesAlertContainer" class="hidden"></div>
+
+        <!-- 4 Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="card-elevated p-4 bg-white rounded-2xl border border-slate-200">
+            <span class="text-[11px] font-bold text-slate-500 block mb-1">إجمالي التراخيص والسجلات</span>
+            <span id="licStatTotal" class="text-2xl font-black font-mono text-slate-900">0</span>
+            <span class="text-[10px] text-slate-400 block mt-1">كافة الوثائق الحكومية</span>
+          </div>
+          <div class="card-elevated p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200">
+            <span class="text-[11px] font-bold text-emerald-800 block mb-1">تراخيص سارية ومطابقة</span>
+            <span id="licStatValid" class="text-2xl font-black font-mono text-emerald-900">0</span>
+            <span class="text-[10px] text-emerald-600 block mt-1">تاريخ صالح &gt; 60 يوماً</span>
+          </div>
+          <div class="card-elevated p-4 bg-amber-50/60 rounded-2xl border border-amber-200">
+            <span class="text-[11px] font-bold text-amber-800 block mb-1">تقترب من الانتهاء (&lt; 60 يوم)</span>
+            <span id="licStatExpiringSoon" class="text-2xl font-black font-mono text-amber-900">0</span>
+            <span class="text-[10px] text-amber-600 block mt-1">تتطلب بدء إجراء التجديد</span>
+          </div>
+          <div class="card-elevated p-4 bg-rose-50/60 rounded-2xl border border-rose-200">
+            <span class="text-[11px] font-bold text-rose-800 block mb-1">تراخيص منتهية</span>
+            <span id="licStatExpired" class="text-2xl font-black font-mono text-rose-900">0</span>
+            <span class="text-[10px] text-rose-600 block mt-1">تتطلب التجديد الفوري</span>
+          </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="card-elevated p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+            <div class="flex items-center gap-2 flex-1 max-w-md">
+              <div class="relative w-full">
+                <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-xs"></i>
+                <input type="text" id="searchLicensesInput" oninput="filterLicensesTable()" placeholder="بحث باسم السجل، رقم الترخيص، أو الجهة المصدرة..." class="w-full pl-3 pr-9 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-teal-600 focus:outline-none">
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="filterLicensesStatus" onchange="filterLicensesTable()" class="rounded-xl border border-slate-200 text-xs py-2 px-3 font-bold text-slate-700">
+                <option value="">كافة الحالات</option>
+                <option value="سارية">سارية</option>
+                <option value="expiring_soon">تقترب من الانتهاء</option>
+                <option value="expired">منتهية</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-right whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3 text-center">#</th>
+                  <th class="py-3 px-3">اسم السجل / الترخيص</th>
+                  <th class="py-3 px-3">رقم الترخيص</th>
+                  <th class="py-3 px-3">الجهة الحكومية المصدرة</th>
+                  <th class="py-3 px-3 text-center">تاريخ الإصدار</th>
+                  <th class="py-3 px-3 text-center">تاريخ الانتهاء</th>
+                  <th class="py-3 px-3 text-center">حالة الصلاحية</th>
+                  <th class="py-3 px-3 text-center">الإجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="licensesTableBody" class="divide-y divide-slate-100">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           VIEW: UNIFIED MULTI-MODULE REPORTS (التقارير المؤسسية الشاملة الموحدة)
+           ===================================================================== -->
+      <section id="view-reports" class="space-y-6 hidden">
+        <!-- Header Banner -->
+        <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-amber-950 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center gap-1.5">
+                  <i class="fa-solid fa-chart-pie text-[11px]"></i> تقارير ذكاء الأعمال الموحدة (HR Analytics)
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  تغطية شاملة للوحدات الست
+                </span>
+              </div>
+              <h1 class="text-2xl font-black text-white">مركز التقارير المؤسسية الموحدة</h1>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                لوحة تحكم إحصائية متكاملة تربط الحضور، نهاية الخدمة، التوظيف، الأسطول، التأمين الطبي، الحوكمة والتراخيص.
+              </p>
+            </div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <button onclick="exportUnifiedReportCsv()" class="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center gap-2 transition shadow-md cursor-pointer">
+                <i class="fa-solid fa-file-excel"></i> تصدير التقرير الشامل Excel / CSV
+              </button>
+              <button onclick="loadUnifiedReportsView()" class="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center gap-1.5 transition border border-white/20 cursor-pointer">
+                <i class="fa-solid fa-arrows-rotate"></i> تحديث المؤشرات
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Domain Summary Blocks -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- 1. Workforce & Saudization -->
+          <div class="card-elevated p-5 bg-white rounded-2xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between border-b pb-2">
+              <h4 class="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-users text-indigo-600"></i> القوى العاملة ونطاقات
+              </h4>
+              <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800">الأخضر المرتفع</span>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">إجمالي الكادر النشط:</span> <strong id="repTotalEmp" class="font-mono text-slate-900">111</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">الموظفون السعوديون:</span> <strong id="repSaudiEmp" class="font-mono text-emerald-700">0</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">الموظفون الوافدون:</span> <strong id="repExpatEmp" class="font-mono text-slate-700">0</strong></div>
+              <div class="flex justify-between border-t pt-1"><span class="font-bold text-slate-700">نسبة التوطين:</span> <strong id="repSaudizationRate" class="font-mono text-emerald-600 font-black">0%</strong></div>
+            </div>
+          </div>
+
+          <!-- 2. Fleet & Tamm -->
+          <div class="card-elevated p-5 bg-white rounded-2xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between border-b pb-2">
+              <h4 class="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-car-side text-blue-600"></i> أسطول المركبات ومنصة تم
+              </h4>
+              <span class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800">منصة تم</span>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">إجمالي المركبات:</span> <strong id="repTotalVehicles" class="font-mono text-slate-900">0</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">التأمين الساري:</span> <strong class="text-emerald-700 font-bold">100% ساري</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">الفحص الدوري:</span> <strong class="text-blue-700 font-bold">مطابق</strong></div>
+              <div class="flex justify-between border-t pt-1"><span class="font-bold text-slate-700">حالة الربط:</span> <strong class="text-emerald-600 font-bold">محدث ومنتظم</strong></div>
+            </div>
+          </div>
+
+          <!-- 3. Health & Insurance -->
+          <div class="card-elevated p-5 bg-white rounded-2xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between border-b pb-2">
+              <h4 class="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-heart-pulse text-rose-600"></i> التأمين والرعاية الصحية
+              </h4>
+              <span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800">CCHI</span>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">بطاقات التأمين الطبي:</span> <strong id="repTotalInsured" class="font-mono text-slate-900">0</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">الشهادات الصحية للبلدية:</span> <strong id="repTotalHealthCards" class="font-mono text-teal-700">0</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">التثقيف والتوعية:</span> <strong class="text-purple-700 font-bold">5 بوسترات معتمدة</strong></div>
+              <div class="flex justify-between border-t pt-1"><span class="font-bold text-slate-700">حالة التغطية:</span> <strong class="text-emerald-600 font-bold">شاملة لكافة الفئات</strong></div>
+            </div>
+          </div>
+
+          <!-- 4. Governance & Licenses -->
+          <div class="card-elevated p-5 bg-white rounded-2xl border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between border-b pb-2">
+              <h4 class="font-black text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-amber-600"></i> الحوكمة والتراخيص
+              </h4>
+              <span class="px-2 py-0.5 rounded text-[10px] font-black bg-amber-100 text-amber-800">حكومية</span>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">طلبات النقل المعلقة:</span> <strong id="repPendingTransfers" class="font-mono text-amber-700">0</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">التعاميم النشطة:</span> <strong id="repActiveCircs" class="font-mono text-slate-900">0</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">السجلات والتراخيص:</span> <strong id="repTotalLics" class="font-mono text-teal-700">0</strong></div>
+              <div class="flex justify-between border-t pt-1"><span class="font-bold text-slate-700">تنبيهات الانتهاء:</span> <strong id="repLicAlerts" class="font-mono text-rose-600 font-bold">0</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Table of 6 Modules Summary Breakdown -->
+        <div class="card-elevated p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="font-black text-sm text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-layer-group text-brand"></i> جدول المقاييس والمؤشرات التشغيلية المجمعة (KPIs Matrix)
+            </h3>
+            <button onclick="exportUnifiedReportCsv()" class="text-xs font-bold text-brand hover:underline flex items-center gap-1">
+              <i class="fa-solid fa-download"></i> تصدير البيانات إلى Excel
+            </button>
+          </div>
+          <div class="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table class="w-full text-xs text-right whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-3">الوحدة المؤسسية</th>
+                  <th class="py-3 px-3">المؤشر التشغيلي</th>
+                  <th class="py-3 px-3 text-center">القيمة الإحصائية</th>
+                  <th class="py-3 px-3 text-center">الامتثال لنظام العمل السعودي</th>
+                  <th class="py-3 px-3 text-center">الحالة والتحديث</th>
+                </tr>
+              </thead>
+              <tbody id="unifiedReportsTableBody" class="divide-y divide-slate-100">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
                 <!-- JS populated -->
               </tbody>
             </table>
@@ -8466,6 +8854,265 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: SUBMIT TRANSFER REQUEST (طلب نقل إداري داخلي)
+       ========================================================================= -->
+  <div id="modalTransferRequest" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-arrows-split-up-and-left text-teal-600"></i> تقديم طلب نقل إداري وتكليف
+        </h3>
+        <button onclick="closeModal('modalTransferRequest')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <form id="formTransferRequest" onsubmit="submitTransferRequestForm(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الموظف صاحب الطلب: *</label>
+          <select id="transferFormEmpId" required class="w-full rounded-xl border border-slate-300 py-2.5 px-3 font-bold text-slate-800">
+            <!-- JS populated -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الإدارة / القسم المنقول إليه: *</label>
+            <select id="transferFormTargetDept" required class="w-full rounded-xl border border-slate-300 py-2.5 px-3 font-bold text-slate-800">
+              <!-- JS populated -->
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الفرع المنقول إليه:</label>
+            <select id="transferFormTargetBranch" class="w-full rounded-xl border border-slate-300 py-2.5 px-3 font-bold text-slate-800">
+              <!-- JS populated -->
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">تاريخ المباشرة المرغوب للنقل: *</label>
+          <input type="date" id="transferFormDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">أسباب ومبررات طلب النقل والتكليف: *</label>
+          <textarea id="transferFormReason" rows="3" required placeholder="بيان الدواعي الإدارية أو الميدانية للنقل..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-medium text-slate-800"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalTransferRequest')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-paper-plane"></i> إرسال الطلب للاعتماد
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: PROCESS TRANSFER APPROVAL (اعتماد أو رفض طلب النقل)
+       ========================================================================= -->
+  <div id="modalTransferApprovalAction" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-stamp text-brand"></i> قرار مسار الاعتماد لطلب النقل
+        </h3>
+        <button onclick="closeModal('modalTransferApprovalAction')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <form id="formTransferApproval" onsubmit="submitTransferApprovalAction(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="transAppId">
+        <input type="hidden" id="transAppStage">
+
+        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
+          <div class="flex justify-between"><span class="text-slate-500">رقم الطلب:</span> <strong id="transAppNo" class="font-mono text-slate-900"></strong></div>
+          <div class="flex justify-between"><span class="text-slate-500">الموظف المنقول:</span> <strong id="transAppEmpName" class="text-slate-900"></strong></div>
+          <div class="flex justify-between"><span class="text-slate-500">مرحلة الاعتماد:</span> <strong id="transAppStageTitle" class="text-[#700c14] font-black"></strong></div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">القرار الرسمي: *</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold cursor-pointer">
+              <input type="radio" name="transAppDecision" value="موافق" checked class="text-emerald-600">
+              <span>موافقة واعتماد</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-rose-300 bg-rose-50 text-rose-800 font-bold cursor-pointer">
+              <input type="radio" name="transAppDecision" value="مرفوض" class="text-rose-600">
+              <span>عدم الموافقة (رفض)</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اسم المسؤول المعتمد: *</label>
+          <input type="text" id="transAppApproverName" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">التوجيه الإداري / الملاحظات: *</label>
+          <textarea id="transAppComment" rows="3" required placeholder="اكتب مبررات القرار أو توجيهات المباشرة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-medium text-slate-800"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalTransferApprovalAction')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-check"></i> تثبيت القرار في المسار
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: ADD CIRCULAR (نشر تعميم إداري جديد)
+       ========================================================================= -->
+  <div id="modalAddCircular" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[95vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-bullhorn text-rose-700"></i> نشر تعميم إداري وتنظيمي جديد
+        </h3>
+        <button onclick="closeModal('modalAddCircular')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <form id="formAddCircular" onsubmit="submitCircularForm(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">عنوان التعميم: *</label>
+          <input type="text" id="circFormTitle" required placeholder="مثال: تنظيم أوقات الدوام الرسمي خلال موسم الصيف..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تصنيف التعميم: *</label>
+            <select id="circFormCategory" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+              <option value="إداري وتنظيمي">إداري وتنظيمي</option>
+              <option value="سلامة وصحة مهنية">سلامة وصحة مهنية</option>
+              <option value="مواعيد الدوام والعمل">مواعيد الدوام والعمل</option>
+              <option value="رعاية صحية وتأمين">رعاية صحية وتأمين</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الجهة الموجه إليها: *</label>
+            <input type="text" id="circFormAudience" required value="كافة منسوبي شركة جوهرة المجد" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الجهة المصدرة: *</label>
+            <input type="text" id="circFormIssuedBy" required value="إدارة الموارد البشرية" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ الإصدار: *</label>
+            <input type="date" id="circFormIssuedAt" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-800">
+            <input type="checkbox" id="circFormIsUrgent" class="w-4 h-4 text-rose-600 rounded">
+            <span>تعميم عاجل وهام جداً</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer font-bold text-slate-800">
+            <input type="checkbox" id="circFormAckReq" checked class="w-4 h-4 text-teal-600 rounded">
+            <span>إلزامية تسجيل الإقرار الرقمي للموظفين</span>
+          </label>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">نص ومحتوى التعميم: *</label>
+          <textarea id="circFormContent" rows="6" required placeholder="اكتب التفاصيل الكاملة والبنود والتعليمات..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-medium text-slate-800"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalAddCircular')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-bullhorn"></i> نشر وتعميم
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: ADD / EDIT LICENSE (إضافة أو تعديل سجل / ترخيص حكومي)
+       ========================================================================= -->
+  <div id="modalAddLicense" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 id="modalAddLicenseTitle" class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-file-shield text-teal-600"></i> إضافة سجل / ترخيص حكومي جديد
+        </h3>
+        <button onclick="closeModal('modalAddLicense')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <form id="formAddLicense" onsubmit="submitLicenseForm(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="licFormId">
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اسم السجل / الترخيص: *</label>
+          <input type="text" id="licFormName" required placeholder="مثال: السجل التجاري الرئيسي، رخصة البلدية للمقر..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رقم الترخيص / السجل: *</label>
+            <input type="text" id="licFormNo" required placeholder="مثال: 5850028731" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold font-mono text-slate-800">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">نوع الترخيص: *</label>
+            <select id="licFormType" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+              <option value="commercial_reg">سجل تجاري (وزارة التجارة)</option>
+              <option value="baladiya">رخصة بلدية (أمانة عسير / منصة بلدي)</option>
+              <option value="civil_defense">دفاع مدني وسلامة</option>
+              <option value="chamber">غرفة تجارية وصناعية</option>
+              <option value="saudization_cert">شهادة التوطين وقوى</option>
+              <option value="zakat_cert">شهادة الزكاة والضريبة ZATCA</option>
+              <option value="gosi_cert">شهادة التأمينات الاجتماعية</option>
+              <option value="other">ترخيص آخر</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">الجهة الحكومية المصدرة: *</label>
+            <input type="text" id="licFormAuthority" required placeholder="مثال: وزارة التجارة، أمانة منطقة عسير..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">التنبيه قبل الانتهاء (بالأيام):</label>
+            <input type="number" id="licFormAlertDays" value="60" min="15" max="180" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ الإصدار:</label>
+            <input type="date" id="licFormIssueDate" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تاريخ الانتهاء: *</label>
+            <input type="date" id="licFormExpiryDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">ملاحظات إضافية أو رقم المرجع:</label>
+          <input type="text" id="licFormNotes" placeholder="مثال: مشمول في التجديد الموحد..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-medium text-slate-800">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
+          <button type="button" onclick="closeModal('modalAddLicense')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-save"></i> حفظ السجل والترخيص
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

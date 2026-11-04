@@ -1112,8 +1112,8 @@ function userHasPermissionForTab(tabId) {
   const role = state.currentUser.role;
   if (role === 'admin') return true;
 
-  // Dashboard and ESS portals are universally accessible to all authenticated users
-  if (tabId === 'dashboard' || tabId === 'selfservice') return true;
+  // Dashboard, ESS and Circulars portals are universally accessible to all authenticated users
+  if (tabId === 'dashboard' || tabId === 'selfservice' || tabId === 'circulars') return true;
 
   const effPerms = state.currentUser.effective_permissions || state.currentUser.permissions || [];
   if (effPerms.includes('all') || effPerms.includes('*')) return true;
@@ -1127,7 +1127,7 @@ function userHasPermissionForTab(tabId) {
 
   // Dept Manager has access to department scopes
   if (role === 'dept_manager') {
-    const deptAllowedTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'attendance', 'compliance', 'organization', 'forms', 'selfservice'];
+    const deptAllowedTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'attendance', 'compliance', 'organization', 'forms', 'selfservice', 'circulars', 'licenses', 'reports'];
     if (deptAllowedTabs.includes(tabId)) return true;
   }
 
@@ -1166,7 +1166,7 @@ function applyRolePermissions() {
   }
 
   // Desktop Aside navigation items - strictly driven by RBAC permissions
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
 
   allTabs.forEach(t => {
     const el = document.getElementById(`nav-${t}`);
@@ -1410,7 +1410,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -1475,6 +1475,15 @@ function switchTab(tabId) {
         break;
       case 'insurance':
         loadInsuranceView();
+        break;
+      case 'circulars':
+        loadCircularsView();
+        break;
+      case 'licenses':
+        loadLicensesView();
+        break;
+      case 'reports':
+        loadUnifiedReportsView();
         break;
       case 'attendance-notices':
         loadNoticesView();
@@ -5116,6 +5125,7 @@ async function loadSelfService() {
   } catch (e) {}
 
   renderSelfServiceRequests();
+  loadEssTransferRequests();
 }
 
 function populateEssEmpSelector() {
@@ -13595,6 +13605,859 @@ window.openAddPolicyModal = openAddPolicyModal;
 window.submitPolicyForm = submitPolicyForm;
 window.exportInsuranceCardsCsv = exportInsuranceCardsCsv;
 window.exportHealthCardsCsv = exportHealthCardsCsv;
+
+/* =========================================================================
+   MODULE 6: GENERAL ADMIN, TRANSFERS WORKFLOW, CIRCULARS & UNIFIED REPORTS
+   ========================================================================= */
+
+let cachedTransferRequests = [];
+let cachedCirculars = [];
+let cachedLicenses = [];
+
+// -------------------------------------------------------------------------
+// 1. TRANSFER REQUESTS & DYNAMIC 3-TIER WORKFLOW
+// -------------------------------------------------------------------------
+
+async function loadEssTransferRequests() {
+  const tbody = document.getElementById('essTransfersTableBody');
+  const badge = document.getElementById('transfersCountBadge');
+  if (!tbody) return;
+
+  try {
+    const res = await apiFetch('/api/general/transfers');
+    if (!res || !res.success) throw new Error(res ? res.error : 'فشل جلب طلبات النقل');
+    cachedTransferRequests = res.data || [];
+
+    if (badge) badge.textContent = `${cachedTransferRequests.length} طلب`;
+
+    if (cachedTransferRequests.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="py-8 text-center text-slate-400">
+            <i class="fa-solid fa-arrows-split-up-and-left text-3xl mb-2 text-slate-300 block"></i>
+            لا توجد طلبات نقل إداري مسجلة حتى الآن.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const curRole = state.currentUser ? state.currentUser.role : 'employee';
+    const curEmpId = state.currentUser ? state.currentUser.emp_id : null;
+
+    tbody.innerHTML = cachedTransferRequests.map(tr => {
+      // 3-Tier Workflow Status Badges
+      const getStageBadge = (status, title) => {
+        let cls = 'bg-amber-100 text-amber-800 border-amber-200';
+        let icon = 'fa-clock';
+        if (status === 'معتمد') {
+          cls = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+          icon = 'fa-check-circle';
+        } else if (status === 'مرفوض') {
+          cls = 'bg-rose-100 text-rose-800 border-rose-200';
+          icon = 'fa-times-circle';
+        }
+        return `
+          <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border ${cls}" title="${title}">
+            <i class="fa-solid ${icon}"></i> <span>${title}: ${status}</span>
+          </div>
+        `;
+      };
+
+      const mBadge = getStageBadge(tr.manager_status, 'المدير');
+      const hBadge = getStageBadge(tr.hr_status, 'الموارد البشرية');
+      const eBadge = getStageBadge(tr.exec_status, 'الإدارة العليا');
+
+      // Final status styling
+      let finalStatusClass = 'bg-slate-100 text-slate-700';
+      if (tr.status.includes('تم تنفيذ النقل') || tr.status.includes('معتمد نهائياً')) {
+        finalStatusClass = 'bg-emerald-100 text-emerald-900 border border-emerald-300 font-black';
+      } else if (tr.status.includes('مرفوض')) {
+        finalStatusClass = 'bg-rose-100 text-rose-900 border border-rose-300 font-bold';
+      } else {
+        finalStatusClass = 'bg-amber-100 text-amber-900 border border-amber-300 font-bold';
+      }
+
+      // Action buttons based on active stage and user role
+      let actionButtons = '';
+      if (tr.manager_status === 'معلق' && (curRole === 'admin' || curRole === 'dept_manager' || curRole === 'direct_manager')) {
+        actionButtons += `
+          <button onclick="openTransferApprovalModal(${tr.id}, 'manager')" class="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] transition shadow-xs cursor-pointer">
+            <i class="fa-solid fa-stamp"></i> قرار المدير
+          </button>
+        `;
+      } else if (tr.manager_status === 'معتمد' && tr.hr_status === 'معلق' && (curRole === 'admin' || curRole === 'hr_manager')) {
+        actionButtons += `
+          <button onclick="openTransferApprovalModal(${tr.id}, 'hr')" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[10px] transition shadow-xs cursor-pointer">
+            <i class="fa-solid fa-user-check"></i> اعتماد HR
+          </button>
+        `;
+      } else if (tr.hr_status === 'معتمد' && tr.exec_status === 'معلق' && (curRole === 'admin')) {
+        actionButtons += `
+          <button onclick="openTransferApprovalModal(${tr.id}, 'exec')" class="px-2.5 py-1 rounded-lg bg-[#700c14] hover:bg-[#8B0000] text-white font-bold text-[10px] transition shadow-xs cursor-pointer">
+            <i class="fa-solid fa-crown"></i> الاعتماد النهائي
+          </button>
+        `;
+      }
+
+      // Print button (decision certificate)
+      const printBtn = `
+        <button onclick="window.open('/api/general/transfers/${tr.id}/print', '_blank')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] transition cursor-pointer" title="طباعة قرار النقل الرسمي A4">
+          <i class="fa-solid fa-print"></i> القرار
+        </button>
+      `;
+
+      return `
+        <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
+          <td class="py-3 px-3 font-mono font-bold text-[#700c14]">${tr.request_no}</td>
+          <td class="py-3 px-3">
+            <div class="font-black text-slate-900">${tr.emp_name}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${tr.emp_code} - ${tr.emp_job || ''}</div>
+          </td>
+          <td class="py-3 px-3">
+            <div class="font-bold text-slate-800">${tr.current_dept_name || '---'}</div>
+            <div class="text-[10px] text-slate-500">${tr.current_branch_name || 'المركز الرئيسي'}</div>
+          </td>
+          <td class="py-3 px-3">
+            <div class="font-black text-teal-800">${tr.target_dept_name || '---'}</div>
+            <div class="text-[10px] text-teal-600">${tr.target_branch_name || 'المركز الرئيسي'}</div>
+          </td>
+          <td class="py-3 px-3 font-mono text-slate-600">${tr.desired_transfer_date || '---'}</td>
+          <td class="py-3 px-3 text-center">
+            <div class="flex flex-col gap-1 items-center">
+              ${mBadge}
+              ${hBadge}
+              ${eBadge}
+            </div>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <span class="inline-block px-2.5 py-1 rounded-full text-[10px] ${finalStatusClass}">
+              ${tr.status}
+            </span>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+              ${actionButtons}
+              ${printBtn}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (err) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-rose-600 font-bold">خطأ في جلب طلبات النقل: ${err.message}</td></tr>`;
+    }
+  }
+}
+
+async function openModalTransferRequest() {
+  const empSel = document.getElementById('transferFormEmpId');
+  const deptSel = document.getElementById('transferFormTargetDept');
+  const branchSel = document.getElementById('transferFormTargetBranch');
+  const dateInp = document.getElementById('transferFormDate');
+  const reasonInp = document.getElementById('transferFormReason');
+
+  // Populate Active Operational Employees
+  if (empSel) {
+    const validEmps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
+    empSel.innerHTML = validEmps.map(e => `
+      <option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>
+    `).join('');
+
+    // Preselect current user if an employee
+    const curEmpId = state.currentUser ? state.currentUser.emp_id : null;
+    if (curEmpId && validEmps.some(e => e.id === Number(curEmpId))) {
+      empSel.value = curEmpId;
+    }
+  }
+
+  // Populate Departments
+  if (deptSel) {
+    try {
+      const dRes = await apiFetch('/api/departments');
+      const depts = (dRes && dRes.data) ? dRes.data : (state.departments || []);
+      deptSel.innerHTML = '<option value="">-- اختر الإدارة المستهدفة --</option>' + depts.map(d => `
+        <option value="${d.id}">${d.name_ar}</option>
+      `).join('');
+    } catch (e) {}
+  }
+
+  // Populate Branches
+  if (branchSel) {
+    try {
+      const bRes = await apiFetch('/api/branches');
+      const branches = (bRes && bRes.data) ? bRes.data : (state.branches || []);
+      branchSel.innerHTML = '<option value="">-- نفس الفرع الحالي --</option>' + branches.map(b => `
+        <option value="${b.id}">${b.name_ar}</option>
+      `).join('');
+    } catch (e) {}
+  }
+
+  // Default desired date to tomorrow
+  if (dateInp) {
+    const tom = new Date();
+    tom.setDate(tom.getDate() + 1);
+    dateInp.value = tom.toISOString().split('T')[0];
+  }
+
+  if (reasonInp) reasonInp.value = '';
+
+  openModal('modalTransferRequest');
+}
+
+async function submitTransferRequestForm(event) {
+  if (event) event.preventDefault();
+  const empId = document.getElementById('transferFormEmpId').value;
+  const targetDeptId = document.getElementById('transferFormTargetDept').value;
+  const targetBranchId = document.getElementById('transferFormTargetBranch').value;
+  const desiredDate = document.getElementById('transferFormDate').value;
+  const reason = document.getElementById('transferFormReason').value;
+
+  if (!empId || !targetDeptId) {
+    alert('يرجى تحديد الموظف والإدارة المنقول إليها.');
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/general/transfers', {
+      method: 'POST',
+      body: JSON.stringify({
+        emp_id: empId,
+        target_dept_id: targetDeptId,
+        target_branch_id: targetBranchId || null,
+        desired_transfer_date: desiredDate,
+        reason: reason
+      })
+    });
+
+    if (res && res.success) {
+      if (typeof showToast === 'function') showToast(res.message || 'تم تقديم طلب النقل بنجاح', 'success');
+      else alert(res.message);
+      closeModal('modalTransferRequest');
+      await loadEssTransferRequests();
+    } else {
+      alert('خطأ: ' + (res ? res.error : 'فشل تقديم الطلب'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تقديم طلب النقل: ' + err.message);
+  }
+}
+
+function openTransferApprovalModal(id, stage) {
+  const tr = cachedTransferRequests.find(r => r.id === id);
+  if (!tr) return;
+
+  document.getElementById('transAppId').value = id;
+  document.getElementById('transAppStage').value = stage;
+  document.getElementById('transAppNo').textContent = tr.request_no;
+  document.getElementById('transAppEmpName').textContent = tr.emp_name;
+
+  let stageTitle = '1. المدير المباشر';
+  if (stage === 'hr') stageTitle = '2. إدارة الموارد البشرية';
+  else if (stage === 'exec') stageTitle = '3. الإدارة العليا (الاعتماد النهائي وتنفيذ النقل)';
+  document.getElementById('transAppStageTitle').textContent = stageTitle;
+
+  const curUser = state.currentUser || {};
+  document.getElementById('transAppApproverName').value = curUser.full_name || curUser.username || 'المسؤول المعتمد';
+  document.getElementById('transAppComment').value = 'موافق ومعتمد وفقاً لمقتضيات مصلحة العمل.';
+
+  openModal('modalTransferApprovalAction');
+}
+
+async function submitTransferApprovalAction(event) {
+  if (event) event.preventDefault();
+  const id = document.getElementById('transAppId').value;
+  const stage = document.getElementById('transAppStage').value;
+  const decisionEls = document.getElementsByName('transAppDecision');
+  let action = 'موافق';
+  for (const el of decisionEls) {
+    if (el.checked) { action = el.value; break; }
+  }
+  const approverName = document.getElementById('transAppApproverName').value;
+  const comment = document.getElementById('transAppComment').value;
+
+  try {
+    const res = await apiFetch(`/api/general/transfers/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({
+        stage: stage,
+        action: action,
+        comment: comment,
+        approver_name: approverName
+      })
+    });
+
+    if (res && res.success) {
+      if (typeof showToast === 'function') showToast(res.message || 'تم تثبيت القرار بنجاح', 'success');
+      else alert(res.message);
+      closeModal('modalTransferApprovalAction');
+      await loadEssTransferRequests();
+      // If final approval, reload employees list to reflect updated department/branch
+      if (stage === 'exec' && action === 'موافق') {
+        const empRes = await apiFetch('/api/employees');
+        if (empRes && empRes.data) state.employees = empRes.data;
+      }
+    } else {
+      alert('خطأ: ' + (res ? res.error : 'فشل تنفيذ الإجراء'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء اعتماد طلب النقل: ' + err.message);
+  }
+}
+
+// -------------------------------------------------------------------------
+// 2. ADMINISTRATIVE CIRCULARS & DIGITAL ACKNOWLEDGEMENT
+// -------------------------------------------------------------------------
+
+async function loadCircularsView() {
+  const grid = document.getElementById('circularsCardsGrid');
+  if (grid) {
+    grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin text-2xl text-[#700c14] mb-2 block"></i>جاري تحميل التعاميم الإدارية...</div>`;
+  }
+
+  const curEmpId = state.currentUser ? state.currentUser.emp_id : null;
+  const url = curEmpId ? `/api/general/circulars?emp_id=${curEmpId}` : '/api/general/circulars';
+
+  try {
+    const res = await apiFetch(url);
+    if (!res || !res.success) throw new Error(res ? res.error : 'فشل جلب التعاميم');
+    cachedCirculars = res.data || [];
+
+    // Calculate KPIs
+    const total = cachedCirculars.length;
+    const urgent = cachedCirculars.filter(c => c.is_urgent).length;
+    const totalAcks = cachedCirculars.reduce((sum, c) => sum + (c.ack_count || 0), 0);
+    const totalPossible = total * 111; // 111 active operational employees
+    const ackRate = totalPossible > 0 ? Math.round((totalAcks / totalPossible) * 100) : 0;
+
+    const elTotal = document.getElementById('circStatTotal');
+    const elUrgent = document.getElementById('circStatUrgent');
+    const elAcks = document.getElementById('circStatAcks');
+    const elRate = document.getElementById('circStatAckRate');
+
+    if (elTotal) elTotal.textContent = total;
+    if (elUrgent) elUrgent.textContent = urgent;
+    if (elAcks) elAcks.textContent = totalAcks;
+    if (elRate) elRate.textContent = `${ackRate}%`;
+
+    const badgeNav = document.getElementById('badgeNavCirculars');
+    if (badgeNav) badgeNav.textContent = `${total} تعميم`;
+
+    renderCircularsCards(cachedCirculars);
+  } catch (err) {
+    if (grid) {
+      grid.innerHTML = `<div class="col-span-full py-8 text-center text-rose-600 font-bold">خطأ في جلب التعاميم: ${err.message}</div>`;
+    }
+  }
+}
+
+function renderCircularsCards(circulars) {
+  const grid = document.getElementById('circularsCardsGrid');
+  if (!grid) return;
+
+  if (!circulars || circulars.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full py-12 text-center text-slate-400">
+        <i class="fa-solid fa-bullhorn text-4xl mb-3 text-slate-300 block"></i>
+        لا توجد تعاميم إدارية مطابقة لخيارات البحث.
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = circulars.map(c => {
+    const isUrgent = c.is_urgent === 1;
+    const isAck = !!c.is_acknowledged_by_user;
+
+    // Acknowledgement Section
+    let ackHtml = '';
+    if (c.acknowledgement_required) {
+      if (isAck) {
+        ackHtml = `
+          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i> تم تسجيل إقرارك بالعلم والاطلاع
+          </span>
+        `;
+      } else {
+        ackHtml = `
+          <button onclick="acknowledgeCircular(${c.id})" class="px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-black text-xs flex items-center gap-1.5 transition shadow-sm cursor-pointer">
+            <i class="fa-solid fa-signature"></i> إقرار بالعلم والاطلاع
+          </button>
+        `;
+      }
+    }
+
+    return `
+      <div class="card-elevated p-6 bg-white rounded-2xl border ${isUrgent ? 'border-rose-300 ring-1 ring-rose-300' : 'border-slate-200'} space-y-4 flex flex-col justify-between hover:shadow-md transition">
+        <div class="space-y-3">
+          <!-- Top Tags -->
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-800 font-mono">${c.circular_no}</span>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">${c.category}</span>
+              ${isUrgent ? '<span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i> عاجل وهام</span>' : ''}
+            </div>
+            <span class="text-[10px] font-mono text-slate-400 font-bold">${c.issued_at}</span>
+          </div>
+
+          <!-- Title -->
+          <h3 class="text-sm font-black text-slate-900 leading-snug">${c.title}</h3>
+
+          <!-- Meta -->
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-[11px] space-y-1">
+            <div class="text-slate-600"><strong class="text-slate-800">الجهة المصدرة:</strong> ${c.issued_by}</div>
+            <div class="text-slate-600"><strong class="text-slate-800">الموجه إليه:</strong> ${c.target_audience}</div>
+            <div class="text-teal-700 font-bold"><i class="fa-solid fa-check-double text-[10px]"></i> إقرارات منسوبي المنشأة: <span class="font-mono">${c.ack_count || 0}</span> موظف</div>
+          </div>
+
+          <!-- Content preview -->
+          <p class="text-xs text-slate-700 whitespace-pre-line leading-relaxed line-clamp-4">${c.content}</p>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2">
+            ${ackHtml}
+          </div>
+          <button onclick="window.open('/api/general/circulars/${c.id}/print', '_blank')" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer">
+            <i class="fa-solid fa-print"></i> طباعة التعميم A4
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterCircularsCards() {
+  const term = (document.getElementById('searchCircularsInput')?.value || '').trim().toLowerCase();
+  const cat = document.getElementById('filterCircularsCategory')?.value || '';
+
+  const filtered = cachedCirculars.filter(c => {
+    const matchTerm = !term || (c.title && c.title.toLowerCase().includes(term)) || (c.content && c.content.toLowerCase().includes(term)) || (c.circular_no && c.circular_no.toLowerCase().includes(term));
+    const matchCat = !cat || c.category === cat;
+    return matchTerm && matchCat;
+  });
+
+  renderCircularsCards(filtered);
+}
+
+async function acknowledgeCircular(circularId) {
+  let empId = state.currentUser ? state.currentUser.emp_id : null;
+  if (!empId) {
+    const firstEmp = (state.employees || []).find(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
+    empId = firstEmp ? firstEmp.id : 1;
+  }
+
+  try {
+    const res = await apiFetch(`/api/general/circulars/${circularId}/acknowledge`, {
+      method: 'POST',
+      body: JSON.stringify({ emp_id: empId })
+    });
+
+    if (res && res.success) {
+      if (typeof showToast === 'function') showToast('تم تسجيل إقرارك بالعلم والاطلاع بنجاح 📜', 'success');
+      else alert('تم تسجيل الإقرار بنجاح.');
+      await loadCircularsView();
+    } else {
+      alert('خطأ: ' + (res ? res.error : 'فشل تسجيل الإقرار'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تسجيل الإقرار: ' + err.message);
+  }
+}
+
+function openModalAddCircular() {
+  document.getElementById('circFormTitle').value = '';
+  document.getElementById('circFormContent').value = '';
+  document.getElementById('circFormCategory').value = 'إداري وتنظيمي';
+  document.getElementById('circFormAudience').value = 'كافة منسوبي شركة جوهرة المجد';
+  document.getElementById('circFormIssuedBy').value = 'إدارة الموارد البشرية';
+  document.getElementById('circFormIssuedAt').value = new Date().toISOString().split('T')[0];
+  document.getElementById('circFormIsUrgent').checked = false;
+  document.getElementById('circFormAckReq').checked = true;
+
+  openModal('modalAddCircular');
+}
+
+async function submitCircularForm(event) {
+  if (event) event.preventDefault();
+  const title = document.getElementById('circFormTitle').value;
+  const content = document.getElementById('circFormContent').value;
+  const category = document.getElementById('circFormCategory').value;
+  const audience = document.getElementById('circFormAudience').value;
+  const issuedBy = document.getElementById('circFormIssuedBy').value;
+  const issuedAt = document.getElementById('circFormIssuedAt').value;
+  const isUrgent = document.getElementById('circFormIsUrgent').checked ? 1 : 0;
+  const ackReq = document.getElementById('circFormAckReq').checked ? 1 : 0;
+
+  if (!title || !content) {
+    alert('يرجى تعبئة عنوان ومحتوى التعميم.');
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/general/circulars', {
+      method: 'POST',
+      body: JSON.stringify({
+        title, content, category,
+        target_audience: audience,
+        issued_by: issuedBy,
+        issued_at: issuedAt,
+        is_urgent: isUrgent,
+        acknowledgement_required: ackReq
+      })
+    });
+
+    if (res && res.success) {
+      if (typeof showToast === 'function') showToast('تم نشر وتعميم القرار الإداري بنجاح 📢', 'success');
+      else alert('تم نشر التعميم بنجاح');
+      closeModal('modalAddCircular');
+      await loadCircularsView();
+    } else {
+      alert('خطأ: ' + (res ? res.error : 'فشل نشر التعميم'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء نشر التعميم: ' + err.message);
+  }
+}
+
+// -------------------------------------------------------------------------
+// 3. COMPANY LICENSES & GOVERNMENT REGISTRATIONS
+// -------------------------------------------------------------------------
+
+async function loadLicensesView() {
+  const tbody = document.getElementById('licensesTableBody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin text-xl text-teal-600 mb-2 block"></i>جاري تحميل السجلات والتراخيص...</td></tr>`;
+  }
+
+  try {
+    const res = await apiFetch('/api/general/licenses');
+    if (!res || !res.success) throw new Error(res ? res.error : 'فشل جلب التراخيص');
+    cachedLicenses = res.data || [];
+
+    // Compute KPIs
+    const total = cachedLicenses.length;
+    const valid = cachedLicenses.filter(l => l.expiry_info.status === 'valid').length;
+    const expiringSoon = cachedLicenses.filter(l => l.expiry_info.status === 'expiring_soon').length;
+    const expired = cachedLicenses.filter(l => l.expiry_info.status === 'expired').length;
+
+    const elTotal = document.getElementById('licStatTotal');
+    const elValid = document.getElementById('licStatValid');
+    const elExpSoon = document.getElementById('licStatExpiringSoon');
+    const elExp = document.getElementById('licStatExpired');
+
+    if (elTotal) elTotal.textContent = total;
+    if (elValid) elValid.textContent = valid;
+    if (elExpSoon) elExpSoon.textContent = expiringSoon;
+    if (elExp) elExp.textContent = expired;
+
+    const badgeNav = document.getElementById('badgeNavLicenses');
+    if (badgeNav) badgeNav.textContent = `${total} ترخيص`;
+
+    // Alert Banner
+    const alertBox = document.getElementById('licensesAlertContainer');
+    if (alertBox) {
+      const urgentCount = expiringSoon + expired;
+      if (urgentCount > 0) {
+        alertBox.classList.remove('hidden');
+        alertBox.innerHTML = `
+          <div class="p-4 bg-amber-50 rounded-2xl border-2 border-amber-300 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600 text-2xl"></i>
+              <div>
+                <h4 class="font-black text-amber-950 text-xs">تنبيهات تراخيص وسجلات تتطلب التجديد (${urgentCount})</h4>
+                <p class="text-[11px] text-amber-800 mt-0.5">يوجد (${expiringSoon}) ترخيص يقترب من الانتهاء خلال 60 يوماً، و (${expired}) ترخيص منتهي الصلاحية.</p>
+              </div>
+            </div>
+            <button onclick="printLicensesReport()" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs cursor-pointer">
+              طباعة كشف المتابعة A4
+            </button>
+          </div>
+        `;
+      } else {
+        alertBox.classList.add('hidden');
+      }
+    }
+
+    renderLicensesTable(cachedLicenses);
+  } catch (err) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-rose-600 font-bold">خطأ في جلب التراخيص: ${err.message}</td></tr>`;
+    }
+  }
+}
+
+function renderLicensesTable(licenses) {
+  const tbody = document.getElementById('licensesTableBody');
+  if (!tbody) return;
+
+  if (!licenses || licenses.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="py-8 text-center text-slate-400">
+          <i class="fa-solid fa-file-shield text-3xl mb-2 text-slate-300 block"></i>
+          لا توجد سجلات أو تراخيص مسجلة مطابقة للبحث.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = licenses.map((l, idx) => {
+    let badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    if (l.expiry_info.status === 'expired') badgeClass = 'bg-rose-100 text-rose-800 border-rose-300 font-black';
+    else if (l.expiry_info.status === 'expiring_soon') badgeClass = 'bg-amber-100 text-amber-800 border-amber-300 font-black';
+
+    return `
+      <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
+        <td class="py-3 px-3 text-center font-bold text-slate-400">${idx + 1}</td>
+        <td class="py-3 px-3">
+          <div class="font-black text-slate-900">${l.license_name_ar}</div>
+          ${l.notes ? `<div class="text-[10px] text-slate-400">${l.notes}</div>` : ''}
+        </td>
+        <td class="py-3 px-3 font-mono font-bold text-teal-800">${l.license_no}</td>
+        <td class="py-3 px-3 font-medium text-slate-700">${l.issuing_authority}</td>
+        <td class="py-3 px-3 text-center font-mono text-slate-500">${l.issue_date || '---'}</td>
+        <td class="py-3 px-3 text-center font-mono font-bold text-slate-800">${l.expiry_date}</td>
+        <td class="py-3 px-3 text-center">
+          <span class="inline-block px-2.5 py-1 rounded-lg text-[10px] font-black border ${badgeClass}">
+            ${l.expiry_info.text_ar}
+          </span>
+        </td>
+        <td class="py-3 px-3 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button onclick="openModalAddLicense(${l.id})" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition cursor-pointer" title="تعديل">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button onclick="deleteLicense(${l.id}, '${l.license_name_ar.replace(/'/g, "\\'")}')" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs transition cursor-pointer" title="حذف">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterLicensesTable() {
+  const term = (document.getElementById('searchLicensesInput')?.value || '').trim().toLowerCase();
+  const status = document.getElementById('filterLicensesStatus')?.value || '';
+
+  const filtered = cachedLicenses.filter(l => {
+    const matchTerm = !term || (l.license_name_ar && l.license_name_ar.toLowerCase().includes(term)) || (l.license_no && l.license_no.toLowerCase().includes(term)) || (l.issuing_authority && l.issuing_authority.toLowerCase().includes(term));
+    let matchStatus = true;
+    if (status === 'سارية') matchStatus = l.expiry_info.status === 'valid';
+    else if (status === 'expiring_soon') matchStatus = l.expiry_info.status === 'expiring_soon';
+    else if (status === 'expired') matchStatus = l.expiry_info.status === 'expired';
+    return matchTerm && matchStatus;
+  });
+
+  renderLicensesTable(filtered);
+}
+
+function openModalAddLicense(id = null) {
+  const titleEl = document.getElementById('modalAddLicenseTitle');
+  const idInp = document.getElementById('licFormId');
+  const nameInp = document.getElementById('licFormName');
+  const noInp = document.getElementById('licFormNo');
+  const typeInp = document.getElementById('licFormType');
+  const authInp = document.getElementById('licFormAuthority');
+  const daysInp = document.getElementById('licFormAlertDays');
+  const issInp = document.getElementById('licFormIssueDate');
+  const expInp = document.getElementById('licFormExpiryDate');
+  const notesInp = document.getElementById('licFormNotes');
+
+  if (id) {
+    const lic = cachedLicenses.find(l => l.id === id);
+    if (!lic) return;
+    if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-pen-to-square text-teal-600"></i> تعديل بيانات الترخيص / السجل';
+    idInp.value = lic.id;
+    nameInp.value = lic.license_name_ar;
+    noInp.value = lic.license_no;
+    typeInp.value = lic.license_type || 'commercial_reg';
+    authInp.value = lic.issuing_authority || '';
+    daysInp.value = lic.alert_days_before || 60;
+    issInp.value = lic.issue_date || '';
+    expInp.value = lic.expiry_date || '';
+    notesInp.value = lic.notes || '';
+  } else {
+    if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-file-shield text-teal-600"></i> إضافة سجل / ترخيص حكومي جديد';
+    idInp.value = '';
+    nameInp.value = '';
+    noInp.value = '';
+    typeInp.value = 'commercial_reg';
+    authInp.value = '';
+    daysInp.value = '60';
+    issInp.value = '';
+    expInp.value = '';
+    notesInp.value = '';
+  }
+
+  openModal('modalAddLicense');
+}
+
+async function submitLicenseForm(event) {
+  if (event) event.preventDefault();
+  const id = document.getElementById('licFormId').value;
+  const data = {
+    license_type: document.getElementById('licFormType').value,
+    license_name_ar: document.getElementById('licFormName').value,
+    license_no: document.getElementById('licFormNo').value,
+    issuing_authority: document.getElementById('licFormAuthority').value,
+    alert_days_before: document.getElementById('licFormAlertDays').value,
+    issue_date: document.getElementById('licFormIssueDate').value || null,
+    expiry_date: document.getElementById('licFormExpiryDate').value,
+    notes: document.getElementById('licFormNotes').value || null
+  };
+
+  try {
+    let res;
+    if (id) {
+      res = await apiFetch(`/api/general/licenses/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+    } else {
+      res = await apiFetch('/api/general/licenses', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    if (res && res.success) {
+      if (typeof showToast === 'function') showToast(res.message || 'تم حفظ الترخيص بنجاح', 'success');
+      else alert(res.message);
+      closeModal('modalAddLicense');
+      await loadLicensesView();
+    } else {
+      alert('خطأ: ' + (res ? res.error : 'فشل حفظ الترخيص'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ الترخيص: ' + err.message);
+  }
+}
+
+async function deleteLicense(id, name) {
+  if (!confirm(`هل أنت متأكد من رغبتك في حذف الترخيص/السجل (${name})؟`)) return;
+
+  try {
+    const res = await apiFetch(`/api/general/licenses/${id}`, { method: 'DELETE' });
+    if (res && res.success) {
+      if (typeof showToast === 'function') showToast(res.message || 'تم حذف الترخيص بنجاح', 'info');
+      else alert(res.message);
+      await loadLicensesView();
+    } else {
+      alert('خطأ: ' + (res ? res.error : 'فشل حذف الترخيص'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حذف الترخيص: ' + err.message);
+  }
+}
+
+function printLicensesReport() {
+  window.open('/api/general/licenses-report/print', '_blank');
+}
+
+// -------------------------------------------------------------------------
+// 4. UNIFIED ADVANCED MULTI-MODULE REPORTING
+// -------------------------------------------------------------------------
+
+async function loadUnifiedReportsView() {
+  const tbody = document.getElementById('unifiedReportsTableBody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin text-xl text-amber-600 mb-2 block"></i>جاري تجميع مؤشرات الوحدات الست...</td></tr>`;
+  }
+
+  try {
+    const res = await apiFetch('/api/general/reports/summary');
+    if (!res || !res.success) throw new Error(res ? res.error : 'فشل جلب التقرير الموحد');
+    const summary = res.data;
+
+    // Update 4 Domain KPI Blocks
+    const elTotEmp = document.getElementById('repTotalEmp');
+    const elSauEmp = document.getElementById('repSaudiEmp');
+    const elExpEmp = document.getElementById('repExpatEmp');
+    const elSaudRate = document.getElementById('repSaudizationRate');
+
+    if (elTotEmp) elTotEmp.textContent = summary.workforce.total_employees;
+    if (elSauEmp) elSauEmp.textContent = summary.workforce.saudi_employees;
+    if (elExpEmp) elExpEmp.textContent = summary.workforce.expat_employees;
+    if (elSaudRate) elSaudRate.textContent = `${summary.workforce.saudization_rate}%`;
+
+    const elVeh = document.getElementById('repTotalVehicles');
+    if (elVeh) elVeh.textContent = summary.fleet.total_vehicles;
+
+    const elIns = document.getElementById('repTotalInsured');
+    const elHCard = document.getElementById('repTotalHealthCards');
+    if (elIns) elIns.textContent = summary.healthcare.insured_employees;
+    if (elHCard) elHCard.textContent = summary.healthcare.baladiya_cards;
+
+    const elPendTr = document.getElementById('repPendingTransfers');
+    const elActCirc = document.getElementById('repActiveCircs');
+    const elTotLic = document.getElementById('repTotalLics');
+    const elLicAlert = document.getElementById('repLicAlerts');
+
+    if (elPendTr) elPendTr.textContent = summary.governance.pending_transfers;
+    if (elActCirc) elActCirc.textContent = summary.governance.active_circulars;
+    if (elTotLic) elTotLic.textContent = summary.governance.total_licenses;
+    if (elLicAlert) elLicAlert.textContent = summary.governance.licenses_alerts;
+
+    // Render Matrix Table
+    if (tbody) {
+      const rows = [
+        { domain: 'الوحدة 1: الحضور والجزاءات', kpi: 'الالتزام ببصمة الدوام والخصومات الآلية', val: 'مفعل آلياً', compliance: 'المادة 80 ولائحة الجزاءات', status: 'سارٍ' },
+        { domain: 'الوحدة 2: نهاية الخدمة والمخالصة', kpi: 'حاسبة مكافأة نهاية الخدمة والمخالصات', val: 'حساب دقيق لكافة المواد (84, 85, 87)', compliance: 'نظام العمل السعودي', status: 'مطابق 100%' },
+        { domain: 'الوحدة 3: التوظيف وتتبع المتقدمين', kpi: 'شواغر التوظيف وعروض العمل الثنائية', val: 'نماذج رسمية عربي/إنجليزي', compliance: 'المادة 109 وهوية الشركة', status: 'معتمد' },
+        { domain: 'الوحدة 4: إدارة الأسطول والسيارات', kpi: 'أسطول المركبات والعهد ومنصة تم', val: `${summary.fleet.total_vehicles} مركبة مسجلة`, compliance: 'تطابق منصة تم والمرور', status: 'سارٍ ومنتظم' },
+        { domain: 'الوحدة 5: التأمين والبطاقات الصحية', kpi: 'تأمين مجلس الضمان والشهادات البلدية', val: `${summary.healthcare.insured_employees} بطاقة تأمين + ${summary.healthcare.baladiya_cards} بطاقة صحية`, compliance: 'معايير CCHI وأمانة عسير', status: 'معتمد رسمياً' },
+        { domain: 'الوحدة 6: الخدمة الذاتية والإدارة', kpi: 'سير موافقات النقل الثلاثي والتعاميم والتراخيص', val: `${summary.governance.total_licenses} تراخيص + ${summary.governance.active_circulars} تعاميم`, compliance: 'حوكمة إدارية رقمية متقدمة', status: 'محدث ونشط' }
+      ];
+
+      tbody.innerHTML = rows.map(r => `
+        <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
+          <td class="py-3 px-3 font-black text-slate-900">${r.domain}</td>
+          <td class="py-3 px-3 text-slate-700">${r.kpi}</td>
+          <td class="py-3 px-3 text-center font-bold font-mono text-[#700c14]">${r.val}</td>
+          <td class="py-3 px-3 text-center font-bold text-teal-800">${r.compliance}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+              ${r.status}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+  } catch (err) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-600 font-bold">خطأ في جلب التقرير الموحد: ${err.message}</td></tr>`;
+    }
+  }
+}
+
+function exportUnifiedReportCsv() {
+  window.open('/api/general/reports/export/csv', '_blank');
+}
+
+// Window Global Exports for Module 6
+window.loadEssTransferRequests = loadEssTransferRequests;
+window.openModalTransferRequest = openModalTransferRequest;
+window.submitTransferRequestForm = submitTransferRequestForm;
+window.openTransferApprovalModal = openTransferApprovalModal;
+window.submitTransferApprovalAction = submitTransferApprovalAction;
+window.loadCircularsView = loadCircularsView;
+window.renderCircularsCards = renderCircularsCards;
+window.filterCircularsCards = filterCircularsCards;
+window.acknowledgeCircular = acknowledgeCircular;
+window.openModalAddCircular = openModalAddCircular;
+window.submitCircularForm = submitCircularForm;
+window.loadLicensesView = loadLicensesView;
+window.renderLicensesTable = renderLicensesTable;
+window.filterLicensesTable = filterLicensesTable;
+window.openModalAddLicense = openModalAddLicense;
+window.submitLicenseForm = submitLicenseForm;
+window.deleteLicense = deleteLicense;
+window.printLicensesReport = printLicensesReport;
+window.loadUnifiedReportsView = loadUnifiedReportsView;
+window.exportUnifiedReportCsv = exportUnifiedReportCsv;
+
 
 
 
