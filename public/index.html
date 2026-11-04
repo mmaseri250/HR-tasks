@@ -252,6 +252,13 @@
           <span id="badgeNavFleet" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300">تم</span>
         </button>
 
+        <!-- 5.6 Medical Insurance, Health Education & Municipal Cards -->
+        <button onclick="switchTab('insurance')" id="nav-insurance" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-heart-pulse w-5 text-center text-base text-rose-600"></i>
+          <span class="flex-1 text-right" data-i18n="nav_insurance">التأمين الطبي والبطاقات الصحية</span>
+          <span id="badgeNavInsurance" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-900 border border-rose-300">CCHI</span>
+        </button>
+
         <!-- 6. Self-Service -->
         <button onclick="switchTab('selfservice')" id="nav-selfservice" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-user-shield w-5 text-center text-base text-indigo-600"></i>
@@ -3998,6 +4005,514 @@
                 <button type="button" onclick="closeModal('modalImportVehicles')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
                 <button type="submit" id="btnSubmitImportVehicles" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow">
                   <i class="fa-solid fa-upload"></i> بدء الاستيراد
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- =========================================================================
+           MODULE 5: MEDICAL INSURANCE, HEALTH EDUCATION & MUNICIPAL CARDS
+           (التأمين الطبي والبطاقات الصحية للعمال والتثقيف الصحي)
+           ========================================================================= -->
+      <section id="view-insurance" class="space-y-6 hidden">
+
+        <!-- Header & Action Toolbar -->
+        <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-rose-950 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-400/30 flex items-center gap-1.5">
+                  <i class="fa-solid fa-heart-pulse text-[11px] animate-pulse"></i> معتمد لدى مجلس الضمان الصحي (CCHI)
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  شهادات البلدية لعمال المشاريع
+                </span>
+              </div>
+              <h2 class="text-2xl font-black text-white flex items-center gap-2.5">
+                <i class="fa-solid fa-notes-medical text-rose-400"></i> منظومة التأمين الطبي والبطاقات الصحية والتثقيف
+              </h2>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                إدارة وثائق وبطاقات التأمين الطبي التعاوني الموحد (CCHI)، متابعة البطاقات والشهادات الصحية للعمال (البلدية) مع التنبيهات الاستباقية، ومكتبة التثقيف والتوعية الصحية الميدانية.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="openAddInsuranceCardModal()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-lg shadow-rose-900/30">
+                <i class="fa-solid fa-plus"></i> إصدار بطاقة تأمين
+              </button>
+              <button onclick="openAddHealthCardModal()" class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow">
+                <i class="fa-solid fa-id-card-clip"></i> تسجيل بطاقة بلدية
+              </button>
+              <button onclick="exportInsuranceCardsCsv()" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition border border-slate-700">
+                <i class="fa-solid fa-file-csv"></i> كشف التأمين
+              </button>
+              <button onclick="exportHealthCardsCsv()" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition border border-slate-700">
+                <i class="fa-solid fa-file-csv"></i> كشف البلدية
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Health & Insurance Stat Cards (Glassmorphism Counters) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-rose-50/80 via-white to-rose-50/30 border border-rose-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">المؤمن لهم والتابعون</p>
+                <h3 id="insKpiCovered" class="text-3xl font-black text-slate-900 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-rose-700 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-users text-[10px]"></i> مستفيدين تحت التغطية
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-shield-heart"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-blue-50/80 via-white to-blue-50/30 border border-blue-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">وثائق CCHI النشطة</p>
+                <h3 id="insKpiPolicies" class="text-3xl font-black text-slate-900 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-blue-700 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-file-contract text-[10px]"></i> وثائق موحدة معتمدة
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-hand-holding-medical"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 border border-emerald-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">بطاقات البلدية للعمال</p>
+                <h3 id="insKpiHealthCards" class="text-3xl font-black text-slate-900 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-id-badge text-[10px]"></i> شهادات صحية مهنية
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-certificate"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-amber-50/80 via-white to-rose-50/30 border border-amber-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">تنبيهات الانتهاء والتجديد</p>
+                <h3 id="insKpiAlerts" class="text-3xl font-black text-rose-600 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-amber-800 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-clock-rotate-left text-[10px]"></i> تنتهي خلال 30 يوم / منتهية
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Navigation Tabs with Modern Icons -->
+        <div class="flex border-b border-slate-200 space-x-2 space-x-reverse text-xs font-bold overflow-x-auto pb-1">
+          <button id="insTabCards" onclick="switchInsuranceSubTab('cards')" class="px-5 py-3 border-b-2 border-brand text-brand flex items-center gap-2 transition whitespace-nowrap">
+            <i class="fa-solid fa-notes-medical text-rose-600"></i> التأمين الطبي وبطاقات CCHI
+          </button>
+          <button id="insTabBaladiya" onclick="switchInsuranceSubTab('baladiya')" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+            <i class="fa-solid fa-id-card-clip text-emerald-600"></i> البطاقات الصحية للعمال (البلدية)
+            <span id="insBaladiyaAlertBadge" class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-900 font-mono">0</span>
+          </button>
+          <button id="insTabEducation" onclick="switchInsuranceSubTab('education')" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+            <i class="fa-solid fa-book-medical text-indigo-600"></i> التثقيف والتوعية الصحية
+          </button>
+          <button id="insTabPolicies" onclick="switchInsuranceSubTab('policies')" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition whitespace-nowrap">
+            <i class="fa-solid fa-file-shield text-blue-600"></i> وثائق التأمين المعتمدة
+          </button>
+        </div>
+
+        <!-- =========================================================================
+             SUB-VIEW 1: EMPLOYEE INSURANCE CARDS (بطاقات التأمين الطبي)
+             ========================================================================= -->
+        <div id="insSubViewCards" class="space-y-4">
+          
+          <div class="card-elevated p-4 flex flex-col lg:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2 w-full lg:w-auto flex-wrap">
+              <div class="relative w-full sm:w-72">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="insSearchInput" oninput="filterInsuranceCardsTable()" placeholder="ابحث باسم الموظف، الرقم الوظيفي، الهوية..." class="w-full text-xs rounded-xl border border-slate-300 py-2 pr-9 pl-3 focus:ring-2 focus:ring-brand font-medium">
+              </div>
+
+              <select id="insClassFilter" onchange="filterInsuranceCardsTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع فئات التأمين</option>
+                <option value="VIP">الفئة الماسية VIP (0% تحمل)</option>
+                <option value="A">الفئة الذهبية A (10% تحمل)</option>
+                <option value="B">الفئة الفضية B (20% تحمل)</option>
+                <option value="C">الفئة البرونزية C</option>
+              </select>
+
+              <select id="insStatusFilter" onchange="filterInsuranceCardsTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع حالات السريان</option>
+                <option value="سارية">سارية ومطابقة</option>
+                <option value="منتهية">منتهية الصلاحية</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <span id="insCardsCountBadge">عرض 0 بطاقة تأمين</span>
+            </div>
+          </div>
+
+          <div class="card-elevated overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                  <tr>
+                    <th class="p-3.5">الموظف المؤمن له</th>
+                    <th class="p-3.5">رقم العضوية (CCHI)</th>
+                    <th class="p-3.5 text-center">فئة التأمين</th>
+                    <th class="p-3.5">شركة التأمين والوثيقة</th>
+                    <th class="p-3.5 text-center">التحمل</th>
+                    <th class="p-3.5 text-center">التابعون</th>
+                    <th class="p-3.5 text-center">فصيلة الدم</th>
+                    <th class="p-3.5">تاريخ الانتهاء</th>
+                    <th class="p-3.5 text-center">الحالة</th>
+                    <th class="p-3.5 text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="insCardsTableBody" class="divide-y divide-slate-100 font-medium text-slate-800">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =========================================================================
+             SUB-VIEW 2: MUNICIPAL HEALTH CARDS (البطاقات الصحية للعمال - البلدية)
+             ========================================================================= -->
+        <div id="insSubViewBaladiya" class="space-y-4 hidden">
+          
+          <!-- Urgent Alert Banner -->
+          <div id="baladiyaAlertBanner" class="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600 text-2xl"></i>
+              <div>
+                <h3 class="text-sm font-black text-amber-950">نظام الرقابة البلدية الاستباقية للشهادات المهنية والصحية</h3>
+                <p class="text-xs text-amber-800 mt-0.5">متابعة الفحوصات المخبرية وتواريخ انتهاء البطاقات الصحية للعمال لتجنب المخالفات وإيقاف تراخيص المشاريع من أمانة منطقة عسير.</p>
+              </div>
+            </div>
+            <button onclick="openAddHealthCardModal()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow whitespace-nowrap">
+              <i class="fa-solid fa-plus"></i> تسجيل بطاقة بلدية
+            </button>
+          </div>
+
+          <!-- Filters -->
+          <div class="card-elevated p-4 flex flex-col lg:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2 w-full lg:w-auto flex-wrap">
+              <div class="relative w-full sm:w-72">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="baladiyaSearchInput" oninput="filterHealthCardsTable()" placeholder="ابحث باسم العامل، رقم الشهادة، المهنة..." class="w-full text-xs rounded-xl border border-slate-300 py-2 pr-9 pl-3 focus:ring-2 focus:ring-brand font-medium">
+              </div>
+
+              <select id="baladiyaMunicipalityFilter" onchange="filterHealthCardsTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع البلديات والأمانات</option>
+                <option value="أمانة منطقة عسير">أمانة منطقة عسير</option>
+                <option value="أبها">بلدية أبها</option>
+                <option value="خميس مشيط">بلدية خميس مشيط</option>
+              </select>
+
+              <select id="baladiyaFitnessFilter" onchange="filterHealthCardsTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">نتيجة الفحص الطبي</option>
+                <option value="لائق طبياً">لائق طبياً (معتمد)</option>
+                <option value="قيد الفحص">قيد الفحص المخبري</option>
+                <option value="غير لائق">غير لائق</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <span id="baladiyaCardsCountBadge">عرض 0 بطاقة بلدية</span>
+            </div>
+          </div>
+
+          <!-- Health Cards Table -->
+          <div class="card-elevated overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                  <tr>
+                    <th class="p-3.5">العامل والمهنة</th>
+                    <th class="p-3.5">رقم الشهادة الصحية</th>
+                    <th class="p-3.5">الأمانة / البلدية</th>
+                    <th class="p-3.5">المركز الطبي الفاحص</th>
+                    <th class="p-3.5 text-center">اللياقة الطبية</th>
+                    <th class="p-3.5">تاريخ الانتهاء</th>
+                    <th class="p-3.5 text-center">حالة السريان</th>
+                    <th class="p-3.5 text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="baladiyaCardsTableBody" class="divide-y divide-slate-100 font-medium text-slate-800">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =========================================================================
+             SUB-VIEW 3: HEALTH EDUCATION & AWARENESS (التثقيف والتوعية الصحية)
+             ========================================================================= -->
+        <div id="insSubViewEducation" class="space-y-6 hidden">
+          
+          <!-- Emergency Direct Contacts Hotline Banner -->
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4 border border-rose-900/50 shadow-md">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-rose-600/30 text-rose-400 flex items-center justify-center text-xl border border-rose-500/40">
+                <i class="fa-solid fa-phone-volume animate-pulse"></i>
+              </div>
+              <div>
+                <h4 class="font-black text-sm text-white">خطوط الاتصال الطبي المباشر والطوارئ المعتمدة</h4>
+                <p class="text-xs text-slate-300">طوارئ الهلال الأحمر: 997 | مركز اتصال وزارة الصحة: 937 | مجلس الضمان الصحي: 920001177</p>
+              </div>
+            </div>
+            <div class="text-left font-mono text-xs">
+              <span class="px-3 py-1.5 rounded-xl bg-white/10 text-amber-300 font-bold border border-white/10 inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-headset"></i> دعم بوبا العربية: 8002440307
+              </span>
+            </div>
+          </div>
+
+          <!-- Articles Grid -->
+          <div id="healthArticlesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Populated via JS -->
+          </div>
+
+        </div>
+
+        <!-- =========================================================================
+             SUB-VIEW 4: POLICIES (وثائق التأمين)
+             ========================================================================= -->
+        <div id="insSubViewPolicies" class="space-y-4 hidden">
+          <div class="card-elevated p-4 flex justify-between items-center">
+            <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-file-contract text-blue-600"></i> وثائق التأمين الطبي التعاوني المعتمدة
+            </h3>
+            <button onclick="openAddPolicyModal()" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-plus"></i> إضافة وثيقة جديدة
+            </button>
+          </div>
+
+          <div id="insurancePoliciesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             MODAL 1: ADD / EDIT INSURANCE CARD (إصدار وتعديل بطاقة تأمين)
+             ========================================================================= -->
+        <div id="modalAddInsuranceCard" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 id="modalInsuranceCardTitle" class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-notes-medical text-rose-600"></i> إصدار بطاقة تأمين طبي لموظف
+              </h3>
+              <button onclick="closeModal('modalAddInsuranceCard')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <form onsubmit="submitInsuranceCardForm(event)" class="space-y-4 text-xs">
+              <input type="hidden" id="insCardFormId">
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الموظف المؤمن له *:</label>
+                  <select id="insCardEmpSelect" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="">-- اختر الموظف --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">وثيقة التأمين المعتمدة *:</label>
+                  <select id="insCardPolicySelect" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">رقم العضوية (Member ID):</label>
+                  <input type="text" id="insCardMemberId" placeholder="BUP-2026-..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">فئة التأمين *:</label>
+                  <select id="insCardClass" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-black text-slate-800">
+                    <option value="VIP">الفئة الماسية VIP (0% تحمل)</option>
+                    <option value="A">الفئة الذهبية A (10% تحمل)</option>
+                    <option value="B" selected>الفئة الفضية B (20% تحمل)</option>
+                    <option value="C">الفئة البرونزية C</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">فصيلة الدم:</label>
+                  <select id="insCardBlood" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="O+">O+</option>
+                    <option value="A+">A+</option>
+                    <option value="B+">B+</option>
+                    <option value="AB+">AB+</option>
+                    <option value="O-">O-</option>
+                    <option value="A-">A-</option>
+                    <option value="B-">B-</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">نسبة التحمل (%):</label>
+                  <input type="number" id="insCardCopay" value="20" min="0" max="30" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">عدد التابعين المغطين:</label>
+                  <input type="number" id="insCardDependents" value="0" min="0" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">تاريخ انتهاء البطاقة *:</label>
+                  <input type="date" id="insCardExpiry" required value="2026-12-31" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ملاحظات أو أمراض مزمنة مصرح عنها:</label>
+                <input type="text" id="insCardNotes" placeholder="أمراض ضغط، سكري، أو أية تغطيات خاصة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalAddInsuranceCard')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> حفظ بيانات البطاقة
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             MODAL 2: ADD / EDIT MUNICIPAL HEALTH CARD (شهادة البلدية الصحية)
+             ========================================================================= -->
+        <div id="modalAddHealthCard" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 id="modalHealthCardTitle" class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-id-card-clip text-emerald-600"></i> تسجيل شهادة بلدية صحية لعامل
+              </h3>
+              <button onclick="closeModal('modalAddHealthCard')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <form onsubmit="submitHealthCardForm(event)" class="space-y-4 text-xs">
+              <input type="hidden" id="healthCardFormId">
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">العامل المستفيد *:</label>
+                  <select id="healthCardEmpSelect" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="">-- اختر العامل --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المهنة المرخصة بالشهادة *:</label>
+                  <input type="text" id="healthCardProfession" required placeholder="عامل إعاشة، خباز، عامل نظافة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">رقم الشهادة الصحية *:</label>
+                  <input type="text" id="healthCardNo" required placeholder="BALAD-ASR-..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الأمانة / البلدية المصدرة *:</label>
+                  <input type="text" id="healthCardMunicipality" required value="أمانة منطقة عسير" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المركز الطبي الفاحص:</label>
+                  <input type="text" id="healthCardCenter" value="مجمع عسير الطبي المعتمد" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">نتيجة الفحص الطبي *:</label>
+                  <select id="healthCardFitness" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="لائق طبياً">لائق طبياً (سليم)</option>
+                    <option value="قيد الفحص">قيد الفحص المخبري</option>
+                    <option value="غير لائق">غير لائق</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">تاريخ الانتهاء *:</label>
+                  <input type="date" id="healthCardExpiry" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ملاحظات إضافية:</label>
+                <input type="text" id="healthCardNotes" placeholder="أية اشتراطات أو فحوصات دورية محددة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalAddHealthCard')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> حفظ الشهادة الصحية
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             MODAL 3: ADD / EDIT POLICY (إضافة وثيقة تأمين)
+             ========================================================================= -->
+        <div id="modalAddPolicy" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-file-shield text-blue-600"></i> إضافة وثيقة تأمين طبي
+              </h3>
+              <button onclick="closeModal('modalAddPolicy')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <form onsubmit="submitPolicyForm(event)" class="space-y-4 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">رقم الوثيقة المعتمد *:</label>
+                <input type="text" id="policyFormNo" required placeholder="POL-BUPA-..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">شركة التأمين التعاوني *:</label>
+                <input type="text" id="policyFormProvider" required placeholder="شركة بوبا العربية، التعاونية للتأمين..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">تاريخ بداية السريان:</label>
+                  <input type="date" id="policyFormStart" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">تاريخ نهاية السريان:</label>
+                  <input type="date" id="policyFormEnd" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalAddPolicy')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> حفظ الوثيقة
                 </button>
               </div>
             </form>

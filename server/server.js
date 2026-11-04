@@ -31,6 +31,7 @@ const attendanceAutomationService = require('./modules/attendanceAutomationServi
 const { eosCalculatorService, SAUDI_EOS_TERMINATION_CASES } = require('./modules/eosCalculatorService');
 const atsRecruitmentService = require('./modules/atsRecruitmentService');
 const fleetService = require('./modules/fleetService');
+const healthInsuranceService = require('./modules/healthInsuranceService');
 
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
@@ -2441,6 +2442,245 @@ app.get('/api/fleet/vehicles/:id/handover-print', (req, res) => {
     res.send(html);
   } catch (err) {
     res.status(500).send(`<h3>خطأ في توليد محضر تسليم عهدة المركبة: ${err.message}</h3>`);
+  }
+});
+
+/* =========================================================================
+   MODULE 5: MEDICAL INSURANCE, BALADIYA HEALTH CARDS & HEALTH AWARENESS API
+   (التأمين الطبي والبطاقات الصحية للعمال والتثقيف الصحي)
+   ========================================================================= */
+
+// Overall Insurance & Health KPIs
+app.get('/api/insurance/kpis', (req, res) => {
+  try {
+    const kpis = healthInsuranceService.getInsuranceKpis();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Policies
+app.get('/api/insurance/policies', (req, res) => {
+  try {
+    const policies = healthInsuranceService.getPolicies();
+    res.json({ success: true, count: policies.length, data: policies });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/insurance/policies', (req, res) => {
+  try {
+    const policy = healthInsuranceService.createPolicy(req.body);
+    res.status(201).json({ success: true, message: 'تمت إضافة وثيقة التأمين بنجاح', data: policy });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/insurance/policies/:id', (req, res) => {
+  try {
+    const policy = healthInsuranceService.getPolicyById(req.params.id);
+    if (!policy) return res.status(404).json({ success: false, error: 'وثيقة التأمين غير موجودة' });
+    res.json({ success: true, data: policy });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/insurance/policies/:id', (req, res) => {
+  try {
+    const updated = healthInsuranceService.updatePolicy(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث الوثيقة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/insurance/policies/:id', (req, res) => {
+  try {
+    const result = healthInsuranceService.deletePolicy(req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Employee Insurance Cards
+app.get('/api/insurance/cards', (req, res) => {
+  try {
+    const cards = healthInsuranceService.getInsuranceCards(req.query);
+    res.json({ success: true, count: cards.length, data: cards });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/insurance/cards', (req, res) => {
+  try {
+    const card = healthInsuranceService.createInsuranceCard(req.body);
+    res.status(201).json({ success: true, message: 'تم إصدار بطاقة التأمين الطبي بنجاح', data: card });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/insurance/cards/:id', (req, res) => {
+  try {
+    const card = healthInsuranceService.getInsuranceCardById(req.params.id);
+    if (!card) return res.status(404).json({ success: false, error: 'بطاقة التأمين غير موجودة' });
+    res.json({ success: true, data: card });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/insurance/cards/:id', (req, res) => {
+  try {
+    const updated = healthInsuranceService.updateInsuranceCard(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث بيانات بطاقة التأمين بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/insurance/cards/:id', (req, res) => {
+  try {
+    const result = healthInsuranceService.deleteInsuranceCard(req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/insurance/cards/:id/print', (req, res) => {
+  try {
+    const html = healthInsuranceService.generateInsuranceCardPrintHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في طباعة بطاقة التأمين: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/insurance/cards-export/csv', (req, res) => {
+  try {
+    const csv = healthInsuranceService.exportInsuranceCardsCsv();
+    const filename = `insurance_cards_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Municipal Health Cards (البلدية)
+app.get('/api/insurance/health-cards', (req, res) => {
+  try {
+    const cards = healthInsuranceService.getHealthCards(req.query);
+    res.json({ success: true, count: cards.length, data: cards });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/insurance/health-cards', (req, res) => {
+  try {
+    const card = healthInsuranceService.createHealthCard(req.body);
+    res.status(201).json({ success: true, message: 'تم تسجيل الشهادة الصحية البلدية بنجاح', data: card });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/insurance/health-cards/:id', (req, res) => {
+  try {
+    const card = healthInsuranceService.getHealthCardById(req.params.id);
+    if (!card) return res.status(404).json({ success: false, error: 'الشهادة الصحية غير موجودة' });
+    res.json({ success: true, data: card });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/insurance/health-cards/:id', (req, res) => {
+  try {
+    const updated = healthInsuranceService.updateHealthCard(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث الشهادة الصحية بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/insurance/health-cards/:id', (req, res) => {
+  try {
+    const result = healthInsuranceService.deleteHealthCard(req.params.id);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/insurance/health-cards/:id/print', (req, res) => {
+  try {
+    const html = healthInsuranceService.generateHealthCardPrintHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في طباعة الشهادة الصحية: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/insurance/health-cards-export/csv', (req, res) => {
+  try {
+    const csv = healthInsuranceService.exportHealthCardsCsv();
+    const filename = `municipal_health_cards_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Health Education Articles
+app.get('/api/insurance/articles', (req, res) => {
+  try {
+    const articles = healthInsuranceService.getHealthArticles(req.query);
+    res.json({ success: true, count: articles.length, data: articles });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/insurance/articles', (req, res) => {
+  try {
+    const article = healthInsuranceService.createHealthArticle(req.body);
+    res.status(201).json({ success: true, message: 'تم نشر المقال التوعوي الصحي بنجاح', data: article });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/insurance/articles/:id', (req, res) => {
+  try {
+    const article = healthInsuranceService.getHealthArticleById(req.params.id);
+    if (!article) return res.status(404).json({ success: false, error: 'المقال غير موجود' });
+    res.json({ success: true, data: article });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/insurance/articles/:id/print', (req, res) => {
+  try {
+    const html = healthInsuranceService.generateHealthArticlePrintHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في طباعة البوستر التوعوي: ${err.message}</h3>`);
   }
 });
 

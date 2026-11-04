@@ -1166,7 +1166,7 @@ function applyRolePermissions() {
   }
 
   // Desktop Aside navigation items - strictly driven by RBAC permissions
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
 
   allTabs.forEach(t => {
     const el = document.getElementById(`nav-${t}`);
@@ -1410,7 +1410,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -1472,6 +1472,9 @@ function switchTab(tabId) {
         break;
       case 'fleet':
         loadFleetView();
+        break;
+      case 'insurance':
+        loadInsuranceView();
         break;
       case 'attendance-notices':
         loadNoticesView();
@@ -12792,6 +12795,807 @@ window.exportFleetCsv = exportFleetCsv;
 window.openImportVehiclesModal = openImportVehiclesModal;
 window.updateImportFileName = updateImportFileName;
 window.submitImportVehicles = submitImportVehicles;
+
+/* =========================================================================
+   MODULE 5: MEDICAL INSURANCE, HEALTH EDUCATION & MUNICIPAL HEALTH CARDS
+   (التأمين الطبي والبطاقات الصحية للعمال والتثقيف الصحي)
+   ========================================================================= */
+
+const insuranceState = {
+  cards: [],
+  healthCards: [],
+  articles: [],
+  policies: [],
+  kpis: {},
+  activeSubTab: 'cards'
+};
+
+/**
+ * Main loader for Module 5
+ */
+async function loadInsuranceView() {
+  await Promise.all([
+    loadInsuranceKpis(),
+    loadInsuranceCards(),
+    loadHealthCards(),
+    loadHealthArticles(),
+    loadInsurancePolicies()
+  ]);
+  switchInsuranceSubTab(insuranceState.activeSubTab || 'cards');
+}
+
+/**
+ * Load KPIs & Alert summary
+ */
+async function loadInsuranceKpis() {
+  try {
+    const res = await fetch('/api/insurance/kpis');
+    const json = await res.json();
+    if (!json.success) return;
+
+    const k = json.data;
+    insuranceState.kpis = k;
+
+    const coveredEl = document.getElementById('insKpiCovered');
+    const policiesEl = document.getElementById('insKpiPolicies');
+    const healthCardsEl = document.getElementById('insKpiHealthCards');
+    const alertsEl = document.getElementById('insKpiAlerts');
+    const baladiyaBadgeEl = document.getElementById('insBaladiyaAlertBadge');
+    const navBadgeEl = document.getElementById('badgeNavInsurance');
+
+    if (coveredEl) coveredEl.textContent = k.total_covered_lives || 0;
+    if (policiesEl) policiesEl.textContent = k.total_policies || 0;
+    if (healthCardsEl) healthCardsEl.textContent = k.total_municipal_cards || 0;
+    if (alertsEl) alertsEl.textContent = k.total_alerts || 0;
+
+    const municipalAlertsCount = (k.municipal_alerts?.expiring_soon || 0) + (k.municipal_alerts?.expired || 0);
+    if (baladiyaBadgeEl) baladiyaBadgeEl.textContent = municipalAlertsCount;
+
+    if (navBadgeEl) {
+      if (k.total_alerts > 0) {
+        navBadgeEl.textContent = `${k.total_alerts} تنبيه`;
+        navBadgeEl.className = 'px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 animate-pulse';
+      } else {
+        navBadgeEl.textContent = 'CCHI';
+        navBadgeEl.className = 'px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-900 border border-rose-300';
+      }
+    }
+  } catch (err) {
+    console.error('Error loading insurance KPIs:', err);
+  }
+}
+
+/**
+ * Switch Sub-Tabs in Module 5
+ */
+function switchInsuranceSubTab(tabName) {
+  insuranceState.activeSubTab = tabName;
+
+  const tabCards = document.getElementById('insTabCards');
+  const tabBaladiya = document.getElementById('insTabBaladiya');
+  const tabEducation = document.getElementById('insTabEducation');
+  const tabPolicies = document.getElementById('insTabPolicies');
+
+  const viewCards = document.getElementById('insSubViewCards');
+  const viewBaladiya = document.getElementById('insSubViewBaladiya');
+  const viewEducation = document.getElementById('insSubViewEducation');
+  const viewPolicies = document.getElementById('insSubViewPolicies');
+
+  const activeClasses = ['border-brand', 'text-brand'];
+  const inactiveClasses = ['border-transparent', 'text-slate-500'];
+
+  [tabCards, tabBaladiya, tabEducation, tabPolicies].forEach(t => {
+    if (t) {
+      t.classList.remove(...activeClasses);
+      t.classList.add(...inactiveClasses);
+    }
+  });
+
+  [viewCards, viewBaladiya, viewEducation, viewPolicies].forEach(v => {
+    if (v) v.classList.add('hidden');
+  });
+
+  if (tabName === 'cards') {
+    if (tabCards) { tabCards.classList.add(...activeClasses); tabCards.classList.remove(...inactiveClasses); }
+    if (viewCards) viewCards.classList.remove('hidden');
+  } else if (tabName === 'baladiya') {
+    if (tabBaladiya) { tabBaladiya.classList.add(...activeClasses); tabBaladiya.classList.remove(...inactiveClasses); }
+    if (viewBaladiya) viewBaladiya.classList.remove('hidden');
+  } else if (tabName === 'education') {
+    if (tabEducation) { tabEducation.classList.add(...activeClasses); tabEducation.classList.remove(...inactiveClasses); }
+    if (viewEducation) viewEducation.classList.remove('hidden');
+  } else if (tabName === 'policies') {
+    if (tabPolicies) { tabPolicies.classList.add(...activeClasses); tabPolicies.classList.remove(...inactiveClasses); }
+    if (viewPolicies) viewPolicies.classList.remove('hidden');
+  }
+}
+
+/**
+ * 1. Fetch & Render Employee Insurance Cards
+ */
+async function loadInsuranceCards() {
+  try {
+    const res = await fetch('/api/insurance/cards');
+    const json = await res.json();
+    if (!json.success) return;
+
+    insuranceState.cards = json.data || [];
+    renderInsuranceCardsTable(insuranceState.cards);
+  } catch (err) {
+    console.error('Error loading insurance cards:', err);
+  }
+}
+
+function renderInsuranceCardsTable(cards) {
+  const tbody = document.getElementById('insCardsTableBody');
+  const countBadge = document.getElementById('insCardsCountBadge');
+  if (!tbody) return;
+
+  const search = (document.getElementById('insSearchInput')?.value || '').toLowerCase().trim();
+  const classFilter = document.getElementById('insClassFilter')?.value || '';
+  const statusFilter = document.getElementById('insStatusFilter')?.value || '';
+
+  const filtered = cards.filter(c => {
+    if (classFilter && c.class_category !== classFilter) return false;
+    if (statusFilter && c.status !== statusFilter) return false;
+
+    if (search) {
+      const matchName = (c.emp_name || '').toLowerCase().includes(search);
+      const matchCode = (c.emp_code || '').toLowerCase().includes(search);
+      const matchMember = (c.member_id || '').toLowerCase().includes(search);
+      const matchId = (c.national_id || '').toLowerCase().includes(search);
+      if (!matchName && !matchCode && !matchMember && !matchId) return false;
+    }
+    return true;
+  });
+
+  if (countBadge) {
+    countBadge.textContent = `عرض ${filtered.length} من أصل ${cards.length} بطاقة تأمين`;
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="p-8 text-center text-slate-400">
+          <i class="fa-solid fa-notes-medical text-4xl mb-2 text-slate-300"></i>
+          <p class="font-bold text-sm">لا توجد بطاقات تأمين طبي تطابق معايير البحث والفلترة</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const classBadgeColor = c.class_category === 'VIP' ? 'bg-amber-100 text-amber-900 border-amber-300' :
+                           c.class_category === 'A' ? 'bg-purple-100 text-purple-900 border-purple-300' :
+                           c.class_category === 'B' ? 'bg-blue-100 text-blue-900 border-blue-300' :
+                           'bg-slate-100 text-slate-800 border-slate-300';
+
+    const exp = c.expiry_info || { text_ar: c.expiry_date, status: 'valid' };
+    const expBadgeClass = exp.status === 'expired' ? 'bg-rose-100 text-rose-800 font-black' :
+                          exp.status === 'expiring_soon' ? 'bg-amber-100 text-amber-800 font-black' :
+                          'bg-emerald-50 text-emerald-800 font-bold';
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition group">
+        <td class="p-3.5">
+          <div class="font-black text-slate-900 text-xs">${c.emp_name}</div>
+          <div class="text-[11px] text-slate-500 font-mono flex items-center gap-1.5 mt-0.5">
+            <span>${c.emp_code}</span>
+            <span>• ${c.emp_job || 'موظف'}</span>
+          </div>
+          <div class="text-[10px] text-slate-400 font-mono mt-0.5">هوية: ${c.national_id || '---'}</div>
+        </td>
+
+        <td class="p-3.5 font-mono font-bold text-blue-700 text-xs">
+          ${c.member_id}
+        </td>
+
+        <td class="p-3.5 text-center">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border ${classBadgeColor}">
+            ${c.class_category}
+          </span>
+        </td>
+
+        <td class="p-3.5">
+          <div class="font-bold text-slate-900 text-xs">${c.provider_name || 'شركة التأمين'}</div>
+          <div class="text-[11px] text-slate-500 font-mono">${c.policy_no || '---'}</div>
+        </td>
+
+        <td class="p-3.5 text-center font-mono font-bold text-slate-800">
+          ${c.copay_percent}%
+        </td>
+
+        <td class="p-3.5 text-center font-bold text-slate-700">
+          ${c.dependents_count || 0}
+        </td>
+
+        <td class="p-3.5 text-center font-black text-rose-600 font-mono">
+          ${c.blood_group || 'O+'}
+        </td>
+
+        <td class="p-3.5">
+          <div class="font-mono font-bold text-slate-800 text-[11px]">${c.expiry_date || '---'}</div>
+          <span class="px-2 py-0.5 rounded text-[10px] block w-max mt-0.5 ${expBadgeClass}">
+            ${exp.text_ar}
+          </span>
+        </td>
+
+        <td class="p-3.5 text-center">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${c.status === 'سارية' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+            ${c.status}
+          </span>
+        </td>
+
+        <td class="p-3.5 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button onclick="printInsuranceCard(${c.id})" title="طباعة البطاقة الرقمية CCHI (A4)" class="p-1.5 rounded-lg bg-[#700c14] hover:bg-[#52090e] text-white text-xs shadow-xs transition">
+              <i class="fa-solid fa-print"></i>
+            </button>
+            <button onclick="openEditInsuranceCardModal(${c.id})" title="تعديل البطاقة" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button onclick="deleteInsuranceCardConfirm(${c.id})" title="حذف البطاقة" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs transition">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterInsuranceCardsTable() {
+  renderInsuranceCardsTable(insuranceState.cards);
+}
+
+/**
+ * 2. Fetch & Render Municipal Health Cards (البلدية)
+ */
+async function loadHealthCards() {
+  try {
+    const res = await fetch('/api/insurance/health-cards');
+    const json = await res.json();
+    if (!json.success) return;
+
+    insuranceState.healthCards = json.data || [];
+    renderHealthCardsTable(insuranceState.healthCards);
+  } catch (err) {
+    console.error('Error loading health cards:', err);
+  }
+}
+
+function renderHealthCardsTable(cards) {
+  const tbody = document.getElementById('baladiyaCardsTableBody');
+  const countBadge = document.getElementById('baladiyaCardsCountBadge');
+  if (!tbody) return;
+
+  const search = (document.getElementById('baladiyaSearchInput')?.value || '').toLowerCase().trim();
+  const munFilter = document.getElementById('baladiyaMunicipalityFilter')?.value || '';
+  const fitFilter = document.getElementById('baladiyaFitnessFilter')?.value || '';
+
+  const filtered = cards.filter(c => {
+    if (munFilter && !(c.municipality_name || '').includes(munFilter)) return false;
+    if (fitFilter && c.fitness_result !== fitFilter) return false;
+
+    if (search) {
+      const matchName = (c.emp_name || '').toLowerCase().includes(search);
+      const matchCode = (c.emp_code || '').toLowerCase().includes(search);
+      const matchCard = (c.card_no || '').toLowerCase().includes(search);
+      const matchProf = (c.profession || '').toLowerCase().includes(search);
+      if (!matchName && !matchCode && !matchCard && !matchProf) return false;
+    }
+    return true;
+  });
+
+  if (countBadge) {
+    countBadge.textContent = `عرض ${filtered.length} من أصل ${cards.length} شهادة بلدية`;
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" class="p-8 text-center text-slate-400">
+          <i class="fa-solid fa-id-card-clip text-4xl mb-2 text-slate-300"></i>
+          <p class="font-bold text-sm">لا توجد بطاقات صحية تطابق معايير البحث</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const exp = c.expiry_info || { text_ar: c.expiry_date, status: 'valid' };
+    const expBadgeClass = exp.status === 'expired' ? 'bg-rose-100 text-rose-800 font-black' :
+                          exp.status === 'expiring_soon' ? 'bg-amber-100 text-amber-800 font-black' :
+                          'bg-emerald-50 text-emerald-800 font-bold';
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition group">
+        <td class="p-3.5">
+          <div class="font-black text-slate-900 text-xs">${c.emp_name}</div>
+          <div class="text-[11px] text-slate-500 font-mono mt-0.5">
+            ${c.emp_code} • <span class="text-emerald-700 font-bold">${c.profession}</span>
+          </div>
+          <div class="text-[10px] text-slate-400 font-mono">هوية: ${c.national_id || '---'}</div>
+        </td>
+
+        <td class="p-3.5 font-mono font-bold text-slate-800 text-xs">
+          ${c.card_no}
+        </td>
+
+        <td class="p-3.5 font-bold text-slate-900 text-xs">
+          ${c.municipality_name}
+        </td>
+
+        <td class="p-3.5 text-xs text-slate-600">
+          ${c.medical_center}
+        </td>
+
+        <td class="p-3.5 text-center">
+          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black ${c.fitness_result === 'لائق طبياً' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800'}">
+            ${c.fitness_result}
+          </span>
+        </td>
+
+        <td class="p-3.5">
+          <div class="font-mono font-bold text-slate-800 text-[11px]">${c.expiry_date}</div>
+          <span class="px-2 py-0.5 rounded text-[10px] block w-max mt-0.5 ${expBadgeClass}">
+            ${exp.text_ar}
+          </span>
+        </td>
+
+        <td class="p-3.5 text-center">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${exp.status === 'expired' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+            ${exp.status === 'expired' ? 'منتهية' : 'سارية'}
+          </span>
+        </td>
+
+        <td class="p-3.5 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button onclick="printHealthCard(${c.id})" title="طباعة شهادة البلدية الصحية A4" class="p-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-xs transition">
+              <i class="fa-solid fa-print"></i>
+            </button>
+            <button onclick="openEditHealthCardModal(${c.id})" title="تعديل البطاقة" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button onclick="deleteHealthCardConfirm(${c.id})" title="حذف الشهادة" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs transition">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterHealthCardsTable() {
+  renderHealthCardsTable(insuranceState.healthCards);
+}
+
+/**
+ * 3. Fetch & Render Health Awareness Articles
+ */
+async function loadHealthArticles() {
+  try {
+    const res = await fetch('/api/insurance/articles');
+    const json = await res.json();
+    if (!json.success) return;
+
+    insuranceState.articles = json.data || [];
+    renderHealthArticles(insuranceState.articles);
+  } catch (err) {
+    console.error('Error loading health articles:', err);
+  }
+}
+
+function renderHealthArticles(articles) {
+  const container = document.getElementById('healthArticlesGrid');
+  if (!container) return;
+
+  if (articles.length === 0) {
+    container.innerHTML = '<p class="text-slate-400 text-xs py-8 text-center col-span-3">لا توجد نشرات تثقيفية حالياً</p>';
+    return;
+  }
+
+  container.innerHTML = articles.map(a => `
+    <div class="card-elevated p-5 flex flex-col justify-between hover:shadow-xl transition border border-slate-200 group">
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+            ${a.category}
+          </span>
+          <div class="w-10 h-10 rounded-xl bg-slate-100 text-[#700c14] flex items-center justify-center text-lg shadow-xs group-hover:scale-110 transition">
+            <i class="fa-solid ${a.icon || 'fa-heart-pulse'}"></i>
+          </div>
+        </div>
+
+        <h4 class="font-black text-slate-900 text-sm leading-snug">${a.title_ar}</h4>
+        ${a.title_en ? `<p class="text-[10px] font-mono text-slate-400 truncate">${a.title_en}</p>` : ''}
+        <p class="text-xs text-slate-600 leading-relaxed line-clamp-3">${a.summary_ar || ''}</p>
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-between mt-4">
+        <span class="text-[10px] text-slate-400 font-mono">${a.published_date || ''}</span>
+        <button onclick="printHealthArticle(${a.id})" class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-[#700c14] text-white font-bold text-xs flex items-center gap-1.5 transition shadow">
+          <i class="fa-solid fa-print text-[11px]"></i> طباعة البوستر (A4)
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/**
+ * 4. Fetch & Render Policies
+ */
+async function loadInsurancePolicies() {
+  try {
+    const res = await fetch('/api/insurance/policies');
+    const json = await res.json();
+    if (!json.success) return;
+
+    insuranceState.policies = json.data || [];
+    renderInsurancePolicies(insuranceState.policies);
+    populatePolicySelectDropdown(insuranceState.policies);
+  } catch (err) {
+    console.error('Error loading policies:', err);
+  }
+}
+
+function renderInsurancePolicies(policies) {
+  const container = document.getElementById('insurancePoliciesGrid');
+  if (!container) return;
+
+  if (policies.length === 0) {
+    container.innerHTML = '<p class="text-slate-400 text-xs py-8 text-center col-span-2">لا توجد وثائق تأمين مسجلة</p>';
+    return;
+  }
+
+  container.innerHTML = policies.map(p => `
+    <div class="card-elevated p-5 space-y-3 border-t-4 border-blue-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-blue-700">${p.policy_no}</span>
+          <h4 class="font-black text-slate-900 text-sm mt-1">${p.provider_name}</h4>
+        </div>
+        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${p.status === 'سارية' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">
+          ${p.status}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+        <div>
+          <span class="text-slate-400 block text-[10px]">فترة السريان:</span>
+          <span class="font-mono font-bold text-slate-800">${p.policy_start || '---'} إلى ${p.policy_end || '---'}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block text-[10px]">الحد الأقصى للتغطية:</span>
+          <span class="font-bold text-emerald-700 font-mono">${Number(p.max_coverage_per_person || 500000).toLocaleString('en-US')} ر.س</span>
+        </div>
+        <div class="col-span-2">
+          <span class="text-slate-400 block text-[10px]">الشبكة والتصنيف:</span>
+          <span class="font-bold text-slate-900">${p.network_tier || 'الشبكة الذهبية والشاملة'}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 text-xs">
+        <span class="text-slate-500 font-bold">المؤمن لهم عبر الوثيقة: <strong class="text-blue-700 font-mono">${p.covered_employees_count || 0}</strong> موظف</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function populatePolicySelectDropdown(policies) {
+  const select = document.getElementById('insCardPolicySelect');
+  if (!select) return;
+  select.innerHTML = policies.map(p => `<option value="${p.id}">${p.provider_name} (${p.policy_no})</option>`).join('');
+}
+
+/**
+ * Modals & Actions for Insurance Cards
+ */
+function openAddInsuranceCardModal(cardId = null) {
+  const form = document.querySelector('#modalAddInsuranceCard form');
+  if (form) form.reset();
+
+  const titleEl = document.getElementById('modalInsuranceCardTitle');
+  const idEl = document.getElementById('insCardFormId');
+  const empSelect = document.getElementById('insCardEmpSelect');
+
+  // Populate employee select
+  if (empSelect) {
+    empSelect.innerHTML = '<option value="">-- اختر الموظف المؤمن له --</option>';
+    const emps = Array.isArray(state?.employees) ? state.employees : [];
+    emps.forEach(emp => {
+      empSelect.innerHTML += `<option value="${emp.id}">${emp.emp_code} - ${emp.full_name_ar} (${emp.job_title_ar || 'موظف'})</option>`;
+    });
+  }
+
+  populatePolicySelectDropdown(insuranceState.policies);
+
+  if (cardId) {
+    const card = insuranceState.cards.find(x => x.id === cardId);
+    if (!card) return;
+
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square text-rose-600"></i> تعديل بطاقة التأمين (${card.emp_name})`;
+    if (idEl) idEl.value = card.id;
+
+    if (empSelect) empSelect.value = card.emp_id;
+    document.getElementById('insCardPolicySelect').value = card.policy_id || '';
+    document.getElementById('insCardMemberId').value = card.member_id || '';
+    document.getElementById('insCardClass').value = card.class_category || 'B';
+    document.getElementById('insCardBlood').value = card.blood_group || 'O+';
+    document.getElementById('insCardCopay').value = card.copay_percent !== undefined ? card.copay_percent : 20;
+    document.getElementById('insCardDependents').value = card.dependents_count || 0;
+    document.getElementById('insCardExpiry').value = card.expiry_date || '2026-12-31';
+    document.getElementById('insCardNotes').value = card.notes || '';
+  } else {
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-notes-medical text-rose-600"></i> إصدار بطاقة تأمين طبي لموظف`;
+    if (idEl) idEl.value = '';
+    document.getElementById('insCardClass').value = 'B';
+    document.getElementById('insCardCopay').value = 20;
+    document.getElementById('insCardExpiry').value = '2026-12-31';
+  }
+
+  openModal('modalAddInsuranceCard');
+}
+
+function openEditInsuranceCardModal(id) {
+  openAddInsuranceCardModal(id);
+}
+
+async function submitInsuranceCardForm(e) {
+  e.preventDefault();
+  const id = document.getElementById('insCardFormId').value;
+
+  const payload = {
+    emp_id: document.getElementById('insCardEmpSelect').value,
+    policy_id: document.getElementById('insCardPolicySelect').value,
+    member_id: document.getElementById('insCardMemberId').value,
+    class_category: document.getElementById('insCardClass').value,
+    blood_group: document.getElementById('insCardBlood').value,
+    copay_percent: document.getElementById('insCardCopay').value,
+    dependents_count: document.getElementById('insCardDependents').value,
+    expiry_date: document.getElementById('insCardExpiry').value,
+    notes: document.getElementById('insCardNotes').value
+  };
+
+  try {
+    const url = id ? `/api/insurance/cards/${id}` : '/api/insurance/cards';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      closeModal('modalAddInsuranceCard');
+      await loadInsuranceView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ بطاقة التأمين: ' + err.message);
+  }
+}
+
+async function deleteInsuranceCardConfirm(id) {
+  if (!confirm('هل أنت متأكد من حذف بطاقة التأمين الطبي؟')) return;
+  try {
+    const res = await fetch(`/api/insurance/cards/${id}`, { method: 'DELETE' });
+    const json = await res.json();
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      await loadInsuranceView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء الحذف: ' + err.message);
+  }
+}
+
+function printInsuranceCard(cardId) {
+  window.open(`/api/insurance/cards/${cardId}/print`, '_blank', 'width=950,height=900,scrollbars=yes');
+}
+
+/**
+ * Modals & Actions for Municipal Health Cards (البلدية)
+ */
+function openAddHealthCardModal(cardId = null) {
+  const form = document.querySelector('#modalAddHealthCard form');
+  if (form) form.reset();
+
+  const titleEl = document.getElementById('modalHealthCardTitle');
+  const idEl = document.getElementById('healthCardFormId');
+  const empSelect = document.getElementById('healthCardEmpSelect');
+
+  // Populate employee select
+  if (empSelect) {
+    empSelect.innerHTML = '<option value="">-- اختر العامل المستفيد --</option>';
+    const emps = Array.isArray(state?.employees) ? state.employees : [];
+    emps.forEach(emp => {
+      empSelect.innerHTML += `<option value="${emp.id}">${emp.emp_code} - ${emp.full_name_ar} (${emp.job_title_ar || 'عامل'})</option>`;
+    });
+  }
+
+  if (cardId) {
+    const card = insuranceState.healthCards.find(x => x.id === cardId);
+    if (!card) return;
+
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square text-emerald-600"></i> تعديل وتجديد شهادة البلدية (${card.emp_name})`;
+    if (idEl) idEl.value = card.id;
+
+    if (empSelect) empSelect.value = card.emp_id;
+    document.getElementById('healthCardProfession').value = card.profession || '';
+    document.getElementById('healthCardNo').value = card.card_no || '';
+    document.getElementById('healthCardMunicipality').value = card.municipality_name || 'أمانة منطقة عسير';
+    document.getElementById('healthCardCenter').value = card.medical_center || '';
+    document.getElementById('healthCardFitness').value = card.fitness_result || 'لائق طبياً';
+    document.getElementById('healthCardExpiry').value = card.expiry_date || '';
+    document.getElementById('healthCardNotes').value = card.notes || '';
+  } else {
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-id-card-clip text-emerald-600"></i> تسجيل شهادة بلدية صحية لعامل`;
+    if (idEl) idEl.value = '';
+    document.getElementById('healthCardMunicipality').value = 'أمانة منطقة عسير';
+    document.getElementById('healthCardCenter').value = 'مجمع عسير الطبي المعتمد';
+    document.getElementById('healthCardFitness').value = 'لائق طبياً';
+  }
+
+  openModal('modalAddHealthCard');
+}
+
+function openEditHealthCardModal(id) {
+  openAddHealthCardModal(id);
+}
+
+async function submitHealthCardForm(e) {
+  e.preventDefault();
+  const id = document.getElementById('healthCardFormId').value;
+
+  const payload = {
+    emp_id: document.getElementById('healthCardEmpSelect').value,
+    profession: document.getElementById('healthCardProfession').value,
+    card_no: document.getElementById('healthCardNo').value,
+    municipality_name: document.getElementById('healthCardMunicipality').value,
+    medical_center: document.getElementById('healthCardCenter').value,
+    fitness_result: document.getElementById('healthCardFitness').value,
+    expiry_date: document.getElementById('healthCardExpiry').value,
+    notes: document.getElementById('healthCardNotes').value
+  };
+
+  try {
+    const url = id ? `/api/insurance/health-cards/${id}` : '/api/insurance/health-cards';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      closeModal('modalAddHealthCard');
+      await loadInsuranceView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ الشهادة الصحية: ' + err.message);
+  }
+}
+
+async function deleteHealthCardConfirm(id) {
+  if (!confirm('هل أنت متأكد من حذف الشهادة الصحية البلدية؟')) return;
+  try {
+    const res = await fetch(`/api/insurance/health-cards/${id}`, { method: 'DELETE' });
+    const json = await res.json();
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      await loadInsuranceView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء الحذف: ' + err.message);
+  }
+}
+
+function printHealthCard(cardId) {
+  window.open(`/api/insurance/health-cards/${cardId}/print`, '_blank', 'width=950,height=900,scrollbars=yes');
+}
+
+function printHealthArticle(articleId) {
+  window.open(`/api/insurance/articles/${articleId}/print`, '_blank', 'width=950,height=900,scrollbars=yes');
+}
+
+/**
+ * Modals & Actions for Policies
+ */
+function openAddPolicyModal() {
+  const form = document.querySelector('#modalAddPolicy form');
+  if (form) form.reset();
+  openModal('modalAddPolicy');
+}
+
+async function submitPolicyForm(e) {
+  e.preventDefault();
+  const payload = {
+    policy_no: document.getElementById('policyFormNo').value,
+    provider_name: document.getElementById('policyFormProvider').value,
+    policy_start: document.getElementById('policyFormStart').value,
+    policy_end: document.getElementById('policyFormEnd').value
+  };
+
+  try {
+    const res = await fetch('/api/insurance/policies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      closeModal('modalAddPolicy');
+      await loadInsuranceView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ الوثيقة: ' + err.message);
+  }
+}
+
+function exportInsuranceCardsCsv() {
+  window.open('/api/insurance/cards-export/csv', '_blank');
+}
+
+function exportHealthCardsCsv() {
+  window.open('/api/insurance/health-cards-export/csv', '_blank');
+}
+
+// Window global exports for Module 5
+window.loadInsuranceView = loadInsuranceView;
+window.loadInsuranceKpis = loadInsuranceKpis;
+window.switchInsuranceSubTab = switchInsuranceSubTab;
+window.loadInsuranceCards = loadInsuranceCards;
+window.renderInsuranceCardsTable = renderInsuranceCardsTable;
+window.filterInsuranceCardsTable = filterInsuranceCardsTable;
+window.loadHealthCards = loadHealthCards;
+window.renderHealthCardsTable = renderHealthCardsTable;
+window.filterHealthCardsTable = filterHealthCardsTable;
+window.loadHealthArticles = loadHealthArticles;
+window.renderHealthArticles = renderHealthArticles;
+window.loadInsurancePolicies = loadInsurancePolicies;
+window.renderInsurancePolicies = renderInsurancePolicies;
+window.openAddInsuranceCardModal = openAddInsuranceCardModal;
+window.openEditInsuranceCardModal = openEditInsuranceCardModal;
+window.submitInsuranceCardForm = submitInsuranceCardForm;
+window.deleteInsuranceCardConfirm = deleteInsuranceCardConfirm;
+window.printInsuranceCard = printInsuranceCard;
+window.openAddHealthCardModal = openAddHealthCardModal;
+window.openEditHealthCardModal = openEditHealthCardModal;
+window.submitHealthCardForm = submitHealthCardForm;
+window.deleteHealthCardConfirm = deleteHealthCardConfirm;
+window.printHealthCard = printHealthCard;
+window.printHealthArticle = printHealthArticle;
+window.openAddPolicyModal = openAddPolicyModal;
+window.submitPolicyForm = submitPolicyForm;
+window.exportInsuranceCardsCsv = exportInsuranceCardsCsv;
+window.exportHealthCardsCsv = exportHealthCardsCsv;
+
 
 
 
