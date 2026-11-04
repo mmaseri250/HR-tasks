@@ -30,6 +30,7 @@ const cacheService = require('./modules/cacheService');
 const attendanceAutomationService = require('./modules/attendanceAutomationService');
 const { eosCalculatorService, SAUDI_EOS_TERMINATION_CASES } = require('./modules/eosCalculatorService');
 const atsRecruitmentService = require('./modules/atsRecruitmentService');
+const fleetService = require('./modules/fleetService');
 
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
@@ -2274,6 +2275,172 @@ app.get('/api/recruitment/templates/undertaking/print', (req, res) => {
     res.send(html);
   } catch (err) {
     res.status(500).send(`<h3>خطأ في توليد نموذج التعهد وسرية المعلومات: ${err.message}</h3>`);
+  }
+});
+
+/* =========================================================================
+   FLEET & VEHICLE MANAGEMENT API (إدارة الأسطول والسيارات ومنصة تم)
+   ========================================================================= */
+
+// Fleet KPIs & Compliance Alerts
+app.get('/api/fleet/kpis', (req, res) => {
+  try {
+    const kpis = fleetService.getFleetKpis();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// List Vehicles (with search and filters)
+app.get('/api/fleet/vehicles', (req, res) => {
+  try {
+    const vehicles = fleetService.getVehicles(req.query);
+    res.json({ success: true, count: vehicles.length, data: vehicles });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Create Vehicle
+app.post('/api/fleet/vehicles', (req, res) => {
+  try {
+    const newVehicle = fleetService.createVehicle(req.body);
+    res.status(201).json({ success: true, message: 'تمت إضافة المركبة بنجاح', data: newVehicle });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Get Single Vehicle Details
+app.get('/api/fleet/vehicles/:id', (req, res) => {
+  try {
+    const vehicle = fleetService.getVehicleById(req.params.id);
+    if (!vehicle) return res.status(404).json({ success: false, error: 'المركبة غير موجودة' });
+    res.json({ success: true, data: vehicle });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update Vehicle
+app.put('/api/fleet/vehicles/:id', (req, res) => {
+  try {
+    const updated = fleetService.updateVehicle(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث بيانات المركبة بنجاح', data: updated });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Delete Vehicle
+app.delete('/api/fleet/vehicles/:id', (req, res) => {
+  try {
+    const result = fleetService.deleteVehicle(req.params.id);
+    res.json({ success: true, message: result.message });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Assign Vehicle Custody (تسليم عهدة)
+app.post('/api/fleet/vehicles/:id/assign', (req, res) => {
+  try {
+    const { emp_id, ...handoverData } = req.body;
+    if (!emp_id) return res.status(400).json({ success: false, error: 'يرجى تحديد الموظف المستلم للعهدة' });
+    const result = fleetService.assignVehicle(req.params.id, emp_id, handoverData);
+    res.json({ success: true, message: 'تم تسليم عهدة المركبة بنجاح وتوثيق المحضر', data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Return Vehicle Custody (استرداد عهدة)
+app.post('/api/fleet/vehicles/:id/return', (req, res) => {
+  try {
+    const result = fleetService.returnVehicle(req.params.id, req.body);
+    res.json({ success: true, message: 'تم استرداد عهدة المركبة وإخلاء طرف الموظف بنجاح', data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Export CSV with UTF-8 BOM
+app.get('/api/fleet/export/csv', (req, res) => {
+  try {
+    const csvData = fleetService.exportVehiclesCsv();
+    const filename = `fleet_export_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvData);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Export Excel (.xlsx)
+app.get('/api/fleet/export/excel', (req, res) => {
+  try {
+    const buffer = fleetService.exportVehiclesExcel();
+    const filename = `fleet_tamm_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Download Blank Import Template
+app.get('/api/fleet/template', (req, res) => {
+  try {
+    const csvTemplate = fleetService.getImportTemplateCsv();
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="fleet_import_template.csv"');
+    res.send(csvTemplate);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Import Vehicles from Excel / CSV
+app.post('/api/fleet/import', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'يرجى إرفاق ملف إكسل أو CSV للاستيراد' });
+    }
+
+    const filePath = req.file.path;
+    const xlsxLib = require('xlsx');
+    const workbook = xlsxLib.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = xlsxLib.utils.sheet_to_json(sheet);
+
+    try { fs.unlinkSync(filePath); } catch (e) {}
+
+    const result = fleetService.importVehicles(rows);
+    res.json({
+      success: true,
+      message: `تمت معالجة ${result.total_rows} صف: تم إدخال ${result.inserted} مركبة جديدة، وتحديث ${result.updated} مركبة.`,
+      data: result
+    });
+  } catch (err) {
+    if (req.file && req.file.path) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Printable Official Handover Certificate (A4)
+app.get('/api/fleet/vehicles/:id/handover-print', (req, res) => {
+  try {
+    const html = fleetService.generateHandoverPrintHtml(req.params.id, req.query.log_id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد محضر تسليم عهدة المركبة: ${err.message}</h3>`);
   }
 });
 

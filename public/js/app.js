@@ -1166,7 +1166,7 @@ function applyRolePermissions() {
   }
 
   // Desktop Aside navigation items - strictly driven by RBAC permissions
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
 
   allTabs.forEach(t => {
     const el = document.getElementById(`nav-${t}`);
@@ -1410,7 +1410,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'attendance-notices', 'absence', 'selfservice', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -1469,6 +1469,9 @@ function switchTab(tabId) {
         break;
       case 'recruitment':
         loadRecruitmentView();
+        break;
+      case 'fleet':
+        loadFleetView();
         break;
       case 'attendance-notices':
         loadNoticesView();
@@ -11955,6 +11958,841 @@ window.submitCompanyEmailSettings = submitCompanyEmailSettings;
 window.exportAbsenceExcel = exportAbsenceExcel;
 window.downloadAbsenceTemplate = downloadAbsenceTemplate;
 window.handleAbsenceExcelUpload = handleAbsenceExcelUpload;
+
+/* =========================================================================
+   MODULE 4: FLEET & VEHICLE MANAGEMENT CONTROLLER (منصة تم وإدارة الأسطول)
+   ========================================================================= */
+
+const fleetState = {
+  vehicles: [],
+  kpis: {},
+  logs: [],
+  activeSubTab: 'vehicles'
+};
+
+/**
+ * Main entry point for loading Fleet & Tamm view
+ */
+async function loadFleetView() {
+  await Promise.all([
+    loadFleetKpis(),
+    loadFleetData()
+  ]);
+  switchFleetSubTab(fleetState.activeSubTab || 'vehicles');
+}
+
+/**
+ * Load KPIs and Tamm alert counts
+ */
+async function loadFleetKpis() {
+  try {
+    const res = await fetch('/api/fleet/kpis');
+    const json = await res.json();
+    if (!json.success) return;
+
+    const data = json.data;
+    fleetState.kpis = data;
+
+    const totalEl = document.getElementById('fleetKpiTotal');
+    const assignedEl = document.getElementById('fleetKpiAssigned');
+    const availableEl = document.getElementById('fleetKpiAvailable');
+    const alertsEl = document.getElementById('fleetKpiAlerts');
+    const badgeEl = document.getElementById('fleetAlertsBadge');
+    const navBadgeEl = document.getElementById('badgeNavFleet');
+
+    if (totalEl) totalEl.textContent = data.total_vehicles || 0;
+    if (assignedEl) assignedEl.textContent = data.assigned_vehicles || 0;
+    if (availableEl) availableEl.textContent = data.available_vehicles || 0;
+    if (alertsEl) alertsEl.textContent = data.total_alerts || 0;
+    if (badgeEl) badgeEl.textContent = data.total_alerts || 0;
+
+    if (navBadgeEl) {
+      if (data.total_alerts > 0) {
+        navBadgeEl.textContent = `${data.total_alerts} تنبيه`;
+        navBadgeEl.className = 'px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 animate-pulse';
+      } else {
+        navBadgeEl.textContent = 'تم';
+        navBadgeEl.className = 'px-1.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300';
+      }
+    }
+  } catch (err) {
+    console.error('Error loading fleet KPIs:', err);
+  }
+}
+
+/**
+ * Fetch all vehicles and render table & compliance cards
+ */
+async function loadFleetData() {
+  try {
+    const res = await fetch('/api/fleet/vehicles');
+    const json = await res.json();
+    if (!json.success) return;
+
+    fleetState.vehicles = json.data || [];
+    renderFleetTable(fleetState.vehicles);
+    renderTammAlerts(fleetState.vehicles);
+  } catch (err) {
+    console.error('Error loading fleet data:', err);
+  }
+}
+
+/**
+ * Switch Sub-Tabs in Fleet View
+ */
+function switchFleetSubTab(tabName) {
+  fleetState.activeSubTab = tabName;
+
+  const tabVehicles = document.getElementById('fleetTabVehicles');
+  const tabAlerts = document.getElementById('fleetTabAlerts');
+  const tabLogs = document.getElementById('fleetTabLogs');
+
+  const viewVehicles = document.getElementById('fleetSubViewVehicles');
+  const viewAlerts = document.getElementById('fleetSubViewAlerts');
+  const viewLogs = document.getElementById('fleetSubViewLogs');
+
+  const activeClasses = ['border-brand', 'text-brand'];
+  const inactiveClasses = ['border-transparent', 'text-slate-500'];
+
+  [tabVehicles, tabAlerts, tabLogs].forEach(t => {
+    if (t) {
+      t.classList.remove(...activeClasses);
+      t.classList.add(...inactiveClasses);
+    }
+  });
+
+  [viewVehicles, viewAlerts, viewLogs].forEach(v => {
+    if (v) v.classList.add('hidden');
+  });
+
+  if (tabName === 'vehicles') {
+    if (tabVehicles) {
+      tabVehicles.classList.add(...activeClasses);
+      tabVehicles.classList.remove(...inactiveClasses);
+    }
+    if (viewVehicles) viewVehicles.classList.remove('hidden');
+  } else if (tabName === 'alerts') {
+    if (tabAlerts) {
+      tabAlerts.classList.add(...activeClasses);
+      tabAlerts.classList.remove(...inactiveClasses);
+    }
+    if (viewAlerts) viewAlerts.classList.remove('hidden');
+  } else if (tabName === 'logs') {
+    if (tabLogs) {
+      tabLogs.classList.add(...activeClasses);
+      tabLogs.classList.remove(...inactiveClasses);
+    }
+    if (viewLogs) viewLogs.classList.remove('hidden');
+    loadFleetLogs();
+  }
+}
+
+/**
+ * Render Vehicles Table with dynamic badges and filters
+ */
+function renderFleetTable(vehicles) {
+  const tbody = document.getElementById('fleetTableBody');
+  const countBadge = document.getElementById('fleetTableCountBadge');
+  if (!tbody) return;
+
+  const search = (document.getElementById('fleetSearchInput')?.value || '').toLowerCase().trim();
+  const statusFilter = document.getElementById('fleetStatusFilter')?.value || '';
+  const custodyFilter = document.getElementById('fleetCustodyFilter')?.value || '';
+  const tammFilter = document.getElementById('fleetTammStatusFilter')?.value || '';
+
+  const filtered = vehicles.filter(v => {
+    if (statusFilter && v.status !== statusFilter) return false;
+    if (tammFilter && v.tamm_status !== tammFilter) return false;
+
+    if (custodyFilter === 'assigned' && !v.assigned_emp_id) return false;
+    if (custodyFilter === 'available' && v.assigned_emp_id) return false;
+
+    if (search) {
+      const matchPlate = (v.plate_number_ar || '').toLowerCase().includes(search);
+      const matchPlateEn = (v.plate_number_en || '').toLowerCase().includes(search);
+      const matchMake = (v.make || '').toLowerCase().includes(search);
+      const matchModel = (v.model || '').toLowerCase().includes(search);
+      const matchVin = (v.vin_serial || '').toLowerCase().includes(search);
+      const matchEmp = (v.assigned_emp_name || '').toLowerCase().includes(search);
+      if (!matchPlate && !matchPlateEn && !matchMake && !matchModel && !matchVin && !matchEmp) return false;
+    }
+
+    return true;
+  });
+
+  if (countBadge) {
+    countBadge.textContent = `عرض ${filtered.length} من أصل ${vehicles.length} مركبة`;
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="p-8 text-center text-slate-400">
+          <i class="fa-solid fa-car-side text-4xl mb-2 text-slate-300"></i>
+          <p class="font-bold text-sm">لا توجد مركبات تطابق معايير البحث والفلترة المحددة</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const getStatusBadge = (statusObj) => {
+    if (!statusObj || statusObj.status === 'unknown') {
+      return '<span class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold">غير محدد</span>';
+    }
+    if (statusObj.status === 'expired') {
+      return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-black border border-rose-200 flex items-center gap-1 w-max"><i class="fa-solid fa-triangle-exclamation text-[9px]"></i> ${statusObj.text_ar}</span>`;
+    }
+    if (statusObj.status === 'expiring_soon') {
+      return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-black border border-amber-200 flex items-center gap-1 w-max"><i class="fa-solid fa-clock text-[9px]"></i> ${statusObj.text_ar}</span>`;
+    }
+    return `<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200 w-max block">${statusObj.text_ar}</span>`;
+  };
+
+  tbody.innerHTML = filtered.map(v => {
+    const isAssigned = !!v.assigned_emp_id;
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition group">
+        <!-- Vehicle & Plate -->
+        <td class="p-3.5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-base font-bold shadow-xs border border-slate-200">
+              <i class="fa-solid fa-truck-pickup"></i>
+            </div>
+            <div>
+              <div class="font-black text-slate-900 text-xs flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded bg-slate-900 text-amber-400 font-mono tracking-wider">${v.plate_number_ar}</span>
+                ${v.plate_number_en ? `<span class="text-[10px] font-mono text-slate-400">(${v.plate_number_en})</span>` : ''}
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono mt-0.5">
+                VIN: ${v.vin_serial || '---'}
+              </div>
+            </div>
+          </div>
+        </td>
+
+        <!-- Specs & Color -->
+        <td class="p-3.5">
+          <div class="font-bold text-slate-900">${v.make} ${v.model}</div>
+          <div class="text-[11px] text-slate-500">موديل ${v.year} - ${v.color || 'أبيض'} (${v.vehicle_type})</div>
+        </td>
+
+        <!-- Custodian Employee -->
+        <td class="p-3.5">
+          ${isAssigned ? `
+            <div>
+              <div class="font-black text-slate-900 flex items-center gap-1">
+                <i class="fa-solid fa-user-check text-emerald-600 text-xs"></i>
+                <span>${v.assigned_emp_name}</span>
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                <span class="font-mono text-slate-600 font-bold">${v.assigned_emp_code || ''}</span>
+                <span>• ${v.assigned_dept_name || 'إدارة المشاريع'}</span>
+              </div>
+              <div class="text-[10px] text-emerald-700 font-bold mt-0.5">
+                تاريخ التسليم: ${v.assigned_date || '---'}
+              </div>
+            </div>
+          ` : `
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 inline-flex items-center gap-1">
+              <i class="fa-solid fa-warehouse text-[10px]"></i> متاح في ساحة الشركة
+            </span>
+          `}
+        </td>
+
+        <!-- Odometer -->
+        <td class="p-3.5 text-center font-mono font-bold text-slate-800">
+          ${Number(v.odometer || 0).toLocaleString('en-US')} <span class="text-[10px] text-slate-400">كم</span>
+        </td>
+
+        <!-- Registration (Istimara) -->
+        <td class="p-3.5">
+          <div class="font-mono font-bold text-slate-800 text-[11px]">${v.istimara_expiry || '---'}</div>
+          <div class="mt-0.5">${getStatusBadge(v.istimara)}</div>
+        </td>
+
+        <!-- Periodic Inspection (Fahas) -->
+        <td class="p-3.5">
+          <div class="font-mono font-bold text-slate-800 text-[11px]">${v.fahas_expiry || '---'}</div>
+          <div class="mt-0.5">${getStatusBadge(v.fahas)}</div>
+        </td>
+
+        <!-- Insurance -->
+        <td class="p-3.5">
+          <div class="font-bold text-slate-900 text-[11px]">${v.insurance_company || '---'}</div>
+          <div class="mt-0.5">${getStatusBadge(v.insurance)}</div>
+        </td>
+
+        <!-- Operational Status -->
+        <td class="p-3.5 text-center">
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-black ${
+            v.status === 'نشط' ? 'bg-emerald-100 text-emerald-800' :
+            v.status === 'متاح' ? 'bg-blue-100 text-blue-800' :
+            v.status === 'صيانة' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+          }">
+            ${v.status}
+          </span>
+        </td>
+
+        <!-- Actions -->
+        <td class="p-3.5 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            
+            <!-- Printable A4 Handover Certificate -->
+            <button onclick="printVehicleHandover(${v.id})" title="طباعة محضر التسليم / الاستلام A4" class="p-1.5 rounded-lg bg-[#700c14] hover:bg-[#52090e] text-white text-xs shadow-xs transition">
+              <i class="fa-solid fa-print"></i>
+            </button>
+
+            ${isAssigned ? `
+              <!-- Return Custody Button -->
+              <button onclick="openReturnCustodyModal(${v.id})" title="استرداد العهدة وإخلاء طرف" class="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shadow-xs transition">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+              </button>
+            ` : `
+              <!-- Assign Custody Button -->
+              <button onclick="openAssignCustodyModal(${v.id})" title="تسليم كعهدة لموظف" class="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition">
+                <i class="fa-solid fa-handshake"></i>
+              </button>
+            `}
+
+            <!-- Edit Button -->
+            <button onclick="openEditVehicleModal(${v.id})" title="تعديل بيانات المركبة" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+
+            <!-- Delete Button -->
+            <button onclick="deleteVehicleConfirm(${v.id}, '${v.plate_number_ar}')" title="حذف المركبة" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs transition">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/**
+ * Filter trigger
+ */
+function filterFleetTable() {
+  renderFleetTable(fleetState.vehicles);
+}
+
+/**
+ * Render Tamm Compliance Center Alerts List
+ */
+function renderTammAlerts(vehicles) {
+  const istimaraList = document.getElementById('tammIstimaraList');
+  const fahasList = document.getElementById('tammFahasList');
+  const insList = document.getElementById('tammInsuranceList');
+
+  const istimaraCount = document.getElementById('tammIstimaraCount');
+  const fahasCount = document.getElementById('tammFahasCount');
+  const insCount = document.getElementById('tammInsuranceCount');
+
+  const istimaraAlerts = vehicles.filter(v => v.istimara.status === 'expired' || v.istimara.status === 'expiring_soon');
+  const fahasAlerts = vehicles.filter(v => v.fahas.status === 'expired' || v.fahas.status === 'expiring_soon');
+  const insAlerts = vehicles.filter(v => v.insurance.status === 'expired' || v.insurance.status === 'expiring_soon');
+
+  if (istimaraCount) istimaraCount.textContent = istimaraAlerts.length;
+  if (fahasCount) fahasCount.textContent = fahasAlerts.length;
+  if (insCount) insCount.textContent = insAlerts.length;
+
+  const renderAlertItem = (v, infoObj, label) => `
+    <div class="p-3 rounded-xl border ${infoObj.status === 'expired' ? 'bg-rose-50/70 border-rose-200' : 'bg-amber-50/70 border-amber-200'} space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="font-black text-slate-900 font-mono text-xs">${v.plate_number_ar}</span>
+        <span class="text-[10px] font-black ${infoObj.status === 'expired' ? 'text-rose-700' : 'text-amber-800'}">
+          ${infoObj.text_ar}
+        </span>
+      </div>
+      <div class="text-[11px] text-slate-600 flex items-center justify-between">
+        <span>${v.make} ${v.model}</span>
+        <span class="font-bold text-slate-900">${v.assigned_emp_name || 'متاحة'}</span>
+      </div>
+      <div class="flex justify-end pt-1">
+        <button onclick="openEditVehicleModal(${v.id})" class="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1">
+          <i class="fa-solid fa-pen"></i> تحديث وثيقة ${label}
+        </button>
+      </div>
+    </div>
+  `;
+
+  if (istimaraList) {
+    if (istimaraAlerts.length === 0) {
+      istimaraList.innerHTML = '<p class="text-slate-400 text-xs py-6 text-center">جميع رخص السير سارية ومطابقة لمنصة تم ✓</p>';
+    } else {
+      istimaraList.innerHTML = istimaraAlerts.map(v => renderAlertItem(v, v.istimara, 'الاستمارة')).join('');
+    }
+  }
+
+  if (fahasList) {
+    if (fahasAlerts.length === 0) {
+      fahasList.innerHTML = '<p class="text-slate-400 text-xs py-6 text-center">كافة المركبات اجتازت الفحص الدوري بنجاح ✓</p>';
+    } else {
+      fahasList.innerHTML = fahasAlerts.map(v => renderAlertItem(v, v.fahas, 'الفحص الدوري')).join('');
+    }
+  }
+
+  if (insList) {
+    if (insAlerts.length === 0) {
+      insList.innerHTML = '<p class="text-slate-400 text-xs py-6 text-center">كافة وثائق التأمين الإلزامي سارية المفعول ✓</p>';
+    } else {
+      insList.innerHTML = insAlerts.map(v => renderAlertItem(v, v.insurance, 'التأمين')).join('');
+    }
+  }
+}
+
+/**
+ * Load Custody Movement Logs Table
+ */
+async function loadFleetLogs() {
+  const tbody = document.getElementById('fleetLogsTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400"><i class="fa-solid fa-spinner fa-spin text-xl"></i> جاري تحميل سجل الحركات...</td></tr>`;
+
+  try {
+    // Gather custody logs from all vehicles
+    const res = await fetch('/api/fleet/vehicles');
+    const json = await res.json();
+    if (!json.success) return;
+
+    let allLogs = [];
+    for (const v of json.data) {
+      const vDetailsRes = await fetch(`/api/fleet/vehicles/${v.id}`);
+      const vJson = await vDetailsRes.json();
+      if (vJson.success && vJson.data && vJson.data.custody_logs) {
+        vJson.data.custody_logs.forEach(l => {
+          allLogs.push({ ...l, plate_number_ar: v.plate_number_ar, make: v.make, model: v.model });
+        });
+      }
+    }
+
+    allLogs.sort((a, b) => new Date(b.action_date) - new Date(a.action_date));
+
+    if (allLogs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 font-bold">لا توجد حركات تسليم أو استرداد مسجلة حتى الآن</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allLogs.map(l => {
+      const isDelivery = l.action_type === 'تسليم_عهدة';
+      const accList = Array.isArray(l.accessories) ? l.accessories : [];
+
+      return `
+        <tr class="hover:bg-slate-50 transition">
+          <td class="p-3.5 font-mono text-[11px] font-bold text-slate-900">${l.action_date}</td>
+          <td class="p-3.5">
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-black ${isDelivery ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+              ${isDelivery ? 'تسليم عهدة' : 'استرداد عهدة'}
+            </span>
+          </td>
+          <td class="p-3.5 font-bold font-mono text-slate-800">${l.plate_number_ar}</td>
+          <td class="p-3.5">
+            <div class="font-bold text-slate-900">${l.emp_name}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${l.emp_code || ''}</div>
+          </td>
+          <td class="p-3.5 text-center font-mono font-bold text-slate-800">${Number(l.odometer || 0).toLocaleString('en-US')} كم</td>
+          <td class="p-3.5 font-semibold text-slate-700">${l.fuel_level || 'ممتلئ'}</td>
+          <td class="p-3.5 text-[11px] text-slate-600 max-w-xs truncate" title="${accList.join('، ')}">
+            ${accList.length > 0 ? accList.join('، ') : '---'}
+          </td>
+          <td class="p-3.5 text-slate-700">${l.supervisor_name || 'مسؤول الحركة'}</td>
+          <td class="p-3.5 text-center">
+            <button onclick="printVehicleHandover(${l.vehicle_id}, ${l.id})" class="px-2.5 py-1 rounded-lg bg-[#700c14] hover:bg-[#52090e] text-white text-[11px] font-bold flex items-center gap-1 mx-auto transition shadow-xs">
+              <i class="fa-solid fa-print"></i> المحضر
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading fleet logs:', err);
+    tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-rose-500 font-bold">حدث خطأ أثناء جلب سجل الحركات</td></tr>`;
+  }
+}
+
+/**
+ * Open Modal to Add or Edit Vehicle
+ */
+function openAddVehicleModal(vehicleId = null) {
+  const form = document.querySelector('#modalAddVehicle form');
+  if (form) form.reset();
+
+  const titleEl = document.getElementById('modalAddVehicleTitle');
+  const idEl = document.getElementById('vehFormId');
+
+  if (vehicleId) {
+    const v = fleetState.vehicles.find(x => x.id === vehicleId);
+    if (!v) return;
+
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square text-blue-600"></i> تعديل بيانات المركبة (${v.plate_number_ar})`;
+    if (idEl) idEl.value = v.id;
+
+    document.getElementById('vehFormPlateAr').value = v.plate_number_ar || '';
+    document.getElementById('vehFormPlateEn').value = v.plate_number_en || '';
+    document.getElementById('vehFormMake').value = v.make || '';
+    document.getElementById('vehFormModel').value = v.model || '';
+    document.getElementById('vehFormYear').value = v.year || 2024;
+    document.getElementById('vehFormColor').value = v.color || '';
+    document.getElementById('vehFormType').value = v.vehicle_type || 'نقل خاص';
+    document.getElementById('vehFormVin').value = v.vin_serial || '';
+    document.getElementById('vehFormOdometer').value = v.odometer || 0;
+    document.getElementById('vehFormFuelCard').value = v.fuel_card_no || '';
+
+    document.getElementById('vehFormIstimara').value = v.istimara_expiry || '';
+    document.getElementById('vehFormFahas').value = v.fahas_expiry || '';
+    document.getElementById('vehFormTammStatus').value = v.tamm_status || 'ساري';
+    document.getElementById('vehFormInsCompany').value = v.insurance_company || '';
+    document.getElementById('vehFormInsPolicy').value = v.insurance_policy_no || '';
+    document.getElementById('vehFormInsExpiry').value = v.insurance_expiry || '';
+    document.getElementById('vehFormTammAuthNo').value = v.tamm_authorization_no || '';
+    document.getElementById('vehFormTammAuthExpiry').value = v.tamm_authorization_expiry || '';
+    document.getElementById('vehFormNotes').value = v.notes || '';
+  } else {
+    if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-car text-blue-600"></i> إضافة مركبة جديدة للأسطول`;
+    if (idEl) idEl.value = '';
+    document.getElementById('vehFormYear').value = 2024;
+    document.getElementById('vehFormType').value = 'نقل خاص';
+    document.getElementById('vehFormTammStatus').value = 'ساري';
+  }
+
+  openModal('modalAddVehicle');
+}
+
+/**
+ * Submit Vehicle Add/Edit Form
+ */
+async function submitVehicleForm(e) {
+  e.preventDefault();
+  const id = document.getElementById('vehFormId').value;
+
+  const payload = {
+    plate_number_ar: document.getElementById('vehFormPlateAr').value,
+    plate_number_en: document.getElementById('vehFormPlateEn').value,
+    make: document.getElementById('vehFormMake').value,
+    model: document.getElementById('vehFormModel').value,
+    year: document.getElementById('vehFormYear').value,
+    color: document.getElementById('vehFormColor').value,
+    vehicle_type: document.getElementById('vehFormType').value,
+    vin_serial: document.getElementById('vehFormVin').value,
+    odometer: document.getElementById('vehFormOdometer').value,
+    fuel_card_no: document.getElementById('vehFormFuelCard').value,
+    istimara_expiry: document.getElementById('vehFormIstimara').value,
+    fahas_expiry: document.getElementById('vehFormFahas').value,
+    tamm_status: document.getElementById('vehFormTammStatus').value,
+    insurance_company: document.getElementById('vehFormInsCompany').value,
+    insurance_policy_no: document.getElementById('vehFormInsPolicy').value,
+    insurance_expiry: document.getElementById('vehFormInsExpiry').value,
+    tamm_authorization_no: document.getElementById('vehFormTammAuthNo').value,
+    tamm_authorization_expiry: document.getElementById('vehFormTammAuthExpiry').value,
+    notes: document.getElementById('vehFormNotes').value
+  };
+
+  try {
+    const url = id ? `/api/fleet/vehicles/${id}` : '/api/fleet/vehicles';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      closeModal('modalAddVehicle');
+      await loadFleetView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ المركبة: ' + err.message);
+  }
+}
+
+/**
+ * Helper: Populate active employees into select dropdown
+ */
+function populateFleetEmpSelect(selectEl) {
+  if (!selectEl) return;
+  selectEl.innerHTML = '<option value="">-- اختر الموظف المستلم للعهدة --</option>';
+
+  const emps = Array.isArray(state?.employees) ? state.employees : [];
+  emps.forEach(emp => {
+    selectEl.innerHTML += `<option value="${emp.id}">${emp.emp_code} - ${emp.full_name_ar} (${emp.job_title_ar || 'موظف'})</option>`;
+  });
+}
+
+/**
+ * Open Modal to Handover Custody
+ */
+function openAssignCustodyModal(vehicleId) {
+  const v = fleetState.vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+
+  document.getElementById('assignCustodyVehicleId').value = v.id;
+  document.getElementById('assignCustodyVehicleName').textContent = `${v.make} ${v.model} (${v.year})`;
+  document.getElementById('assignCustodyVehiclePlate').textContent = v.plate_number_ar;
+  document.getElementById('assignCustodyOdometer').value = v.odometer || 0;
+  document.getElementById('assignCustodyDate').value = new Date().toISOString().split('T')[0];
+
+  const select = document.getElementById('assignCustodyEmpSelect');
+  populateFleetEmpSelect(select);
+
+  openModal('modalAssignCustody');
+}
+
+/**
+ * Submit Custody Handover
+ */
+async function submitAssignCustodyForm(e) {
+  e.preventDefault();
+  const vehicleId = document.getElementById('assignCustodyVehicleId').value;
+  const empId = document.getElementById('assignCustodyEmpSelect').value;
+
+  const accessories = [];
+  if (document.getElementById('accCheckIstimara')?.checked) accessories.push('الاستمارة الأصلية');
+  if (document.getElementById('accCheckKey')?.checked) accessories.push('مفتاح احتياطي');
+  if (document.getElementById('accCheckFire')?.checked) accessories.push('طفاية حريق');
+  if (document.getElementById('accCheckSpare')?.checked) accessories.push('إطار احتياطي');
+  if (document.getElementById('accCheckKit')?.checked) accessories.push('عِدة ورافعة');
+  if (document.getElementById('accCheckFirstAid')?.checked) accessories.push('حقيبة إسعافات');
+
+  const payload = {
+    emp_id: empId,
+    action_date: document.getElementById('assignCustodyDate').value,
+    odometer: document.getElementById('assignCustodyOdometer').value,
+    fuel_level: document.getElementById('assignCustodyFuelLevel').value,
+    accessories,
+    body_condition_notes: document.getElementById('assignCustodyCondition').value,
+    supervisor_name: document.getElementById('assignCustodySupervisor').value,
+    notes: document.getElementById('assignCustodyNotes').value
+  };
+
+  try {
+    const res = await fetch(`/api/fleet/vehicles/${vehicleId}/assign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      closeModal('modalAssignCustody');
+      await loadFleetView();
+      // Ask to print handover certificate
+      if (confirm('تم تسليم العهدة وتوثيق المحضر بنجاح. هل ترغب بطباعة محضر الاستلام الرسمي A4 الآن؟')) {
+        printVehicleHandover(vehicleId);
+      }
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تسليم العهدة: ' + err.message);
+  }
+}
+
+/**
+ * Open Modal to Return Custody
+ */
+function openReturnCustodyModal(vehicleId) {
+  const v = fleetState.vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+
+  document.getElementById('returnCustodyVehicleId').value = v.id;
+  document.getElementById('returnCustodyInfo').textContent = `${v.make} ${v.model} — المستلم: ${v.assigned_emp_name}`;
+  document.getElementById('returnCustodyPlate').textContent = v.plate_number_ar;
+  document.getElementById('returnCustodyOdometer').value = v.odometer || 0;
+  document.getElementById('returnCustodyDate').value = new Date().toISOString().split('T')[0];
+
+  openModal('modalReturnCustody');
+}
+
+/**
+ * Submit Custody Return
+ */
+async function submitReturnCustodyForm(e) {
+  e.preventDefault();
+  const vehicleId = document.getElementById('returnCustodyVehicleId').value;
+
+  const payload = {
+    action_date: document.getElementById('returnCustodyDate').value,
+    odometer: document.getElementById('returnCustodyOdometer').value,
+    fuel_level: document.getElementById('returnCustodyFuelLevel').value,
+    new_status: document.getElementById('returnCustodyNewStatus').value,
+    body_condition_notes: document.getElementById('returnCustodyCondition').value
+  };
+
+  try {
+    const res = await fetch(`/api/fleet/vehicles/${vehicleId}/return`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      closeModal('modalReturnCustody');
+      await loadFleetView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء استرداد العهدة: ' + err.message);
+  }
+}
+
+/**
+ * Delete Vehicle confirmation
+ */
+async function deleteVehicleConfirm(vehicleId, plate) {
+  if (!confirm(`هل أنت متأكد من رغبتك بحذف المركبة ذات اللوحة (${plate}) نهائياً؟`)) return;
+
+  try {
+    const res = await fetch(`/api/fleet/vehicles/${vehicleId}`, { method: 'DELETE' });
+    const json = await res.json();
+    if (json.success) {
+      if (typeof showToast === 'function') showToast(json.message, 'success');
+      else alert(json.message);
+      await loadFleetView();
+    } else {
+      alert('خطأ: ' + json.error);
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حذف المركبة: ' + err.message);
+  }
+}
+
+/**
+ * Print Official Handover Certificate (A4)
+ */
+function printVehicleHandover(vehicleId, logId = null) {
+  const url = logId ? `/api/fleet/vehicles/${vehicleId}/handover-print?log_id=${logId}` : `/api/fleet/vehicles/${vehicleId}/handover-print`;
+  window.open(url, '_blank', 'width=950,height=900,scrollbars=yes');
+}
+
+/**
+ * Export Fleet to Excel
+ */
+function exportFleetExcel() {
+  window.open('/api/fleet/export/excel', '_blank');
+}
+
+/**
+ * Export Fleet to CSV
+ */
+function exportFleetCsv() {
+  window.open('/api/fleet/export/csv', '_blank');
+}
+
+/**
+ * Open Import Modal
+ */
+function openImportVehiclesModal() {
+  const input = document.getElementById('importVehiclesFileInput');
+  if (input) input.value = '';
+  const nameEl = document.getElementById('importVehiclesFileName');
+  if (nameEl) nameEl.textContent = 'لم يتم اختيار ملف بعد';
+  const resultEl = document.getElementById('importVehiclesResult');
+  if (resultEl) resultEl.className = 'hidden';
+
+  openModal('modalImportVehicles');
+}
+
+/**
+ * Update selected import file name
+ */
+function updateImportFileName(input) {
+  const nameEl = document.getElementById('importVehiclesFileName');
+  if (input.files && input.files[0]) {
+    if (nameEl) nameEl.textContent = `${input.files[0].name} (${(input.files[0].size / 1024).toFixed(1)} KB)`;
+  }
+}
+
+/**
+ * Submit Vehicle Import File
+ */
+async function submitImportVehicles(e) {
+  e.preventDefault();
+  const input = document.getElementById('importVehiclesFileInput');
+  if (!input || !input.files || !input.files[0]) {
+    alert('يرجى اختيار ملف Excel أو CSV أولاً');
+    return;
+  }
+
+  const btn = document.getElementById('btnSubmitImportVehicles');
+  const resultEl = document.getElementById('importVehiclesResult');
+  if (btn) btn.disabled = true;
+
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+
+  try {
+    const res = await fetch('/api/fleet/import', {
+      method: 'POST',
+      body: formData
+    });
+    const json = await res.json();
+
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      if (json.success) {
+        resultEl.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+        resultEl.textContent = json.message;
+        setTimeout(async () => {
+          closeModal('modalImportVehicles');
+          await loadFleetView();
+        }, 1500);
+      } else {
+        resultEl.className = 'p-3 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300';
+        resultEl.textContent = json.error;
+      }
+    }
+  } catch (err) {
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.className = 'p-3 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300';
+      resultEl.textContent = 'حدث خطأ أثناء رفع الملف: ' + err.message;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// Global Window Exports for Fleet & Tamm Module
+window.loadFleetView = loadFleetView;
+window.loadFleetKpis = loadFleetKpis;
+window.loadFleetData = loadFleetData;
+window.switchFleetSubTab = switchFleetSubTab;
+window.renderFleetTable = renderFleetTable;
+window.filterFleetTable = filterFleetTable;
+window.renderTammAlerts = renderTammAlerts;
+window.loadFleetLogs = loadFleetLogs;
+window.openAddVehicleModal = openAddVehicleModal;
+window.openEditVehicleModal = openAddVehicleModal;
+window.submitVehicleForm = submitVehicleForm;
+window.openAssignCustodyModal = openAssignCustodyModal;
+window.submitAssignCustodyForm = submitAssignCustodyForm;
+window.openReturnCustodyModal = openReturnCustodyModal;
+window.submitReturnCustodyForm = submitReturnCustodyForm;
+window.deleteVehicleConfirm = deleteVehicleConfirm;
+window.printVehicleHandover = printVehicleHandover;
+window.exportFleetExcel = exportFleetExcel;
+window.exportFleetCsv = exportFleetCsv;
+window.openImportVehiclesModal = openImportVehiclesModal;
+window.updateImportFileName = updateImportFileName;
+window.submitImportVehicles = submitImportVehicles;
+
 
 
 

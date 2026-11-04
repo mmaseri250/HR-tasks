@@ -245,6 +245,13 @@
           <span id="badgeNavRecruitment" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">ATS</span>
         </button>
 
+        <!-- 5.5 Fleet & Vehicles (إدارة الأسطول والسيارات ومنصة تم) -->
+        <button onclick="switchTab('fleet')" id="nav-fleet" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-car-side w-5 text-center text-base text-blue-600"></i>
+          <span class="flex-1 text-right" data-i18n="nav_fleet">إدارة الأسطول ومنصة تم</span>
+          <span id="badgeNavFleet" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300">تم</span>
+        </button>
+
         <!-- 6. Self-Service -->
         <button onclick="switchTab('selfservice')" id="nav-selfservice" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-user-shield w-5 text-center text-base text-indigo-600"></i>
@@ -3341,6 +3348,663 @@
             </form>
           </div>
         </div>
+      </section>
+
+      <!-- =========================================================================
+           MODULE 4: FLEET & VEHICLE MANAGEMENT (إدارة الأسطول والسيارات ومنصة تم)
+           ========================================================================= -->
+      <section id="view-fleet" class="space-y-6 hidden">
+        
+        <!-- Header & Toolbar -->
+        <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-slate-800 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center gap-1.5">
+                  <i class="fa-solid fa-satellite-dish text-[11px] animate-pulse"></i> مطابقة منصة تم الرسمية
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                  لوائح المرور والسلامة
+                </span>
+              </div>
+              <h2 class="text-2xl font-black text-white flex items-center gap-2.5">
+                <i class="fa-solid fa-car-side text-blue-400"></i> إدارة أسطول المركبات والعهد — منصة تم
+              </h2>
+              <p class="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                المنظومة المتكاملة لإدارة حركة المركبات، مطابقة بيانات منصة "تم" الحكومية (رخص السير، الفحص الفني الدوري، التأمين الإلزامي)، وتسليم واسترداد عهد الموظفين بمحاضر رسمية معتمدة A4.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="openAddVehicleModal()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 transition shadow-lg shadow-blue-900/30">
+                <i class="fa-solid fa-plus"></i> إضافة مركبة جديدة
+              </button>
+              <button onclick="openImportVehiclesModal()" class="px-3.5 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs flex items-center gap-2 transition">
+                <i class="fa-solid fa-file-import"></i> استيراد (Excel/CSV)
+              </button>
+              <button onclick="exportFleetExcel()" class="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-2 transition shadow">
+                <i class="fa-solid fa-file-excel"></i> تصدير إكسل
+              </button>
+              <button onclick="exportFleetCsv()" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition border border-slate-700">
+                <i class="fa-solid fa-file-csv"></i> CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fleet Stat Cards (Glassmorphism & Live Counters) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-blue-50/80 via-white to-blue-50/30 border border-blue-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">إجمالي الأسطول</p>
+                <h3 id="fleetKpiTotal" class="text-3xl font-black text-slate-900 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-blue-700 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-car text-[10px]"></i> مركبات مسجلة بالنظام
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-truck-pickup"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 border border-emerald-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">عُهد نشطة للموظفين</p>
+                <h3 id="fleetKpiAssigned" class="text-3xl font-black text-slate-900 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-id-card-clip text-[10px]"></i> مسلمة بمحاضر رسمية
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/30 border border-indigo-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">مركبات متاحة بالساحة</p>
+                <h3 id="fleetKpiAvailable" class="text-3xl font-black text-slate-900 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-indigo-700 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-warehouse text-[10px]"></i> جاهزة للتسليم والتشغيل
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-key"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-elevated p-5 relative overflow-hidden bg-gradient-to-br from-rose-50/80 via-white to-amber-50/30 border border-rose-100 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">تنبيهات منصة تم</p>
+                <h3 id="fleetKpiAlerts" class="text-3xl font-black text-rose-600 mt-1 font-mono">0</h3>
+                <p class="text-[11px] font-semibold text-rose-700 mt-1 flex items-center gap-1">
+                  <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> استمارة / فحص / تأمين
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shadow-inner">
+                <i class="fa-solid fa-bell"></i>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Navigation Tabs for Fleet Views -->
+        <div class="flex border-b border-slate-200 space-x-2 space-x-reverse text-xs font-bold">
+          <button id="fleetTabVehicles" onclick="switchFleetSubTab('vehicles')" class="px-5 py-3 border-b-2 border-brand text-brand flex items-center gap-2 transition">
+            <i class="fa-solid fa-list-check"></i> أسطول المركبات والعهد
+          </button>
+          <button id="fleetTabAlerts" onclick="switchFleetSubTab('alerts')" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> مركز تنبيهات منصة تم
+            <span id="fleetAlertsBadge" class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 font-mono">0</span>
+          </button>
+          <button id="fleetTabLogs" onclick="switchFleetSubTab('logs')" class="px-5 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 flex items-center gap-2 transition">
+            <i class="fa-solid fa-clipboard-list text-indigo-600"></i> سجل حركات وتسليم العهد
+          </button>
+        </div>
+
+        <!-- =========================================================================
+             SUB-VIEW 1: VEHICLES & CUSTODY TABLE (جدول المركبات والعهد)
+             ========================================================================= -->
+        <div id="fleetSubViewVehicles" class="space-y-4">
+          
+          <!-- Filters & Search Toolbar -->
+          <div class="card-elevated p-4 flex flex-col lg:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2 w-full lg:w-auto flex-wrap">
+              <div class="relative w-full sm:w-72">
+                <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="fleetSearchInput" oninput="filterFleetTable()" placeholder="ابحث برقم اللوحة، الماركة، الموديل، الموظف..." class="w-full text-xs rounded-xl border border-slate-300 py-2 pr-9 pl-3 focus:ring-2 focus:ring-brand font-medium">
+              </div>
+
+              <select id="fleetStatusFilter" onchange="filterFleetTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع حالات المركبات</option>
+                <option value="نشط">نشط (قيد التشغيل)</option>
+                <option value="متاح">متاح في الساحة</option>
+                <option value="صيانة">تحت الصيانة</option>
+                <option value="معطل">معطل</option>
+              </select>
+
+              <select id="fleetCustodyFilter" onchange="filterFleetTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">حالة تسليم العهدة</option>
+                <option value="assigned">مسلم كعهدة لموظف</option>
+                <option value="available">متاح غير مسلم (في الساحة)</option>
+              </select>
+
+              <select id="fleetTammStatusFilter" onchange="filterFleetTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">حالة منصة تم</option>
+                <option value="ساري">ساري (مطابق)</option>
+                <option value="بانتظار التجديد">بانتظار التجديد</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+              <span id="fleetTableCountBadge">عرض 0 مركبة</span>
+            </div>
+          </div>
+
+          <!-- Vehicles Table -->
+          <div class="card-elevated overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                  <tr>
+                    <th class="p-3.5">المركبة واللوحة</th>
+                    <th class="p-3.5">المواصفات واللون</th>
+                    <th class="p-3.5">الموظف المستلم (العهدة)</th>
+                    <th class="p-3.5 text-center">العداد (كم)</th>
+                    <th class="p-3.5">الاستمارة (تم)</th>
+                    <th class="p-3.5">الفحص الدوري</th>
+                    <th class="p-3.5">التأمين</th>
+                    <th class="p-3.5 text-center">الحالة</th>
+                    <th class="p-3.5 text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="fleetTableBody" class="divide-y divide-slate-100 font-medium text-slate-800">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =========================================================================
+             SUB-VIEW 2: TAMM COMPLIANCE CENTER (مركز تنبيهات منصة تم)
+             ========================================================================= -->
+        <div id="fleetSubViewAlerts" class="space-y-6 hidden">
+          
+          <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600 text-2xl"></i>
+              <div>
+                <h3 class="text-sm font-black text-amber-950">نظام المراقبة الاستباقية للوثائق والتراخيص (منصة تم)</h3>
+                <p class="text-xs text-amber-800 mt-0.5">يعرض هذا القسم كافة الوثائق المنتهية أو التي تقترب من الانتهاء خلال 30 يوماً لتفادي الغرامات وإيقاف خدمات الأسطول.</p>
+              </div>
+            </div>
+            <button onclick="loadFleetData()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-arrows-rotate"></i> تحديث الفحص الفوري
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- 1. Istimara Alerts -->
+            <div class="card-elevated p-5 space-y-4 border-t-4 border-rose-500">
+              <div class="flex items-center justify-between border-b pb-3">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-id-card text-rose-600 text-lg"></i>
+                  <h4 class="font-black text-slate-900 text-sm">رخص السير (الاستمارات)</h4>
+                </div>
+                <span id="tammIstimaraCount" class="px-2 py-0.5 rounded-full text-xs font-black bg-rose-100 text-rose-800">0</span>
+              </div>
+              <div id="tammIstimaraList" class="space-y-2.5 max-h-[400px] overflow-y-auto">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- 2. Fahas Alerts -->
+            <div class="card-elevated p-5 space-y-4 border-t-4 border-amber-500">
+              <div class="flex items-center justify-between border-b pb-3">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-wrench text-amber-600 text-lg"></i>
+                  <h4 class="font-black text-slate-900 text-sm">الفحص الفني الدوري</h4>
+                </div>
+                <span id="tammFahasCount" class="px-2 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-800">0</span>
+              </div>
+              <div id="tammFahasList" class="space-y-2.5 max-h-[400px] overflow-y-auto">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- 3. Insurance Alerts -->
+            <div class="card-elevated p-5 space-y-4 border-t-4 border-blue-500">
+              <div class="flex items-center justify-between border-b pb-3">
+                <div class="flex items-center gap-2">
+                  <i class="fa-solid fa-shield-halved text-blue-600 text-lg"></i>
+                  <h4 class="font-black text-slate-900 text-sm">وثائق التأمين الإلزامي</h4>
+                </div>
+                <span id="tammInsuranceCount" class="px-2 py-0.5 rounded-full text-xs font-black bg-blue-100 text-blue-800">0</span>
+              </div>
+              <div id="tammInsuranceList" class="space-y-2.5 max-h-[400px] overflow-y-auto">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- =========================================================================
+             SUB-VIEW 3: CUSTODY MOVEMENT LOGS (سجل حركات وتسليم العهد)
+             ========================================================================= -->
+        <div id="fleetSubViewLogs" class="space-y-4 hidden">
+          <div class="card-elevated p-4 flex justify-between items-center">
+            <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-brand"></i> سجل حركات تسليم واسترداد عهد المركبات
+            </h3>
+            <span class="text-xs text-slate-500">توثيق نظامي معتمد وفقاً للمادة 80 من نظام العمل</span>
+          </div>
+
+          <div class="card-elevated overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-50 text-slate-700 font-black border-b border-slate-200">
+                  <tr>
+                    <th class="p-3.5">تاريخ الحركة</th>
+                    <th class="p-3.5">نوع الحركة</th>
+                    <th class="p-3.5">رقم اللوحة</th>
+                    <th class="p-3.5">الموظف</th>
+                    <th class="p-3.5 text-center">قراءة العداد</th>
+                    <th class="p-3.5">مستوى الوقود</th>
+                    <th class="p-3.5">الملحقات المسلمة</th>
+                    <th class="p-3.5">المشرف الفني</th>
+                    <th class="p-3.5 text-center">محضر A4</th>
+                  </tr>
+                </thead>
+                <tbody id="fleetLogsTableBody" class="divide-y divide-slate-100 font-medium text-slate-800">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             MODAL 1: ADD / EDIT VEHICLE (إضافة وتعديل مركبة)
+             ========================================================================= -->
+        <div id="modalAddVehicle" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 id="modalAddVehicleTitle" class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-car text-blue-600"></i> إضافة مركبة جديدة للأسطول
+              </h3>
+              <button onclick="closeModal('modalAddVehicle')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <form onsubmit="submitVehicleForm(event)" class="space-y-4 text-xs">
+              <input type="hidden" id="vehFormId">
+
+              <!-- Group 1: Basic Specifications -->
+              <div class="p-3.5 bg-slate-50 rounded-2xl space-y-3 border border-slate-200">
+                <h4 class="font-black text-slate-800 flex items-center gap-1.5">
+                  <i class="fa-solid fa-info-circle text-blue-600"></i> بيانات المركبة الأساسية:
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">رقم اللوحة (عربي) *:</label>
+                    <input type="text" id="vehFormPlateAr" required placeholder="مثال: أ ب ج 1122" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">رقم اللوحة (إنجليزي):</label>
+                    <input type="text" id="vehFormPlateEn" placeholder="مثال: 1122 JBA" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">الشركة الصانعة *:</label>
+                    <input type="text" id="vehFormMake" required placeholder="تويوتا، إيسوزو، هيونداي" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">الموديل والطراز *:</label>
+                    <input type="text" id="vehFormModel" required placeholder="هايلكس، ديماكس، إلنترا" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">سنة الصنع *:</label>
+                    <input type="number" id="vehFormYear" required value="2024" min="2000" max="2030" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold font-mono text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">اللون:</label>
+                    <input type="text" id="vehFormColor" placeholder="أبيض لؤلؤي" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">نوع المركبة:</label>
+                    <select id="vehFormType" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                      <option value="نقل خاص">نقل خاص (بيك أب / غمارتين)</option>
+                      <option value="خصوصي">خصوصي (سيدان / SUV)</option>
+                      <option value="نقل عام">نقل عام</option>
+                      <option value="شاحنة / معدة ثقيلة">شاحنة / معدة ثقيلة</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">رقم الهيكل (VIN):</label>
+                    <input type="text" id="vehFormVin" placeholder="رقم الهيكل التسلسلي" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">قراءة العداد الحالية (كم):</label>
+                    <input type="number" id="vehFormOdometer" value="0" min="0" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">رقم بطاقة الوقود:</label>
+                    <input type="text" id="vehFormFuelCard" placeholder="PETRO-4491-..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Group 2: Tamm Platform Fields -->
+              <div class="p-3.5 bg-blue-50/50 rounded-2xl space-y-3 border border-blue-200">
+                <h4 class="font-black text-blue-900 flex items-center gap-1.5">
+                  <i class="fa-solid fa-satellite-dish text-blue-600"></i> بيانات منصة تم الحكومية والتراخيص:
+                </h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">انتهاء رخصة السير (الاستمارة) *:</label>
+                    <input type="date" id="vehFormIstimara" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">انتهاء الفحص الفني الدوري *:</label>
+                    <input type="date" id="vehFormFahas" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">حالة منصة تم:</label>
+                    <select id="vehFormTammStatus" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                      <option value="ساري">ساري (مطابق ومفعل)</option>
+                      <option value="بانتظار التجديد">بانتظار التجديد</option>
+                      <option value="منتهي">منتهي</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">شركة التأمين:</label>
+                    <input type="text" id="vehFormInsCompany" placeholder="التعاونية، تكافل الراجحي..." class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">رقم وثيقة التأمين:</label>
+                    <input type="text" id="vehFormInsPolicy" placeholder="رقم وثيقة التأمين" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">انتهاء وثيقة التأمين:</label>
+                    <input type="date" id="vehFormInsExpiry" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">رقم تفويض القيادة في تم:</label>
+                    <input type="text" id="vehFormTammAuthNo" placeholder="TAMM-AUTH-..." class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block font-bold text-slate-700 mb-1">انتهاء تفويض تم:</label>
+                    <input type="date" id="vehFormTammAuthExpiry" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ملاحظات إضافية:</label>
+                <textarea id="vehFormNotes" rows="2" placeholder="أية ملاحظات فنية أو إدارية تخص المركبة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800"></textarea>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalAddVehicle')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> حفظ بيانات المركبة
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             MODAL 2: ASSIGN VEHICLE CUSTODY (تسليم عهدة لموظف)
+             ========================================================================= -->
+        <div id="modalAssignCustody" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-handshake text-emerald-600"></i> محضر تسليم عهدة مركبة لموظف
+              </h3>
+              <button onclick="closeModal('modalAssignCustody')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <form onsubmit="submitAssignCustodyForm(event)" class="space-y-4 text-xs">
+              <input type="hidden" id="assignCustodyVehicleId">
+
+              <!-- Vehicle Summary Banner -->
+              <div class="p-3 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-200">
+                <div>
+                  <span class="text-slate-500 block text-[11px]">المركبة المحددة:</span>
+                  <span id="assignCustodyVehicleName" class="font-black text-slate-900 text-sm">---</span>
+                </div>
+                <div class="text-left font-mono">
+                  <span class="text-slate-500 block text-[11px]">رقم اللوحة:</span>
+                  <span id="assignCustodyVehiclePlate" class="font-black text-blue-700 text-sm">---</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الموظف المستلم للعهدة *:</label>
+                  <select id="assignCustodyEmpSelect" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="">اختر الموظف...</option>
+                    <!-- Populated dynamically via JS from active employees -->
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">تاريخ تسليم العهدة *:</label>
+                  <input type="date" id="assignCustodyDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">قراءة العداد عند التسليم (كم) *:</label>
+                  <input type="number" id="assignCustodyOdometer" required min="0" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">مستوى الوقود:</label>
+                  <select id="assignCustodyFuelLevel" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="ممتلئ">ممتلئ (Full)</option>
+                    <option value="ثلاثة أرباع">ثلاثة أرباع (3/4)</option>
+                    <option value="نصف">نصف (1/2)</option>
+                    <option value="ربع">ربع (1/4)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-2">الملحقات والوثائق المسلمة:</label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                    <input type="checkbox" id="accCheckIstimara" checked class="rounded text-brand"> الاستمارة الأصلية
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                    <input type="checkbox" id="accCheckKey" checked class="rounded text-brand"> مفتاح احتياطي
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                    <input type="checkbox" id="accCheckFire" checked class="rounded text-brand"> طفاية حريق
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                    <input type="checkbox" id="accCheckSpare" checked class="rounded text-brand"> إطار احتياطي
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                    <input type="checkbox" id="accCheckKit" checked class="rounded text-brand"> عِدة ورافعة
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-800">
+                    <input type="checkbox" id="accCheckFirstAid" checked class="rounded text-brand"> حقيبة إسعافات
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">المعاينة الفنية وحالة البودي:</label>
+                <input type="text" id="assignCustodyCondition" value="المركبة بحالة ممتازة وخالية من أية صدمات ظاهرة" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المشرف الفني المسلّم للعهدة:</label>
+                  <input type="text" id="assignCustodySupervisor" value="مسؤول الحركة والأسطول" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">ملاحظات المحضر:</label>
+                  <input type="text" id="assignCustodyNotes" placeholder="أية ملاحظات إدارية..." class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalAssignCustody')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> اعتماد تسليم العهدة
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             MODAL 3: RETURN VEHICLE CUSTODY (استرداد العهدة وإخلاء الطرف)
+             ========================================================================= -->
+        <div id="modalReturnCustody" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-arrow-rotate-left text-amber-600"></i> محضر استرداد عهدة مركبة وإخلاء طرف الموظف
+              </h3>
+              <button onclick="closeModal('modalReturnCustody')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <form onsubmit="submitReturnCustodyForm(event)" class="space-y-4 text-xs">
+              <input type="hidden" id="returnCustodyVehicleId">
+
+              <div class="p-3 bg-slate-50 rounded-2xl flex items-center justify-between border border-slate-200">
+                <div>
+                  <span class="text-slate-500 block text-[11px]">المركبة والموظف الحالي:</span>
+                  <span id="returnCustodyInfo" class="font-black text-slate-900 text-sm">---</span>
+                </div>
+                <div class="text-left font-mono">
+                  <span class="text-slate-500 block text-[11px]">اللوحة:</span>
+                  <span id="returnCustodyPlate" class="font-black text-blue-700 text-sm">---</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">تاريخ الاسترداد *:</label>
+                  <input type="date" id="returnCustodyDate" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">قراءة العداد الحالية (كم) *:</label>
+                  <input type="number" id="returnCustodyOdometer" required min="0" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">مستوى الوقود المستلم:</label>
+                  <select id="returnCustodyFuelLevel" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="ممتلئ">ممتلئ (Full)</option>
+                    <option value="ثلاثة أرباع">ثلاثة أرباع (3/4)</option>
+                    <option value="نصف">نصف (1/2)</option>
+                    <option value="ربع">ربع (1/4)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الحالة التشغيلية الجديدة للمركبة:</label>
+                  <select id="returnCustodyNewStatus" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="متاح">متاح في الساحة (جاهز للتشغيل)</option>
+                    <option value="صيانة">تحويل للصيانة الدورية</option>
+                    <option value="معطل">معطل يحتاج لإصلاح</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">فحص البودي والملاحظات عند الاسترداد:</label>
+                <input type="text" id="returnCustodyCondition" value="تم فحص المركبة واستلامها ومطابقة الملحقات وإخلاء طرف الموظف" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalReturnCustody')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> اعتماد استرداد العهدة وإخلاء الطرف
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- =========================================================================
+             MODAL 4: IMPORT VEHICLES FROM EXCEL / CSV (استيراد مركبات)
+             ========================================================================= -->
+        <div id="modalImportVehicles" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-file-excel text-emerald-600"></i> استيراد أسطول المركبات (Excel / CSV)
+              </h3>
+              <button onclick="closeModal('modalImportVehicles')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+
+            <form onsubmit="submitImportVehicles(event)" class="space-y-4 text-xs">
+              <p class="text-slate-600 leading-relaxed">
+                يمكنك استيراد أو تحديث بيانات أسطول السيارات جماعياً عن طريق رفع ملف Excel (.xlsx) أو CSV يتضمن أرقام اللوحات، مواصفات منصة تم، وتواريخ الفحص والاستمارة.
+              </p>
+
+              <div class="p-4 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl text-center space-y-2">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400"></i>
+                <div>
+                  <label for="importVehiclesFileInput" class="cursor-pointer font-bold text-brand hover:underline">
+                    اختر ملف من جهازك
+                  </label>
+                  <input type="file" id="importVehiclesFileInput" accept=".xlsx, .xls, .csv" required class="hidden" onchange="updateImportFileName(this)">
+                </div>
+                <p id="importVehiclesFileName" class="text-[11px] text-slate-500 font-mono">لم يتم اختيار ملف بعد</p>
+              </div>
+
+              <div class="flex items-center justify-between text-[11px]">
+                <a href="/api/fleet/template" download="fleet_import_template.csv" class="text-blue-600 hover:underline font-bold flex items-center gap-1">
+                  <i class="fa-solid fa-download"></i> تحميل نموذج الاستيراد الجاهز (CSV Template)
+                </a>
+              </div>
+
+              <div id="importVehiclesResult" class="hidden p-3 rounded-xl text-xs font-bold"></div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalImportVehicles')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" id="btnSubmitImportVehicles" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-upload"></i> بدء الاستيراد
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      </section>
 
       <section id="view-attendance-notices" class="space-y-6 hidden">
         <div class="card-elevated p-6">
