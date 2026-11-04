@@ -26,6 +26,7 @@ const officialTemplates = require('./modules/officialTemplates');
 const absenceNoticesModule = require('./modules/absenceNotices');
 const auditModule = require('./modules/audit');
 const rbacEngine = require('./modules/rbacEngine');
+const cacheService = require('./modules/cacheService');
 
 // Initialize Seed Data if unseeded
 try {
@@ -212,6 +213,14 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(rbacEngine.authenticateAndScope);
 
+// In-Memory Mutation Cache Invalidation
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    cacheService.clear();
+  }
+  next();
+});
+
 // Anti-stale Cache Control Middleware: ensures browsers and mobile PWAs never receive outdated data
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
@@ -234,7 +243,7 @@ const upload = multer({ dest: path.join(__dirname, '..', 'uploads') });
    0. UNIFIED HIGH-SPEED BOOTSTRAP API (Single-Trip Hydration)
    ========================================================================= */
 
-app.get('/api/bootstrap', (req, res) => {
+app.get('/api/bootstrap', cacheService.routeCache(20), (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
 
@@ -570,7 +579,7 @@ app.get('/api/settings', (req, res) => {
   }
 });
 
-app.get('/api/dashboard/stats', (req, res) => {
+app.get('/api/dashboard/stats', cacheService.routeCache(25), (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const saudization = employeesModule.getSaudizationMetrics();
@@ -598,13 +607,13 @@ app.get('/api/dashboard/stats', (req, res) => {
         saudization,
         attendance,
         expiringDocsCount: docAlerts.length,
-        expiringDocs: docAlerts.slice(0, 5),
+        expiringDocs: docAlerts, // Send full alerts for smart frontend search/filtering
         pendingRequestsCount: pendingRequests.length,
-        pendingRequests: pendingRequests.slice(0, 5),
+        pendingRequests: pendingRequests.slice(0, 10),
         currentPayroll,
         deptDistribution,
         penaltiesCount: penalties.length,
-        recentPenalties: penalties.slice(0, 5)
+        recentPenalties: penalties // Send full list for smart table
       }
     });
   } catch (err) {
@@ -612,7 +621,7 @@ app.get('/api/dashboard/stats', (req, res) => {
   }
 });
 
-app.get('/api/departments', (req, res) => {
+app.get('/api/departments', cacheService.routeCache(45), (req, res) => {
   try {
     const depts = query(`
       SELECT d.*, COUNT(e.id) AS employee_count
@@ -682,7 +691,7 @@ app.delete('/api/departments/:id', (req, res) => {
    2.1 BRANCHES MANAGEMENT (فروع ومواقع شركة جوهرة المجد)
    ========================================================================= */
 
-app.get('/api/branches', (req, res) => {
+app.get('/api/branches', cacheService.routeCache(45), (req, res) => {
   try {
     const branches = query(`
       SELECT b.*,
@@ -971,7 +980,7 @@ app.get('/api/employees/metrics/saudization', (req, res) => {
 });
 
 // Enterprise Compliance & Iqama / Work Permits Dashboard API
-app.get('/api/compliance/stats', (req, res) => {
+app.get('/api/compliance/stats', cacheService.routeCache(30), (req, res) => {
   try {
     const compliance = employeesModule.getComplianceMetrics();
     res.json({ success: true, data: compliance });

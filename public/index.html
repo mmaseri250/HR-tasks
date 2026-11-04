@@ -41,8 +41,9 @@
   <!-- Font Awesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
-  <!-- Chart.js -->
+  <!-- Chart.js & ApexCharts (Modern Interactive SVG Charts) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
   <!-- QRCode.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -341,71 +342,98 @@
           </div>
         </div>
 
-        <!-- KPI Cards Grid (Executive Redesign) -->
+        <!-- KPI Cards Grid (Glassmorphism & Calm Gradients) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <!-- KPI 1: Workforce -->
-          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-brand/40 transition" onclick="switchTab('employees-db')">
+          <div class="glass-stat-card stat-theme-workforce" onclick="switchTab('employees-db')">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400" data-i18n="kpi_total_employees">إجمالي القوى العاملة</p>
-                <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono">111</h3>
-                <p class="text-[11px] text-emerald-700 font-bold mt-1.5 flex items-center gap-1">
-                  <i class="fa-solid fa-circle-check text-emerald-600"></i> 100% موظفون نشطون (31 سعودي • 80 مقيم)
-                </p>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-brand animate-pulse"></span>
+                  <p class="text-xs font-bold text-slate-500" data-i18n="kpi_total_employees">إجمالي القوى العاملة</p>
+                </div>
+                <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">111</h3>
+                <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <i class="fa-solid fa-arrow-trend-up text-[9px]"></i> 100% نشط
+                  </span>
+                  <span class="text-[10px] text-slate-500 font-bold font-mono">31 سعودي • 80 مقيم</span>
+                </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-brand/10 text-brand flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand/15 to-brand/5 text-brand flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-brand/20">
                 <i class="fa-solid fa-users"></i>
               </div>
             </div>
           </div>
 
           <!-- KPI 2: Compliance -->
-          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-amber-400 transition" onclick="switchTab('compliance')">
+          <div class="glass-stat-card stat-theme-compliance" onclick="switchTab('compliance')">
             <div class="flex justify-between items-start">
-              <div>
+              <div class="flex-1 min-w-0 pr-1">
                 <div class="flex items-center gap-1.5">
-                  <p class="text-xs font-bold text-slate-400" data-i18n="kpi_compliance">مؤشر الامتثال والإقامات</p>
-                  <span class="text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded-full">قوى ومقيم</span>
+                  <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  <p class="text-xs font-bold text-slate-500" data-i18n="kpi_compliance">مؤشر الامتثال النظامي</p>
+                  <span class="text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded-full mr-auto">قوى ومقيم</span>
                 </div>
-                <h3 id="statComplianceRate" class="text-3xl font-black text-amber-600 mt-2 font-mono">54%</h3>
+                <div class="flex items-baseline gap-2 mt-2">
+                  <h3 id="statComplianceRate" class="text-3xl font-black text-amber-600 font-mono tracking-tight">54%</h3>
+                  <span class="text-[11px] text-amber-700 font-bold">حالة المتابعة</span>
+                </div>
+                <!-- Dynamic Mini Progress Bar -->
+                <div class="w-full bg-amber-100/70 rounded-full h-1.5 mt-2 overflow-hidden">
+                  <div id="statComplianceProgressBar" class="bg-gradient-to-r from-amber-500 to-amber-600 h-1.5 rounded-full transition-all duration-500" style="width: 54%;"></div>
+                </div>
                 <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  <span id="statComplianceSub" class="text-[11px] text-amber-800 font-bold">3 سارية • 61 إقامة تتطلب تجديد</span>
+                  <span id="statComplianceSub" class="text-[10px] text-amber-800 font-bold">3 سارية • 61 إقامة تتطلب تجديد</span>
                 </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-100 text-amber-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-amber-300/40 mr-2">
                 <i class="fa-solid fa-shield-halved"></i>
               </div>
             </div>
           </div>
 
           <!-- KPI 3: Attendance -->
-          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-blue-400 transition" onclick="switchTab('attendance')">
+          <div class="glass-stat-card stat-theme-attendance" onclick="switchTab('attendance')">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400" data-i18n="kpi_attendance">نسبة الحضور اليومي</p>
-                <h3 id="statAttendanceRate" class="text-3xl font-black text-blue-600 mt-2 font-mono">100%</h3>
-                <p id="statAttendanceSummaryText" class="text-[11px] text-slate-600 font-bold mt-1.5 flex items-center gap-1">
-                  <i class="fa-solid fa-fingerprint text-blue-600"></i> 110 حاضر • 0 في إجازة
-                </p>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                  <p class="text-xs font-bold text-slate-500" data-i18n="kpi_attendance">نسبة الحضور اليومي</p>
+                  <span class="text-[9px] bg-blue-100 text-blue-800 font-black px-1.5 py-0.5 rounded-full">بصمة ذكية</span>
+                </div>
+                <h3 id="statAttendanceRate" class="text-3xl font-black text-blue-600 mt-2 font-mono tracking-tight">100%</h3>
+                <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    <i class="fa-solid fa-fingerprint text-[9px]"></i> بصمة حية
+                  </span>
+                  <p id="statAttendanceSummaryText" class="text-[10px] text-slate-500 font-bold font-mono">110 حاضر • 0 في إجازة</p>
+                </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400/20 to-blue-100 text-blue-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-blue-300/40">
                 <i class="fa-solid fa-user-check"></i>
               </div>
             </div>
           </div>
 
           <!-- KPI 4: Payroll & WPS -->
-          <div class="card-elevated kpi-stat-card p-5 cursor-pointer hover:border-emerald-400 transition" onclick="switchTab('payroll')">
+          <div class="glass-stat-card stat-theme-payroll" onclick="switchTab('payroll')">
             <div class="flex justify-between items-start">
               <div>
-                <p class="text-xs font-bold text-slate-400" id="statPayrollPeriodTitle" data-i18n="kpi_payroll">مسير الأجور الشهري</p>
-                <h3 id="statPayrollAmount" class="text-2xl font-black text-emerald-700 mt-2 font-mono">367,000 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
-                <p class="text-[11px] text-emerald-700 font-bold mt-1.5 flex items-center gap-1" id="statPayrollStatusSubtitle">
-                  <i class="fa-solid fa-circle-check text-emerald-600"></i> حماية الأجور (WPS) ومصرف الراجحي
-                </p>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <p class="text-xs font-bold text-slate-500" id="statPayrollPeriodTitle" data-i18n="kpi_payroll">مسير الأجور الشهري</p>
+                </div>
+                <h3 id="statPayrollAmount" class="text-2xl font-black text-emerald-700 mt-2 font-mono tracking-tight">367,000 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
+                <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200" id="statPayrollStatusSubtitle">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i> حماية الأجور (WPS)
+                  </span>
+                  <span class="text-[10px] text-slate-500 font-bold">مصرف الراجحي</span>
+                </div>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-emerald-100 text-emerald-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-emerald-300/40">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
               </div>
             </div>
@@ -413,87 +441,177 @@
 
         </div>
 
-        </div>
-
-        <!-- Charts (strictly sized containers to prevent any overlap) -->
+        <!-- Charts (Interactive SVG ApexCharts with Fallback) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
+          <!-- Chart 1: Workforce by Department -->
           <div class="card-elevated p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-              <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-brand"></i> توزيع القوى العاملة حسب الإدارات
-              </h3>
-              <span class="text-xs text-slate-400 font-bold">9 إدارات رئيسية</span>
+            <div class="flex justify-between items-center border-b pb-3 flex-wrap gap-2">
+              <div>
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-chart-pie text-brand"></i> توزيع القوى العاملة حسب الإدارات
+                </h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">مخطط تفاعلي يوضح نسب الموظفين وتوزيعهم التشغيلي</p>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-brand/10 text-brand border border-brand/20">
+                <i class="fa-solid fa-sitemap ml-1"></i> <span id="deptChartCountBadge">15 إدارة</span>
+              </span>
             </div>
-            <div class="chart-container-fixed">
-              <canvas id="deptChart"></canvas>
+            <div class="relative min-h-[300px] flex items-center justify-center">
+              <div id="apexDeptChart" class="w-full"></div>
+              <canvas id="deptChart" class="hidden"></canvas>
             </div>
           </div>
 
+          <!-- Chart 2: Attendance Velocity & Trends -->
           <div class="card-elevated p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3">
-              <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-chart-column text-blue-600"></i> مؤشرات الانضباط ومسار الحضور اليومي
-              </h3>
-              <span class="text-xs text-slate-400 font-bold">اليوم الحالي</span>
+            <div class="flex justify-between items-center border-b pb-3 flex-wrap gap-2">
+              <div>
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <i class="fa-solid fa-chart-column text-blue-600"></i> مؤشرات الانضباط ومسار الحضور الحي
+                </h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">متابعة فورية لنبضات الحضور والتأخير والإجازات</p>
+              </div>
+              <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button type="button" onclick="setAttendanceChartType('daily')" id="btnAttTypeDaily" class="smart-filter-pill active">اليومي</button>
+                <button type="button" onclick="setAttendanceChartType('weekly')" id="btnAttTypeWeekly" class="smart-filter-pill">الأسبوعي</button>
+              </div>
             </div>
-            <div class="chart-container-fixed">
-              <canvas id="attendanceChart"></canvas>
+            <div class="relative min-h-[300px] flex items-center justify-center">
+              <div id="apexAttendanceChart" class="w-full"></div>
+              <canvas id="attendanceChart" class="hidden"></canvas>
             </div>
           </div>
 
         </div>
 
-        <!-- Tables Row: Expiration Alerts & Disciplinary Actions -->
+        <!-- Smart Interactive Tables: Expiration Alerts & Disciplinary Actions -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
-          <!-- Alerts -->
-          <div class="card-elevated p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> تنبيهات الوثائق والإقامات والعقود
-              </h3>
-              <span id="alertsCountBadge" class="text-xs font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">4 تنبيهات</span>
+          <!-- Smart Table 1: Expiration & Compliance Alerts -->
+          <div class="card-elevated p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm shadow-xs border border-amber-200">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-slate-800">تنبيهات الوثائق والإقامات والعقود</h3>
+                    <p class="text-[10px] text-slate-400">متابعة آلية لتجديد الإقامات، الجوازات، ورخص العمل</p>
+                  </div>
+                </div>
+                <span id="alertsCountBadge" class="text-xs font-black bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full border border-rose-200">
+                  61 تنبيهاً
+                </span>
+              </div>
+
+              <!-- Interactive Controls (Search & Quick Filter Pills) -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
+                <div class="relative flex-1">
+                  <i class="fa-solid fa-magnifying-glass absolute right-2.5 top-2.5 text-slate-400 text-xs"></i>
+                  <input type="text" id="dashboardAlertsSearch" oninput="filterDashboardAlerts()" placeholder="بحث باسم الموظف أو نوع الوثيقة..." class="w-full text-xs pr-8 pl-3 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-brand transition">
+                </div>
+                <div class="flex items-center gap-1 flex-wrap">
+                  <button type="button" onclick="setAlertsFilter('all')" class="smart-filter-pill active" data-alert-filter="all">الكل</button>
+                  <button type="button" onclick="setAlertsFilter('iqama')" class="smart-filter-pill" data-alert-filter="iqama">الإقامات</button>
+                  <button type="button" onclick="setAlertsFilter('passport')" class="smart-filter-pill" data-alert-filter="passport">الجوازات</button>
+                  <button type="button" onclick="setAlertsFilter('critical')" class="smart-filter-pill" data-alert-filter="critical">عاجل</button>
+                </div>
+              </div>
+
+              <!-- Interactive Table with Sortable Columns -->
+              <div class="overflow-x-auto rounded-xl border border-slate-200/90 shadow-xs">
+                <table class="w-full text-xs text-right">
+                  <thead class="bg-slate-100/80 text-slate-600 font-bold border-b border-slate-200 select-none">
+                    <tr>
+                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardAlerts('name')">
+                        الموظف <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
+                      </th>
+                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardAlerts('type')">
+                        نوع الوثيقة <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
+                      </th>
+                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardAlerts('date')">
+                        تاريخ الانتهاء <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
+                      </th>
+                      <th class="py-2.5 px-3 text-center">الحالة</th>
+                      <th class="py-2.5 px-3 text-center">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardAlertsTableBody" class="divide-y divide-slate-100 bg-white">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-right">
-                <thead class="bg-slate-50 text-slate-500 font-bold border-b">
-                  <tr>
-                    <th class="py-2.5 px-3">الموظف</th>
-                    <th class="py-2.5 px-3">نوع الوثيقة</th>
-                    <th class="py-2.5 px-3">تاريخ الانتهاء</th>
-                    <th class="py-2.5 px-3">الحالة</th>
-                  </tr>
-                </thead>
-                <tbody id="dashboardAlertsTableBody" class="divide-y divide-slate-100">
-                  <!-- JS populated -->
-                </tbody>
-              </table>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span id="alertsShowingSummary">عرض أحدث التنبيهات</span>
+              <button onclick="switchTab('compliance')" class="text-brand font-bold hover:underline flex items-center gap-1">
+                الانتقال لمركز الامتثال والإقامات <i class="fa-solid fa-arrow-left text-[10px]"></i>
+              </button>
             </div>
           </div>
 
-          <!-- Recent Penalties & Requests -->
-          <div class="card-elevated p-6">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-gavel text-amber-600"></i> أحدث القرارات الجزائية الصادرة
-              </h3>
-              <button onclick="switchTab('penalties')" class="text-xs text-brand font-bold hover:underline">عرض سجل الجزاءات</button>
+          <!-- Smart Table 2: Recent Disciplinary Decisions -->
+          <div class="card-elevated p-6 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl bg-rose-50 text-brand flex items-center justify-center text-sm shadow-xs border border-brand/20">
+                    <i class="fa-solid fa-gavel"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-bold text-slate-800">أحدث القرارات الجزائية الصادرة</h3>
+                    <p class="text-[10px] text-slate-400">القرارات الإدارية، الخصومات ولائحة العمل المعتمدة</p>
+                  </div>
+                </div>
+                <button onclick="switchTab('penalties')" class="text-xs text-brand font-bold hover:underline flex items-center gap-1">
+                  سجل الجزاءات <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                </button>
+              </div>
+
+              <!-- Interactive Controls (Search & Quick Filter Pills) -->
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
+                <div class="relative flex-1">
+                  <i class="fa-solid fa-magnifying-glass absolute right-2.5 top-2.5 text-slate-400 text-xs"></i>
+                  <input type="text" id="dashboardPenaltiesSearch" oninput="filterDashboardPenalties()" placeholder="بحث برقم القرار، اسم الموظف، المخالفة..." class="w-full text-xs pr-8 pl-3 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-brand transition">
+                </div>
+                <div class="flex items-center gap-1 flex-wrap">
+                  <button type="button" onclick="setPenaltiesFilter('all')" class="smart-filter-pill active" data-pen-filter="all">الكل</button>
+                  <button type="button" onclick="setPenaltiesFilter('deduction')" class="smart-filter-pill" data-pen-filter="deduction">خصومات</button>
+                  <button type="button" onclick="setPenaltiesFilter('warning')" class="smart-filter-pill" data-pen-filter="warning">إنذارات</button>
+                </div>
+              </div>
+
+              <!-- Interactive Table with Sortable Columns -->
+              <div class="overflow-x-auto rounded-xl border border-slate-200/90 shadow-xs">
+                <table class="w-full text-xs text-right">
+                  <thead class="bg-slate-100/80 text-slate-600 font-bold border-b border-slate-200 select-none">
+                    <tr>
+                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardPenalties('number')">
+                        رقم القرار <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
+                      </th>
+                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardPenalties('name')">
+                        الموظف <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
+                      </th>
+                      <th class="py-2.5 px-3">المخالفة</th>
+                      <th class="py-2.5 px-3 text-center">الجزاء</th>
+                      <th class="py-2.5 px-3 text-center">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardPenaltiesTableBody" class="divide-y divide-slate-100 bg-white">
+                    <!-- Populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-right">
-                <thead class="bg-slate-50 text-slate-500 font-bold border-b">
-                  <tr>
-                    <th class="py-2.5 px-3">رقم القرار</th>
-                    <th class="py-2.5 px-3">الموظف</th>
-                    <th class="py-2.5 px-3">المخالفة</th>
-                    <th class="py-2.5 px-3">الجزاء المطبق</th>
-                  </tr>
-                </thead>
-                <tbody id="dashboardPenaltiesTableBody" class="divide-y divide-slate-100">
-                  <!-- JS populated -->
-                </tbody>
-              </table>
+
+            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span id="penaltiesShowingSummary">عرض أحدث القرارات الجزائية</span>
+              <button onclick="switchTab('penalties'); setTimeout(() => openModal('modalAddPenalty'), 150);" class="text-brand font-bold hover:underline flex items-center gap-1">
+                + إصدار قرار جديد
+              </button>
             </div>
           </div>
 

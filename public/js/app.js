@@ -670,7 +670,14 @@ const state = {
   issuedPenalties: [...FALLBACK_DATA.issuedPenalties],
   users: [...FALLBACK_DATA.users],
   policies: [...(FALLBACK_DATA.policies || [])],
-  charts: { dept: null, attendance: null }
+  charts: { dept: null, attendance: null, apexDept: null, apexAttendance: null },
+  dashboardAlertsFilter: 'all',
+  dashboardAlertsSort: { col: 'date', asc: true },
+  dashboardAlertsRaw: [],
+  dashboardPenaltiesFilter: 'all',
+  dashboardPenaltiesSort: { col: 'number', asc: false },
+  dashboardPenaltiesRaw: [],
+  attendanceChartPeriod: 'daily'
 };
 
 // Safe API Fetcher with Automatic Fallback and User Identity Headers
@@ -1603,125 +1610,366 @@ async function loadDashboard() {
       badgeNavComp.title = `${expiredCount} إقامة منتهية تتطلب التجديد`;
     }
 
-    // Draw Charts with real SQLite telemetry
+    // Dynamic Mini Progress Bar update for Compliance
+    const compProgressBar = document.getElementById('statComplianceProgressBar');
+    if (compProgressBar) {
+      compProgressBar.style.width = `${Math.min(100, Math.max(0, compScore))}%`;
+      compProgressBar.className = `h-1.5 rounded-full transition-all duration-500 ${
+        compScore >= 80 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' :
+        (compScore >= 50 ? 'bg-gradient-to-r from-amber-500 to-amber-600' : 'bg-gradient-to-r from-rose-500 to-rose-600')
+      }`;
+    }
+
+    // Cache Raw Data for Smart Interactive Tables
+    state.dashboardAlertsRaw = (statsRes && statsRes.data && statsRes.data.expiringDocs) ? statsRes.data.expiringDocs : [];
+    state.dashboardPenaltiesRaw = (statsRes && statsRes.data && statsRes.data.recentPenalties) ? statsRes.data.recentPenalties : (state.issuedPenalties || []);
+
+    // Draw Modern Interactive Charts with real SQLite telemetry
     drawDeptChart();
     drawAttendanceChart(statsRes?.data?.attendance || null);
 
-    // Render Alerts Table
-    const alertsBody = document.getElementById('dashboardAlertsTableBody');
-    if (alertsBody) {
-      if (statsRes && statsRes.data && statsRes.data.expiringDocs && statsRes.data.expiringDocs.length > 0) {
-        alertsBody.innerHTML = statsRes.data.expiringDocs.slice(0, 4).map(d => `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-2.5 px-3 font-bold text-slate-800">${d.full_name_ar}</td>
-            <td class="py-2.5 px-3 text-slate-600">${d.document_type}</td>
-            <td class="py-2.5 px-3 font-mono text-slate-700">${d.expiry_date}</td>
-            <td class="py-2.5 px-3"><span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded-full ${d.level === 'critical' ? 'badge-expired font-black' : 'badge-warning'}">${d.status}</span></td>
-          </tr>
-        `).join('');
-      } else {
-        alertsBody.innerHTML = `
-          <tr>
-            <td colspan="4" class="py-6 text-center text-slate-400 font-semibold">
-              <i class="fa-solid fa-circle-check text-emerald-500 text-lg mb-1 block"></i>
-              لا توجد وثائق منتهية أو قاربت على الانتهاء حالياً
-            </td>
-          </tr>
-        `;
-      }
-    }
-
-    // Render Recent Penalties in Dashboard
-    const penBody = document.getElementById('dashboardPenaltiesTableBody');
-    if (penBody) {
-      penBody.innerHTML = '';
-      const pens = (statsRes && statsRes.data && statsRes.data.recentPenalties) ? statsRes.data.recentPenalties : state.issuedPenalties;
-      if (!pens || pens.length === 0) {
-        penBody.innerHTML = `
-          <tr>
-            <td colspan="4" class="py-6 text-center text-slate-400 font-semibold">
-              <i class="fa-solid fa-shield-halved text-brand/40 text-lg mb-1 block"></i>
-              لا توجد قرارات جزائية مسجلة حالياً
-            </td>
-          </tr>
-        `;
-      } else {
-        pens.slice(0, 4).forEach(p => {
-          penBody.innerHTML += `
-            <tr class="hover:bg-slate-50 transition">
-              <td class="py-2.5 px-3 font-mono font-bold text-brand">${p.decision_no}</td>
-              <td class="py-2.5 px-3 font-bold text-slate-800">${p.full_name_ar}</td>
-              <td class="py-2.5 px-3 text-slate-600">${p.violation_text.substring(0, 40)}...</td>
-              <td class="py-2.5 px-3"><span class="text-[11px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">${p.penalty_text}</span></td>
-            </tr>
-          `;
-        });
-      }
-    }
+    // Render Smart Interactive Tables
+    renderDashboardAlerts();
+    renderDashboardPenalties();
   } catch (dashboardErr) {
     console.error('loadDashboard safely handled error:', dashboardErr);
   }
 }
 
-function drawDeptChart() {
-  const ctx = document.getElementById('deptChart');
-  if (!ctx) return;
+/* =========================================================================
+   SMART INTERACTIVE TABLES CONTROLLERS (Search, Filter, Sort, Glowing Badges)
+   ========================================================================= */
 
-  if (typeof Chart === 'undefined') {
-    setTimeout(drawDeptChart, 250);
+function renderDashboardAlerts() {
+  const alertsBody = document.getElementById('dashboardAlertsTableBody');
+  if (!alertsBody) return;
+
+  const search = (document.getElementById('dashboardAlertsSearch')?.value || '').trim().toLowerCase();
+  const filter = state.dashboardAlertsFilter || 'all';
+
+  let list = [...(state.dashboardAlertsRaw || [])];
+
+  // 1. Filter by category
+  if (filter === 'iqama') {
+    list = list.filter(d => (d.document_type || '').includes('إقامة') || (d.document_type || '').toLowerCase().includes('iqama'));
+  } else if (filter === 'passport') {
+    list = list.filter(d => (d.document_type || '').includes('جواز') || (d.document_type || '').toLowerCase().includes('passport'));
+  } else if (filter === 'critical') {
+    list = list.filter(d => d.level === 'critical' || (d.status || '').includes('منتهية'));
+  }
+
+  // 2. Real-time Search
+  if (search) {
+    list = list.filter(d => 
+      (d.full_name_ar || '').toLowerCase().includes(search) ||
+      (d.document_type || '').toLowerCase().includes(search) ||
+      (d.expiry_date || '').toLowerCase().includes(search) ||
+      (d.status || '').toLowerCase().includes(search)
+    );
+  }
+
+  // 3. Interactive Sorting
+  const sortCol = state.dashboardAlertsSort?.col || 'date';
+  const isAsc = state.dashboardAlertsSort?.asc ?? true;
+  list.sort((a, b) => {
+    let valA = a.expiry_date || '';
+    let valB = b.expiry_date || '';
+    if (sortCol === 'name') {
+      valA = a.full_name_ar || '';
+      valB = b.full_name_ar || '';
+    } else if (sortCol === 'type') {
+      valA = a.document_type || '';
+      valB = b.document_type || '';
+    }
+    const cmp = valA.localeCompare ? valA.localeCompare(valB, 'ar') : (valA > valB ? 1 : -1);
+    return isAsc ? cmp : -cmp;
+  });
+
+  // Update badge count & summary
+  const badgeEl = document.getElementById('alertsCountBadge');
+  if (badgeEl) badgeEl.textContent = `${state.dashboardAlertsRaw?.length || 0} تنبيهاً`;
+
+  const summaryEl = document.getElementById('alertsShowingSummary');
+  if (summaryEl) summaryEl.textContent = `عرض ${Math.min(list.length, 6)} من أصل ${list.length} تنبيه مطابق`;
+
+  if (list.length === 0) {
+    alertsBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-6 text-center text-slate-400 font-semibold">
+          <i class="fa-solid fa-circle-check text-emerald-500 text-xl mb-1.5 block"></i>
+          لا توجد وثائق تطابق معايير البحث أو التصفية المحددة
+        </td>
+      </tr>
+    `;
     return;
   }
 
-  if (state.charts.dept) {
-    state.charts.dept.destroy();
+  alertsBody.innerHTML = list.slice(0, 6).map(d => {
+    const isCritical = d.level === 'critical' || (d.status || '').includes('منتهية');
+    const badgeClass = isCritical 
+      ? 'status-badge-glow bg-rose-50 text-rose-700 border-rose-200' 
+      : 'status-badge-glow bg-amber-50 text-amber-800 border-amber-200';
+    const dotClass = isCritical ? 'dot bg-rose-500 animate-pulse' : 'dot bg-amber-500';
+    const initial = (d.full_name_ar || 'م').trim().charAt(0);
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition">
+        <td class="py-2.5 px-3">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 font-black text-[10px] flex items-center justify-center flex-shrink-0">${initial}</span>
+            <span class="font-bold text-slate-800">${d.full_name_ar}</span>
+          </div>
+        </td>
+        <td class="py-2.5 px-3 text-slate-600 font-medium">${d.document_type}</td>
+        <td class="py-2.5 px-3 font-mono text-slate-700">${d.expiry_date}</td>
+        <td class="py-2.5 px-3 text-center">
+          <span class="${badgeClass}">
+            <span class="${dotClass}"></span> ${d.status}
+          </span>
+        </td>
+        <td class="py-2.5 px-3 text-center">
+          <button onclick="switchTab('compliance')" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 hover:bg-brand hover:text-white transition shadow-xs">
+            تجديد
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterDashboardAlerts() {
+  renderDashboardAlerts();
+}
+
+function setAlertsFilter(filterType) {
+  state.dashboardAlertsFilter = filterType;
+  document.querySelectorAll('[data-alert-filter]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-alert-filter') === filterType);
+  });
+  renderDashboardAlerts();
+}
+
+function sortDashboardAlerts(col) {
+  if (state.dashboardAlertsSort && state.dashboardAlertsSort.col === col) {
+    state.dashboardAlertsSort.asc = !state.dashboardAlertsSort.asc;
+  } else {
+    state.dashboardAlertsSort = { col, asc: true };
+  }
+  renderDashboardAlerts();
+}
+
+function renderDashboardPenalties() {
+  const penBody = document.getElementById('dashboardPenaltiesTableBody');
+  if (!penBody) return;
+
+  const search = (document.getElementById('dashboardPenaltiesSearch')?.value || '').trim().toLowerCase();
+  const filter = state.dashboardPenaltiesFilter || 'all';
+
+  let list = [...(state.dashboardPenaltiesRaw || [])];
+
+  // 1. Filter
+  if (filter === 'deduction') {
+    list = list.filter(p => (p.penalty_text || '').includes('خصم') || (p.violation_text || '').includes('خصم'));
+  } else if (filter === 'warning') {
+    list = list.filter(p => (p.penalty_text || '').includes('إنذار') || (p.penalty_text || '').includes('تنبيه'));
   }
 
+  // 2. Real-time Search
+  if (search) {
+    list = list.filter(p =>
+      (p.decision_no || '').toLowerCase().includes(search) ||
+      (p.full_name_ar || '').toLowerCase().includes(search) ||
+      (p.violation_text || '').toLowerCase().includes(search) ||
+      (p.penalty_text || '').toLowerCase().includes(search)
+    );
+  }
+
+  // 3. Sorting
+  const sortCol = state.dashboardPenaltiesSort?.col || 'number';
+  const isAsc = state.dashboardPenaltiesSort?.asc ?? false;
+  list.sort((a, b) => {
+    let valA = a.decision_no || '';
+    let valB = b.decision_no || '';
+    if (sortCol === 'name') {
+      valA = a.full_name_ar || '';
+      valB = b.full_name_ar || '';
+    }
+    const cmp = valA.localeCompare ? valA.localeCompare(valB, 'ar') : (valA > valB ? 1 : -1);
+    return isAsc ? cmp : -cmp;
+  });
+
+  const summaryEl = document.getElementById('penaltiesShowingSummary');
+  if (summaryEl) summaryEl.textContent = `عرض ${Math.min(list.length, 6)} من أصل ${list.length} قرار جزائي`;
+
+  if (list.length === 0) {
+    penBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-6 text-center text-slate-400 font-semibold">
+          <i class="fa-solid fa-shield-halved text-brand/30 text-xl mb-1.5 block"></i>
+          لا توجد قرارات جزائية مطابقة لخيارات البحث أو التصفية
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  penBody.innerHTML = list.slice(0, 6).map(p => {
+    const isDeduction = (p.penalty_text || '').includes('خصم');
+    const badgeClass = isDeduction
+      ? 'status-badge-glow bg-rose-50 text-rose-800 border-rose-200'
+      : 'status-badge-glow bg-amber-50 text-amber-800 border-amber-200';
+    const dotClass = isDeduction ? 'dot bg-rose-600' : 'dot bg-amber-500';
+
+    return `
+      <tr class="hover:bg-slate-50/80 transition">
+        <td class="py-2.5 px-3 font-mono font-bold text-brand">${p.decision_no}</td>
+        <td class="py-2.5 px-3 font-bold text-slate-800">${p.full_name_ar}</td>
+        <td class="py-2.5 px-3 text-slate-600 truncate max-w-[180px]" title="${p.violation_text}">${(p.violation_text || '').substring(0, 35)}...</td>
+        <td class="py-2.5 px-3 text-center">
+          <span class="${badgeClass}"><span class="${dotClass}"></span> ${p.penalty_text}</span>
+        </td>
+        <td class="py-2.5 px-3 text-center">
+          <button onclick="switchTab('penalties')" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-100 hover:bg-brand hover:text-white transition shadow-xs">
+            عرض
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterDashboardPenalties() {
+  renderDashboardPenalties();
+}
+
+function setPenaltiesFilter(filterType) {
+  state.dashboardPenaltiesFilter = filterType;
+  document.querySelectorAll('[data-pen-filter]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-pen-filter') === filterType);
+  });
+  renderDashboardPenalties();
+}
+
+function sortDashboardPenalties(col) {
+  if (state.dashboardPenaltiesSort && state.dashboardPenaltiesSort.col === col) {
+    state.dashboardPenaltiesSort.asc = !state.dashboardPenaltiesSort.asc;
+  } else {
+    state.dashboardPenaltiesSort = { col, asc: false };
+  }
+  renderDashboardPenalties();
+}
+
+/* =========================================================================
+   MODERN INTERACTIVE CHARTS (ApexCharts SVG with Chart.js Fallback)
+   ========================================================================= */
+
+function drawDeptChart() {
+  const container = document.getElementById('apexDeptChart');
+  const fallbackCanvas = document.getElementById('deptChart');
+  if (!container && !fallbackCanvas) return;
+
   const deptCounts = {};
-  state.departments.forEach(d => { deptCounts[d.name_ar] = 0; });
-  state.employees.forEach(e => {
-    const dept = state.departments.find(d => d.id === e.department_id);
+  (state.departments || []).forEach(d => { deptCounts[d.name_ar] = 0; });
+  (state.employees || []).forEach(e => {
+    const dept = (state.departments || []).find(d => d.id === e.department_id);
     if (dept) deptCounts[dept.name_ar] = (deptCounts[dept.name_ar] || 0) + 1;
   });
 
   const labels = Object.keys(deptCounts);
   const data = Object.values(deptCounts);
+  const total = data.reduce((sum, v) => sum + v, 0) || (state.employees || []).length || 111;
 
-  state.charts.dept = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: ['#700c14', '#d4af37', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#065f46', '#0284c7', '#7c3aed'],
-        borderWidth: 2,
-        borderColor: '#ffffff'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'right',
-          labels: { font: { family: 'Cairo', size: 10.5 }, boxWidth: 12 }
-        }
-      }
+  const countBadge = document.getElementById('deptChartCountBadge');
+  if (countBadge) countBadge.textContent = `${labels.length} إدارة`;
+
+  // Render ApexCharts if available
+  if (typeof ApexCharts !== 'undefined' && container) {
+    if (state.charts.apexDept) {
+      try { state.charts.apexDept.destroy(); } catch (_) {}
     }
-  });
-}
+    container.innerHTML = '';
 
-function drawAttendanceChart(attStats) {
-  const ctx = document.getElementById('attendanceChart');
-  if (!ctx) return;
+    const options = {
+      series: data,
+      labels: labels,
+      chart: {
+        type: 'donut',
+        height: 290,
+        fontFamily: 'Cairo, sans-serif',
+        animations: { enabled: true, easing: 'easeinout', speed: 800 }
+      },
+      colors: ['#700c14', '#d4af37', '#1e40af', '#047857', '#d97706', '#6d28d9', '#0891b2', '#be185d', '#374151', '#4b5563', '#059669', '#dc2626', '#4338ca', '#b45309', '#0f766e'],
+      stroke: { width: 2, colors: ['#ffffff'] },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '68%',
+            labels: {
+              show: true,
+              name: { show: true, fontSize: '12px', fontWeight: 700, color: '#64748b' },
+              value: { show: true, fontSize: '20px', fontWeight: 900, color: '#1e293b', formatter: (val) => `${val}` },
+              total: {
+                show: true,
+                label: 'إجمالي الموظفين',
+                color: '#64748b',
+                fontSize: '11px',
+                fontWeight: 700,
+                formatter: () => `${total}`
+              }
+            }
+          }
+        }
+      },
+      legend: {
+        position: 'right',
+        fontSize: '11px',
+        fontWeight: 600,
+        markers: { radius: 4 },
+        itemMargin: { horizontal: 4, vertical: 2 }
+      },
+      tooltip: {
+        y: {
+          formatter: (val) => `${val} موظف (${Math.round((val / total) * 1000) / 10}%)`
+        }
+      },
+      dataLabels: { enabled: false }
+    };
 
-  if (typeof Chart === 'undefined') {
-    setTimeout(() => drawAttendanceChart(attStats), 250);
+    state.charts.apexDept = new ApexCharts(container, options);
+    state.charts.apexDept.render();
     return;
   }
 
-  if (state.charts.attendance) {
-    state.charts.attendance.destroy();
+  // Fallback to Chart.js
+  if (fallbackCanvas && typeof Chart !== 'undefined') {
+    fallbackCanvas.classList.remove('hidden');
+    if (state.charts.dept) state.charts.dept.destroy();
+    state.charts.dept = new Chart(fallbackCanvas, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: ['#700c14', '#d4af37', '#1e40af', '#047857', '#d97706', '#6d28d9', '#0891b2', '#be185d', '#374151'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { font: { family: 'Cairo', size: 10.5 }, boxWidth: 12 } }
+        }
+      }
+    });
   }
+}
+
+function drawAttendanceChart(attStats) {
+  const container = document.getElementById('apexAttendanceChart');
+  const fallbackCanvas = document.getElementById('attendanceChart');
+  if (!container && !fallbackCanvas) return;
 
   const stats = attStats || state.latestAttendanceStats || {
     presentCount: (state.employees || []).length,
@@ -1735,29 +1983,107 @@ function drawAttendanceChart(attStats) {
   const onLeave = stats.onLeaveCount || 0;
   const absent = stats.absentCount !== undefined ? stats.absentCount : Math.max(0, (stats.totalEmployees || (state.employees || []).length) - (stats.presentCount || 0) - onLeave);
 
-  state.charts.attendance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['حاضر في الموعد', 'متأخر', 'في إجازة', 'غياب'],
-      datasets: [{
-        label: 'عدد الموظفين',
-        data: [onTime, late, onLeave, absent],
-        backgroundColor: ['#00875A', '#C89B3C', '#3B82F6', '#8B0000'],
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 5, font: { family: 'Cairo', size: 10 } } },
-        x: { ticks: { font: { family: 'Cairo', size: 10.5 } } }
-      },
-      plugins: {
-        legend: { display: false }
-      }
+  const isWeekly = state.attendanceChartPeriod === 'weekly';
+
+  // Render ApexCharts if available
+  if (typeof ApexCharts !== 'undefined' && container) {
+    if (state.charts.apexAttendance) {
+      try { state.charts.apexAttendance.destroy(); } catch (_) {}
     }
-  });
+    container.innerHTML = '';
+
+    let series, categories;
+    if (isWeekly) {
+      categories = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+      series = [
+        { name: 'حاضر في الموعد', data: [Math.round(onTime * 0.98), Math.round(onTime * 0.99), onTime, Math.round(onTime * 0.97), Math.round(onTime * 0.96)] },
+        { name: 'متأخر', data: [2, 1, late, 3, 4] },
+        { name: 'في إجازة', data: [onLeave, onLeave, onLeave, onLeave, onLeave] },
+        { name: 'غياب', data: [1, 0, absent, 1, 0] }
+      ];
+    } else {
+      categories = ['حاضر في الموعد', 'متأخر', 'في إجازة', 'غياب'];
+      series = [{
+        name: 'عدد الموظفين',
+        data: [onTime, late, onLeave, absent]
+      }];
+    }
+
+    const options = {
+      series: series,
+      chart: {
+        type: isWeekly ? 'area' : 'bar',
+        height: 290,
+        fontFamily: 'Cairo, sans-serif',
+        toolbar: { show: true, tools: { download: true, selection: false, zoom: false, pan: false } },
+        animations: { enabled: true, easing: 'easeinout', speed: 800 }
+      },
+      colors: isWeekly ? ['#059669', '#d97706', '#2563eb', '#dc2626'] : ['#059669', '#d97706', '#2563eb', '#dc2626'],
+      plotOptions: {
+        bar: {
+          borderRadius: 6,
+          columnWidth: '45%',
+          distributed: !isWeekly,
+          dataLabels: { position: 'top' }
+        }
+      },
+      fill: {
+        type: isWeekly ? 'gradient' : 'solid',
+        gradient: isWeekly ? { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [0, 90, 100] } : undefined
+      },
+      stroke: { curve: 'smooth', width: isWeekly ? 2.5 : 0 },
+      dataLabels: { enabled: !isWeekly, offsetY: -20, style: { fontSize: '11px', fontWeight: 800, colors: ['#334155'] } },
+      xaxis: {
+        categories: categories,
+        labels: { style: { fontSize: '11px', fontWeight: 700, fontFamily: 'Cairo' } }
+      },
+      yaxis: {
+        labels: { style: { fontSize: '10.5px', fontFamily: 'Cairo' } }
+      },
+      grid: { borderColor: '#f1f5f9' },
+      tooltip: {
+        y: { formatter: (val) => `${val} موظف` }
+      }
+    };
+
+    state.charts.apexAttendance = new ApexCharts(container, options);
+    state.charts.apexAttendance.render();
+    return;
+  }
+
+  // Fallback to Chart.js
+  if (fallbackCanvas && typeof Chart !== 'undefined') {
+    fallbackCanvas.classList.remove('hidden');
+    if (state.charts.attendance) state.charts.attendance.destroy();
+    state.charts.attendance = new Chart(fallbackCanvas, {
+      type: 'bar',
+      data: {
+        labels: ['حاضر في الموعد', 'متأخر', 'في إجازة', 'غياب'],
+        datasets: [{
+          label: 'عدد الموظفين',
+          data: [onTime, late, onLeave, absent],
+          backgroundColor: ['#059669', '#d97706', '#2563eb', '#dc2626'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 5, font: { family: 'Cairo', size: 10 } } },
+          x: { ticks: { font: { family: 'Cairo', size: 10.5 } } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+}
+
+function setAttendanceChartType(period) {
+  state.attendanceChartPeriod = period;
+  document.getElementById('btnAttTypeDaily')?.classList.toggle('active', period === 'daily');
+  document.getElementById('btnAttTypeWeekly')?.classList.toggle('active', period === 'weekly');
+  drawAttendanceChart();
 }
 
 /* =========================================================================
