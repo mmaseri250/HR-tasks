@@ -29,6 +29,7 @@ const rbacEngine = require('./modules/rbacEngine');
 const cacheService = require('./modules/cacheService');
 const attendanceAutomationService = require('./modules/attendanceAutomationService');
 const { eosCalculatorService, SAUDI_EOS_TERMINATION_CASES } = require('./modules/eosCalculatorService');
+const atsRecruitmentService = require('./modules/atsRecruitmentService');
 
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
@@ -2104,6 +2105,175 @@ app.get('/api/eos/export/csv', (req, res) => {
     res.send(csv);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   ATS & RECRUITMENT API (الوظائف الشاغرة وتتبع المتقدمين والقوالب ثنائية اللغة)
+   ========================================================================= */
+
+// KPIs
+app.get('/api/recruitment/kpis', (req, res) => {
+  try {
+    const kpis = atsRecruitmentService.getRecruitmentKpis();
+    res.json({ success: true, data: kpis });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Vacancies
+app.get('/api/recruitment/vacancies', (req, res) => {
+  try {
+    const list = atsRecruitmentService.getVacancies(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/recruitment/vacancies', (req, res) => {
+  try {
+    const vacancy = atsRecruitmentService.createVacancy(req.body);
+    res.status(201).json({ success: true, message: 'تم إنشاء الوظيفة الشاغرة بنجاح', data: vacancy });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/recruitment/vacancies/:id', (req, res) => {
+  try {
+    const vacancy = atsRecruitmentService.getVacancyById(req.params.id);
+    if (!vacancy) return res.status(404).json({ success: false, error: 'الوظيفة غير موجودة' });
+    res.json({ success: true, data: vacancy });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/recruitment/vacancies/:id', (req, res) => {
+  try {
+    const vacancy = atsRecruitmentService.updateVacancy(req.params.id, req.body);
+    res.json({ success: true, message: 'تم تحديث الوظيفة الشاغرة بنجاح', data: vacancy });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/recruitment/vacancies/:id', (req, res) => {
+  try {
+    atsRecruitmentService.deleteVacancy(req.params.id);
+    res.json({ success: true, message: 'تم حذف الوظيفة الشاغرة بنجاح' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Applicants
+app.get('/api/recruitment/applicants', (req, res) => {
+  try {
+    const list = atsRecruitmentService.getApplicants(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/recruitment/applicants', (req, res) => {
+  try {
+    const applicant = atsRecruitmentService.createApplicant(req.body);
+    res.status(201).json({ success: true, message: 'تم تسجيل المتقدم بنجاح', data: applicant });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/recruitment/applicants/:id', (req, res) => {
+  try {
+    const applicant = atsRecruitmentService.getApplicantById(req.params.id);
+    if (!applicant) return res.status(404).json({ success: false, error: 'المتقدم غير موجود' });
+    res.json({ success: true, data: applicant });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch('/api/recruitment/applicants/:id/stage', (req, res) => {
+  try {
+    const { stage, interview_notes, interview_date } = req.body;
+    const applicant = atsRecruitmentService.updateApplicantStage(req.params.id, stage, interview_notes, interview_date);
+    res.json({ success: true, message: `تم نقل المتقدم إلى مرحلة: ${stage}`, data: applicant });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Job Offers
+app.get('/api/recruitment/offers', (req, res) => {
+  try {
+    const list = atsRecruitmentService.getOffers(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/recruitment/offers', (req, res) => {
+  try {
+    const offer = atsRecruitmentService.createOffer(req.body);
+    res.status(201).json({ success: true, message: 'تم إنشاء العرض الوظيفي بنجاح', data: offer });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/recruitment/offers/:id', (req, res) => {
+  try {
+    const offer = atsRecruitmentService.getOfferById(req.params.id);
+    if (!offer) return res.status(404).json({ success: false, error: 'العرض الوظيفي غير موجود' });
+    res.json({ success: true, data: offer });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch('/api/recruitment/offers/:id/status', (req, res) => {
+  try {
+    const offer = atsRecruitmentService.updateOfferStatus(req.params.id, req.body.status);
+    res.json({ success: true, message: `تم تحديث حالة العرض إلى: ${req.body.status}`, data: offer });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/recruitment/offers/:id/print', (req, res) => {
+  try {
+    const html = atsRecruitmentService.generateJobOfferPrintHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد وثيقة العرض الوظيفي: ${err.message}</h3>`);
+  }
+});
+
+// Bilingual Templates Direct Printing
+app.get('/api/recruitment/templates/application/print', (req, res) => {
+  try {
+    const html = atsRecruitmentService.generateJobApplicationPrintHtml(req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد نموذج طلب التوظيف: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/recruitment/templates/undertaking/print', (req, res) => {
+  try {
+    const html = atsRecruitmentService.generateUndertakingPrintHtml(req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في توليد نموذج التعهد وسرية المعلومات: ${err.message}</h3>`);
   }
 });
 

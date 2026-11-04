@@ -238,6 +238,13 @@
         </button>
         <button onclick="switchTab('absence')" id="nav-absence" class="hidden"></button>
 
+        <!-- 5.4 Recruitment & ATS (التوظيف وتتبع المتقدمين والقوالب) -->
+        <button onclick="switchTab('recruitment')" id="nav-recruitment" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-user-plus w-5 text-center text-base text-amber-700"></i>
+          <span class="flex-1 text-right" data-i18n="nav_recruitment">التوظيف وتتبع المتقدمين (ATS)</span>
+          <span id="badgeNavRecruitment" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">ATS</span>
+        </button>
+
         <!-- 6. Self-Service -->
         <button onclick="switchTab('selfservice')" id="nav-selfservice" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-user-shield w-5 text-center text-base text-indigo-600"></i>
@@ -2702,6 +2709,639 @@
       <!-- =====================================================================
            VIEW: ATTENDANCE & ARTICLE 80 NOTICES (إشعارات وإنذارات الدوام والانقطاع)
            ===================================================================== -->
+      <!-- =====================================================================
+           VIEW: ATS RECRUITMENT & BILINGUAL TEMPLATES (التوظيف وتتبع المتقدمين)
+           ===================================================================== -->
+      <section id="view-recruitment" class="space-y-6 hidden">
+        <div class="card-elevated p-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-brand"></i> نظام التوظيف وتتبع المتقدمين (ATS)
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">إدارة الوظائف الشاغرة، مسار استقطاب وتقييم الكفاءات (ATS Pipeline)، إصدار العروض الوظيفية، والقوالب الرسمية ثنائية اللغة (عربي / English).</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="openAddVacancyModal()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i> إضافة وظيفة شاغرة
+              </button>
+              <button onclick="openAddApplicantModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-user-plus"></i> تسجيل مرشح جديد
+              </button>
+              <button onclick="openCreateOfferModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-award"></i> إنشاء عرض وظيفي
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-tabs Navigation -->
+          <div class="flex gap-2 border-b border-slate-200 mt-4 pb-2 flex-wrap">
+            <button onclick="switchRecruitmentSubTab('vacancies')" id="subtab-btn-rec-vacancies" class="px-4 py-2 rounded-xl text-xs font-bold transition sub-tab-btn-active bg-brand text-white shadow-sm">
+              <i class="fa-solid fa-briefcase ml-1"></i> الوظائف الشاغرة
+              <span id="badgeRecVacanciesCount" class="mr-1 px-1.5 py-0.5 rounded-full text-[10px] bg-white/20 text-white font-mono">0</span>
+            </button>
+            <button onclick="switchRecruitmentSubTab('pipeline')" id="subtab-btn-rec-pipeline" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+              <i class="fa-solid fa-network-wired ml-1 text-indigo-600"></i> مسار المتقدمين (ATS Pipeline)
+              <span id="badgeRecApplicantsCount" class="mr-1 px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-100 text-indigo-800 font-mono">0</span>
+            </button>
+            <button onclick="switchRecruitmentSubTab('offers')" id="subtab-btn-rec-offers" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+              <i class="fa-solid fa-file-contract ml-1 text-amber-600"></i> العروض الوظيفية الرسمية
+              <span id="badgeRecOffersCount" class="mr-1 px-1.5 py-0.5 rounded-full text-[10px] bg-amber-100 text-amber-900 font-mono">0</span>
+            </button>
+            <button onclick="switchRecruitmentSubTab('templates')" id="subtab-btn-rec-templates" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+              <i class="fa-solid fa-language ml-1 text-emerald-600"></i> القوالب ثنائية اللغة (عربي / EN)
+            </button>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 1: VACANCIES -->
+        <div id="recSubViewVacancies" class="space-y-6">
+          
+          <!-- KPI Cards Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="flex justify-between items-center text-slate-500 text-xs font-bold">
+                <span>إجمالي الوظائف المطروحة</span>
+                <i class="fa-solid fa-briefcase text-slate-400"></i>
+              </div>
+              <h3 id="statRecTotalVacancies" class="text-2xl font-black text-slate-900 font-mono mt-2">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <div class="flex justify-between items-center text-emerald-700 text-xs font-bold">
+                <span>الوظائف المفتوحة حالياً</span>
+                <i class="fa-solid fa-door-open text-emerald-500"></i>
+              </div>
+              <h3 id="statRecOpenVacancies" class="text-2xl font-black text-emerald-950 font-mono mt-2">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-200">
+              <div class="flex justify-between items-center text-indigo-700 text-xs font-bold">
+                <span>إجمالي المرشحين والمتقدمين</span>
+                <i class="fa-solid fa-users text-indigo-500"></i>
+              </div>
+              <h3 id="statRecTotalApplicants" class="text-2xl font-black text-indigo-950 font-mono mt-2">0</h3>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+              <div class="flex justify-between items-center text-amber-700 text-xs font-bold">
+                <span>العروض الوظيفية النشطة</span>
+                <i class="fa-solid fa-award text-amber-500"></i>
+              </div>
+              <h3 id="statRecActiveOffers" class="text-2xl font-black text-amber-950 font-mono mt-2">0</h3>
+            </div>
+          </div>
+
+          <!-- Search & Filter Bar -->
+          <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input type="text" id="recVacanciesSearchInput" oninput="filterVacanciesTable()" placeholder="ابحث برقم الوظيفة، المسمى بالعربي أو الإنجليزي..." class="w-full sm:w-80 text-xs rounded-xl border border-slate-300 py-2 px-3 focus:ring-2 focus:ring-brand">
+              <select id="recVacanciesStatusFilter" onchange="filterVacanciesTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع الحالات</option>
+                <option value="مفتوح">مفتوح للتقديم</option>
+                <option value="معلق">معلق مؤقتاً</option>
+                <option value="مغلق">مغلق / تم الشغل</option>
+              </select>
+            </div>
+            <button onclick="loadVacancies()" class="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition">
+              <i class="fa-solid fa-rotate"></i> تحديث القائمة
+            </button>
+          </div>
+
+          <!-- Vacancies Table -->
+          <div class="card-elevated overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-right">
+                <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-3 px-3">كود الوظيفة</th>
+                    <th class="py-3 px-3">المسمى الوظيفي (عربي / English)</th>
+                    <th class="py-3 px-3">الإدارة والقسم</th>
+                    <th class="py-3 px-3">سنوات الخبرة</th>
+                    <th class="py-3 px-3">نوع الدوام</th>
+                    <th class="py-3 px-3">الشواغر</th>
+                    <th class="py-3 px-3">نطاق الراتب</th>
+                    <th class="py-3 px-3">المتقدمين</th>
+                    <th class="py-3 px-3">الحالة</th>
+                    <th class="py-3 px-3 text-center">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="recVacanciesTableBody" class="divide-y divide-slate-100">
+                  <!-- JS Populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SUB-VIEW 2: ATS PIPELINE (مسار تتبع المتقدمين) -->
+        <div id="recSubViewPipeline" class="space-y-6 hidden">
+          
+          <!-- Filter Bar -->
+          <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input type="text" id="recPipelineSearchInput" oninput="filterApplicantsPipeline()" placeholder="ابحث باسم المرشح، الجوال، الإيميل..." class="w-full sm:w-80 text-xs rounded-xl border border-slate-300 py-2 px-3 focus:ring-2 focus:ring-brand">
+              <select id="recPipelineVacancyFilter" onchange="filterApplicantsPipeline()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع الوظائف الشاغرة</option>
+                <!-- JS populated -->
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="openAddApplicantModal()" class="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
+                <i class="fa-solid fa-plus"></i> مرشح جديد
+              </button>
+              <button onclick="loadApplicants()" class="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-rotate"></i> تحديث
+              </button>
+            </div>
+          </div>
+
+          <!-- 6-Stage Kanban Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-start overflow-x-auto pb-4">
+            
+            <!-- Stage 1: New -->
+            <div class="bg-slate-100 rounded-2xl p-3 space-y-3 min-w-[210px] border border-slate-200">
+              <div class="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span class="text-xs font-black text-slate-700 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> جديد (New)
+                </span>
+                <span id="badgeStageNew" class="text-[10px] font-mono font-bold bg-white text-slate-700 px-2 py-0.5 rounded-full border">0</span>
+              </div>
+              <div id="kanbanStageNew" class="space-y-2 min-h-[150px]">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- Stage 2: Screening -->
+            <div class="bg-blue-50/70 rounded-2xl p-3 space-y-3 min-w-[210px] border border-blue-200">
+              <div class="flex justify-between items-center pb-2 border-b border-blue-200">
+                <span class="text-xs font-black text-blue-900 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> فرز أولي
+                </span>
+                <span id="badgeStageScreening" class="text-[10px] font-mono font-bold bg-white text-blue-900 px-2 py-0.5 rounded-full border border-blue-200">0</span>
+              </div>
+              <div id="kanbanStageScreening" class="space-y-2 min-h-[150px]">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- Stage 3: Interview -->
+            <div class="bg-amber-50/70 rounded-2xl p-3 space-y-3 min-w-[210px] border border-amber-200">
+              <div class="flex justify-between items-center pb-2 border-b border-amber-200">
+                <span class="text-xs font-black text-amber-900 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> مقابلة شخصية
+                </span>
+                <span id="badgeStageInterview" class="text-[10px] font-mono font-bold bg-white text-amber-900 px-2 py-0.5 rounded-full border border-amber-200">0</span>
+              </div>
+              <div id="kanbanStageInterview" class="space-y-2 min-h-[150px]">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- Stage 4: Job Offer -->
+            <div class="bg-purple-50/70 rounded-2xl p-3 space-y-3 min-w-[210px] border border-purple-200">
+              <div class="flex justify-between items-center pb-2 border-b border-purple-200">
+                <span class="text-xs font-black text-purple-900 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> عرض وظيفي
+                </span>
+                <span id="badgeStageOffer" class="text-[10px] font-mono font-bold bg-white text-purple-900 px-2 py-0.5 rounded-full border border-purple-200">0</span>
+              </div>
+              <div id="kanbanStageOffer" class="space-y-2 min-h-[150px]">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- Stage 5: Hired -->
+            <div class="bg-emerald-50/70 rounded-2xl p-3 space-y-3 min-w-[210px] border border-emerald-200">
+              <div class="flex justify-between items-center pb-2 border-b border-emerald-200">
+                <span class="text-xs font-black text-emerald-900 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> مقبول ومُعيّن
+                </span>
+                <span id="badgeStageHired" class="text-[10px] font-mono font-bold bg-white text-emerald-900 px-2 py-0.5 rounded-full border border-emerald-200">0</span>
+              </div>
+              <div id="kanbanStageHired" class="space-y-2 min-h-[150px]">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+            <!-- Stage 6: Rejected -->
+            <div class="bg-rose-50/70 rounded-2xl p-3 space-y-3 min-w-[210px] border border-rose-200">
+              <div class="flex justify-between items-center pb-2 border-b border-rose-200">
+                <span class="text-xs font-black text-rose-900 flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> مستبعد / مرفوض
+                </span>
+                <span id="badgeStageRejected" class="text-[10px] font-mono font-bold bg-white text-rose-900 px-2 py-0.5 rounded-full border border-rose-200">0</span>
+              </div>
+              <div id="kanbanStageRejected" class="space-y-2 min-h-[150px]">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- SUB-VIEW 3: JOB OFFERS (العروض الوظيفية) -->
+        <div id="recSubViewOffers" class="space-y-6 hidden">
+          
+          <!-- Search & Filter Bar -->
+          <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input type="text" id="recOffersSearchInput" oninput="filterJobOffersTable()" placeholder="ابحث برقم العرض، اسم المرشح، الجوال..." class="w-full sm:w-80 text-xs rounded-xl border border-slate-300 py-2 px-3 focus:ring-2 focus:ring-brand">
+              <select id="recOffersStatusFilter" onchange="filterJobOffersTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع حالات العروض</option>
+                <option value="مرسل للمرشح">مرسل للمرشح (بانتظار الرد)</option>
+                <option value="مقبول">تم القبول والاعتماد</option>
+                <option value="مرفوض">مرفوض من المرشح</option>
+              </select>
+            </div>
+            <button onclick="openCreateOfferModal()" class="text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-plus"></i> إنشاء عرض وظيفي جديد
+            </button>
+          </div>
+
+          <!-- Offers Table -->
+          <div class="card-elevated overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-right">
+                <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-3 px-3">رقم العرض</th>
+                    <th class="py-3 px-3">المرشح</th>
+                    <th class="py-3 px-3">المسمى الوظيفي</th>
+                    <th class="py-3 px-3">الإدارة</th>
+                    <th class="py-3 px-3">الراتب الأساسي</th>
+                    <th class="py-3 px-3">البدلات (سكن/نقل)</th>
+                    <th class="py-3 px-3 font-black text-brand">إجمالي الراتب الشامل</th>
+                    <th class="py-3 px-3">تاريخ الإصدار</th>
+                    <th class="py-3 px-3">حالة العرض</th>
+                    <th class="py-3 px-3 text-center">الوثائق والطباعة</th>
+                  </tr>
+                </thead>
+                <tbody id="recOffersTableBody" class="divide-y divide-slate-100">
+                  <!-- JS Populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SUB-VIEW 4: BILINGUAL TEMPLATES (القوالب ثنائية اللغة) -->
+        <div id="recSubViewTemplates" class="space-y-6 hidden">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Template 1: Application Form -->
+            <div class="card-elevated p-6 space-y-4 border-t-4 border-indigo-600 hover:shadow-lg transition">
+              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center text-2xl font-black">
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+              <div class="space-y-1">
+                <h3 class="text-sm font-black text-slate-900">1. نموذج طلب التوظيف الرسمي</h3>
+                <h4 class="text-[11px] font-bold text-slate-500 font-mono">Bilingual Job Application Form</h4>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                استمارة توظيف رسمية ثنائية اللغة (عربي / English) متضمنة بيانات الهوية، السيرة، المؤهلات العلمية، الخبرات العملية، والإقرار القانوني بصحة البيانات والتوقيع.
+              </p>
+              <div class="pt-2 border-t flex flex-col gap-2">
+                <button onclick="printBilingualApplicationForm()" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow">
+                  <i class="fa-solid fa-print"></i> معاينة وطباعة الاستمارة (A4)
+                </button>
+              </div>
+            </div>
+
+            <!-- Template 2: Job Offer Letter -->
+            <div class="card-elevated p-6 space-y-4 border-t-4 border-amber-600 hover:shadow-lg transition">
+              <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center text-2xl font-black">
+                <i class="fa-solid fa-award"></i>
+              </div>
+              <div class="space-y-1">
+                <h3 class="text-sm font-black text-slate-900">2. نموذج العرض الوظيفي الرسمي</h3>
+                <h4 class="text-[11px] font-bold text-slate-500 font-mono">Bilingual Official Job Offer Letter</h4>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                خطاب عرض وظيفي رسمي ملزم قانونياً وفق نظام العمل السعودي، يشمل الحزمة المالية التفصيلية، شروط العقد، فترة التجربة (م53)، والتأمين الطبي، وخانة قبول المرشح.
+              </p>
+              <div class="pt-2 border-t flex flex-col gap-2">
+                <button onclick="printSampleJobOffer()" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 transition flex items-center justify-center gap-2 shadow">
+                  <i class="fa-solid fa-print"></i> معاينة نموذج العرض (A4)
+                </button>
+              </div>
+            </div>
+
+            <!-- Template 3: NDA & Undertaking -->
+            <div class="card-elevated p-6 space-y-4 border-t-4 border-[#700c14] hover:shadow-lg transition">
+              <div class="w-12 h-12 rounded-2xl bg-rose-50 text-[#700c14] border border-rose-200 flex items-center justify-center text-2xl font-black">
+                <i class="fa-solid fa-shield-halved"></i>
+              </div>
+              <div class="space-y-1">
+                <h3 class="text-sm font-black text-slate-900">3. نموذج إقرار وتعهد وسرية المعلومات</h3>
+                <h4 class="text-[11px] font-bold text-slate-500 font-mono">Employee Undertaking & NDA</h4>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                وثيقة تعهد قانونية ملزمة لحفظ أسرار العمل والبيانات التجارية، والالتزام بلوائح العمل وقواعد السلامة، وتسليم العهد المادية والرقمية عند انتهاء الخدمة.
+              </p>
+              <div class="pt-2 border-t flex flex-col gap-2">
+                <button onclick="printBilingualUndertaking()" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-[#700c14] hover:bg-[#52090e] transition flex items-center justify-center gap-2 shadow">
+                  <i class="fa-solid fa-print"></i> معاينة وثيقة التعهد (A4)
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- MODAL: ADD / EDIT VACANCY -->
+        <div id="modalAddVacancy" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-briefcase text-brand"></i> إضافة / تعديل وظيفة شاغرة
+              </h3>
+              <button onclick="closeModal('modalAddVacancy')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+            <form onsubmit="submitVacancyForm(event)" class="space-y-3 text-xs">
+              <input type="hidden" id="vacFormId">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المسمى الوظيفي (بالعربي) *:</label>
+                  <input type="text" id="vacFormTitleAr" required placeholder="مثال: مدير مشروع إنشائي" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المسمى الوظيفي (بالإنجليزي):</label>
+                  <input type="text" id="vacFormTitleEn" placeholder="e.g. Project Manager" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الإدارة / القسم:</label>
+                  <select id="vacFormDept" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="">-- اختر الإدارة --</option>
+                    <!-- Populated via JS -->
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">نوع الدوام:</label>
+                  <select id="vacFormType" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="دوام كامل">دوام كامل (Full-Time)</option>
+                    <option value="دوام جزئي">دوام جزئي (Part-Time)</option>
+                    <option value="عقد محدد المدة">عقد محدد المدة (Project-Based)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">سنوات الخبرة المطلوبة:</label>
+                  <input type="number" id="vacFormExp" value="3" min="0" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">عدد الشواغر:</label>
+                  <input type="number" id="vacFormOpenings" value="1" min="1" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">حالة الوظيفة:</label>
+                  <select id="vacFormStatus" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                    <option value="مفتوح">مفتوح للتقديم</option>
+                    <option value="معلق">معلق مؤقتاً</option>
+                    <option value="مغلق">مغلق</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">نطاق الراتب المتوقع:</label>
+                <input type="text" id="vacFormSalary" placeholder="مثال: 9,000 - 13,000 ر.س" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">المتطلبات والشروط والمهارات الأساسية:</label>
+                <textarea id="vacFormReqs" rows="3" placeholder="اكتب المؤهلات والشهادات المهنية المطلوبة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800"></textarea>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalAddVacancy')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> حفظ الوظيفة
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL: ADD APPLICANT -->
+        <div id="modalAddApplicant" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-indigo-600"></i> تسجيل مرشح جديد (ATS Candidate)
+              </h3>
+              <button onclick="closeModal('modalAddApplicant')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+            <form onsubmit="submitApplicantForm(event)" class="space-y-3 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">الوظيفة المرشح لها *:</label>
+                <select id="appFormVacancyId" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                  <option value="">-- اختر الوظيفة الشاغرة --</option>
+                  <!-- Populated via JS -->
+                </select>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الاسم الكامل للمرشح *:</label>
+                  <input type="text" id="appFormFullName" required placeholder="الاسم الثلاثي أو الرباعي" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الجنسية:</label>
+                  <input type="text" id="appFormNationality" value="سعودي" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">رقم الجوال *:</label>
+                  <input type="text" id="appFormPhone" required placeholder="05xxxxxxxx" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">البريد الإلكتروني:</label>
+                  <input type="email" id="appFormEmail" placeholder="candidate@example.com" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المؤهل العلمي:</label>
+                  <input type="text" id="appFormEducation" placeholder="بكالوريوس هندسة / إدارة" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">سنوات الخبرة:</label>
+                  <input type="number" id="appFormExp" value="3" min="0" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الراتب المتوقع (ر.س):</label>
+                  <input type="number" id="appFormSalary" placeholder="10000" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">جهة العمل الحالية / السابقة:</label>
+                <input type="text" id="appFormEmployer" placeholder="اسم الشركة الحالية أو السابقة" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalAddApplicant')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> تسجيل المرشح
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL: MOVE STAGE -->
+        <div id="modalMoveApplicantStage" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-arrows-split-up-and-left text-indigo-600"></i> نقل مرحلة المرشح (ATS Stage)
+              </h3>
+              <button onclick="closeModal('modalMoveApplicantStage')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+            <form onsubmit="submitMoveStageForm(event)" class="space-y-3 text-xs">
+              <input type="hidden" id="moveStageApplicantId">
+              <div>
+                <span class="block font-bold text-slate-500 mb-0.5">المرشح:</span>
+                <span id="moveStageCandidateName" class="font-black text-slate-900 text-sm block"></span>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">المرحلة الجديدة في المسار *:</label>
+                <select id="moveStageSelect" required class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                  <option value="جديد">1. جديد (New Candidate)</option>
+                  <option value="فرز_أولي">2. فرز أولي (Screening)</option>
+                  <option value="مقابلة_شخصية">3. مقابلة شخصية (Interview)</option>
+                  <option value="عرض_وظيفي">4. إصدار عرض وظيفي (Job Offer)</option>
+                  <option value="مقبول">5. مقبول ومُعيّن (Hired)</option>
+                  <option value="مرفوض">6. مستبعد / مرفوض (Rejected)</option>
+                </select>
+              </div>
+
+              <div id="moveStageInterviewDateContainer">
+                <label class="block font-bold text-slate-700 mb-1">موعد المقابلة (إن وجد):</label>
+                <input type="datetime-local" id="moveStageInterviewDate" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ملاحظات التقييم / المقابلة:</label>
+                <textarea id="moveStageNotes" rows="3" placeholder="ملاحظات المقابلة الفنية والسلوكية..." class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800"></textarea>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalMoveApplicantStage')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-arrow-right-arrow-left"></i> حفظ ونقل المرحلة
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL: CREATE JOB OFFER -->
+        <div id="modalCreateJobOffer" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+          <div class="bg-white rounded-3xl max-w-3xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-award text-amber-600"></i> إنشاء عرض وظيفي رسمي جديد
+              </h3>
+              <button onclick="closeModal('modalCreateJobOffer')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+            </div>
+            <form onsubmit="submitCreateOfferForm(event)" class="space-y-3 text-xs">
+              <input type="hidden" id="offerFormApplicantId">
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">اسم المرشح *:</label>
+                  <input type="text" id="offerFormCandidateName" required placeholder="اسم المرشح كاملاً" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">رقم الهوية / الإقامة:</label>
+                  <input type="text" id="offerFormNationalId" placeholder="10xxxxxxxx" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المسمى الوظيفي (عربي) *:</label>
+                  <input type="text" id="offerFormTitleAr" required placeholder="مثال: مهندس سلامة وصحة مهنية" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">المسمى الوظيفي (إنجليزي):</label>
+                  <input type="text" id="offerFormTitleEn" placeholder="e.g. Safety Engineer" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono text-slate-800">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الإدارة / القسم:</label>
+                  <input type="text" id="offerFormDept" value="إدارة المشاريع" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800 font-bold">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">موقع العمل:</label>
+                  <input type="text" id="offerFormBranch" value="المقر الرئيسي - الرياض" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800 font-bold">
+                </div>
+              </div>
+
+              <!-- Salary Breakdown Box -->
+              <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-2">
+                <span class="font-black text-amber-950 block">الحزمة المالية الشهرية (بالريال السعودي):</span>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">الأساسي *:</label>
+                    <input type="number" id="offerFormBasic" value="6000" oninput="calculateOfferGross()" required class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-900 bg-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">بدل السكن:</label>
+                    <input type="number" id="offerFormHousing" value="1500" oninput="calculateOfferGross()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-900 bg-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">بدل النقل:</label>
+                    <input type="number" id="offerFormTransport" value="500" oninput="calculateOfferGross()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-900 bg-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">بدلات أخرى:</label>
+                    <input type="number" id="offerFormOther" value="0" oninput="calculateOfferGross()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-900 bg-white">
+                  </div>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-amber-200">
+                  <span class="font-bold text-amber-900">إجمالي الراتب الشهري الشامل:</span>
+                  <span id="offerFormTotalDisplay" class="font-mono font-black text-brand text-sm">8,000 ر.س</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">فترة التجربة (المادة 53):</label>
+                  <input type="text" id="offerFormProbation" value="90 يوماً (90 Days)" class="w-full rounded-xl border border-slate-300 py-2 px-3 text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">الإجازة السنوية (المادة 109):</label>
+                  <input type="number" id="offerFormVacation" value="30" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-800">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">تاريخ المباشرة المتوقع:</label>
+                  <input type="date" id="offerFormStartDate" class="w-full rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800">
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-3 border-t">
+                <button type="button" onclick="closeModal('modalCreateJobOffer')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-check"></i> حفظ وإصدار العرض
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
       <section id="view-attendance-notices" class="space-y-6 hidden">
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">

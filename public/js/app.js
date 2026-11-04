@@ -1467,6 +1467,9 @@ function switchTab(tabId) {
       case 'terminated':
         loadTerminatedView();
         break;
+      case 'recruitment':
+        loadRecruitmentView();
+        break;
       case 'attendance-notices':
         loadNoticesView();
         break;
@@ -10273,6 +10276,694 @@ function exportTerminatedExcel() {
 }
 
 
+// --- 2.1 ATS RECRUITMENT & BILINGUAL TEMPLATES MODULE ---
+let recruitmentVacancies = [];
+let recruitmentApplicants = [];
+let recruitmentOffers = [];
+let currentRecruitmentSubTab = 'vacancies';
+
+async function loadRecruitmentView() {
+  try {
+    await Promise.all([
+      loadRecruitmentKpis(),
+      loadVacancies(),
+      loadApplicants(),
+      loadJobOffers()
+    ]);
+  } catch (err) {
+    console.error('Error loading recruitment view:', err);
+  }
+}
+
+function switchRecruitmentSubTab(subTab) {
+  currentRecruitmentSubTab = subTab;
+  const tabs = ['vacancies', 'pipeline', 'offers', 'templates'];
+  tabs.forEach(t => {
+    const view = document.getElementById(`recSubView${t.charAt(0).toUpperCase() + t.slice(1)}`);
+    const btn = document.getElementById(`subtab-btn-rec-${t}`);
+    if (t === subTab) {
+      if (view) view.classList.remove('hidden');
+      if (btn) btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition sub-tab-btn-active bg-brand text-white shadow-sm';
+    } else {
+      if (view) view.classList.add('hidden');
+      if (btn) btn.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition';
+    }
+  });
+
+  if (subTab === 'vacancies') loadVacancies();
+  else if (subTab === 'pipeline') loadApplicants();
+  else if (subTab === 'offers') loadJobOffers();
+}
+
+async function loadRecruitmentKpis() {
+  try {
+    const res = await apiFetch('/api/recruitment/kpis');
+    if (res && res.success && res.data) {
+      const d = res.data;
+      const elTotV = document.getElementById('statRecTotalVacancies');
+      const elOpnV = document.getElementById('statRecOpenVacancies');
+      const elTotA = document.getElementById('statRecTotalApplicants');
+      const elActO = document.getElementById('statRecActiveOffers');
+      const bV = document.getElementById('badgeRecVacanciesCount');
+      const bA = document.getElementById('badgeRecApplicantsCount');
+      const bO = document.getElementById('badgeRecOffersCount');
+
+      if (elTotV) elTotV.textContent = d.totalVacancies || 0;
+      if (elOpnV) elOpnV.textContent = d.openVacancies || 0;
+      if (elTotA) elTotA.textContent = d.totalApplicants || 0;
+      if (elActO) elActO.textContent = d.activeOffers || 0;
+      if (bV) bV.textContent = d.openVacancies || 0;
+      if (bA) bA.textContent = d.totalApplicants || 0;
+      if (bO) bO.textContent = d.activeOffers || 0;
+    }
+  } catch (e) {
+    console.error('Error loading recruitment KPIs:', e);
+  }
+}
+
+async function loadVacancies() {
+  try {
+    const res = await apiFetch('/api/recruitment/vacancies');
+    if (res && res.success) {
+      recruitmentVacancies = res.data || [];
+      renderVacanciesTable(recruitmentVacancies);
+      populateVacancySelects();
+    }
+  } catch (err) {
+    console.error('Error loading vacancies:', err);
+  }
+}
+
+function renderVacanciesTable(records) {
+  const tbody = document.getElementById('recVacanciesTableBody');
+  if (!tbody) return;
+
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 font-bold">لا توجد وظائف شاغرة حالياً. انقر على "+ إضافة وظيفة شاغرة" لنشر وظيفة جديدة.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map((r, i) => `
+    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+      <td class="p-3">
+        <span class="font-mono font-bold text-brand bg-brand/5 px-2 py-0.5 rounded-lg border border-brand/20">${r.job_code}</span>
+      </td>
+      <td class="p-3">
+        <div class="font-bold text-slate-900">${r.title_ar}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${r.title_en || '-'}</div>
+      </td>
+      <td class="p-3 text-slate-700 font-semibold">${r.department_name || 'الإدارة العامة'}</td>
+      <td class="p-3 font-mono font-bold text-slate-700">${r.experience_years ? r.experience_years + ' سنوات' : 'بدون خبرة'}</td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800">${r.employment_type || 'دوام كامل'}</span></td>
+      <td class="p-3 font-mono font-bold text-slate-800">${r.openings_count || 1}</td>
+      <td class="p-3 font-mono font-bold text-emerald-700">${r.salary_range || 'حسب المقابلة'}</td>
+      <td class="p-3 font-mono font-bold text-indigo-700">
+        <span class="px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-900">${r.applicants_count || 0} مرشح</span>
+      </td>
+      <td class="p-3">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.status === 'مفتوح' ? 'bg-emerald-100 text-emerald-800' : (r.status === 'معلق' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800')}">
+          ${r.status}
+        </span>
+      </td>
+      <td class="p-3 text-center">
+        <div class="flex items-center justify-center gap-1.5">
+          <button onclick="openAddApplicantModal(${r.id})" title="إضافة مرشح لهذه الوظيفة" class="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition">
+            <i class="fa-solid fa-user-plus text-xs"></i>
+          </button>
+          <button onclick="openAddVacancyModal(${r.id})" title="تعديل الوظيفة" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            <i class="fa-solid fa-pen-to-square text-xs"></i>
+          </button>
+          <button onclick="printBilingualApplicationFormForVacancy(${r.id})" title="طباعة استمارة توظيف A4 لهذه الوظيفة" class="p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 transition">
+            <i class="fa-solid fa-print text-xs"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterVacanciesTable() {
+  const query = (document.getElementById('recVacanciesSearchInput')?.value || '').toLowerCase().trim();
+  const statusFilter = document.getElementById('recVacanciesStatusFilter')?.value || '';
+
+  const filtered = recruitmentVacancies.filter(r => {
+    const matchQuery = !query ||
+      (r.title_ar && r.title_ar.toLowerCase().includes(query)) ||
+      (r.title_en && r.title_en.toLowerCase().includes(query)) ||
+      (r.job_code && r.job_code.toLowerCase().includes(query));
+
+    const matchStatus = !statusFilter || (r.status === statusFilter);
+    return matchQuery && matchStatus;
+  });
+
+  renderVacanciesTable(filtered);
+}
+
+function populateVacancySelects() {
+  const appSelect = document.getElementById('appFormVacancyId');
+  const pipeFilter = document.getElementById('recPipelineVacancyFilter');
+
+  const options = '<option value="">-- اختر الوظيفة الشاغرة --</option>' +
+    recruitmentVacancies.map(v => `<option value="${v.id}">${v.job_code} - ${v.title_ar} (${v.status})</option>`).join('');
+
+  if (appSelect) appSelect.innerHTML = options;
+
+  if (pipeFilter) {
+    pipeFilter.innerHTML = '<option value="">جميع الوظائف الشاغرة</option>' +
+      recruitmentVacancies.map(v => `<option value="${v.id}">${v.title_ar} (${v.job_code})</option>`).join('');
+  }
+
+  // Populate department select in vacancy modal
+  const vacDept = document.getElementById('vacFormDept');
+  if (vacDept && state && state.departments) {
+    vacDept.innerHTML = '<option value="">-- اختر الإدارة --</option>' +
+      state.departments.map(d => `<option value="${d.id}">${d.name_ar}</option>`).join('');
+  }
+}
+
+function openAddVacancyModal(vacancyId = null) {
+  populateVacancySelects();
+  const idInput = document.getElementById('vacFormId');
+  const titleAr = document.getElementById('vacFormTitleAr');
+  const titleEn = document.getElementById('vacFormTitleEn');
+  const dept = document.getElementById('vacFormDept');
+  const type = document.getElementById('vacFormType');
+  const exp = document.getElementById('vacFormExp');
+  const openings = document.getElementById('vacFormOpenings');
+  const salary = document.getElementById('vacFormSalary');
+  const reqs = document.getElementById('vacFormReqs');
+  const status = document.getElementById('vacFormStatus');
+
+  if (vacancyId) {
+    const v = recruitmentVacancies.find(item => item.id === vacancyId);
+    if (v) {
+      if (idInput) idInput.value = v.id;
+      if (titleAr) titleAr.value = v.title_ar || '';
+      if (titleEn) titleEn.value = v.title_en || '';
+      if (dept) dept.value = v.department_id || '';
+      if (type) type.value = v.employment_type || 'دوام كامل';
+      if (exp) exp.value = v.experience_years || 0;
+      if (openings) openings.value = v.openings_count || 1;
+      if (salary) salary.value = v.salary_range || '';
+      if (reqs) reqs.value = v.requirements || '';
+      if (status) status.value = v.status || 'مفتوح';
+    }
+  } else {
+    if (idInput) idInput.value = '';
+    if (titleAr) titleAr.value = '';
+    if (titleEn) titleEn.value = '';
+    if (salary) salary.value = '';
+    if (reqs) reqs.value = '';
+    if (exp) exp.value = 3;
+    if (openings) openings.value = 1;
+    if (status) status.value = 'مفتوح';
+  }
+
+  openModal('modalAddVacancy');
+}
+
+async function submitVacancyForm(e) {
+  e.preventDefault();
+  const id = document.getElementById('vacFormId')?.value;
+  const payload = {
+    title_ar: document.getElementById('vacFormTitleAr').value,
+    title_en: document.getElementById('vacFormTitleEn').value,
+    department_id: document.getElementById('vacFormDept').value || null,
+    employment_type: document.getElementById('vacFormType').value,
+    experience_years: Number(document.getElementById('vacFormExp').value) || 0,
+    openings_count: Number(document.getElementById('vacFormOpenings').value) || 1,
+    salary_range: document.getElementById('vacFormSalary').value,
+    requirements: document.getElementById('vacFormReqs').value,
+    status: document.getElementById('vacFormStatus').value
+  };
+
+  try {
+    const url = id ? `/api/recruitment/vacancies/${id}` : '/api/recruitment/vacancies';
+    const method = id ? 'PUT' : 'POST';
+    const res = await apiFetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res && res.success) {
+      closeModal('modalAddVacancy');
+      await loadVacancies();
+      await loadRecruitmentKpis();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(id ? 'تم تحديث الوظيفة الشاغرة بنجاح' : 'تم نشر الوظيفة الشاغرة بنجاح', 'success');
+      } else {
+        alert('تم حفظ الوظيفة الشاغرة بنجاح');
+      }
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل حفظ الوظيفة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء حفظ الوظيفة: ' + err.message);
+  }
+}
+
+// ==========================================
+// APPLICANTS & ATS PIPELINE
+// ==========================================
+
+async function loadApplicants() {
+  try {
+    const res = await apiFetch('/api/recruitment/applicants');
+    if (res && res.success) {
+      recruitmentApplicants = res.data || [];
+      renderApplicantsPipeline(recruitmentApplicants);
+    }
+  } catch (err) {
+    console.error('Error loading applicants:', err);
+  }
+}
+
+function renderApplicantsPipeline(records) {
+  const stages = {
+    'جديد': { el: document.getElementById('kanbanStageNew'), badge: document.getElementById('badgeStageNew'), count: 0 },
+    'فرز_أولي': { el: document.getElementById('kanbanStageScreening'), badge: document.getElementById('badgeStageScreening'), count: 0 },
+    'مقابلة_شخصية': { el: document.getElementById('kanbanStageInterview'), badge: document.getElementById('badgeStageInterview'), count: 0 },
+    'عرض_وظيفي': { el: document.getElementById('kanbanStageOffer'), badge: document.getElementById('badgeStageOffer'), count: 0 },
+    'مقبول': { el: document.getElementById('kanbanStageHired'), badge: document.getElementById('badgeStageHired'), count: 0 },
+    'مرفوض': { el: document.getElementById('kanbanStageRejected'), badge: document.getElementById('badgeStageRejected'), count: 0 }
+  };
+
+  Object.values(stages).forEach(s => {
+    if (s.el) s.el.innerHTML = '';
+  });
+
+  (records || []).forEach(a => {
+    const stageKey = a.stage || 'جديد';
+    const targetStage = stages[stageKey] || stages['جديد'];
+    targetStage.count++;
+
+    if (targetStage.el) {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-3 rounded-xl border border-slate-200/90 shadow-sm space-y-2 hover:border-brand/40 transition text-xs';
+      card.innerHTML = `
+        <div class="flex justify-between items-start">
+          <span class="font-mono text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">${a.applicant_no}</span>
+          <span class="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-full">${a.nationality || 'سعودي'}</span>
+        </div>
+        <div>
+          <h4 class="font-black text-slate-900 leading-snug">${a.full_name}</h4>
+          <p class="text-[10px] text-slate-500 font-bold mt-0.5 flex items-center gap-1">
+            <i class="fa-solid fa-briefcase text-[9px] text-brand"></i>
+            <span>${a.vacancy_title_ar || 'طلب عام'}</span>
+          </p>
+        </div>
+        <div class="text-[10px] text-slate-600 flex justify-between pt-1 border-t border-slate-100">
+          <span>${a.experience_years ? a.experience_years + ' سنوات خبرة' : 'خريج جديد'}</span>
+          <span class="font-mono text-emerald-700 font-bold">${a.expected_salary ? a.expected_salary.toLocaleString() + ' ر.س' : ''}</span>
+        </div>
+        <div class="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-100">
+          <button onclick="openMoveStageModal(${a.id}, '${a.stage}', '${a.full_name}')" class="text-[10px] font-bold text-indigo-700 hover:bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 transition flex items-center gap-1">
+            <i class="fa-solid fa-arrows-split-up-and-left text-[9px]"></i> نقل
+          </button>
+          <div class="flex gap-1">
+            <button onclick="openCreateOfferModalForApplicant(${a.id})" title="إصدار عرض وظيفي" class="p-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 transition">
+              <i class="fa-solid fa-award text-xs"></i>
+            </button>
+            <button onclick="printBilingualApplicationForm(${a.id})" title="طباعة طلب التوظيف A4" class="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+              <i class="fa-solid fa-print text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      targetStage.el.appendChild(card);
+    }
+  });
+
+  Object.entries(stages).forEach(([key, s]) => {
+    if (s.badge) s.badge.textContent = s.count;
+    if (s.el && s.count === 0) {
+      s.el.innerHTML = `<div class="p-4 text-center text-slate-400 font-bold text-[11px]">لا يوجد مرشحين</div>`;
+    }
+  });
+}
+
+function filterApplicantsPipeline() {
+  const query = (document.getElementById('recPipelineSearchInput')?.value || '').toLowerCase().trim();
+  const vFilter = document.getElementById('recPipelineVacancyFilter')?.value || '';
+
+  const filtered = recruitmentApplicants.filter(a => {
+    const matchQuery = !query ||
+      (a.full_name && a.full_name.toLowerCase().includes(query)) ||
+      (a.phone && a.phone.includes(query)) ||
+      (a.email && a.email.toLowerCase().includes(query)) ||
+      (a.applicant_no && a.applicant_no.toLowerCase().includes(query));
+
+    const matchVacancy = !vFilter || (String(a.vacancy_id) === String(vFilter));
+    return matchQuery && matchVacancy;
+  });
+
+  renderApplicantsPipeline(filtered);
+}
+
+function openAddApplicantModal(vacancyId = null) {
+  populateVacancySelects();
+  const vSelect = document.getElementById('appFormVacancyId');
+  if (vSelect && vacancyId) {
+    vSelect.value = vacancyId;
+  }
+  openModal('modalAddApplicant');
+}
+
+async function submitApplicantForm(e) {
+  e.preventDefault();
+  const payload = {
+    vacancy_id: document.getElementById('appFormVacancyId').value || null,
+    full_name: document.getElementById('appFormFullName').value,
+    nationality: document.getElementById('appFormNationality').value,
+    phone: document.getElementById('appFormPhone').value,
+    email: document.getElementById('appFormEmail').value,
+    education_level: document.getElementById('appFormEducation').value,
+    experience_years: Number(document.getElementById('appFormExp').value) || 0,
+    expected_salary: Number(document.getElementById('appFormSalary').value) || 0,
+    current_employer: document.getElementById('appFormEmployer').value,
+    stage: 'جديد'
+  };
+
+  try {
+    const res = await apiFetch('/api/recruitment/applicants', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res && res.success) {
+      closeModal('modalAddApplicant');
+      await loadApplicants();
+      await loadRecruitmentKpis();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`تم تسجيل المرشح ${payload.full_name} برقم: ${res.data.applicant_no}`, 'success');
+      } else {
+        alert(`تم تسجيل المرشح برقم: ${res.data.applicant_no}`);
+      }
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل تسجيل المرشح'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تسجيل المرشح: ' + err.message);
+  }
+}
+
+function openMoveStageModal(id, currentStage, candidateName) {
+  const idInput = document.getElementById('moveStageApplicantId');
+  const nameEl = document.getElementById('moveStageCandidateName');
+  const select = document.getElementById('moveStageSelect');
+  const notes = document.getElementById('moveStageNotes');
+  const dt = document.getElementById('moveStageInterviewDate');
+
+  if (idInput) idInput.value = id;
+  if (nameEl) nameEl.textContent = candidateName || 'مرشح';
+  if (select) select.value = currentStage || 'جديد';
+  if (notes) notes.value = '';
+  if (dt) dt.value = '';
+
+  openModal('modalMoveApplicantStage');
+}
+
+async function submitMoveStageForm(e) {
+  e.preventDefault();
+  const id = document.getElementById('moveStageApplicantId').value;
+  const stage = document.getElementById('moveStageSelect').value;
+  const notes = document.getElementById('moveStageNotes').value;
+  const interviewDate = document.getElementById('moveStageInterviewDate').value;
+
+  try {
+    const res = await apiFetch(`/api/recruitment/applicants/${id}/stage`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stage: stage,
+        interview_notes: notes,
+        interview_date: interviewDate || null
+      })
+    });
+
+    if (res && res.success) {
+      closeModal('modalMoveApplicantStage');
+      await loadApplicants();
+      await loadRecruitmentKpis();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`تم نقل المرشح إلى مرحلة: ${stage}`, 'success');
+      }
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل نقل المرحلة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء نقل المرحلة: ' + err.message);
+  }
+}
+
+// ==========================================
+// JOB OFFERS MANAGEMENT
+// ==========================================
+
+async function loadJobOffers() {
+  try {
+    const res = await apiFetch('/api/recruitment/offers');
+    if (res && res.success) {
+      recruitmentOffers = res.data || [];
+      renderJobOffersTable(recruitmentOffers);
+    }
+  } catch (err) {
+    console.error('Error loading job offers:', err);
+  }
+}
+
+function renderJobOffersTable(records) {
+  const tbody = document.getElementById('recOffersTableBody');
+  if (!tbody) return;
+
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 font-bold">لا توجد عروض وظيفية مسجلة حالياً. انقر على "+ إنشاء عرض وظيفي" لإصدار أول عرض.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map((r, i) => `
+    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+      <td class="p-3">
+        <span class="font-mono font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">${r.offer_no}</span>
+      </td>
+      <td class="p-3">
+        <div class="font-bold text-slate-900">${r.candidate_name}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${r.candidate_phone || '-'} • ${r.national_id || '-'}</div>
+      </td>
+      <td class="p-3">
+        <div class="font-bold text-slate-800">${r.job_title_ar}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${r.job_title_en || '-'}</div>
+      </td>
+      <td class="p-3 text-slate-700 font-semibold">${r.department_name || 'الإدارة العامة'}</td>
+      <td class="p-3 font-mono font-bold text-slate-800">${(r.basic_salary || 0).toLocaleString()} ر.س</td>
+      <td class="p-3 font-mono text-slate-600">${((r.housing_allowance || 0) + (r.transport_allowance || 0)).toLocaleString()} ر.س</td>
+      <td class="p-3 font-mono font-black text-brand text-sm">${(r.total_salary || 0).toLocaleString()} ر.س</td>
+      <td class="p-3 font-mono text-slate-500">${(r.created_at || '').split('T')[0] || '-'}</td>
+      <td class="p-3">
+        <select onchange="updateOfferStatus(${r.id}, this.value)" class="text-[11px] font-bold rounded-lg border px-2 py-1 ${r.status === 'مقبول' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : (r.status === 'مرفوض' ? 'bg-rose-50 text-rose-800 border-rose-300' : 'bg-amber-50 text-amber-900 border-amber-300')}">
+          <option value="مرسل للمرشح" ${r.status === 'مرسل للمرشح' ? 'selected' : ''}>مرسل للمرشح</option>
+          <option value="مقبول" ${r.status === 'مقبول' ? 'selected' : ''}>تم القبول (مقبول)</option>
+          <option value="مرفوض" ${r.status === 'مرفوض' ? 'selected' : ''}>مرفوض</option>
+        </select>
+      </td>
+      <td class="p-3 text-center">
+        <div class="flex items-center justify-center gap-1.5">
+          <button onclick="printJobOffer(${r.id})" class="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-[10px] flex items-center gap-1 shadow-xs transition">
+            <i class="fa-solid fa-print"></i> العرض (PDF)
+          </button>
+          <button onclick="printBilingualUndertaking('${r.candidate_name}', '${r.national_id || ''}', '${r.job_title_ar}')" class="px-2.5 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200 font-bold text-[10px] flex items-center gap-1 shadow-xs transition">
+            <i class="fa-solid fa-shield-halved"></i> التعهد (NDA)
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterJobOffersTable() {
+  const query = (document.getElementById('recOffersSearchInput')?.value || '').toLowerCase().trim();
+  const statusFilter = document.getElementById('recOffersStatusFilter')?.value || '';
+
+  const filtered = recruitmentOffers.filter(r => {
+    const matchQuery = !query ||
+      (r.candidate_name && r.candidate_name.toLowerCase().includes(query)) ||
+      (r.offer_no && r.offer_no.toLowerCase().includes(query)) ||
+      (r.candidate_phone && r.candidate_phone.includes(query)) ||
+      (r.job_title_ar && r.job_title_ar.includes(query));
+
+    const matchStatus = !statusFilter || (r.status === statusFilter);
+    return matchQuery && matchStatus;
+  });
+
+  renderJobOffersTable(filtered);
+}
+
+function openCreateOfferModal(applicantId = null) {
+  const appInput = document.getElementById('offerFormApplicantId');
+  const nameInput = document.getElementById('offerFormCandidateName');
+  const nidInput = document.getElementById('offerFormNationalId');
+  const titleAr = document.getElementById('offerFormTitleAr');
+  const titleEn = document.getElementById('offerFormTitleEn');
+  const dept = document.getElementById('offerFormDept');
+  const basic = document.getElementById('offerFormBasic');
+  const housing = document.getElementById('offerFormHousing');
+  const transport = document.getElementById('offerFormTransport');
+  const other = document.getElementById('offerFormOther');
+
+  if (applicantId) {
+    const a = recruitmentApplicants.find(item => item.id === applicantId);
+    if (a) {
+      if (appInput) appInput.value = a.id;
+      if (nameInput) nameInput.value = a.full_name || '';
+      if (nidInput) nidInput.value = a.national_id || '';
+      if (titleAr) titleAr.value = a.vacancy_title_ar || 'مهندس مشاريع';
+      if (titleEn) titleEn.value = a.vacancy_title_en || 'Project Engineer';
+      const expected = a.expected_salary || 8000;
+      if (basic) basic.value = Math.round(expected * 0.7);
+      if (housing) housing.value = Math.round(expected * 0.2);
+      if (transport) transport.value = Math.round(expected * 0.1);
+      if (other) other.value = 0;
+    }
+  } else {
+    if (appInput) appInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (nidInput) nidInput.value = '';
+    if (basic) basic.value = 6000;
+    if (housing) housing.value = 1500;
+    if (transport) transport.value = 500;
+    if (other) other.value = 0;
+  }
+
+  calculateOfferGross();
+  openModal('modalCreateJobOffer');
+}
+
+function openCreateOfferModalForApplicant(applicantId) {
+  openCreateOfferModal(applicantId);
+}
+
+function calculateOfferGross() {
+  const basic = Number(document.getElementById('offerFormBasic')?.value) || 0;
+  const housing = Number(document.getElementById('offerFormHousing')?.value) || 0;
+  const transport = Number(document.getElementById('offerFormTransport')?.value) || 0;
+  const other = Number(document.getElementById('offerFormOther')?.value) || 0;
+  const total = basic + housing + transport + other;
+
+  const display = document.getElementById('offerFormTotalDisplay');
+  if (display) display.textContent = `${total.toLocaleString()} ر.س`;
+}
+
+async function submitCreateOfferForm(e) {
+  e.preventDefault();
+  const basic = Number(document.getElementById('offerFormBasic').value) || 0;
+  const housing = Number(document.getElementById('offerFormHousing').value) || 0;
+  const transport = Number(document.getElementById('offerFormTransport').value) || 0;
+  const other = Number(document.getElementById('offerFormOther').value) || 0;
+
+  const payload = {
+    applicant_id: document.getElementById('offerFormApplicantId').value || null,
+    candidate_name: document.getElementById('offerFormCandidateName').value,
+    national_id: document.getElementById('offerFormNationalId').value,
+    job_title_ar: document.getElementById('offerFormTitleAr').value,
+    job_title_en: document.getElementById('offerFormTitleEn').value,
+    department_name: document.getElementById('offerFormDept').value,
+    branch_name: document.getElementById('offerFormBranch').value,
+    basic_salary: basic,
+    housing_allowance: housing,
+    transport_allowance: transport,
+    other_allowances: other,
+    contract_duration: document.getElementById('offerFormProbation').value,
+    annual_leave_days: Number(document.getElementById('offerFormVacation').value) || 30,
+    start_date: document.getElementById('offerFormStartDate').value || new Date().toISOString().split('T')[0],
+    status: 'مرسل للمرشح'
+  };
+
+  try {
+    const res = await apiFetch('/api/recruitment/offers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res && res.success) {
+      closeModal('modalCreateJobOffer');
+      await loadJobOffers();
+      await loadApplicants();
+      await loadRecruitmentKpis();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`تم إصدار العرض الوظيفي رقم ${res.data.offer_no} بنجاح`, 'success');
+      } else {
+        alert(`تم إصدار العرض الوظيفي رقم ${res.data.offer_no} بنجاح`);
+      }
+      switchRecruitmentSubTab('offers');
+    } else {
+      alert('خطأ: ' + (res?.error || 'فشل إصدار العرض الوظيفي'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء إصدار العرض: ' + err.message);
+  }
+}
+
+async function updateOfferStatus(id, newStatus) {
+  try {
+    const res = await apiFetch(`/api/recruitment/offers/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    if (res && res.success) {
+      await loadJobOffers();
+      await loadApplicants();
+      await loadRecruitmentKpis();
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`تم تحديث حالة العرض إلى: ${newStatus}`, 'success');
+      }
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تحديث حالة العرض: ' + err.message);
+  }
+}
+
+// ==========================================
+// BILINGUAL TEMPLATES PRINT ACTIONS
+// ==========================================
+
+function printJobOffer(id) {
+  if (!id) return;
+  window.open(`/api/recruitment/offers/${id}/print`, '_blank');
+}
+
+function printBilingualApplicationForm(applicantId = null) {
+  const url = applicantId 
+    ? `/api/recruitment/templates/application/print?applicant_id=${applicantId}`
+    : '/api/recruitment/templates/application/print';
+  window.open(url, '_blank');
+}
+
+function printBilingualApplicationFormForVacancy(vacancyId) {
+  window.open(`/api/recruitment/templates/application/print?vacancy_id=${vacancyId}`, '_blank');
+}
+
+function printBilingualUndertaking(candidateName = '', nationalId = '', jobTitle = '') {
+  let url = '/api/recruitment/templates/undertaking/print';
+  const params = [];
+  if (candidateName) params.push(`candidate_name=${encodeURIComponent(candidateName)}`);
+  if (nationalId) params.push(`national_id=${encodeURIComponent(nationalId)}`);
+  if (jobTitle) params.push(`job_title_ar=${encodeURIComponent(jobTitle)}`);
+  if (params.length > 0) url += '?' + params.join('&');
+  window.open(url, '_blank');
+}
+
+function printSampleJobOffer() {
+  if (recruitmentOffers && recruitmentOffers.length > 0) {
+    printJobOffer(recruitmentOffers[0].id);
+  } else {
+    window.open('/api/recruitment/offers/1/print', '_blank');
+  }
+}
+
 // --- 3. LOANS MANAGEMENT MODULE ---
 let loansRecords = [];
 
@@ -10774,6 +11465,36 @@ window.printEosSettlementById = printEosSettlementById;
 window.exportEosSettlementsCsv = exportEosSettlementsCsv;
 window.downloadTerminatedTemplateExcel = downloadTerminatedTemplateExcel;
 window.exportTerminatedExcel = exportTerminatedExcel;
+
+window.loadRecruitmentView = loadRecruitmentView;
+window.switchRecruitmentSubTab = switchRecruitmentSubTab;
+window.loadRecruitmentKpis = loadRecruitmentKpis;
+window.loadVacancies = loadVacancies;
+window.renderVacanciesTable = renderVacanciesTable;
+window.filterVacanciesTable = filterVacanciesTable;
+window.populateVacancySelects = populateVacancySelects;
+window.openAddVacancyModal = openAddVacancyModal;
+window.submitVacancyForm = submitVacancyForm;
+window.loadApplicants = loadApplicants;
+window.renderApplicantsPipeline = renderApplicantsPipeline;
+window.filterApplicantsPipeline = filterApplicantsPipeline;
+window.openAddApplicantModal = openAddApplicantModal;
+window.submitApplicantForm = submitApplicantForm;
+window.openMoveStageModal = openMoveStageModal;
+window.submitMoveStageForm = submitMoveStageForm;
+window.loadJobOffers = loadJobOffers;
+window.renderJobOffersTable = renderJobOffersTable;
+window.filterJobOffersTable = filterJobOffersTable;
+window.openCreateOfferModal = openCreateOfferModal;
+window.openCreateOfferModalForApplicant = openCreateOfferModalForApplicant;
+window.calculateOfferGross = calculateOfferGross;
+window.submitCreateOfferForm = submitCreateOfferForm;
+window.updateOfferStatus = updateOfferStatus;
+window.printJobOffer = printJobOffer;
+window.printBilingualApplicationForm = printBilingualApplicationForm;
+window.printBilingualApplicationFormForVacancy = printBilingualApplicationFormForVacancy;
+window.printBilingualUndertaking = printBilingualUndertaking;
+window.printSampleJobOffer = printSampleJobOffer;
 
 window.loadLoansView = loadLoansView;
 window.filterLoansTable = filterLoansTable;
