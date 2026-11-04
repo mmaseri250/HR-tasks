@@ -233,6 +233,22 @@ test('getRecruitmentKpis computes accurate real-time metrics across all pipeline
 // --- TEST GROUP 6: Absolute Database Safety & Integrity (Rule #1) ---
 console.log('\n--- TEST GROUP 6: Database Safety & Rule #1 Strict Verification ---');
 
+// Cleanup test-created records to maintain pristine database state
+try {
+  const { run } = require('../server/database/db');
+  if (createdOffer && createdOffer.id) {
+    run('DELETE FROM job_offers WHERE id = ?', [createdOffer.id]);
+  }
+  if (newApplicant && newApplicant.id) {
+    run('DELETE FROM job_applicants WHERE id = ?', [newApplicant.id]);
+  }
+  if (newVac && newVac.id) {
+    run('DELETE FROM job_vacancies WHERE id = ?', [newVac.id]);
+  }
+} catch (e) {
+  console.warn('Test cleanup warning:', e.message);
+}
+
 const activeEmployees = query("SELECT * FROM employees WHERE status = 'نشط'");
 test('Strict Rule #1: Exactly 111 active operational employees preserved in database', () => {
   assert.strictEqual(activeEmployees.length, 111, `Expected 111 employees, found ${activeEmployees.length}`);

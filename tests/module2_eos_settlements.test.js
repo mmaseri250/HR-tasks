@@ -295,8 +295,9 @@ async function runTests() {
     loans_balance: 1500
   });
 
+  const farisEmp = get("SELECT * FROM employees WHERE emp_code = 'JM-0004'") || { id: 1 };
   const saveRes = eosService.saveSettlement({
-    emp_id: 30914, // فارس عبدالرحمن القحطاني
+    emp_id: farisEmp.id,
     emp_code: 'JM-0004',
     employee_name_ar: 'فارس عبدالرحمن القحطاني',
     national_id: '1088492011',
@@ -349,6 +350,12 @@ async function runTests() {
 
   // --- TEST GROUP 6: Database Integrity & Employee Counts ---
   console.log('\n--- TEST GROUP 6: System Integrity & Zero Data Loss ---');
+
+  // Clean up created test settlement to ensure zero test residue
+  if (saveRes && saveRes.id) {
+    const { run } = require('../server/database/db');
+    run('DELETE FROM eos_settlements WHERE id = ?', [saveRes.id]);
+  }
 
   const employees = query(`SELECT * FROM employees WHERE status = 'نشط'`);
   test('Exactly 111 active operational employees exist in database', () => {

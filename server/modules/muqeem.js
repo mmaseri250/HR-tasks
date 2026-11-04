@@ -259,9 +259,22 @@ function syncEmployeeExpiry(iqama, iqamaExpiry, passportExpiry) {
   }
 }
 
+function getLatestMuqeemExcelPath() {
+  const rootDir = path.join(__dirname, '..', '..');
+  const primaryPath = path.join(rootDir, 'المقيمين النشطين 04_11_2026.xlsx');
+  if (fs.existsSync(primaryPath)) return primaryPath;
+
+  const files = fs.readdirSync(rootDir).filter(f => f.startsWith('المقيمين النشطين') && f.endsWith('.xlsx'));
+  if (files.length > 0) {
+    files.sort().reverse();
+    return path.join(rootDir, files[0]);
+  }
+  return path.join(rootDir, 'المقيمين النشطين10_5_2026.xlsx');
+}
+
 function syncFromExcel() {
   const xlsx = require('xlsx');
-  const excelPath = path.join(__dirname, '..', '..', 'المقيمين النشطين10_5_2026.xlsx');
+  const excelPath = getLatestMuqeemExcelPath();
   if (!fs.existsSync(excelPath)) {
     throw new Error('ملف المقيمين النشطين غير موجود في المجلد الرئيسي');
   }
@@ -272,13 +285,19 @@ function syncFromExcel() {
   let inserted = 0;
   let updated = 0;
 
-  const expatEmps = query('SELECT national_id, full_name_ar, gender, nationality, job_title_ar, iqama_expiry, passport_expiry FROM employees WHERE is_saudi = 0');
-  const expatMap = new Map();
-  expatEmps.forEach(e => expatMap.set(String(e.national_id).trim(), e));
+  const currentIqamas = new Set(data.map(r => String(r['رقم الاقامة'] || '').trim()).filter(Boolean));
+
+  // Remove any resident not in the active Muqeem file
+  const oldResidents = query('SELECT iqama_number FROM muqeem_residents');
+  for (const r of oldResidents) {
+    if (!currentIqamas.has(String(r.iqama_number).trim())) {
+      run('DELETE FROM muqeem_residents WHERE iqama_number = ?', [r.iqama_number]);
+    }
+  }
 
   for (const row of data) {
     const iqama = String(row['رقم الاقامة'] || '').trim();
-    if (!iqama || !expatMap.has(iqama)) continue;
+    if (!iqama) continue;
 
     const fullName = String(row['الاسم'] || '').trim();
     const gender = String(row['الجنس'] || 'ذكر').trim();
@@ -328,9 +347,6 @@ function syncFromExcel() {
 
     syncEmployeeExpiry(iqama, iqamaExpiryGregorian, passportExpiry);
   }
-
-  // Delete any resident not in the company's active employee database
-  run('DELETE FROM muqeem_residents WHERE iqama_number NOT IN (SELECT national_id FROM employees WHERE is_saudi = 0)');
 
   const finalCount = get('SELECT count(*) as cnt FROM muqeem_residents').cnt;
   return { success: true, message: `تمت مزامنة بيانات مقيم بنجاح: ${inserted} جديد، ${updated} محدث (المطابق للموظفين: ${finalCount})`, count: finalCount };

@@ -719,16 +719,13 @@ function initSchema() {
 function seedMuqeemResidentsFromExcel() {
   try {
     const xlsx = require('xlsx');
-    const excelPath = path.join(__dirname, '..', '..', 'المقيمين النشطين10_5_2026.xlsx');
+    const rootDir = path.join(__dirname, '..', '..');
+    const primaryPath = path.join(rootDir, 'المقيمين النشطين 04_11_2026.xlsx');
+    const excelPath = fs.existsSync(primaryPath) ? primaryPath : path.join(rootDir, 'المقيمين النشطين10_5_2026.xlsx');
     if (!fs.existsSync(excelPath)) return;
     const wb = xlsx.readFile(excelPath);
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = xlsx.utils.sheet_to_json(ws);
-
-    // Retrieve active expat employees from employee database
-    const expatEmps = db.prepare('SELECT national_id, full_name_ar, gender, nationality, job_title_ar, iqama_expiry, passport_expiry FROM employees WHERE is_saudi = 0').all();
-    const expatMap = new Map();
-    expatEmps.forEach(e => expatMap.set(String(e.national_id).trim(), e));
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO muqeem_residents (
@@ -739,10 +736,19 @@ function seedMuqeemResidentsFromExcel() {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    // Only insert rows that match the employee database!
+    const updateEmpStmt = db.prepare(`
+      UPDATE employees SET
+        iqama_expiry = COALESCE(?, iqama_expiry),
+        passport_expiry = COALESCE(?, passport_expiry)
+      WHERE national_id = ?
+    `);
+
     for (const row of data) {
       const iqama = String(row['رقم الاقامة'] || '').trim();
-      if (!iqama || !expatMap.has(iqama)) continue;
+      if (!iqama) continue;
+
+      const iqamaExpiry = String(row['تاريخ انتهاء الاقامة'] || '').trim();
+      const passportExpiry = String(row['تاريخ انتهاء الجواز'] || '').trim();
 
       stmt.run(
         iqama,
@@ -751,14 +757,16 @@ function seedMuqeemResidentsFromExcel() {
         String(row['الجنسية'] || '').trim(),
         String(row['المهنة'] || '').trim(),
         String(row['رقم الجواز'] || '').trim(),
-        String(row['تاريخ انتهاء الجواز'] || '').trim(),
+        passportExpiry,
         String(row['تاريخ اصدار الاقامة'] || '').trim(),
-        String(row['تاريخ انتهاء الاقامة'] || '').trim(),
+        iqamaExpiry,
         String(row['تاريخ انتهاء الاقامة بالهجري'] || '').trim(),
         String(row['تاريخ الميلاد'] || '').trim(),
         String(row['خارج المملكه'] || '').trim() === 'نعم' ? 1 : 0,
         String(row['رقم صاحب العمل'] || '7013999755').trim()
       );
+
+      updateEmpStmt.run(iqamaExpiry || null, passportExpiry || null, iqama);
     }
 
     // Only residents genuinely present in the Muqeem Excel sheet are inserted.

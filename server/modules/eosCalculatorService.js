@@ -326,16 +326,16 @@ class EosCalculatorService {
   }
 
   calculateSettlement(params) {
-    const emp_id = params.emp_id || null;
+    const empIdentifier = params.emp_id || params.emp_code || null;
     let emp = null;
-    if (emp_id) {
+    if (empIdentifier || params.emp_code) {
       emp = get(`
         SELECT e.*, d.name_ar as department_name, b.name_ar as branch_name
         FROM employees e
         LEFT JOIN departments d ON e.department_id = d.id
         LEFT JOIN branches b ON e.branch_id = b.id
-        WHERE e.id = ? OR e.emp_code = ?
-      `, [emp_id, emp_id]);
+        WHERE e.id = ? OR e.emp_code = ? OR e.emp_code = ?
+      `, [params.emp_id || 0, String(params.emp_id || ''), params.emp_code || '']);
     }
 
     // Determine working values

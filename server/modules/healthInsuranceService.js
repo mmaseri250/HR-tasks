@@ -549,7 +549,7 @@ class HealthInsuranceService {
              e.job_title_ar as emp_job, d.name_ar as dept_name,
              p.provider_name, p.policy_no, p.network_tier
       FROM employee_insurance_cards c
-      JOIN employees e ON c.emp_id = e.id
+      JOIN employees e ON (c.emp_id = e.id OR (c.emp_code IS NOT NULL AND c.emp_code = e.emp_code))
       LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN medical_insurance_policies p ON c.policy_id = p.id
       WHERE 1=1
@@ -605,7 +605,7 @@ class HealthInsuranceService {
              d.name_ar as dept_name, b.name_ar as branch_name,
              p.provider_name, p.policy_no, p.network_tier, p.max_coverage_per_person
       FROM employee_insurance_cards c
-      JOIN employees e ON c.emp_id = e.id
+      JOIN employees e ON (c.emp_id = e.id OR (c.emp_code IS NOT NULL AND c.emp_code = e.emp_code))
       LEFT JOIN departments d ON e.department_id = d.id
       LEFT JOIN branches b ON e.branch_id = b.id
       LEFT JOIN medical_insurance_policies p ON c.policy_id = p.id
@@ -709,7 +709,7 @@ class HealthInsuranceService {
              e.national_id, e.nationality, e.gender, e.birth_date,
              e.job_title_ar as emp_job, d.name_ar as dept_name
       FROM health_cards h
-      JOIN employees e ON h.emp_id = e.id
+      JOIN employees e ON (h.emp_id = e.id OR (h.emp_code IS NOT NULL AND h.emp_code = e.emp_code))
       LEFT JOIN departments d ON e.department_id = d.id
       WHERE 1=1
     `;
@@ -764,7 +764,7 @@ class HealthInsuranceService {
              e.job_title_ar as emp_job, e.phone as emp_phone,
              d.name_ar as dept_name
       FROM health_cards h
-      JOIN employees e ON h.emp_id = e.id
+      JOIN employees e ON (h.emp_id = e.id OR (h.emp_code IS NOT NULL AND h.emp_code = e.emp_code))
       LEFT JOIN departments d ON e.department_id = d.id
       WHERE h.id = ?
     `, [id]);
