@@ -2099,6 +2099,16 @@ app.get('/api/eos/settlements/:id/print', (req, res) => {
   }
 });
 
+app.post('/api/eos/print-preview', (req, res) => {
+  try {
+    const html = eosCalculatorService.generateClearancePrintHtml(req.body);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في إنشاء نموذج المخالصة: ${err.message}</h3>`);
+  }
+});
+
 app.get('/api/eos/export/csv', (req, res) => {
   try {
     const csv = eosCalculatorService.exportSettlementsCsv();

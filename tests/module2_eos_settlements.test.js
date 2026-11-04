@@ -31,10 +31,83 @@ async function runTests() {
     }
   }
 
-  // --- TEST GROUP 1: Saudi Labor Law Gratuity Logic (Article 84 & 85) ---
-  console.log('--- TEST GROUP 1: Statutory Gratuity Calculations ---');
+  // --- TEST GROUP 1: Saudi Labor Law Gratuity Logic & 16 Statutory Cases ---
+  console.log('--- TEST GROUP 1: Statutory Gratuity Calculations & 16 Statutory Cases ---');
 
-  // Test 1: Resignation under 2 years (Article 85) -> 0%
+  // Test 1: Verify exactly 16 statutory termination cases match the statutory list 100%
+  test('Exactly 16 Saudi Labor Law termination cases exist with 100% verbatim names', () => {
+    assert.strictEqual(SAUDI_EOS_TERMINATION_CASES.length, 16, 'Must contain exactly 16 statutory cases');
+    const EXPECTED_16_REASONS = [
+      'استقالة الموظف',
+      'فسخ العقد خلال فترة التجربة وفقاً للمادة 53 من نظام العمل',
+      'باتفاق الطرفين وفقاً للمادة 74 من نظام العمل',
+      'فسخ عقد العمل من قبل صاحب العمل وفقاً للمادة 80 من نظام العمل',
+      'إنتهاء العقد بإنتهاء مدته',
+      'بلوغ العامل سن التقاعد وفقاً للمادة 74 من نظام العمل',
+      'إغلاق المنشأة نهائياً وفقاً للمادة 74 من نظام العمل',
+      'إنهاء النشاط الذي يعمل فيه العامل وفقاً للمادة 74 من نظام العمل',
+      'إنهاء العقد دون سبب مشروع وفقاً للمادة 77 من نظام العمل',
+      'وفاة العامل وفقاً للمادة 79 من نظام العمل',
+      'عجز العامل عن العمل (الناتج عن إصابة العمل) وفقاً للمادة 137 من نظام العمل',
+      'إنتقال ملكية المنشأة (الفردية) إلى مالك جديد وفقاً للمادة 18 من نظام العمل',
+      'إنهاء المرأة العاملة العقد بسبب الوضع وفقاً للمادة 87 من نظام العمل',
+      'إنهاء المرأة العاملة العقد بسبب الزواج وفقاً للمادة 87 من نظام العمل',
+      'وفاة صاحب العمل وفقاً للمادة 79 من نظام العمل إذا كانت شخصيته قد روعيت في عقد العمل',
+      'فسخ العقد من قبل العامل وفقاً للمادة 81 من نظام العمل'
+    ];
+
+    EXPECTED_16_REASONS.forEach(name => {
+      const found = SAUDI_EOS_TERMINATION_CASES.find(c => c.name === name);
+      assert(found, `Expected case name "${name}" not found in SAUDI_EOS_TERMINATION_CASES`);
+    });
+
+    const resignationCase = SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'resignation');
+    assert.strictEqual(resignationCase.name, 'استقالة الموظف', 'Resignation name must strictly be "استقالة الموظف" without "(المادة 85)"');
+    assert(!resignationCase.name.includes('85'), 'Resignation title must not cite "(المادة 85)"');
+  });
+
+  // Test 2: Single Gross Salary Field Input
+  test('Single gross salary field calculates base gratuity accurately', () => {
+    const res = eosService.calculateEos({
+      hire_date: '2022-01-01',
+      end_date: '2026-01-01', // 4 years
+      termination_reason_code: 'استقالة الموظف',
+      gross_salary: 9000,
+      contract_type: 'محدد المدة'
+    });
+    // Gross = 9000. 4 years: 4 * (9000 * 0.5) = 18,000 base. 4 yrs resignation = 33.33% = 6,000 SAR.
+    assert.strictEqual(res.gross_salary, 9000);
+    assert.strictEqual(res.base_gratuity, 18000);
+    assert.strictEqual(res.end_of_service_award, 6000);
+  });
+
+  // Test 3: Contract Type Options (محدد المدة vs غير محدد المدة) for Article 77
+  test('Contract type option impacts Article 77 compensation (fixed vs indefinite)', () => {
+    // Fixed-term: remaining months compensation (5 months @ 10,000 = 50,000)
+    const fixedRes = eosService.calculateEos({
+      hire_date: '2022-01-01',
+      end_date: '2026-01-01',
+      termination_reason_code: 'إنهاء العقد دون سبب مشروع وفقاً للمادة 77 من نظام العمل',
+      gross_salary: 10000,
+      contract_type: 'محدد المدة',
+      remaining_contract_months: 5
+    });
+    assert.strictEqual(fixedRes.contract_type, 'محدد المدة');
+    assert.strictEqual(fixedRes.article_77_compensation, 50000);
+
+    // Indefinite-term: 15 days per year (4 years @ 5,000/yr = 20,000)
+    const indefiniteRes = eosService.calculateEos({
+      hire_date: '2022-01-01',
+      end_date: '2026-01-01',
+      termination_reason_code: 'إنهاء العقد دون سبب مشروع وفقاً للمادة 77 من نظام العمل',
+      gross_salary: 10000,
+      contract_type: 'غير محدد المدة'
+    });
+    assert.strictEqual(indefiniteRes.contract_type, 'غير محدد المدة');
+    assert.strictEqual(indefiniteRes.article_77_compensation, 20000);
+  });
+
+  // Test 4: Resignation under 2 years -> 0%
   test('Resignation < 2 years yields 0% entitlement', () => {
     const res = eosService.calculateEos({
       hire_date: '2025-01-01',
@@ -265,6 +338,9 @@ async function runTests() {
     assert(html.includes('مخالصة نهائية'), 'Should contain title');
     assert(html.includes(saveRes.settlement_number), 'Should contain settlement number');
     assert(html.includes('فارس عبدالرحمن القحطاني'), 'Should contain employee name');
+    assert(html.includes('نوع العقد'), 'Should display contract type in official clearance');
+    assert(html.includes('إجمالي الراتب الفعلي الشامل'), 'Should display actual gross salary');
+    assert(!html.includes('استرشادي'), 'Must not contain any reference to guidance/sample terminology');
     assert(html.includes('المادة 84'), 'Should cite Saudi Labor Law');
     assert(html.includes('توقيع الموظف المقر بما فيه'), 'Should contain employee signature');
     assert(html.includes('مدير الموارد البشرية'), 'Should contain HR signature');

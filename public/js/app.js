@@ -9925,35 +9925,38 @@ function onEosEmployeeSelected(empId) {
 
   const hireDateInput = document.getElementById('eosCalcHireDate');
   const endDateInput = document.getElementById('eosCalcEndDate');
-  const basicInput = document.getElementById('eosCalcBasicSalary');
-  const housingInput = document.getElementById('eosCalcHousing');
-  const transportInput = document.getElementById('eosCalcTransport');
-  const otherInput = document.getElementById('eosCalcOther');
+  const grossInput = document.getElementById('eosCalcGrossSalary');
   const leaveInput = document.getElementById('eosCalcLeaveDays');
 
   if (hireDateInput && emp.join_date) hireDateInput.value = emp.join_date;
   if (endDateInput && !endDateInput.value) endDateInput.value = new Date().toISOString().split('T')[0];
 
-  const totalSal = Number(emp.salary) || 5000;
-  const basic = Number(emp.basic_salary) || Math.round(totalSal * 0.7);
-  const housing = Number(emp.housing_allowance) || Math.round(totalSal * 0.2);
-  const transport = Number(emp.transport_allowance) || Math.round(totalSal * 0.1);
-  const other = Number(emp.other_allowance) || 0;
+  const totalSal = Number(emp.salary) || ((Number(emp.basic_salary || 0) + Number(emp.housing_allowance || 0) + Number(emp.transport_allowance || 0) + Number(emp.other_allowance || 0))) || 5000;
+  if (grossInput) grossInput.value = totalSal;
+  if (leaveInput) leaveInput.value = emp.leave_balance || emp.annual_leave_balance || 0;
 
-  if (basicInput) basicInput.value = basic;
-  if (housingInput) housingInput.value = housing;
-  if (transportInput) transportInput.value = transport;
-  if (otherInput) otherInput.value = other;
-  if (leaveInput) leaveInput.value = emp.leave_balance || 0;
+  // Set contract type based on employee contract
+  const isIndefinite = emp.contract_type && emp.contract_type.includes('غير محدد');
+  const fixedRadio = document.getElementById('eosContractFixed');
+  const indefiniteRadio = document.getElementById('eosContractIndefinite');
+  if (isIndefinite && indefiniteRadio) {
+    indefiniteRadio.checked = true;
+  } else if (fixedRadio) {
+    fixedRadio.checked = true;
+  }
 
   triggerLiveEosCalculation();
 }
 
+function onEosContractTypeChange(val) {
+  triggerLiveEosCalculation();
+}
+
 function onEosReasonChange() {
-  const reason = document.getElementById('eosCalcReasonSelect')?.value;
+  const reason = document.getElementById('eosCalcReasonSelect')?.value || '';
   const art77Container = document.getElementById('eosArticle77Container');
   if (art77Container) {
-    if (reason === 'article_77_unlawful') {
+    if (reason.includes('77') || reason.includes('دون سبب مشروع')) {
       art77Container.classList.remove('hidden');
     } else {
       art77Container.classList.add('hidden');
@@ -9965,21 +9968,18 @@ function onEosReasonChange() {
 async function triggerLiveEosCalculation() {
   const hire_date = document.getElementById('eosCalcHireDate')?.value;
   const end_date = document.getElementById('eosCalcEndDate')?.value;
-  const termination_reason_code = document.getElementById('eosCalcReasonSelect')?.value || 'resignation';
-  const basic_salary = Number(document.getElementById('eosCalcBasicSalary')?.value) || 0;
-  const housing_allowance = Number(document.getElementById('eosCalcHousing')?.value) || 0;
-  const transport_allowance = Number(document.getElementById('eosCalcTransport')?.value) || 0;
-  const other_allowances = Number(document.getElementById('eosCalcOther')?.value) || 0;
+  const termination_reason_code = document.getElementById('eosCalcReasonSelect')?.value || 'استقالة الموظف';
+  const gross_salary = Number(document.getElementById('eosCalcGrossSalary')?.value) || 0;
+  const contract_type = document.querySelector('input[name="eosCalcContractType"]:checked')?.value || 'محدد المدة';
   const leave_balance_days = Number(document.getElementById('eosCalcLeaveDays')?.value) || 0;
   const unpaid_salary_amount = Number(document.getElementById('eosCalcUnpaidSalary')?.value) || 0;
   const remaining_contract_months = Number(document.getElementById('eosCalcRemainingMonths')?.value) || 0;
   const loans_balance = Number(document.getElementById('eosCalcLoans')?.value) || 0;
   const other_deductions = Number(document.getElementById('eosCalcOtherDeductions')?.value) || 0;
 
-  const grossSalary = basic_salary + housing_allowance + transport_allowance + other_allowances;
   const grossDisplay = document.getElementById('eosGrossDisplayLabel');
   if (grossDisplay) {
-    grossDisplay.textContent = `الإجمالي: ${grossSalary.toLocaleString()} ر.س`;
+    grossDisplay.textContent = `الإجمالي: ${gross_salary.toLocaleString()} ر.س`;
   }
 
   if (!hire_date || !end_date) return;
@@ -9992,10 +9992,9 @@ async function triggerLiveEosCalculation() {
         hire_date,
         end_date,
         termination_reason_code,
-        basic_salary,
-        housing_allowance,
-        transport_allowance,
-        other_allowances,
+        gross_salary,
+        basic_salary: gross_salary,
+        contract_type,
         leave_balance_days,
         unpaid_salary_amount,
         remaining_contract_months,
@@ -10068,10 +10067,8 @@ function resetEosCalculator() {
   const hireDateInput = document.getElementById('eosCalcHireDate');
   const endDateInput = document.getElementById('eosCalcEndDate');
   const reasonSelect = document.getElementById('eosCalcReasonSelect');
-  const basicInput = document.getElementById('eosCalcBasicSalary');
-  const housingInput = document.getElementById('eosCalcHousing');
-  const transportInput = document.getElementById('eosCalcTransport');
-  const otherInput = document.getElementById('eosCalcOther');
+  const grossInput = document.getElementById('eosCalcGrossSalary');
+  const fixedRadio = document.getElementById('eosContractFixed');
   const leaveInput = document.getElementById('eosCalcLeaveDays');
   const unpaidInput = document.getElementById('eosCalcUnpaidSalary');
   const remainingInput = document.getElementById('eosCalcRemainingMonths');
@@ -10084,11 +10081,9 @@ function resetEosCalculator() {
 
   if (hireDateInput) hireDateInput.value = threeYearsAgo.toISOString().split('T')[0];
   if (endDateInput) endDateInput.value = today;
-  if (reasonSelect) reasonSelect.value = 'resignation';
-  if (basicInput) basicInput.value = 4000;
-  if (housingInput) housingInput.value = 1000;
-  if (transportInput) transportInput.value = 500;
-  if (otherInput) otherInput.value = 0;
+  if (reasonSelect) reasonSelect.value = 'استقالة الموظف';
+  if (fixedRadio) fixedRadio.checked = true;
+  if (grossInput) grossInput.value = 5000;
   if (leaveInput) leaveInput.value = 0;
   if (unpaidInput) unpaidInput.value = 0;
   if (remainingInput) remainingInput.value = 0;
@@ -10096,6 +10091,40 @@ function resetEosCalculator() {
   if (deductionsInput) deductionsInput.value = 0;
 
   onEosReasonChange();
+}
+
+async function printCurrentEosClearance() {
+  if (currentEosCalcResult && currentEosCalcResult.id) {
+    printEosSettlementById(currentEosCalcResult.id);
+    return;
+  }
+
+  if (currentEosCalcResult) {
+    try {
+      const resp = await fetch('/api/eos/print-preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(currentEosCalcResult)
+      });
+      if (resp.ok) {
+        const html = await resp.text();
+        const win = window.open('', '_blank');
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        return;
+      }
+    } catch (err) {
+      console.warn('Direct print-preview fallback, saving first:', err);
+    }
+
+    await saveCalculatedEosSettlement();
+    if (currentEosCalcResult && currentEosCalcResult.id) {
+      printEosSettlementById(currentEosCalcResult.id);
+    }
+  } else {
+    alert('يرجى احتساب المكافأة أولاً لمعاينة وطباعة نموذج المخالصة المعتمد.');
+  }
 }
 
 async function saveCalculatedEosSettlement() {
@@ -11469,6 +11498,8 @@ window.initEosCalculator = initEosCalculator;
 window.onEosModeChange = onEosModeChange;
 window.onEosEmployeeSelected = onEosEmployeeSelected;
 window.onEosReasonChange = onEosReasonChange;
+window.onEosContractTypeChange = onEosContractTypeChange;
+window.printCurrentEosClearance = printCurrentEosClearance;
 window.triggerLiveEosCalculation = triggerLiveEosCalculation;
 window.renderEosLiveResults = renderEosLiveResults;
 window.resetEosCalculator = resetEosCalculator;

@@ -13,107 +13,131 @@ const { query, get, run } = require('../database/db');
 const SAUDI_EOS_TERMINATION_CASES = [
   {
     id: 'resignation',
-    name: 'استقالة الموظف (المادة 85)',
-    article: 'المادة 85 من نظام العمل',
+    name: 'استقالة الموظف',
+    article: 'المادة 84 والمادة 85 من نظام العمل',
     category: 'استقالة',
     entitlement_type: 'resignation_scale',
-    description: 'استقالة اختيارية من الموظف: لا يستحق شيئاً إذا قلت الخدمة عن سنتين، ويستحق الثلث من 2 إلى 5 سنوات، والثلثين من 5 إلى 10 سنوات، والمكافأة كاملة إذا بلغت 10 سنوات فأكثر.'
-  },
-  {
-    id: 'article_77_unlawful',
-    name: 'إنهاء العقد دون سبب مشروع من صاحب العمل (المادة 77)',
-    article: 'المادة 77 والمادة 84 من نظام العمل',
-    category: 'إنهاء غير مشروع',
-    entitlement_type: 'article_77_full',
-    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% بالإضافة إلى تعويض المادة 77 (أجر 15 يوماً عن كل سنة للعقد غير المحدد، أو أجر المدة المتبقية للعقد المحدد، بحد أدنى أجر شهرين).'
-  },
-  {
-    id: 'contract_expiry',
-    name: 'انتهاء مدة العقد محدد المدة (المادة 74/2)',
-    article: 'المادة 74/2 والمادة 84 من نظام العمل',
-    category: 'انتهاء العقد',
-    entitlement_type: 'full',
-    description: 'استحقاق كامل بنسبة 100% لانقضاء الأجل المحدد في العقد دون تجديده وفقاً للمادة 84.'
-  },
-  {
-    id: 'mutual_agreement',
-    name: 'اتفاق الطرفين على إنهاء العقد بالتراضي (المادة 74/1)',
-    article: 'المادة 74/1 والمادة 84 من نظام العمل',
-    category: 'اتفاق الطرفين',
-    entitlement_type: 'full',
-    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% باتفاق الطرفين كتابياً على إنهاء العلاقة التعاقدية.'
+    description: 'استقالة اختيارية من الموظف: لا يستحق شيئاً إذا قلت الخدمة عن سنتين، ويستحق الثلث من سنتين إلى خمس سنوات، والثلثين من خمس إلى عشر سنوات، والمكافأة كاملة إذا بلغت عشر سنوات فأكثر.'
   },
   {
     id: 'probation_termination',
-    name: 'فسخ العقد خلال فترة التجربة (المادة 53)',
+    name: 'فسخ العقد خلال فترة التجربة وفقاً للمادة 53 من نظام العمل',
     article: 'المادة 53 من نظام العمل',
     category: 'فترة التجربة',
     entitlement_type: 'zero',
     description: 'لا يستحق العامل أي مكافأة نهاية خدمة أو تعويض إذا تم إنهاء العقد خلال فترة التجربة المنصوص عليها بالعقد.'
   },
   {
+    id: 'mutual_agreement',
+    name: 'باتفاق الطرفين وفقاً للمادة 74 من نظام العمل',
+    article: 'المادة 74 فقرة (1) والمادة 84 من نظام العمل',
+    category: 'اتفاق الطرفين',
+    entitlement_type: 'full',
+    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% باتفاق الطرفين كتابياً على إنهاء العلاقة التعاقدية.'
+  },
+  {
     id: 'article_80_dismissal',
-    name: 'فسخ العقد لسبب مشروع لخطأ جسيم (المادة 80)',
+    name: 'فسخ عقد العمل من قبل صاحب العمل وفقاً للمادة 80 من نظام العمل',
     article: 'المادة 80 من نظام العمل',
     category: 'فسخ تأديبي',
     entitlement_type: 'zero',
-    description: 'يسقط حق العامل تماماً في مكافأة نهاية الخدمة والإشعار والتعويض إذا كان الفسخ لحالة من حالات المادة 80.'
+    description: 'يسقط حق العامل تماماً في مكافأة نهاية الخدمة والإشعار والتعويض إذا كان الفسخ لإحدى الحالات المنصوص عليها في المادة 80.'
   },
   {
-    id: 'article_81_employee_leave',
-    name: 'فسخ العقد من قبل العامل لإخلال صاحب العمل (المادة 81)',
-    article: 'المادة 81 والمادة 87 من نظام العمل',
-    category: 'فسخ مشروع من العامل',
+    id: 'contract_expiry',
+    name: 'إنتهاء العقد بإنتهاء مدته',
+    article: 'المادة 74 فقرة (2) والمادة 84 من نظام العمل',
+    category: 'انتهاء العقد',
     entitlement_type: 'full',
-    description: 'يستحق العامل مكافأة نهاية الخدمة كاملة بنسبة 100% إذا ترك العمل بسبب إخلال صاحب العمل بالتزاماته الجوهرية أو الاعتداء أو تكليفه بعمل يختلف جوهرياً.'
-  },
-  {
-    id: 'force_majeure',
-    name: 'إنهاء العقد لظروف القوة القاهرة (المادة 74/5 و87)',
-    article: 'المادة 74/5 والمادة 87 من نظام العمل',
-    category: 'قوة قاهرة',
-    entitlement_type: 'full',
-    description: 'استحقاق كامل بنسبة 100% عند انتهاء العقد لظروف قاهرة خارجة عن إرادة الطرفين استثناءً من أحكام الاستقالة.'
-  },
-  {
-    id: 'female_marriage_leave',
-    name: 'إنهاء العاملة للعقد بسبب الزواج (المادة 87)',
-    article: 'المادة 87 من نظام العمل',
-    category: 'استثناء الزواج',
-    entitlement_type: 'full',
-    description: 'تستحق العاملة المكافأة كاملة بنسبة 100% إذا أنهت العقد خلال 6 أشهر من تاريخ عقد زواجها استثناءً من أحكام المادة 85.'
-  },
-  {
-    id: 'female_maternity_leave',
-    name: 'إنهاء العاملة للعقد بسبب الوضع (المادة 87)',
-    article: 'المادة 87 من نظام العمل',
-    category: 'استثناء الوضع',
-    entitlement_type: 'full',
-    description: 'تستحق العاملة المكافأة كاملة بنسبة 100% إذا أنهت العقد خلال 3 أشهر من تاريخ الوضع استثناءً من أحكام المادة 85.'
+    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% لانقضاء الأجل المحدد في العقد دون تجديده وفقاً للمادة 84.'
   },
   {
     id: 'retirement',
-    name: 'بلوغ سن التقاعد النظامي (المادة 74/4)',
-    article: 'المادة 74/4 والمادة 84 من نظام العمل',
+    name: 'بلوغ العامل سن التقاعد وفقاً للمادة 74 من نظام العمل',
+    article: 'المادة 74 فقرة (4) والمادة 84 من نظام العمل',
     category: 'تقاعد',
     entitlement_type: 'full',
-    description: 'استحقاق المكافأة كاملة بنسبة 100% عند بلوغ سن التقاعد (60 سنة للرجال و55 سنة للنساء ما لم ينص العقد على غير ذلك).'
+    description: 'استحقاق المكافأة كاملة بنسبة 100% عند بلوغ سن التقاعد النظامي (60 سنة للعمال و55 سنة للعاملات ما لم ينص العقد على غير ذلك).'
+  },
+  {
+    id: 'facility_closure',
+    name: 'إغلاق المنشأة نهائياً وفقاً للمادة 74 من نظام العمل',
+    article: 'المادة 74 فقرة (6) والمادة 84 من نظام العمل',
+    category: 'إغلاق المنشأة',
+    entitlement_type: 'full',
+    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% عند إغلاق المنشأة نهائياً وفقاً للمادة 74.'
+  },
+  {
+    id: 'activity_cessation',
+    name: 'إنهاء النشاط الذي يعمل فيه العامل وفقاً للمادة 74 من نظام العمل',
+    article: 'المادة 74 فقرة (7) والمادة 84 من نظام العمل',
+    category: 'إنهاء النشاط',
+    entitlement_type: 'full',
+    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% عند إنهاء النشاط أو القسم الذي يعمل فيه العامل وفقاً للمادة 74.'
+  },
+  {
+    id: 'article_77_unlawful',
+    name: 'إنهاء العقد دون سبب مشروع وفقاً للمادة 77 من نظام العمل',
+    article: 'المادة 77 والمادة 84 من نظام العمل',
+    category: 'إنهاء غير مشروع',
+    entitlement_type: 'article_77_full',
+    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% بالإضافة إلى تعويض المادة 77 (أجر 15 يوماً عن كل سنة للعقد غير المحدد، أو أجر المدة المتبقية للعقد المحدد، بحد أدنى أجر شهرين).'
   },
   {
     id: 'employee_death',
-    name: 'وفاة العامل أثناء سريان العقد (المادة 79)',
+    name: 'وفاة العامل وفقاً للمادة 79 من نظام العمل',
     article: 'المادة 79 والمادة 84 من نظام العمل',
-    category: 'وفاة',
+    category: 'وفاة العامل',
     entitlement_type: 'full',
     description: 'تصرف المكافأة كاملة بنسبة 100% للورثة الشرعيين للعامل المتوفى دون أي استقطاع.'
   },
   {
     id: 'work_injury_disability',
-    name: 'عجز العامل التام عن العمل الناتج عن إصابة (المادة 137)',
+    name: 'عجز العامل عن العمل (الناتج عن إصابة العمل) وفقاً للمادة 137 من نظام العمل',
     article: 'المادة 137 والمادة 84 من نظام العمل',
-    category: 'عجز وإصابة',
+    category: 'عجز وإصابة عمل',
     entitlement_type: 'full',
     description: 'استحقاق المكافأة كاملة بنسبة 100% بالإضافة إلى التعويضات المقررة نظاماً عن إصابة العمل.'
+  },
+  {
+    id: 'ownership_transfer',
+    name: 'إنتقال ملكية المنشأة (الفردية) إلى مالك جديد وفقاً للمادة 18 من نظام العمل',
+    article: 'المادة 18 والمادة 84 من نظام العمل',
+    category: 'انتقال الملكية',
+    entitlement_type: 'full',
+    description: 'استحقاق مكافأة نهاية الخدمة كاملة بنسبة 100% عند انتقال ملكية المنشأة إلى مالك جديد وتصفية مستحقات العمال.'
+  },
+  {
+    id: 'female_maternity_leave',
+    name: 'إنهاء المرأة العاملة العقد بسبب الوضع وفقاً للمادة 87 من نظام العمل',
+    article: 'المادة 87 من نظام العمل',
+    category: 'استثناء الوضع',
+    entitlement_type: 'full',
+    description: 'تستحق العاملة المكافأة كاملة بنسبة 100% إذا أنهت العقد خلال 3 أشهر من تاريخ الوضع استثناءً من أحكام الاستقالة.'
+  },
+  {
+    id: 'female_marriage_leave',
+    name: 'إنهاء المرأة العاملة العقد بسبب الزواج وفقاً للمادة 87 من نظام العمل',
+    article: 'المادة 87 من نظام العمل',
+    category: 'استثناء الزواج',
+    entitlement_type: 'full',
+    description: 'تستحق العاملة المكافأة كاملة بنسبة 100% إذا أنهت العقد خلال 6 أشهر من تاريخ عقد زواجها استثناءً من أحكام الاستقالة.'
+  },
+  {
+    id: 'employer_death',
+    name: 'وفاة صاحب العمل وفقاً للمادة 79 من نظام العمل إذا كانت شخصيته قد روعيت في عقد العمل',
+    article: 'المادة 79 والمادة 84 من نظام العمل',
+    category: 'وفاة صاحب العمل',
+    entitlement_type: 'full',
+    description: 'استحقاق المكافأة كاملة بنسبة 100% عند وفاة صاحب العمل إذا كانت شخصيته قد روعيت في عقد العمل.'
+  },
+  {
+    id: 'article_81_employee_leave',
+    name: 'فسخ العقد من قبل العامل وفقاً للمادة 81 من نظام العمل',
+    article: 'المادة 81 والمادة 87 من نظام العمل',
+    category: 'فسخ مشروع من العامل',
+    entitlement_type: 'full',
+    description: 'يستحق العامل مكافأة نهاية الخدمة كاملة بنسبة 100% إذا ترك العمل بسبب إخلال صاحب العمل بالتزاماته الجوهرية أو الاعتداء أو تكليفه بعمل يختلف جوهرياً.'
   }
 ];
 
@@ -272,19 +296,22 @@ function resolveTerminationCase(caseIdOrName) {
   const exact = SAUDI_EOS_TERMINATION_CASES.find(c => c.id === queryStr || c.name === queryStr);
   if (exact) return exact;
 
-  if (queryStr.includes('77')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'article_77_unlawful');
-  if (queryStr.includes('80') || queryStr.includes('فصل')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'article_80_dismissal');
-  if (queryStr.includes('53') || queryStr.includes('تجربة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'probation_termination');
-  if (queryStr.includes('85') || queryStr.includes('استقالة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'resignation');
-  if (queryStr.includes('74/1') || queryStr.includes('تراضي') || queryStr.includes('اتفاق')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'mutual_agreement');
-  if (queryStr.includes('74/2') || queryStr.includes('انتهاء مدة') || queryStr.includes('انتهاء العقد')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'contract_expiry');
-  if (queryStr.includes('74/4') || queryStr.includes('تقاعد')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'retirement');
-  if (queryStr.includes('74/5') || queryStr.includes('قوة قاهرة') || queryStr.includes('قاهرة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'force_majeure');
-  if (queryStr.includes('87') && queryStr.includes('زواج')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'female_marriage_leave');
-  if (queryStr.includes('87') && queryStr.includes('وضع')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'female_maternity_leave');
-  if (queryStr.includes('81')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'article_81_employee_leave');
-  if (queryStr.includes('79') || queryStr.includes('وفاة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'employee_death');
-  if (queryStr.includes('137') || queryStr.includes('عجز') || queryStr.includes('إصابة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'work_injury_disability');
+  if (queryStr === 'resignation' || queryStr.includes('استقالة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'resignation');
+  if (queryStr === 'probation_termination' || queryStr.includes('53') || queryStr.includes('تجربة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'probation_termination');
+  if (queryStr === 'article_80_dismissal' || queryStr.includes('80') || queryStr.includes('خطأ جسيم')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'article_80_dismissal');
+  if (queryStr === 'article_81_employee_leave' || queryStr.includes('81') || queryStr.includes('إخلال')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'article_81_employee_leave');
+  if (queryStr === 'article_77_unlawful' || queryStr.includes('77') || queryStr.includes('دون سبب مشروع')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'article_77_unlawful');
+  if (queryStr === 'contract_expiry' || queryStr.includes('إنتهاء العقد') || queryStr.includes('انتهاء العقد') || queryStr.includes('إنتهاء مدته') || queryStr.includes('انتهاء مدته')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'contract_expiry');
+  if (queryStr === 'mutual_agreement' || queryStr.includes('باتفاق') || queryStr.includes('تراضي')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'mutual_agreement');
+  if (queryStr === 'retirement' || queryStr.includes('تقاعد')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'retirement');
+  if (queryStr === 'facility_closure' || queryStr.includes('إغلاق المنشأة') || queryStr.includes('اغلاق المنشأة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'facility_closure');
+  if (queryStr === 'activity_cessation' || queryStr.includes('إنهاء النشاط') || queryStr.includes('انهاء النشاط')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'activity_cessation');
+  if (queryStr === 'work_injury_disability' || queryStr.includes('137') || queryStr.includes('عجز') || queryStr.includes('إصابة')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'work_injury_disability');
+  if (queryStr === 'ownership_transfer' || queryStr.includes('18') || queryStr.includes('ملكية') || queryStr.includes('انتقال')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'ownership_transfer');
+  if (queryStr === 'female_maternity_leave' || queryStr.includes('الوضع') || queryStr.includes('وضع')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'female_maternity_leave');
+  if (queryStr === 'female_marriage_leave' || queryStr.includes('الزواج') || queryStr.includes('زواج')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'female_marriage_leave');
+  if (queryStr === 'employer_death' || (queryStr.includes('وفاة') && queryStr.includes('صاحب العمل'))) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'employer_death');
+  if (queryStr === 'employee_death' || queryStr.includes('وفاة') || queryStr.includes('79')) return SAUDI_EOS_TERMINATION_CASES.find(c => c.id === 'employee_death');
 
   return SAUDI_EOS_TERMINATION_CASES[0];
 }
@@ -314,19 +341,39 @@ class EosCalculatorService {
     // Determine working values
     const effectiveHireDate = params.hire_date || emp?.join_date || new Date().toISOString().split('T')[0];
     const effectiveEndDate = params.end_date || new Date().toISOString().split('T')[0];
-    const effectiveBasic = Number(params.basic_salary !== undefined && params.basic_salary !== null ? params.basic_salary : (emp?.basic_salary || 0));
-    const effectiveHousing = Number(params.housing_allowance !== undefined ? params.housing_allowance : (emp?.housing_allowance || 0));
-    const effectiveTransport = Number(params.transport_allowance !== undefined ? params.transport_allowance : (emp?.transport_allowance || 0));
-    const effectiveOther = Number(params.other_allowances !== undefined ? params.other_allowances : (params.other_allowance !== undefined ? params.other_allowance : (emp?.other_allowance || 0)));
 
-    const grossSalary = effectiveBasic + effectiveHousing + effectiveTransport + effectiveOther;
-    const effectiveGross = grossSalary > 0 ? grossSalary : effectiveBasic;
+    // Support Single Gross Salary field (إجمالي الراتب الفعلي الشامل) with backward compatibility
+    const rawGross = params.gross_salary !== undefined && params.gross_salary !== null ? Number(params.gross_salary) : null;
+    const rawBasic = params.basic_salary !== undefined && params.basic_salary !== null ? Number(params.basic_salary) : null;
+    const rawHousing = Number(params.housing_allowance || 0);
+    const rawTransport = Number(params.transport_allowance || 0);
+    const rawOther = Number(params.other_allowances !== undefined ? params.other_allowances : (params.other_allowance || 0));
+
+    let effectiveGross = 0;
+    if (rawGross !== null && !isNaN(rawGross) && rawGross > 0) {
+      effectiveGross = rawGross;
+    } else if (rawBasic !== null && !isNaN(rawBasic) && rawBasic > 0) {
+      const sum = rawBasic + rawHousing + rawTransport + rawOther;
+      effectiveGross = sum > 0 ? sum : rawBasic;
+    } else if (emp) {
+      effectiveGross = Number(emp.salary || ((emp.basic_salary || 0) + (emp.housing_allowance || 0) + (emp.transport_allowance || 0) + (emp.other_allowance || 0))) || 0;
+    }
+    if (effectiveGross <= 0) effectiveGross = 5000;
+    const effectiveBasic = rawBasic !== null && rawBasic > 0 ? rawBasic : effectiveGross;
+    const effectiveHousing = rawHousing;
+    const effectiveTransport = rawTransport;
+    const effectiveOther = rawOther;
 
     const effectiveLeaveBalance = Number(
       params.leave_balance_days !== undefined ? params.leave_balance_days :
       (params.leave_balance !== undefined && params.leave_balance !== null ? params.leave_balance : (emp?.annual_leave_balance || 0))
     );
-    const effectiveContractType = params.contract_type || emp?.contract_type || 'عقد محدد المدة';
+
+    // Contract Type Option (محدد المدة - غير محدد المدة)
+    const rawContract = params.contract_type || emp?.contract_type || 'محدد المدة';
+    const isFixedTerm = !String(rawContract).includes('غير محدد');
+    const effectiveContractType = isFixedTerm ? 'محدد المدة' : 'غير محدد المدة';
+
     const remaining_contract_months = Number(params.remaining_contract_months || 0);
     const unpaid_salary = Number(params.unpaid_salary_amount !== undefined ? params.unpaid_salary_amount : (params.unpaid_salary || 0));
     const loans_deduction = Number(params.loans_balance !== undefined ? params.loans_balance : (params.loans_deduction || 0));
@@ -356,19 +403,19 @@ class EosCalculatorService {
       if (totalYears < 2) {
         entitlementRate = 0.0;
         entitlementPercentageLabel = '0% (مدة الخدمة أقل من سنتين)';
-        statutoryRule = 'بموجب المادة 85 من نظام العمل: لا يستحق العامل المستقيل أي مكافأة نهاية خدمة إذا كانت مدة خدمته أقل من سنتين متتاليتين.';
+        statutoryRule = 'استقالة العامل: لا يستحق العامل المستقيل أي مكافأة نهاية خدمة إذا كانت مدة خدمته أقل من سنتين متتاليتين.';
       } else if (totalYears < 5) {
         entitlementRate = 1.0 / 3.0;
         entitlementPercentageLabel = '33.33% (ثلث المكافأة المستحقة)';
-        statutoryRule = 'بموجب المادة 85 من نظام العمل: يستحق العامل المستقيل ثلث المكافأة بعد خدمة لا تقل عن سنتين متتاليتين ولا تزيد على خمس سنوات.';
+        statutoryRule = 'استقالة العامل: يستحق العامل المستقيل ثلث المكافأة (33.33%) بعد قضاء خدمة لا تقل عن سنتين متتاليتين ولا تزيد على خمس سنوات.';
       } else if (totalYears < 10) {
         entitlementRate = 2.0 / 3.0;
         entitlementPercentageLabel = '66.67% (ثلثي المكافأة المستحقة)';
-        statutoryRule = 'بموجب المادة 85 من نظام العمل: يستحق العامل المستقيل ثلثي المكافأة إذا زادت مدة خدمته على خمس سنوات متتالية ولم تبلغ عشر سنوات.';
+        statutoryRule = 'استقالة العامل: يستحق العامل المستقيل ثلثي المكافأة (66.67%) إذا زادت مدة خدمته على خمس سنوات متتالية ولم تبلغ عشر سنوات.';
       } else {
         entitlementRate = 1.0;
         entitlementPercentageLabel = '100% (المكافأة كاملة)';
-        statutoryRule = 'بموجب المادة 85 من نظام العمل: يستحق العامل المستقيل المكافأة كاملة إذا بلغت مدة خدمته عشر سنوات فأكثر.';
+        statutoryRule = 'استقالة العامل: يستحق العامل المستقيل المكافأة كاملة بنسبة 100% إذا بلغت مدة خدمته عشر سنوات فأكثر.';
       }
     } else if (termCase.entitlement_type === 'article_77_full') {
       entitlementRate = 1.0;
@@ -392,15 +439,18 @@ class EosCalculatorService {
     let article77Details = '';
     if (termCase.id === 'article_77_unlawful') {
       const minCompensation = effectiveGross * 2; // minimum 2 months
-      if (effectiveContractType.includes('محدد') && remaining_contract_months > 0) {
+      if (isFixedTerm && remaining_contract_months > 0) {
         // Fixed-term: remaining months salary, min 2 months
         article77Compensation = Math.max(minCompensation, Math.round(remaining_contract_months * effectiveGross * 100) / 100);
-        article77Details = `تعويض المدة المتبقية من العقد المحدد (${remaining_contract_months} شهر) بحد أدنى أجر شهرين = ${article77Compensation.toLocaleString()} ر.س`;
+        article77Details = `تعويض المدة المتبقية من العقد محدد المدة (${remaining_contract_months} شهر) بحد أدنى أجر شهرين = ${article77Compensation.toLocaleString()} ر.س`;
+      } else if (isFixedTerm) {
+        article77Compensation = minCompensation;
+        article77Details = `تعويض إنهاء العقد محدد المدة (الحد الأدنى النظامي أجر شهرين) = ${article77Compensation.toLocaleString()} ر.س`;
       } else {
         // Indefinite contract: 15 days per year, min 2 months
         const calculated = Math.round(totalYears * (effectiveGross * 0.5) * 100) / 100;
         article77Compensation = Math.max(minCompensation, calculated);
-        article77Details = `تعويض أجر 15 يوماً عن كل سنة خدمة (${totalYears} سنة) بحد أدنى أجر شهرين = ${article77Compensation.toLocaleString()} ر.س`;
+        article77Details = `تعويض أجر 15 يوماً عن كل سنة خدمة للعقد غير محدد المدة (${totalYears} سنة) بحد أدنى أجر شهرين = ${article77Compensation.toLocaleString()} ر.س`;
       }
     }
 
@@ -420,6 +470,8 @@ class EosCalculatorService {
 
     return {
       // Direct root convenience properties
+      contract_type: effectiveContractType,
+      gross_salary: effectiveGross,
       service_years: servicePeriod.years,
       service_months: servicePeriod.months,
       service_days: servicePeriod.days,
@@ -443,7 +495,7 @@ class EosCalculatorService {
       employee: {
         id: emp?.id || null,
         emp_code: params.emp_code || emp?.emp_code || 'GUEST-001',
-        full_name_ar: params.employee_name_ar || params.full_name_ar || emp?.full_name_ar || 'حساب استرشادي',
+        full_name_ar: params.employee_name_ar || params.full_name_ar || emp?.full_name_ar || 'موظف المنشأة',
         national_id: params.national_id || emp?.national_id || '--',
         nationality: params.nationality || emp?.nationality || 'سعودي',
         job_title_ar: params.job_title_ar || emp?.job_title_ar || 'موظف',
@@ -522,8 +574,8 @@ class EosCalculatorService {
         basic_salary, gross_salary, termination_type,
         award_amount, vacation_compensation, remaining_leave_days,
         unpaid_salary, loans_deduction, other_deductions,
-        net_payable, reason, clearance_status, approved_by, approved_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        net_payable, reason, clearance_status, approved_by, approved_at, contract_type
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
     `, [
       settlementNo,
       e.id,
@@ -550,7 +602,8 @@ class EosCalculatorService {
       b.net_payable,
       t.statutory_rule,
       params.clearance_status || 'معتمد - جاهز للصرف',
-      params.approved_by || 'إدارة الموارد البشرية'
+      params.approved_by || 'إدارة الموارد البشرية',
+      e.contract_type || 'محدد المدة'
     ]);
 
     // If an employee was associated, optionally record in terminated_employees as well
@@ -621,10 +674,50 @@ class EosCalculatorService {
    * Generates official printable Clearance & Discharge Form (مخالصة نهائية وإبراء ذمة شامل)
    */
   generateClearancePrintHtml(idOrNo) {
-    const item = this.getSettlementById(idOrNo);
+    let item = null;
+    if (typeof idOrNo === 'object' && idOrNo !== null) {
+      const d = idOrNo;
+      const b = d.breakdown || {};
+      const e = d.employee || {};
+      const dt = d.dates || {};
+      const sp = d.service_period || {};
+      const t = d.termination || {};
+      item = {
+        settlement_no: d.settlement_no || d.settlement_number || 'JM-EOS-معتمد',
+        full_name_ar: e.full_name_ar || d.full_name_ar || d.employee_name_ar || 'موظف المنشأة',
+        emp_code: e.emp_code || d.emp_code || 'GUEST-001',
+        national_id: e.national_id || d.national_id || '--',
+        job_title: e.job_title_ar || d.job_title || d.job_title_ar || 'موظف',
+        department_name: e.department_name || d.department_name || 'الإدارة العامة',
+        contract_type: e.contract_type || d.contract_type || 'محدد المدة',
+        gross_salary: e.gross_salary || d.gross_salary || d.basic_salary || 0,
+        basic_salary: e.basic_salary || d.basic_salary || 0,
+        hire_date: dt.hire_date || d.hire_date || '--',
+        end_date: dt.end_date || d.end_date || '--',
+        service_years: sp.years !== undefined ? sp.years : (d.service_years || 0),
+        service_months: sp.months !== undefined ? sp.months : (d.service_months || 0),
+        service_days: sp.days !== undefined ? sp.days : (d.service_days || 0),
+        total_service_years: sp.total_years !== undefined ? sp.total_years : (d.total_years || d.total_service_years || 0),
+        termination_type: t.name || d.termination_type || d.termination_reason_code || 'استقالة الموظف',
+        reason: t.statutory_rule || d.statutory_rule || d.reason || '',
+        award_amount: b.eos_award !== undefined ? b.eos_award : (d.award_amount !== undefined ? d.award_amount : (d.end_of_service_award || 0)),
+        vacation_compensation: b.vacation_compensation !== undefined ? b.vacation_compensation : (d.vacation_compensation !== undefined ? d.vacation_compensation : (d.leave_compensation || 0)),
+        remaining_leave_days: e.leave_balance !== undefined ? e.leave_balance : (d.remaining_leave_days !== undefined ? d.remaining_leave_days : (d.leave_balance_days || 0)),
+        unpaid_salary: b.unpaid_salary !== undefined ? b.unpaid_salary : (d.unpaid_salary || d.unpaid_salary_amount || 0),
+        loans_deduction: b.loans_deduction !== undefined ? b.loans_deduction : (d.loans_deduction || d.loans_balance || 0),
+        other_deductions: b.other_deductions !== undefined ? b.other_deductions : (d.other_deductions || 0),
+        net_payable: b.net_payable !== undefined ? b.net_payable : (d.net_payable !== undefined ? d.net_payable : (d.net_payable_amount || 0)),
+        clearance_status: d.clearance_status || 'معتمد - جاهز للصرف',
+        created_at: d.created_at || new Date().toISOString()
+      };
+      item.tafqeet_ar = d.tafqeet_ar || tafqeetArabic(item.net_payable);
+    } else {
+      item = this.getSettlementById(idOrNo);
+    }
+
     if (!item) throw new Error('سجل المخالصة غير موجود');
 
-    const totalServiceStr = `${item.service_years} سنة و ${item.service_months} شهر و ${item.service_days} يوم`;
+    const totalServiceStr = `${item.service_years || 0} سنة و ${item.service_months || 0} شهر و ${item.service_days || 0} يوم`;
     const tafqeet = item.tafqeet_ar || tafqeetArabic(item.net_payable);
 
     return `
@@ -719,22 +812,28 @@ class EosCalculatorService {
           <tr class="bg-slate-50">
             <td class="p-2.5 font-bold text-slate-600">الإدارة / القسم:</td>
             <td class="p-2.5 font-bold text-slate-800">${item.department_name || 'الإدارة العامة'}</td>
-            <td class="p-2.5 font-bold text-slate-600">الراتب الشهري الفعلي:</td>
-            <td class="p-2.5 font-mono font-bold text-emerald-700">${Number(item.gross_salary || item.basic_salary).toLocaleString()} ر.س</td>
+            <td class="p-2.5 font-bold text-slate-600">نوع العقد:</td>
+            <td class="p-2.5 font-bold text-brand">${item.contract_type || 'محدد المدة'}</td>
           </tr>
           <tr>
+            <td class="p-2.5 font-bold text-slate-600">إجمالي الراتب الفعلي الشامل:</td>
+            <td class="p-2.5 font-mono font-bold text-emerald-700">${Number(item.gross_salary || item.basic_salary).toLocaleString()} ر.س</td>
+            <td class="p-2.5 font-bold text-slate-600">رصيد الإجازات المتبقي:</td>
+            <td class="p-2.5 font-bold text-slate-800">${item.remaining_leave_days || 0} يوم</td>
+          </tr>
+          <tr class="bg-slate-50">
             <td class="p-2.5 font-bold text-slate-600">تاريخ المباشرة:</td>
             <td class="p-2.5 font-mono text-slate-800">${item.hire_date}</td>
             <td class="p-2.5 font-bold text-slate-600">تاريخ انتهاء الخدمة:</td>
             <td class="p-2.5 font-mono text-slate-800">${item.end_date}</td>
           </tr>
-          <tr class="bg-slate-50">
+          <tr>
             <td class="p-2.5 font-bold text-slate-600">إجمالي مدة الخدمة:</td>
             <td class="p-2.5 font-bold text-slate-900" colspan="3">${totalServiceStr} (${item.total_service_years} سنة)</td>
           </tr>
-          <tr>
-            <td class="p-2.5 font-bold text-slate-600">سبب إنهاء العلاقة التعاقدية:</td>
-            <td class="p-2.5 font-bold text-amber-900 bg-amber-50" colspan="3">${item.termination_type}</td>
+          <tr class="bg-amber-50">
+            <td class="p-2.5 font-bold text-slate-700">سبب إنهاء العلاقة التعاقدية:</td>
+            <td class="p-2.5 font-bold text-amber-950" colspan="3">${item.termination_type}</td>
           </tr>
           ${item.reason ? `
           <tr class="bg-slate-50">
@@ -873,13 +972,14 @@ class EosCalculatorService {
       'رقم المخالصة',
       'كود الموظف',
       'اسم الموظف',
+      'نوع العقد',
       'الهوية / الإقامة',
       'المسمى الوظيفي',
       'الإدارة',
       'تاريخ التعيين',
       'تاريخ الإنهاء',
       'مدة الخدمة',
-      'الراتب الفعلي',
+      'إجمالي الراتب الفعلي',
       'سبب الإنهاء',
       'مكافأة نهاية الخدمة',
       'تعويض الإجازات',
@@ -902,6 +1002,7 @@ class EosCalculatorService {
         r.settlement_no,
         r.emp_code,
         r.full_name_ar,
+        r.contract_type || 'محدد المدة',
         r.national_id || '',
         r.job_title || '',
         r.department_name || '',
