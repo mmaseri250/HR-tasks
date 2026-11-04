@@ -224,10 +224,10 @@
           <span class="flex-1 text-right" data-i18n="nav_loans">إدارة واستيراد السلف</span>
         </button>
 
-        <!-- 5.2 Terminated Employees (الموظفون المنهي خدماتهم) -->
+        <!-- 5.2 End of Service & Settlements (حاسبة نهاية الخدمة والمخالصة) -->
         <button onclick="switchTab('terminated')" id="nav-terminated" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-user-xmark w-5 text-center text-base text-slate-700"></i>
-          <span class="flex-1 text-right" data-i18n="nav_terminated">الموظفون المنهي خدماتهم</span>
+          <i class="fa-solid fa-calculator w-5 text-center text-base text-[#700c14]"></i>
+          <span class="flex-1 text-right" data-i18n="nav_terminated">حاسبة نهاية الخدمة والمخالصة (EOS)</span>
         </button>
 
         <!-- 5.3 Attendance & Disciplinary Notices (إشعارات وإنذارات الدوام الرسمية) -->
@@ -2351,112 +2351,352 @@
       </section>
 
       <!-- =====================================================================
-           VIEW: TERMINATED EMPLOYEES (الموظفون المنهي خدماتهم ومكافأة نهاية الخدمة)
+           VIEW: END OF SERVICE & EOS CALCULATOR (متوافقة مع نظام العمل السعودي)
            ===================================================================== -->
       <section id="view-terminated" class="space-y-6 hidden">
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
               <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
-                <i class="fa-solid fa-user-xmark text-slate-700"></i> الموظفون المنهي خدماتهم وحساب مكافأة نهاية الخدمة (م84 وم85)
+                <i class="fa-solid fa-calculator text-brand"></i> حاسبة نهاية الخدمة والمخالصة النهائية (EOS)
               </h2>
-              <p class="text-xs text-slate-500 mt-1">حساب مكافأة نهاية الخدمة، تعويض الإجازات، إخلاء الطرف، إصدار النموذج الرسمي JM-HR-F-003/v3، واستيراد وتصدير الإكسل.</p>
+              <p class="text-xs text-slate-500 mt-1">متوافقة بالكامل مع نظام العمل السعودي (المواد 53، 74، 77، 80، 81، 84، 85، 87، 111) مع تفقيط المبالغ بالعربية وتوليد نموذج إبراء الذمة للطباعة الفورية (PDF).</p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <button onclick="openAddTerminatedModal()" class="bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-                <i class="fa-solid fa-user-minus"></i> تسجيل إنهاء خدمة
+              <button onclick="switchEosSubTab('calculator')" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-calculator"></i> حاسبة نهاية الخدمة التفاعلية
               </button>
-              <button onclick="openModal('modalImportTerminatedEmployees')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-file-excel"></i> استيراد من Excel
+              <button onclick="exportEosSettlementsCsv()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-excel"></i> تصدير سجل المخالصات (Excel)
               </button>
               <button onclick="downloadTerminatedTemplateExcel()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5">
-                <i class="fa-solid fa-download"></i> النموذج الاسترشادي (.xlsx)
-              </button>
-              <button onclick="exportTerminatedExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-file-export"></i> تصدير Excel
+                <i class="fa-solid fa-download"></i> النموذج الاسترشادي
               </button>
             </div>
           </div>
 
+          <!-- Sub-tabs Navigation -->
+          <div class="flex gap-2 border-b border-slate-200 mt-4 pb-2">
+            <button onclick="switchEosSubTab('calculator')" id="subtab-btn-eos-calculator" class="px-4 py-2 rounded-xl text-xs font-bold transition sub-tab-btn-active">
+              <i class="fa-solid fa-calculator ml-1 text-brand"></i> حاسبة مكافأة نهاية الخدمة التفاعلية الفورية
+            </button>
+            <button onclick="switchEosSubTab('records')" id="subtab-btn-eos-records" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+              <i class="fa-solid fa-list-check ml-1"></i> سجل المخالصات المعتمدة والمنهي خدماتهم
+            </button>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 1: INTERACTIVE EOS CALCULATOR -->
+        <div id="eosSubViewCalculator" class="space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Column 1: Inputs & Controls (7 Cols) -->
+            <div class="lg:col-span-7 card-elevated p-6 space-y-4">
+              <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-sliders text-brand"></i> مدخلات ومحددات احتساب مكافأة نهاية الخدمة
+                </h3>
+                <span class="text-[11px] font-bold text-brand bg-brand/10 px-2.5 py-0.5 rounded-full">نظام العمل السعودي 2026</span>
+              </div>
+
+              <!-- Mode Selection -->
+              <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-bold">
+                <label class="flex items-center gap-2 cursor-pointer text-slate-800">
+                  <input type="radio" name="eosCalcMode" value="employee" checked onchange="onEosModeChange(this.value)" class="text-brand focus:ring-brand">
+                  <span>اختيار موظف مسجل بالمنشأة (111 موظفاً)</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer text-slate-600">
+                  <input type="radio" name="eosCalcMode" value="custom" onchange="onEosModeChange(this.value)" class="text-brand focus:ring-brand">
+                  <span>احتساب حر / موظف خارجي جديد</span>
+                </label>
+              </div>
+
+              <!-- Employee Selector -->
+              <div id="eosEmpSelectContainer">
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  <i class="fa-solid fa-user text-brand ml-1"></i> اختيار الموظف:
+                </label>
+                <select id="eosCalcEmpSelect" onchange="onEosEmployeeSelected(this.value)" class="w-full text-xs rounded-xl border border-slate-300 py-2.5 px-3 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-brand">
+                  <option value="">-- اختر موظفاً لتحميل بياناته ورواتبه تلقائياً --</option>
+                  <!-- Populated via JS -->
+                </select>
+              </div>
+
+              <!-- Dates Row -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    <i class="fa-solid fa-calendar-plus text-brand ml-1"></i> تاريخ بداية الخدمة (المباشرة):
+                  </label>
+                  <input type="date" id="eosCalcHireDate" onchange="triggerLiveEosCalculation()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800 focus:ring-2 focus:ring-brand">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">
+                    <i class="fa-solid fa-calendar-check text-rose-700 ml-1"></i> تاريخ انتهاء الخدمة (آخر يوم عمل):
+                  </label>
+                  <input type="date" id="eosCalcEndDate" onchange="triggerLiveEosCalculation()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 font-mono font-bold text-slate-800 focus:ring-2 focus:ring-brand">
+                </div>
+              </div>
+
+              <!-- Termination Reason (13 Saudi Labor Law Cases) -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  <i class="fa-solid fa-scale-balanced text-amber-600 ml-1"></i> سبب إنهاء العلاقة التعاقدية (السند النظامي):
+                </label>
+                <select id="eosCalcReasonSelect" onchange="onEosReasonChange()" class="w-full text-xs rounded-xl border border-slate-300 py-2.5 px-3 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-brand">
+                  <option value="resignation">استقالة الموظف (المادة 85) - تدرج حسب مدة الخدمة</option>
+                  <option value="article_77_unlawful">إنهاء العقد دون سبب مشروع من صاحب العمل (المادة 77) - كامل المكافأة + تعويض م77</option>
+                  <option value="contract_expiry">انتهاء مدة العقد محدد المدة (المادة 74/2) - استحقاق 100%</option>
+                  <option value="mutual_agreement">اتفاق الطرفين على إنهاء العقد بالتراضي (المادة 74/1) - استحقاق 100%</option>
+                  <option value="probation_termination">فسخ العقد خلال فترة التجربة (المادة 53) - لا يستحق مكافأة (0%)</option>
+                  <option value="article_80_dismissal">فسخ العقد لسبب مشروع لارتكاب خطأ جسيم (المادة 80) - حرمان تام (0%)</option>
+                  <option value="article_81_employee_leave">فسخ العقد من قبل العامل لإخلال صاحب العمل (المادة 81) - استحقاق 100%</option>
+                  <option value="force_majeure">إنهاء العقد لظروف القوة القاهرة (المادة 74/5 و87) - استحقاق 100%</option>
+                  <option value="female_marriage_leave">إنهاء العاملة للعقد بسبب الزواج خلال 6 أشهر (المادة 87) - استحقاق 100%</option>
+                  <option value="female_maternity_leave">إنهاء العاملة للعقد بسبب الوضع خلال 3 أشهر (المادة 87) - استحقاق 100%</option>
+                  <option value="retirement">بلوغ سن التقاعد النظامي (المادة 74/4) - استحقاق 100%</option>
+                  <option value="employee_death">وفاة العامل أثناء سريان العقد (المادة 79) - استحقاق 100% للورثة</option>
+                  <option value="work_injury_disability">عجز العامل عن العمل لإصابة عمل (المادة 137) - استحقاق 100%</option>
+                </select>
+              </div>
+
+              <!-- Salary Breakdown Grid -->
+              <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-bold text-slate-700">تفاصيل الأجر الشهري الفعلي (الأساس لحساب المكافأة وفق م84):</span>
+                  <span class="font-mono font-bold text-brand" id="eosGrossDisplayLabel">الإجمالي: 0 ر.س</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">الراتب الأساسي:</label>
+                    <input type="number" id="eosCalcBasicSalary" value="4000" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">بدل السكن:</label>
+                    <input type="number" id="eosCalcHousing" value="1000" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">بدل النقل:</label>
+                    <input type="number" id="eosCalcTransport" value="500" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-800">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">بدلات ثابتة أخرى:</label>
+                    <input type="number" id="eosCalcOther" value="0" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-slate-300 py-1.5 px-2.5 font-mono font-bold text-slate-800">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Additional Entitlements & Deductions -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <!-- Additional Entitlements -->
+                <div class="space-y-2 p-3 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                  <span class="font-bold text-emerald-900 block text-[11px]">مستحقات أخرى للموظف (+):</span>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">رصيد الإجازات المتبقية (بالأيام):</label>
+                    <input type="number" id="eosCalcLeaveDays" value="0" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-emerald-300 py-1.5 px-2.5 font-mono font-bold text-emerald-900 bg-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">أيام عمل متأخرة / راتب متبقي (ر.س):</label>
+                    <input type="number" id="eosCalcUnpaidSalary" value="0" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-emerald-300 py-1.5 px-2.5 font-mono font-bold text-emerald-900 bg-white">
+                  </div>
+                  <div id="eosArticle77Container" class="hidden">
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">شهور العقد المتبقية (لعقد محدد):</label>
+                    <input type="number" id="eosCalcRemainingMonths" value="0" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-amber-300 py-1.5 px-2.5 font-mono font-bold text-amber-900 bg-white">
+                  </div>
+                </div>
+
+                <!-- Deductions -->
+                <div class="space-y-2 p-3 bg-rose-50/60 rounded-xl border border-rose-200">
+                  <span class="font-bold text-rose-900 block text-[11px]">استقطاعات والتزامات على الموظف (-):</span>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">سلف وقروض متبقية (ر.س):</label>
+                    <input type="number" id="eosCalcLoans" value="0" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-rose-300 py-1.5 px-2.5 font-mono font-bold text-rose-900 bg-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-600 mb-0.5">خصومات أخرى / عهد مالية (ر.س):</label>
+                    <input type="number" id="eosCalcOtherDeductions" value="0" oninput="triggerLiveEosCalculation()" class="w-full rounded-xl border border-rose-300 py-1.5 px-2.5 font-mono font-bold text-rose-900 bg-white">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reset and Quick Actions -->
+              <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="resetEosCalculator()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                  إعادة تعيين الحاسبة
+                </button>
+                <button type="button" onclick="triggerLiveEosCalculation()" class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-brand hover:bg-brand-dark transition shadow flex items-center gap-1.5">
+                  <i class="fa-solid fa-calculator"></i> إعادة الاحتساب
+                </button>
+              </div>
+            </div>
+
+            <!-- Column 2: Live Results & Legal Citation (5 Cols) -->
+            <div class="lg:col-span-5 space-y-4">
+              
+              <!-- Service Period Card -->
+              <div class="card-elevated p-5 space-y-3 bg-gradient-to-br from-white to-slate-50 border-t-4 border-brand">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-slate-500">مدة الخدمة المحتسبة</span>
+                  <span id="eosResDurationDays" class="text-[11px] font-mono text-slate-400 font-bold">0 يوم</span>
+                </div>
+                <h4 id="eosResDurationFormatted" class="text-lg font-black text-slate-900 leading-snug">0 سنة</h4>
+                <div class="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs flex justify-between items-center">
+                  <span class="font-bold text-slate-600">إجمالي السنوات الكسرية:</span>
+                  <span id="eosResTotalYears" class="font-mono font-black text-brand text-sm">0.00 سنة</span>
+                </div>
+              </div>
+
+              <!-- Statutory Rule Card -->
+              <div class="card-elevated p-5 space-y-2 border-r-4 border-amber-500 bg-amber-50/40">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
+                    <i class="fa-solid fa-scale-balanced text-amber-600"></i> نسبة الاستحقاق النظامية
+                  </span>
+                  <span id="eosResEntitlementPctBadge" class="text-xs font-mono font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">100%</span>
+                </div>
+                <p id="eosResStatutoryRule" class="text-xs text-slate-700 leading-relaxed font-medium">
+                  بموجب المادة 84 من نظام العمل: يستحق العامل مكافأة نهاية الخدمة كاملة.
+                </p>
+              </div>
+
+              <!-- Breakdown Table Card -->
+              <div class="card-elevated p-5 space-y-3">
+                <h4 class="text-xs font-black text-slate-800 border-b pb-2 flex items-center gap-1.5">
+                  <i class="fa-solid fa-file-invoice-dollar text-brand"></i> تفاصيل الحسبة المالية
+                </h4>
+
+                <div class="space-y-2 text-xs divide-y divide-slate-100">
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-600">المكافأة الأساسية (المادة 84):</span>
+                    <span id="eosResBaseGratuity" class="font-mono font-bold text-slate-800">0 ر.س</span>
+                  </div>
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-600">المكافأة الصافية بعد نسبة الاستحقاق:</span>
+                    <span id="eosResAwardAmount" class="font-mono font-black text-emerald-700">0 ر.س</span>
+                  </div>
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-600">تعويض رصيد الإجازات (المادة 111):</span>
+                    <span id="eosResVacationComp" class="font-mono font-bold text-blue-700">0 ر.س</span>
+                  </div>
+                  <div id="eosResArt77Row" class="hidden flex justify-between py-1 text-amber-900 bg-amber-50 px-2 rounded-lg">
+                    <span>تعويض الإنهاء غير المشروع (م77):</span>
+                    <span id="eosResArt77Comp" class="font-mono font-black">0 ر.س</span>
+                  </div>
+                  <div class="flex justify-between py-1">
+                    <span class="text-slate-600">أيام عمل متأخرة / رواتب:</span>
+                    <span id="eosResUnpaidSalary" class="font-mono font-bold text-slate-700">0 ر.س</span>
+                  </div>
+                  <div class="flex justify-between py-1 text-rose-700">
+                    <span>إجمالي الاستقطاعات (سلف/خصومات):</span>
+                    <span id="eosResDeductions" class="font-mono font-bold">-0 ر.س</span>
+                  </div>
+                </div>
+
+                <!-- Hero Grand Total Banner -->
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-[#700c14] to-[#45070c] text-white space-y-2 shadow-lg border border-amber-400/30">
+                  <span class="text-xs text-amber-200 font-bold block">صافي المستحق النهائي للموظف:</span>
+                  <div class="flex items-baseline gap-2">
+                    <h3 id="eosResNetPayable" class="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">0</h3>
+                    <span class="text-xs text-amber-300 font-bold">ريال سعودي</span>
+                  </div>
+                  <div class="pt-2 border-t border-white/20 text-[11px] text-amber-100 font-medium leading-relaxed" id="eosResTafqeetAr">
+                    فقط وقدره صفر ريال سعودي لا غير
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-2 pt-2">
+                  <button type="button" onclick="saveCalculatedEosSettlement()" class="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 transition flex items-center justify-center gap-2 shadow">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> اعتماد وحفظ المخالصة بالسجل الرسمي
+                  </button>
+                  <button type="button" onclick="printCalculatedEosSettlement()" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-print"></i> معاينة وطباعة المخالصة الرسمية (PDF)
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 2: SETTLEMENTS & TERMINATED RECORDS -->
+        <div id="eosSubViewRecords" class="space-y-6 hidden">
+          
           <!-- KPI Cards Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <span class="text-xs text-slate-600 font-bold">إجمالي المنتهية خدماتهم</span>
-              <h3 id="statTermTotal" class="text-2xl font-black text-slate-900 font-mono mt-1">0</h3>
+              <span class="text-xs text-slate-600 font-bold">إجمالي المخالصات المعتمدة</span>
+              <h3 id="statEosTotal" class="text-2xl font-black text-slate-900 font-mono mt-1">0</h3>
             </div>
             <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200">
               <span class="text-xs text-amber-700 font-bold">الاستقالات (م85)</span>
-              <h3 id="statTermResignations" class="text-2xl font-black text-amber-950 font-mono mt-1">0</h3>
+              <h3 id="statEosResignations" class="text-2xl font-black text-amber-950 font-mono mt-1">0</h3>
             </div>
             <div class="p-4 rounded-2xl bg-blue-50 border border-blue-200">
               <span class="text-xs text-blue-700 font-bold">انتهاء عقود / فصل</span>
-              <h3 id="statTermContracts" class="text-2xl font-black text-blue-950 font-mono mt-1">0</h3>
+              <h3 id="statEosContracts" class="text-2xl font-black text-blue-950 font-mono mt-1">0</h3>
             </div>
             <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200">
-              <span class="text-xs text-rose-700 font-bold">بانتظار إخلاء الطرف</span>
-              <h3 id="statTermPendingClearance" class="text-2xl font-black text-rose-950 font-mono mt-1">0</h3>
+              <span class="text-xs text-rose-700 font-bold">بانتظار الصرف</span>
+              <h3 id="statEosPending" class="text-2xl font-black text-rose-950 font-mono mt-1">0</h3>
             </div>
             <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-              <span class="text-xs text-emerald-700 font-bold">إجمالي المستحقات والمكافآت</span>
-              <h3 id="statTermTotalSettlements" class="text-2xl font-black text-emerald-950 font-mono mt-1">0 ر.س</h3>
+              <span class="text-xs text-emerald-700 font-bold">إجمالي المبالغ المصروفة</span>
+              <h3 id="statEosTotalAmount" class="text-2xl font-black text-emerald-950 font-mono mt-1">0 ر.س</h3>
             </div>
           </div>
+
+          <!-- Filter & Search Bar -->
+          <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input type="text" id="eosRecordsSearchInput" oninput="filterEosSettlementsTable()" placeholder="ابحث برقم المخالصة، الاسم، الرقم الوظيفي..." class="w-full sm:w-80 text-xs rounded-xl border border-slate-300 py-2 px-3 focus:ring-2 focus:ring-brand">
+              <select id="eosRecordsTypeFilter" onchange="filterEosSettlementsTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3 font-bold text-slate-700 focus:ring-2 focus:ring-brand">
+                <option value="">جميع أسباب الإنهاء</option>
+                <option value="استقالة">استقالة الموظف (المادة 85)</option>
+                <option value="المادة 77">إنهاء غير مشروع (المادة 77)</option>
+                <option value="انتهاء مدة">انتهاء مدة العقد (المادة 74/2)</option>
+                <option value="اتفاق">باتفاق الطرفين (المادة 74/1)</option>
+                <option value="فترة التجربة">فسخ خلال التجربة (المادة 53)</option>
+                <option value="المادة 80">فسخ بموجب المادة 80</option>
+                <option value="القوة القاهرة">القوة القاهرة</option>
+                <option value="سن التقاعد">سن التقاعد</option>
+              </select>
+            </div>
+            <button onclick="loadEosSettlementsRecords()" class="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition">
+              <i class="fa-solid fa-rotate"></i> تحديث السجل
+            </button>
+          </div>
+
+          <!-- Settlements Table -->
+          <div class="card-elevated overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-right">
+                <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-3 px-3">رقم المخالصة</th>
+                    <th class="py-3 px-3">الموظف</th>
+                    <th class="py-3 px-3">الإدارة</th>
+                    <th class="py-3 px-3">تاريخ الإنهاء</th>
+                    <th class="py-3 px-3">نوع الإنهاء</th>
+                    <th class="py-3 px-3">مدة الخدمة</th>
+                    <th class="py-3 px-3">مكافأة نهاية الخدمة</th>
+                    <th class="py-3 px-3">تعويض الإجازات</th>
+                    <th class="py-3 px-3 font-black text-brand">صافي المستحق</th>
+                    <th class="py-3 px-3">الحالة</th>
+                    <th class="py-3 px-3 text-center">إبراء الذمة (PDF)</th>
+                  </tr>
+                </thead>
+                <tbody id="eosSettlementsTableBody" class="divide-y divide-slate-100">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
 
-        <!-- Filter & Search Bar -->
-        <div class="card-elevated p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <input type="text" id="terminatedSearchInput" oninput="filterTerminatedTable()" placeholder="ابحث بالاسم أو الرقم الوظيفي أو الهوية..." class="w-full sm:w-72 text-xs rounded-xl border border-slate-300 py-2 px-3">
-            <select id="terminatedTypeFilter" onchange="filterTerminatedTable()" class="text-xs rounded-xl border border-slate-300 py-2 px-3">
-              <option value="">جميع أسباب الإنهاء (قوى)</option>
-              <option value="استقالة الموظف">استقالة الموظف (المادة 85)</option>
-              <option value="فترة التجربة">فسخ العقد خلال التجربة (المادة 53)</option>
-              <option value="بإتفاق الطرفين">باتفاق الطرفين (المادة 74/1)</option>
-              <option value="المادة 80">فسخ بموجب المادة 80 (دون مكافأة)</option>
-              <option value="إنتهاء العقد بإنتهاء مدته">انتهاء مدة العقد (المادة 74/2)</option>
-              <option value="سن التقاعد">بلوغ سن التقاعد (المادة 74/4)</option>
-              <option value="إغلاق المنشأة">إغلاق المنشأة نهائياً (المادة 74/6)</option>
-              <option value="إنهاء النشاط">إنهاء النشاط (المادة 74/7)</option>
-              <option value="دون سبب مشروع">إنهاء دون سبب مشروع (المادة 77)</option>
-              <option value="وفاة العامل">وفاة العامل (المادة 79)</option>
-              <option value="عجز العامل">عجز عن العمل لإصابة (المادة 137)</option>
-              <option value="انتقال ملكية">انتقال ملكية المنشأة (المادة 18)</option>
-              <option value="الوضع">إنهاء بسبب الوضع (المادة 87)</option>
-              <option value="الزواج">إنهاء بسبب الزواج (المادة 87)</option>
-              <option value="وفاة صاحب العمل">وفاة صاحب العمل (المادة 79)</option>
-              <option value="المادة 81">فسخ من قبل العامل (المادة 81)</option>
-              <option value="القوة القاهرة">القوة القاهرة (المادة 74/5)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Terminated Employees Table -->
-        <div class="card-elevated overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-xs text-right">
-              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
-                <tr>
-                  <th class="py-3 px-3">الرقم</th>
-                  <th class="py-3 px-3">الموظف</th>
-                  <th class="py-3 px-3">الإدارة</th>
-                  <th class="py-3 px-3">تاريخ التعيين</th>
-                  <th class="py-3 px-3">تاريخ الإنهاء</th>
-                  <th class="py-3 px-3">نوع الإنهاء</th>
-                  <th class="py-3 px-3">مدة الخدمة</th>
-                  <th class="py-3 px-3">آخر راتب</th>
-                  <th class="py-3 px-3">مكافأة نهاية الخدمة</th>
-                  <th class="py-3 px-3">تعويض الإجازات</th>
-                  <th class="py-3 px-3 font-black text-brand">صافي المستحقات</th>
-                  <th class="py-3 px-3">إخلاء الطرف</th>
-                  <th class="py-3 px-3 text-center">النموذج الرسمي (v3)</th>
-                </tr>
-              </thead>
-              <tbody id="terminatedTableBody" class="divide-y divide-slate-100">
-                <!-- JS populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
       </section>
 
       <!-- =====================================================================

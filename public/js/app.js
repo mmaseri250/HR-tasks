@@ -9808,230 +9808,470 @@ function printOfficialFormModal() {
   }
 }
 
-// --- 2. TERMINATED EMPLOYEES MODULE ---
-let terminatedRecords = [];
+// --- 2. END OF SERVICE (EOS) & CLEARANCE MODULE (متوافق مع نظام العمل السعودي) ---
+let eosSettlementsRecords = [];
+let currentEosCalcResult = null;
+let eosCalcInitialized = false;
 
 async function loadTerminatedView() {
   try {
-    const [recRes, kpiRes] = await Promise.all([
-      apiFetch('/api/employees/terminated'),
-      apiFetch('/api/employees/terminated/kpis')
-    ]);
-
-    terminatedRecords = (recRes && recRes.success) ? recRes.data : [];
-    const kpis = (kpiRes && kpiRes.success) ? kpiRes.data : {};
-
-    const elTotal = document.getElementById('statTermTotal');
-    const elResign = document.getElementById('statTermResignations');
-    const elCont = document.getElementById('statTermContracts');
-    const elPending = document.getElementById('statTermPendingClearance');
-    const elSettle = document.getElementById('statTermTotalSettlements');
-
-    if (elTotal) elTotal.textContent = kpis.total || 0;
-    if (elResign) elResign.textContent = kpis.resignations || 0;
-    if (elCont) elCont.textContent = kpis.contracts || 0;
-    if (elPending) elPending.textContent = kpis.pendingClearance || 0;
-    if (elSettle) elSettle.textContent = (kpis.totalSettlements || 0).toLocaleString() + ' ر.س';
-
-    renderTerminatedTable(terminatedRecords);
+    initEosCalculator();
+    await loadEosSettlementsRecords();
   } catch (e) {
-    console.error('Error loading terminated employees:', e);
+    console.error('Error loading EOS / Terminated view:', e);
   }
 }
 
-function renderTerminatedTable(records) {
-  const tbody = document.getElementById('terminatedTableBody');
+function switchEosSubTab(subTab) {
+  const calcView = document.getElementById('eosSubViewCalculator');
+  const recView = document.getElementById('eosSubViewRecords');
+  const btnCalc = document.getElementById('subtab-btn-eos-calculator');
+  const btnRec = document.getElementById('subtab-btn-eos-records');
+
+  if (subTab === 'calculator') {
+    if (calcView) calcView.classList.remove('hidden');
+    if (recView) recView.classList.add('hidden');
+    if (btnCalc) {
+      btnCalc.className = 'px-4 py-2 rounded-xl text-xs font-bold transition sub-tab-btn-active bg-brand text-white shadow-sm';
+    }
+    if (btnRec) {
+      btnRec.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition';
+    }
+    if (!eosCalcInitialized) {
+      initEosCalculator();
+    }
+  } else {
+    if (calcView) calcView.classList.add('hidden');
+    if (recView) recView.classList.remove('hidden');
+    if (btnCalc) {
+      btnCalc.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition';
+    }
+    if (btnRec) {
+      btnRec.className = 'px-4 py-2 rounded-xl text-xs font-bold transition sub-tab-btn-active bg-brand text-white shadow-sm';
+    }
+    loadEosSettlementsRecords();
+  }
+}
+
+function initEosCalculator() {
+  const select = document.getElementById('eosCalcEmpSelect');
+  if (select && state && state.employees && state.employees.length > 0) {
+    const prevVal = select.value;
+    select.innerHTML = '<option value="">-- اختر موظفاً لتحميل بياناته ورواتبه تلقائياً --</option>' +
+      state.employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || e.department_name || ''})</option>`).join('');
+
+    if (prevVal) {
+      select.value = prevVal;
+    } else if (select.options.length > 1) {
+      select.selectedIndex = 1;
+      onEosEmployeeSelected(select.value);
+    }
+  }
+
+  const hireDateInput = document.getElementById('eosCalcHireDate');
+  const endDateInput = document.getElementById('eosCalcEndDate');
+  const today = new Date().toISOString().split('T')[0];
+
+  if (endDateInput && !endDateInput.value) {
+    endDateInput.value = today;
+  }
+  if (hireDateInput && !hireDateInput.value) {
+    const threeYearsAgo = new Date();
+    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+    hireDateInput.value = threeYearsAgo.toISOString().split('T')[0];
+  }
+
+  eosCalcInitialized = true;
+  triggerLiveEosCalculation();
+}
+
+function onEosModeChange(mode) {
+  const container = document.getElementById('eosEmpSelectContainer');
+  if (mode === 'employee') {
+    if (container) container.style.display = 'block';
+    const select = document.getElementById('eosCalcEmpSelect');
+    if (select && select.value) {
+      onEosEmployeeSelected(select.value);
+    }
+  } else {
+    if (container) container.style.display = 'none';
+  }
+  triggerLiveEosCalculation();
+}
+
+function onEosEmployeeSelected(empId) {
+  if (!empId || !state || !state.employees) return;
+  const emp = state.employees.find(e => String(e.id) === String(empId) || String(e.emp_code) === String(empId));
+  if (!emp) return;
+
+  const hireDateInput = document.getElementById('eosCalcHireDate');
+  const endDateInput = document.getElementById('eosCalcEndDate');
+  const basicInput = document.getElementById('eosCalcBasicSalary');
+  const housingInput = document.getElementById('eosCalcHousing');
+  const transportInput = document.getElementById('eosCalcTransport');
+  const otherInput = document.getElementById('eosCalcOther');
+  const leaveInput = document.getElementById('eosCalcLeaveDays');
+
+  if (hireDateInput && emp.join_date) hireDateInput.value = emp.join_date;
+  if (endDateInput && !endDateInput.value) endDateInput.value = new Date().toISOString().split('T')[0];
+
+  const totalSal = Number(emp.salary) || 5000;
+  const basic = Number(emp.basic_salary) || Math.round(totalSal * 0.7);
+  const housing = Number(emp.housing_allowance) || Math.round(totalSal * 0.2);
+  const transport = Number(emp.transport_allowance) || Math.round(totalSal * 0.1);
+  const other = Number(emp.other_allowance) || 0;
+
+  if (basicInput) basicInput.value = basic;
+  if (housingInput) housingInput.value = housing;
+  if (transportInput) transportInput.value = transport;
+  if (otherInput) otherInput.value = other;
+  if (leaveInput) leaveInput.value = emp.leave_balance || 0;
+
+  triggerLiveEosCalculation();
+}
+
+function onEosReasonChange() {
+  const reason = document.getElementById('eosCalcReasonSelect')?.value;
+  const art77Container = document.getElementById('eosArticle77Container');
+  if (art77Container) {
+    if (reason === 'article_77_unlawful') {
+      art77Container.classList.remove('hidden');
+    } else {
+      art77Container.classList.add('hidden');
+    }
+  }
+  triggerLiveEosCalculation();
+}
+
+async function triggerLiveEosCalculation() {
+  const hire_date = document.getElementById('eosCalcHireDate')?.value;
+  const end_date = document.getElementById('eosCalcEndDate')?.value;
+  const termination_reason_code = document.getElementById('eosCalcReasonSelect')?.value || 'resignation';
+  const basic_salary = Number(document.getElementById('eosCalcBasicSalary')?.value) || 0;
+  const housing_allowance = Number(document.getElementById('eosCalcHousing')?.value) || 0;
+  const transport_allowance = Number(document.getElementById('eosCalcTransport')?.value) || 0;
+  const other_allowances = Number(document.getElementById('eosCalcOther')?.value) || 0;
+  const leave_balance_days = Number(document.getElementById('eosCalcLeaveDays')?.value) || 0;
+  const unpaid_salary_amount = Number(document.getElementById('eosCalcUnpaidSalary')?.value) || 0;
+  const remaining_contract_months = Number(document.getElementById('eosCalcRemainingMonths')?.value) || 0;
+  const loans_balance = Number(document.getElementById('eosCalcLoans')?.value) || 0;
+  const other_deductions = Number(document.getElementById('eosCalcOtherDeductions')?.value) || 0;
+
+  const grossSalary = basic_salary + housing_allowance + transport_allowance + other_allowances;
+  const grossDisplay = document.getElementById('eosGrossDisplayLabel');
+  if (grossDisplay) {
+    grossDisplay.textContent = `الإجمالي: ${grossSalary.toLocaleString()} ر.س`;
+  }
+
+  if (!hire_date || !end_date) return;
+
+  try {
+    const res = await apiFetch('/api/eos/calculate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hire_date,
+        end_date,
+        termination_reason_code,
+        basic_salary,
+        housing_allowance,
+        transport_allowance,
+        other_allowances,
+        leave_balance_days,
+        unpaid_salary_amount,
+        remaining_contract_months,
+        loans_balance,
+        other_deductions
+      })
+    });
+
+    if (res && res.success && res.data) {
+      currentEosCalcResult = res.data;
+      renderEosLiveResults(res.data);
+    }
+  } catch (err) {
+    console.error('Error calculating live EOS:', err);
+  }
+}
+
+function renderEosLiveResults(d) {
+  const elDays = document.getElementById('eosResDurationDays');
+  const elFmt = document.getElementById('eosResDurationFormatted');
+  const elTotY = document.getElementById('eosResTotalYears');
+  const elPctBadge = document.getElementById('eosResEntitlementPctBadge');
+  const elRule = document.getElementById('eosResStatutoryRule');
+  const elBase = document.getElementById('eosResBaseGratuity');
+  const elAward = document.getElementById('eosResAwardAmount');
+  const elVac = document.getElementById('eosResVacationComp');
+  const elArt77Row = document.getElementById('eosResArt77Row');
+  const elArt77Comp = document.getElementById('eosResArt77Comp');
+  const elUnpaid = document.getElementById('eosResUnpaidSalary');
+  const elDed = document.getElementById('eosResDeductions');
+  const elNet = document.getElementById('eosResNetPayable');
+  const elTafqeet = document.getElementById('eosResTafqeetAr');
+
+  if (elDays) elDays.textContent = `${d.service_days || 0} يوم`;
+  if (elFmt) elFmt.textContent = d.service_period_formatted || `${d.service_years || 0} سنة`;
+  if (elTotY) elTotY.textContent = `${(d.service_years || 0).toFixed(2)} سنة`;
+
+  if (elPctBadge) {
+    elPctBadge.textContent = `${d.entitlement_percentage}%`;
+    if (d.entitlement_percentage === 100) {
+      elPctBadge.className = 'text-xs font-mono font-black px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300';
+    } else if (d.entitlement_percentage === 0) {
+      elPctBadge.className = 'text-xs font-mono font-black px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-rose-300';
+    } else {
+      elPctBadge.className = 'text-xs font-mono font-black px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300';
+    }
+  }
+
+  if (elRule) elRule.textContent = d.statutory_rule || '';
+  if (elBase) elBase.textContent = `${(d.base_gratuity || 0).toLocaleString()} ر.س`;
+  if (elAward) elAward.textContent = `${(d.end_of_service_award || 0).toLocaleString()} ر.س`;
+  if (elVac) elVac.textContent = `${(d.leave_compensation || 0).toLocaleString()} ر.س`;
+
+  if (elArt77Row) {
+    if (d.article_77_compensation && d.article_77_compensation > 0) {
+      elArt77Row.classList.remove('hidden');
+      if (elArt77Comp) elArt77Comp.textContent = `${d.article_77_compensation.toLocaleString()} ر.س`;
+    } else {
+      elArt77Row.classList.add('hidden');
+    }
+  }
+
+  if (elUnpaid) elUnpaid.textContent = `${(d.unpaid_salary_amount || 0).toLocaleString()} ر.س`;
+  if (elDed) elDed.textContent = `-${(d.total_deductions || 0).toLocaleString()} ر.س`;
+  if (elNet) elNet.textContent = `${(d.net_payable_amount || 0).toLocaleString()}`;
+  if (elTafqeet) elTafqeet.textContent = d.tafqeet_ar || '';
+}
+
+function resetEosCalculator() {
+  const hireDateInput = document.getElementById('eosCalcHireDate');
+  const endDateInput = document.getElementById('eosCalcEndDate');
+  const reasonSelect = document.getElementById('eosCalcReasonSelect');
+  const basicInput = document.getElementById('eosCalcBasicSalary');
+  const housingInput = document.getElementById('eosCalcHousing');
+  const transportInput = document.getElementById('eosCalcTransport');
+  const otherInput = document.getElementById('eosCalcOther');
+  const leaveInput = document.getElementById('eosCalcLeaveDays');
+  const unpaidInput = document.getElementById('eosCalcUnpaidSalary');
+  const remainingInput = document.getElementById('eosCalcRemainingMonths');
+  const loansInput = document.getElementById('eosCalcLoans');
+  const deductionsInput = document.getElementById('eosCalcOtherDeductions');
+
+  const today = new Date().toISOString().split('T')[0];
+  const threeYearsAgo = new Date();
+  threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+
+  if (hireDateInput) hireDateInput.value = threeYearsAgo.toISOString().split('T')[0];
+  if (endDateInput) endDateInput.value = today;
+  if (reasonSelect) reasonSelect.value = 'resignation';
+  if (basicInput) basicInput.value = 4000;
+  if (housingInput) housingInput.value = 1000;
+  if (transportInput) transportInput.value = 500;
+  if (otherInput) otherInput.value = 0;
+  if (leaveInput) leaveInput.value = 0;
+  if (unpaidInput) unpaidInput.value = 0;
+  if (remainingInput) remainingInput.value = 0;
+  if (loansInput) loansInput.value = 0;
+  if (deductionsInput) deductionsInput.value = 0;
+
+  onEosReasonChange();
+}
+
+async function saveCalculatedEosSettlement() {
+  if (!currentEosCalcResult) {
+    return alert('يرجى احتساب مكافأة نهاية الخدمة أولاً قبل الحفظ.');
+  }
+
+  const mode = document.querySelector('input[name="eosCalcMode"]:checked')?.value || 'employee';
+  let emp = null;
+
+  if (mode === 'employee') {
+    const empId = document.getElementById('eosCalcEmpSelect')?.value;
+    if (empId && state && state.employees) {
+      emp = state.employees.find(e => String(e.id) === String(empId) || String(e.emp_code) === String(empId));
+    }
+  }
+
+  const payload = {
+    emp_id: emp ? emp.id : null,
+    emp_code: emp ? emp.emp_code : 'CUSTOM',
+    employee_name_ar: emp ? emp.full_name_ar : 'موظف خارجي / احتساب مخصص',
+    national_id: emp ? emp.national_id : '',
+    job_title_ar: emp ? emp.job_title_ar : 'غير محدد',
+    department_name: emp ? emp.department_name : 'الإدارة العامة',
+    ...currentEosCalcResult
+  };
+
+  try {
+    const res = await apiFetch('/api/eos/settlements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res && res.success) {
+      currentEosCalcResult.id = res.data.id;
+      currentEosCalcResult.settlement_number = res.data.settlement_number;
+      if (typeof showToastNotification === 'function') {
+        showToastNotification(`تم اعتماد وحفظ المخالصة رقم ${res.data.settlement_number} بنجاح`, 'success');
+      } else {
+        alert(`تم اعتماد وحفظ المخالصة رقم ${res.data.settlement_number} بنجاح`);
+      }
+      await loadEosSettlementsRecords();
+      switchEosSubTab('records');
+    } else {
+      alert('خطأ أثناء حفظ المخالصة: ' + (res?.error || 'فشلت العملية'));
+    }
+  } catch (err) {
+    alert('حدث خطأ في الاتصال أثناء حفظ المخالصة: ' + err.message);
+  }
+}
+
+async function printCalculatedEosSettlement() {
+  if (currentEosCalcResult && currentEosCalcResult.id) {
+    printEosSettlementById(currentEosCalcResult.id);
+  } else {
+    // If not saved yet, save it and open print window
+    if (confirm('المخالصة لم تُحفظ في السجل الرسمي بعد. هل ترغب في حفظها الآن وطباعتها مباشرة؟')) {
+      await saveCalculatedEosSettlement();
+      if (currentEosCalcResult && currentEosCalcResult.id) {
+        printEosSettlementById(currentEosCalcResult.id);
+      }
+    }
+  }
+}
+
+async function loadEosSettlementsRecords() {
+  try {
+    const res = await apiFetch('/api/eos/settlements');
+    if (res && res.success) {
+      eosSettlementsRecords = res.data || [];
+
+      // Calculate and update KPIs
+      const totalCount = eosSettlementsRecords.length;
+      let resignations = 0;
+      let contracts = 0;
+      let pending = 0;
+      let totalAmount = 0;
+
+      eosSettlementsRecords.forEach(r => {
+        totalAmount += Number(r.net_payable_amount) || 0;
+        if (r.termination_reason_code === 'resignation' || (r.termination_reason_ar && r.termination_reason_ar.includes('استقالة'))) {
+          resignations++;
+        } else {
+          contracts++;
+        }
+        if (r.clearance_status === 'قيد الصرف' || r.clearance_status === 'معلق') {
+          pending++;
+        }
+      });
+
+      const elTot = document.getElementById('statEosTotal');
+      const elRes = document.getElementById('statEosResignations');
+      const elCont = document.getElementById('statEosContracts');
+      const elPend = document.getElementById('statEosPending');
+      const elAmt = document.getElementById('statEosTotalAmount');
+
+      if (elTot) elTot.textContent = totalCount;
+      if (elRes) elRes.textContent = resignations;
+      if (elCont) elCont.textContent = contracts;
+      if (elPend) elPend.textContent = pending;
+      if (elAmt) elAmt.textContent = `${totalAmount.toLocaleString()} ر.س`;
+
+      renderEosSettlementsTable(eosSettlementsRecords);
+    }
+  } catch (err) {
+    console.error('Error loading EOS settlements:', err);
+  }
+}
+
+function renderEosSettlementsTable(records) {
+  const tbody = document.getElementById('eosSettlementsTableBody');
   if (!tbody) return;
 
   if (!records || records.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-center text-slate-400 font-bold">لا يوجد موظفون منهي خدماتهم حالياً في السجلات.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="p-8 text-center text-slate-400 font-bold">لا توجد مخالصات معتمدة مسجلة حالياً. يمكنك استخدام الحاسبة التفاعلية واحتساب مخالصة جديدة.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = records.map((r, i) => `
     <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-      <td class="p-3 font-mono font-bold text-slate-500">${i + 1}</td>
       <td class="p-3">
-        <div class="font-bold text-slate-900">${r.full_name_ar}</div>
-        <div class="text-[10px] text-slate-400 font-mono">${r.emp_code} • ${r.national_id || '-'}</div>
+        <span class="font-mono font-bold text-brand bg-brand/5 px-2 py-0.5 rounded-lg border border-brand/20">${r.settlement_number || ('JM-EOS-' + r.id)}</span>
+      </td>
+      <td class="p-3">
+        <div class="font-bold text-slate-900">${r.employee_name_ar || '-'}</div>
+        <div class="text-[10px] text-slate-400 font-mono">${r.emp_code || '-'} • ${r.national_id || '-'}</div>
       </td>
       <td class="p-3">
         <div class="text-slate-800 font-semibold">${r.department_name || '-'}</div>
-        <div class="text-[10px] text-slate-400">${r.job_title_ar}</div>
+        <div class="text-[10px] text-slate-400">${r.job_title_ar || '-'}</div>
       </td>
-      <td class="p-3 font-mono text-slate-600">${r.join_date || '-'}</td>
-      <td class="p-3 font-mono font-bold text-rose-700">${r.termination_date}</td>
-      <td class="p-3 font-semibold text-slate-800"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">${r.termination_type}</span></td>
-      <td class="p-3 font-mono font-bold text-slate-700">${r.service_years} سنة</td>
-      <td class="p-3 font-mono font-bold text-slate-800">${(r.last_salary || 0).toLocaleString()} ر.س</td>
-      <td class="p-3 font-mono font-bold text-emerald-700">${(r.end_of_service_reward || 0).toLocaleString()} ر.س</td>
+      <td class="p-3 font-mono font-bold text-rose-700">${r.end_date || r.termination_date || '-'}</td>
+      <td class="p-3">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+          ${r.termination_reason_ar || r.termination_type || 'إنهاء علاقة تعاقدية'}
+        </span>
+      </td>
+      <td class="p-3 font-mono font-bold text-slate-700">${r.service_period_formatted || `${r.service_years || 0} سنة`}</td>
+      <td class="p-3 font-mono font-bold text-emerald-700">${(r.end_of_service_award || r.end_of_service_reward || 0).toLocaleString()} ر.س</td>
       <td class="p-3 font-mono text-blue-700 font-semibold">${(r.leave_compensation || 0).toLocaleString()} ر.س</td>
-      <td class="p-3 font-mono font-black text-brand text-sm">${(r.total_settlement || 0).toLocaleString()} ر.س</td>
-      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.clearance_status === 'مكتمل' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${r.clearance_status}</span></td>
+      <td class="p-3 font-mono font-black text-brand text-sm">${(r.net_payable_amount || r.total_settlement || 0).toLocaleString()} ر.س</td>
+      <td class="p-3">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${r.clearance_status === 'معتمد ومكتمل' || r.clearance_status === 'مكتمل' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+          ${r.clearance_status || 'معتمد'}
+        </span>
+      </td>
       <td class="p-3 text-center">
-        <button onclick="openOfficialFormPreview('termination', ${r.id})" class="px-2.5 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-[10px] flex items-center gap-1 mx-auto transition">
-          <i class="fa-solid fa-file-contract"></i> نموذج v3
+        <button onclick="printEosSettlementById(${r.id})" class="px-3 py-1 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 font-bold text-xs flex items-center gap-1.5 mx-auto transition shadow-sm">
+          <i class="fa-solid fa-print"></i> إبراء الذمة (PDF)
         </button>
       </td>
     </tr>
   `).join('');
 }
 
-function filterTerminatedTable() {
-  const query = (document.getElementById('terminatedSearchInput')?.value || '').toLowerCase().trim();
-  const typeFilter = document.getElementById('terminatedTypeFilter')?.value || '';
+function filterEosSettlementsTable() {
+  const query = (document.getElementById('eosRecordsSearchInput')?.value || '').toLowerCase().trim();
+  const typeFilter = document.getElementById('eosRecordsTypeFilter')?.value || '';
 
-  const filtered = terminatedRecords.filter(r => {
+  const filtered = eosSettlementsRecords.filter(r => {
     const matchQuery = !query ||
-      (r.full_name_ar && r.full_name_ar.toLowerCase().includes(query)) ||
+      (r.settlement_number && r.settlement_number.toLowerCase().includes(query)) ||
+      (r.employee_name_ar && r.employee_name_ar.toLowerCase().includes(query)) ||
       (r.emp_code && r.emp_code.toLowerCase().includes(query)) ||
       (r.national_id && r.national_id.includes(query)) ||
       (r.department_name && r.department_name.toLowerCase().includes(query));
 
-    const matchType = !typeFilter || (r.termination_type && r.termination_type.includes(typeFilter));
+    const matchType = !typeFilter ||
+      (r.termination_reason_ar && r.termination_reason_ar.includes(typeFilter)) ||
+      (r.termination_type && r.termination_type.includes(typeFilter));
+
     return matchQuery && matchType;
   });
 
-  renderTerminatedTable(filtered);
+  renderEosSettlementsTable(filtered);
 }
 
-function openAddTerminatedModal() {
-  const select = document.getElementById('termFormEmpId');
-  if (select) {
-    select.innerHTML = '<option value="">-- اختر الموظف --</option>' +
-      state.employees.map(e => `<option value="${e.id}">${e.emp_code} - ${e.full_name_ar} (${e.job_title_ar || ''})</option>`).join('');
-  }
-  const dateInput = document.getElementById('termFormDate');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-  calculateLiveSettlement();
-  openModal('modalAddTerminatedEmployee');
+function printEosSettlementById(id) {
+  if (!id) return;
+  window.open('/api/eos/settlements/' + id + '/print', '_blank');
 }
 
-function onTerminatedEmployeeChanged(empId) {
-  calculateLiveSettlement();
+function exportEosSettlementsCsv() {
+  window.open('/api/eos/export/csv', '_blank');
 }
 
-async function calculateLiveSettlement() {
-  const empId = document.getElementById('termFormEmpId')?.value;
-  const date = document.getElementById('termFormDate')?.value || new Date().toISOString().split('T')[0];
-  const type = document.getElementById('termFormType')?.value || 'استقالة الموظف';
-  const deductions = Number(document.getElementById('termFormDeductions')?.value) || 0;
-
-  const elY = document.getElementById('termLiveServiceYears');
-  const elS = document.getElementById('termLiveLastSalary');
-  const elB = document.getElementById('termLiveBaseGratuity');
-  const elG = document.getElementById('termLiveGratuity');
-  const elL = document.getElementById('termLiveLeaveComp');
-  const elN = document.getElementById('termLiveNetTotal');
-  const elPct = document.getElementById('termLiveEntitlementPct');
-  const elDesc = document.getElementById('termLiveRuleDescription');
-
-  if (!empId) {
-    if (elY) elY.textContent = '0 سنة خدمة';
-    if (elS) elS.textContent = '0 ر.س';
-    if (elB) elB.textContent = '0 ر.س';
-    if (elG) elG.textContent = '0 ر.س';
-    if (elL) elL.textContent = '0 ر.س';
-    if (elN) elN.textContent = '0 ر.س';
-    if (elPct) elPct.textContent = 'نسبة الاستحقاق: 100%';
-    if (elDesc) elDesc.textContent = 'يرجى اختيار الموظف لبدء احتساب المستحقات آلياً';
-    return;
-  }
-
-  try {
-    const res = await apiFetch('/api/employees/terminated/calculate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emp_id: empId, termination_date: date, termination_type: type, deductions_amount: deductions })
-    });
-
-    if (res && res.success && res.data) {
-      const d = res.data;
-      if (elY) elY.textContent = d.service_period?.formatted || `${d.service_years} سنة خدمة`;
-      if (elS) elS.textContent = `${(d.employee?.last_salary || 0).toLocaleString()} ر.س`;
-      if (elB) elB.textContent = `${(d.base_gratuity || 0).toLocaleString()} ر.س`;
-      if (elG) elG.textContent = `${(d.end_of_service_reward || 0).toLocaleString()} ر.س`;
-      if (elL) elL.textContent = `${(d.leave_compensation || 0).toLocaleString()} ر.س`;
-      if (elN) elN.textContent = `${(d.total_settlement || 0).toLocaleString()} ر.س`;
-      if (elPct) elPct.textContent = `نسبة الاستحقاق: ${d.entitlement_percentage || '100%'}`;
-      if (elDesc) elDesc.textContent = d.statutory_rule || '';
-    }
-  } catch (e) {
-    console.error('Error calculating settlement:', e);
-  }
-}
-
-async function submitTerminatedEmployee(e) {
-  e.preventDefault();
-  const empId = document.getElementById('termFormEmpId').value;
-  const date = document.getElementById('termFormDate').value;
-  const type = document.getElementById('termFormType').value;
-  const deductions = Number(document.getElementById('termFormDeductions').value) || 0;
-  const notes = document.getElementById('termFormNotes').value;
-
-  if (!empId) return alert('يرجى اختيار الموظف أولاً');
-
-  try {
-    const res = await apiFetch('/api/employees/terminated', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        emp_id: empId,
-        termination_date: date,
-        termination_type: type,
-        deductions_amount: deductions,
-        notes: notes
-      })
-    });
-
-    if (res && res.success) {
-      alert('تم تسجيل إنهاء الخدمة واعتماد المخالصة بنجاح');
-      closeModal('modalAddTerminatedEmployee');
-      await loadTerminatedView();
-      await loadEmployees();
-    } else {
-      alert('خطأ: ' + (res?.error || 'فشل في تسجيل إنهاء الخدمة'));
-    }
-  } catch (err) {
-    alert('حدث خطأ أثناء حفظ إنهاء الخدمة: ' + err.message);
-  }
-}
-
+// Backwards compatibility wrappers
 function downloadTerminatedTemplateExcel() {
-  window.open('/api/employees/terminated/template', '_blank');
+  window.open('/api/eos/export/csv', '_blank');
 }
-
 function exportTerminatedExcel() {
-  window.open('/api/employees/terminated/export', '_blank');
+  window.open('/api/eos/export/csv', '_blank');
 }
 
-async function submitImportTerminatedExcel() {
-  const fileInput = document.getElementById('fileTerminatedImport');
-  if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-    return alert('يرجى اختيار ملف الإكسل أولاً');
-  }
-
-  const formData = new FormData();
-  formData.append('file', fileInput.files[0]);
-
-  try {
-    const res = await fetch('/api/employees/terminated/import', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-    if (data && data.success) {
-      alert(`تم استيراد ${data.count} سجلاً للموظفين المنهي خدماتهم بنجاح`);
-      closeModal('modalImportTerminatedEmployees');
-      fileInput.value = '';
-      await loadTerminatedView();
-    } else {
-      alert('خطأ أثناء الاستيراد: ' + (data?.error || 'فشل استيراد الملف'));
-    }
-  } catch (err) {
-    alert('حدث خطأ في الاتصال أثناء استيراد الملف: ' + err.message);
-  }
-}
 
 // --- 3. LOANS MANAGEMENT MODULE ---
 let loansRecords = [];
@@ -10517,14 +10757,23 @@ window.openOfficialFormPreview = openOfficialFormPreview;
 window.printOfficialFormModal = printOfficialFormModal;
 
 window.loadTerminatedView = loadTerminatedView;
-window.filterTerminatedTable = filterTerminatedTable;
-window.openAddTerminatedModal = openAddTerminatedModal;
-window.onTerminatedEmployeeChanged = onTerminatedEmployeeChanged;
-window.calculateLiveSettlement = calculateLiveSettlement;
-window.submitTerminatedEmployee = submitTerminatedEmployee;
+window.switchEosSubTab = switchEosSubTab;
+window.initEosCalculator = initEosCalculator;
+window.onEosModeChange = onEosModeChange;
+window.onEosEmployeeSelected = onEosEmployeeSelected;
+window.onEosReasonChange = onEosReasonChange;
+window.triggerLiveEosCalculation = triggerLiveEosCalculation;
+window.renderEosLiveResults = renderEosLiveResults;
+window.resetEosCalculator = resetEosCalculator;
+window.saveCalculatedEosSettlement = saveCalculatedEosSettlement;
+window.printCalculatedEosSettlement = printCalculatedEosSettlement;
+window.loadEosSettlementsRecords = loadEosSettlementsRecords;
+window.renderEosSettlementsTable = renderEosSettlementsTable;
+window.filterEosSettlementsTable = filterEosSettlementsTable;
+window.printEosSettlementById = printEosSettlementById;
+window.exportEosSettlementsCsv = exportEosSettlementsCsv;
 window.downloadTerminatedTemplateExcel = downloadTerminatedTemplateExcel;
 window.exportTerminatedExcel = exportTerminatedExcel;
-window.submitImportTerminatedExcel = submitImportTerminatedExcel;
 
 window.loadLoansView = loadLoansView;
 window.filterLoansTable = filterLoansTable;

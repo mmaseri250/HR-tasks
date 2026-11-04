@@ -28,6 +28,7 @@ const auditModule = require('./modules/audit');
 const rbacEngine = require('./modules/rbacEngine');
 const cacheService = require('./modules/cacheService');
 const attendanceAutomationService = require('./modules/attendanceAutomationService');
+const { eosCalculatorService, SAUDI_EOS_TERMINATION_CASES } = require('./modules/eosCalculatorService');
 
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
@@ -2029,6 +2030,78 @@ app.get('/api/employees/terminated/:id', (req, res) => {
     const record = terminatedEmployeesModule.getTerminatedById(req.params.id);
     if (!record) return res.status(404).json({ success: false, error: 'السجل غير موجود' });
     res.json({ success: true, data: record });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* =========================================================================
+   EOS CALCULATOR & FINAL SETTLEMENT API (حاسبة نهاية الخدمة والمخالصة النهائية)
+   ========================================================================= */
+
+app.get('/api/eos/cases', (req, res) => {
+  try {
+    res.json({ success: true, count: SAUDI_EOS_TERMINATION_CASES.length, data: SAUDI_EOS_TERMINATION_CASES });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/eos/calculate', (req, res) => {
+  try {
+    const result = eosCalculatorService.calculateSettlement(req.body);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/eos/settlements', (req, res) => {
+  try {
+    const settlement = eosCalculatorService.saveSettlement(req.body);
+    cacheService.delete('/api/dashboard/stats');
+    res.status(201).json({ success: true, message: 'تم حفظ واعتماد المخالصة النهائية بنجاح', data: settlement });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/eos/settlements', (req, res) => {
+  try {
+    const list = eosCalculatorService.getSettlements(req.query);
+    res.json({ success: true, count: list.length, data: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/eos/settlements/:id', (req, res) => {
+  try {
+    const item = eosCalculatorService.getSettlementById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, error: 'سجل المخالصة غير موجود' });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/eos/settlements/:id/print', (req, res) => {
+  try {
+    const html = eosCalculatorService.generateClearancePrintHtml(req.params.id);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في إنشاء نموذج المخالصة: ${err.message}</h3>`);
+  }
+});
+
+app.get('/api/eos/export/csv', (req, res) => {
+  try {
+    const csv = eosCalculatorService.exportSettlementsCsv();
+    const filename = `eos_settlements_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
