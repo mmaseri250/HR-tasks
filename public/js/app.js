@@ -1595,7 +1595,14 @@ async function loadDashboard() {
     if (attRateEl) attRateEl.textContent = `${attRate}%`;
 
     const attSummEl = document.getElementById('statAttendanceSummaryText');
-    if (attSummEl) attSummEl.textContent = `${present} حاضر • ${onLeave} في إجازة`;
+    if (attSummEl) {
+      const kpis = statsRes?.data?.attendanceKPIs;
+      if (kpis) {
+        attSummEl.textContent = `${kpis.presentToday} حاضر (${kpis.lateToday} متأخر) • ${kpis.autoPenaltiesThisMonth} جزاء آلي`;
+      } else {
+        attSummEl.textContent = `${present} حاضر • ${onLeave} في إجازة`;
+      }
+    }
 
     const payAmtEl = document.getElementById('statPayrollAmount');
     if (payAmtEl) payAmtEl.innerHTML = `${payrollNet} <span class="text-xs font-bold text-slate-500">ر.س</span>`;
@@ -2871,6 +2878,7 @@ function switchPenaltySubTab(subTab) {
     issuedView.classList.remove('hidden');
     btnReg.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition';
     btnIssued.className = 'px-4 py-2 rounded-xl text-xs font-bold transition sub-tab-btn-active';
+    populatePenaltyEmployeeDropdown();
   }
 }
 
@@ -3089,9 +3097,9 @@ function renderIssuedPenaltiesTable(list) {
   if (!list || list.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="py-8 text-center text-slate-400 font-semibold">
+        <td colspan="9" class="py-8 text-center text-slate-400 font-semibold">
           <i class="fa-solid fa-shield-halved text-2xl text-slate-300 block mb-2"></i>
-          لا توجد قرارات جزائية مسجلة حالياً
+          لا توجد قرارات جزائية مطابقة لمعايير البحث والتصفية
         </td>
       </tr>
     `;
@@ -3099,6 +3107,11 @@ function renderIssuedPenaltiesTable(list) {
   }
 
   list.forEach(p => {
+    const isAuto = p.status && p.status.includes('آلي');
+    const statusBadge = isAuto
+      ? `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300"><i class="fa-solid fa-bolt text-[9px] ml-1"></i>${p.status}</span>`
+      : `<span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300">${p.status || 'معتمد ومطبق'}</span>`;
+
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-slate-50 transition';
     tr.innerHTML = `
@@ -3108,9 +3121,10 @@ function renderIssuedPenaltiesTable(list) {
         <div class="text-[11px] text-slate-400 font-mono">${p.emp_code}</div>
       </td>
       <td class="py-3 px-3 font-mono font-bold text-slate-700">${p.violation_code}</td>
-      <td class="py-3 px-4 text-slate-800">${p.violation_text}</td>
-      <td class="py-3 px-3 font-bold text-slate-700">${p.repetition_level}</td>
+      <td class="py-3 px-4 text-slate-800 leading-relaxed">${p.violation_text}</td>
+      <td class="py-3 px-3 font-bold text-slate-700 text-center">${p.repetition_level}</td>
       <td class="py-3 px-3"><span class="inline-block text-[11px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold">${p.penalty_text}</span></td>
+      <td class="py-3 px-3">${statusBadge}</td>
       <td class="py-3 px-3 font-mono text-slate-600">${p.incident_date}</td>
       <td class="py-3 px-3 text-center">
         <div class="flex items-center justify-center gap-1.5 flex-wrap">
@@ -3131,6 +3145,116 @@ function renderIssuedPenaltiesTable(list) {
     `;
     tbody.appendChild(tr);
   });
+}
+
+function populatePenaltyEmployeeDropdown() {
+  const empSelect = document.getElementById('penaltyIssuedEmployeeFilter');
+  const cardEmpSelect = document.getElementById('attCardEmpSelect');
+  
+  const employees = state.employees || [];
+  if (empSelect && empSelect.options.length <= 1) {
+    employees.forEach(emp => {
+      const opt = document.createElement('option');
+      opt.value = emp.id;
+      opt.textContent = `${emp.emp_code} - ${emp.full_name_ar}`;
+      empSelect.appendChild(opt);
+    });
+  }
+
+  if (cardEmpSelect && cardEmpSelect.options.length === 0) {
+    employees.forEach(emp => {
+      const opt = document.createElement('option');
+      opt.value = emp.id;
+      opt.textContent = `${emp.emp_code} - ${emp.full_name_ar} (${emp.job_title_ar || 'موظف'})`;
+      cardEmpSelect.appendChild(opt);
+    });
+  }
+}
+
+function filterIssuedPenalties() {
+  const searchTerm = (document.getElementById('penaltyIssuedSearchInput')?.value || '').trim().toLowerCase();
+  const categoryFilter = document.getElementById('penaltyIssuedCategoryFilter')?.value || '';
+  const statusFilter = document.getElementById('penaltyIssuedStatusFilter')?.value || '';
+  const empFilter = document.getElementById('penaltyIssuedEmployeeFilter')?.value || '';
+
+  const allPenalties = state.issuedPenalties || [];
+
+  const filtered = allPenalties.filter(p => {
+    // 1. Search term
+    if (searchTerm) {
+      const codeMatch = (p.decision_no || '').toLowerCase().includes(searchTerm);
+      const nameMatch = (p.full_name_ar || '').toLowerCase().includes(searchTerm);
+      const empCodeMatch = (p.emp_code || '').toLowerCase().includes(searchTerm);
+      const vioMatch = (p.violation_text || '').toLowerCase().includes(searchTerm);
+      const penMatch = (p.penalty_text || '').toLowerCase().includes(searchTerm);
+      if (!codeMatch && !nameMatch && !empCodeMatch && !vioMatch && !penMatch) return false;
+    }
+
+    // 2. Category
+    if (categoryFilter && p.category !== categoryFilter) return false;
+
+    // 3. Status
+    if (statusFilter && p.status !== statusFilter) return false;
+
+    // 4. Employee ID
+    if (empFilter && Number(p.emp_id) !== Number(empFilter)) return false;
+
+    return true;
+  });
+
+  renderIssuedPenaltiesTable(filtered);
+}
+
+function resetPenaltyIssuedFilters() {
+  const search = document.getElementById('penaltyIssuedSearchInput');
+  const cat = document.getElementById('penaltyIssuedCategoryFilter');
+  const st = document.getElementById('penaltyIssuedStatusFilter');
+  const emp = document.getElementById('penaltyIssuedEmployeeFilter');
+
+  if (search) search.value = '';
+  if (cat) cat.value = '';
+  if (st) st.value = '';
+  if (emp) emp.value = '';
+
+  renderIssuedPenaltiesTable(state.issuedPenalties || []);
+}
+
+async function triggerAutomatedViolationsScan() {
+  if (!confirm('هل ترغب في تشغيل فحص البصمة الآلي الآن والربط الفوري بلائحة المخالفات والجزاءات السعودية؟\n\nسيقوم النظام برصد أي تأخير أو غياب واحتساب الجزاء المناسب آلياً وفق المادة 80 ولائحة تنظيم العمل.')) {
+    return;
+  }
+
+  try {
+    const today = document.getElementById('attendanceDateInput')?.value || new Date().toISOString().split('T')[0];
+    const res = await apiFetch('/api/attendance/auto-violations/run', {
+      method: 'POST',
+      body: JSON.stringify({ date: today })
+    });
+
+    if (res && res.success) {
+      const d = res.data;
+      alert(`✓ اكتمل الرصد والربط الآلي بنجاح!\n\n• الموظفون الذين تم فحصهم: ${d.processedEmployees}\n• حالات التأخير المرصودة: ${d.delaysDetected}\n• حالات الغياب المرصودة: ${d.absencesDetected}\n• القرارات الجزائية الصادرة آلياً: ${d.penaltiesCreated.length}\n• القرارات السابقة المتخطاة منعاً للتكرار: ${d.skippedDuplicates}`);
+      
+      // Reload issued penalties from server
+      const pensRes = await apiFetch('/api/penalties/issued');
+      if (pensRes && pensRes.success) {
+        state.issuedPenalties = pensRes.data;
+        renderIssuedPenaltiesTable(state.issuedPenalties);
+      }
+      
+      // Reload attendance table
+      await loadAttendance(today);
+    } else {
+      alert('خطأ أثناء تشغيل الرصد الآلي: ' + (res?.error || 'حدث خطأ'));
+    }
+  } catch (err) {
+    alert('تعذر الاتصال بالخادم: ' + err.message);
+  }
+}
+
+function exportAttendanceReport(format = 'excel') {
+  const dateVal = document.getElementById('attendanceDateInput')?.value || new Date().toISOString().split('T')[0];
+  window.open(`/api/attendance/export?date=${dateVal}`, '_blank');
 }
 
 async function deletePenaltyDecision(id) {
@@ -3190,60 +3314,301 @@ function exportPenaltiesCsv() {
    5. ATTENDANCE & BIOMETRIC CONTROLLER
    ========================================================================= */
 
-function loadAttendance(dateStr) {
-  // Render Connected Biometric Devices
+async function loadAttendance(dateStr) {
   renderBiometricDevices();
+  const targetDate = dateStr || document.getElementById('attendanceDateInput')?.value || new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('attendanceDateInput');
+  if (dateInput && !dateInput.value) dateInput.value = targetDate;
 
-  // Badges
-  const badges = document.getElementById('attendanceStatsBadges');
-  if (badges) {
-    const totalEmps = state.employees.length;
-    badges.innerHTML = `
-      <span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg">الحاضرون: ${totalEmps}</span>
-      <span class="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-lg">المتأخرون: 0</span>
-      <span class="bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-lg">في إجازة: 0</span>
-      <span class="bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-lg">عمل إضافي: 0</span>
-    `;
-  }
-
-  // Attendance Rows
   const tbody = document.getElementById('attendanceTableBody');
   if (tbody) {
-    tbody.innerHTML = '';
-    if (state.employees.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="10" class="py-8 text-center text-slate-400 font-semibold">
-            <i class="fa-solid fa-users-slash text-2xl text-slate-300 block mb-2"></i>
-            لا يوجد موظفون مسجلون حالياً. أضف موظفين جدد لعرض سجلات حضور وانصراف البصمة الحية.
-          </td>
-        </tr>
-      `;
-    } else {
-      state.employees.forEach(emp => {
-        const branch = (state.branches || []).find(b => b.id === emp.branch_id);
-        const branchName = branch ? branch.name_ar : (emp.branch_name_ar || 'المقر الرئيسي');
+    tbody.innerHTML = `<tr><td colspan="11" class="py-6 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin text-brand ml-2"></i> جاري استرجاع سجلات الحضور الحي...</td></tr>`;
+  }
 
-        tbody.innerHTML += `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-3 px-3 font-mono font-bold text-slate-700">${emp.emp_code}</td>
-            <td class="py-3 px-3 font-bold text-slate-900">${emp.full_name_ar}</td>
-            <td class="py-3 px-3 text-slate-500">${emp.department_name_ar || 'الإدارة'}</td>
-            <td class="py-3 px-3 font-mono text-emerald-700 font-bold">08:00:00</td>
-            <td class="py-3 px-3 font-mono text-slate-700 font-bold">-</td>
-            <td class="py-3 px-3 font-mono font-bold text-slate-800">8.0 س</td>
-            <td class="py-3 px-3 font-mono font-bold text-slate-400">0 د</td>
-            <td class="py-3 px-3 font-mono font-bold text-slate-400">0 س</td>
-            <td class="py-3 px-3"><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">حاضر</span></td>
-            <td class="py-3 px-3 text-slate-500">حضور نظامي - جهاز بصمة ${branchName}</td>
-          </tr>
+  try {
+    const res = await apiFetch(`/api/attendance/daily?date=${targetDate}`);
+    if (res && res.success) {
+      const stats = res.stats || {};
+      const records = res.data || [];
+
+      // Badges
+      const badges = document.getElementById('attendanceStatsBadges');
+      if (badges) {
+        badges.innerHTML = `
+          <span class="bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-lg">الحاضرون: ${stats.presentCount || records.filter(r => r.status === 'حاضر').length}</span>
+          <span class="bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-lg">المتأخرون: ${stats.lateCount || records.filter(r => r.status === 'متأخر').length}</span>
+          <span class="bg-blue-100 text-blue-800 font-bold px-2.5 py-1 rounded-lg">في إجازة: ${stats.onLeaveCount || records.filter(r => r.status === 'إجازة').length}</span>
+          <span class="bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-lg">الغياب: ${stats.absentCount || records.filter(r => r.status === 'غائب').length}</span>
+          <span class="bg-purple-100 text-purple-800 font-bold px-2.5 py-1 rounded-lg">نسبة الانضباط: ${stats.attendanceRate || 100}%</span>
         `;
-      });
+      }
+
+      if (tbody) {
+        tbody.innerHTML = '';
+        if (records.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="11" class="py-8 text-center text-slate-400 font-semibold">
+                <i class="fa-solid fa-calendar-xmark text-2xl text-slate-300 block mb-2"></i>
+                لا توجد سجلات حضور مسجلة لهذا اليوم (${targetDate}).
+              </td>
+            </tr>
+          `;
+        } else {
+          records.forEach(r => {
+            let statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">حاضر</span>';
+            if (r.status === 'متأخر') {
+              statusBadge = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">متأخر (${r.delay_minutes || 0} د)</span>`;
+            } else if (r.status === 'غائب') {
+              statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">غائب</span>';
+            } else if (r.status === 'إجازة') {
+              statusBadge = '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">إجازة</span>';
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition';
+            tr.innerHTML = `
+              <td class="py-3 px-3 font-mono font-bold text-slate-700">${r.emp_code}</td>
+              <td class="py-3 px-3 font-bold text-slate-900">${r.full_name_ar}</td>
+              <td class="py-3 px-3 text-slate-500">${r.department_name || 'الإدارة'}</td>
+              <td class="py-3 px-3 font-mono text-emerald-700 font-bold">${r.check_in || '-'}</td>
+              <td class="py-3 px-3 font-mono text-slate-700 font-bold">${r.check_out || '-'}</td>
+              <td class="py-3 px-3 font-mono font-bold text-slate-800">${r.work_hours || 0} س</td>
+              <td class="py-3 px-3 font-mono font-bold ${r.delay_minutes > 0 ? 'text-rose-600' : 'text-slate-400'}">${r.delay_minutes || 0} د</td>
+              <td class="py-3 px-3 font-mono font-bold text-slate-400">${r.overtime_hours || 0} س</td>
+              <td class="py-3 px-3">${statusBadge}</td>
+              <td class="py-3 px-3 text-slate-500 text-[11px]">${r.notes || 'حضور نظامي'}</td>
+              <td class="py-3 px-3 text-center">
+                <button type="button" onclick="openEmployeeAttendanceCardModal(${r.emp_id})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] px-2.5 py-1 rounded-lg border border-indigo-200 transition inline-flex items-center gap-1 shadow-xs">
+                  <i class="fa-solid fa-id-card text-indigo-600"></i>
+                  <span>البطاقة</span>
+                </button>
+              </td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      }
+    }
+  } catch (err) {
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="11" class="py-6 text-center text-rose-500 font-bold">تعذر تحميل بيانات الحضور: ${err.message}</td></tr>`;
     }
   }
 
   // Render Attendance Policies
   renderPolicies();
+}
+
+/* =========================================================================
+   5.0 EMPLOYEE ATTENDANCE CARD CONTROLLER (بطاقة حضور الموظف)
+   ========================================================================= */
+
+let currentAttCardData = null;
+
+async function openEmployeeAttendanceCardModal(empId = null, monthStr = null) {
+  populatePenaltyEmployeeDropdown();
+  
+  const empSelect = document.getElementById('attCardEmpSelect');
+  const monthInput = document.getElementById('attCardMonthInput');
+
+  const selectedEmpId = empId || (empSelect ? empSelect.value : null) || (state.employees[0] ? state.employees[0].id : null);
+  const selectedMonth = monthStr || (monthInput ? monthInput.value : null) || new Date().toISOString().substring(0, 7);
+
+  if (empSelect && selectedEmpId) empSelect.value = selectedEmpId;
+  if (monthInput && selectedMonth) monthInput.value = selectedMonth;
+
+  openModal('modalEmployeeAttendanceCard');
+  await reloadCurrentEmployeeAttendanceCard();
+}
+
+async function reloadCurrentEmployeeAttendanceCard() {
+  const empSelect = document.getElementById('attCardEmpSelect');
+  const monthInput = document.getElementById('attCardMonthInput');
+
+  const empId = empSelect ? empSelect.value : null;
+  const month = monthInput ? monthInput.value : new Date().toISOString().substring(0, 7);
+
+  if (!empId) return;
+
+  const recordsBody = document.getElementById('attCardDailyRecordsBody');
+  if (recordsBody) {
+    recordsBody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin text-brand ml-2"></i> جاري استرجاع بطاقة الحضور الرسمية...</td></tr>`;
+  }
+
+  try {
+    const res = await apiFetch(`/api/attendance/employee-card/${empId}?month=${month}`);
+    if (res && res.success) {
+      currentAttCardData = res.data;
+      renderEmployeeAttendanceCard(res.data);
+    } else {
+      alert('تعذر تحميل بطاقة الحضور: ' + (res?.error || 'خطأ غير معروف'));
+    }
+  } catch (err) {
+    alert('خطأ أثناء تحميل بطاقة الحضور: ' + err.message);
+  }
+}
+
+function renderEmployeeAttendanceCard(card) {
+  const emp = card.employee;
+  const metrics = card.metrics;
+  const period = card.period;
+
+  // Header info
+  const empNameEl = document.getElementById('attCardEmpName');
+  if (empNameEl) empNameEl.textContent = emp.full_name_ar;
+
+  const empCodeEl = document.getElementById('attCardEmpCode');
+  if (empCodeEl) empCodeEl.textContent = emp.emp_code;
+
+  const empJobEl = document.getElementById('attCardEmpJob');
+  if (empJobEl) empJobEl.textContent = emp.job_title_ar || 'غير محدد';
+
+  const empDeptEl = document.getElementById('attCardEmpDept');
+  if (empDeptEl) empDeptEl.textContent = emp.department_name || 'الإدارة العامة';
+
+  const empNatIdEl = document.getElementById('attCardEmpNationalId');
+  if (empNatIdEl) empNatIdEl.textContent = emp.national_id || '--';
+
+  const empBranchEl = document.getElementById('attCardEmpBranch');
+  if (empBranchEl) empBranchEl.textContent = emp.branch_name || 'المقر الرئيسي';
+
+  const empSalaryEl = document.getElementById('attCardEmpSalary');
+  if (empSalaryEl) empSalaryEl.textContent = `${Number(emp.basic_salary || 0).toLocaleString()} ر.س`;
+
+  const empShiftEl = document.getElementById('attCardEmpShift');
+  if (empShiftEl) empShiftEl.textContent = emp.shift_type || 'دوام صباحي معتمد';
+
+  const cycleLabel = document.getElementById('attCardCycleLabel');
+  if (cycleLabel) cycleLabel.textContent = `دورة الرواتب: شهر ${period.month}`;
+
+  const docRef = document.getElementById('attCardDocRef');
+  if (docRef) docRef.textContent = `JM-HR-ATT-${period.month.replace('-', '')}-${emp.emp_code}`;
+
+  // Metrics Badges
+  const statPresent = document.getElementById('attCardStatPresent');
+  if (statPresent) statPresent.textContent = `${metrics.presentDays} يوم`;
+
+  const statLate = document.getElementById('attCardStatLate');
+  if (statLate) statLate.textContent = `${metrics.lateDays} يوم`;
+
+  const statAbsent = document.getElementById('attCardStatAbsent');
+  if (statAbsent) statAbsent.textContent = `${metrics.absentDays} يوم`;
+
+  const statLeave = document.getElementById('attCardStatLeave');
+  if (statLeave) statLeave.textContent = `${metrics.onLeaveDays} يوم`;
+
+  const statHours = document.getElementById('attCardStatHours');
+  if (statHours) statHours.textContent = `${metrics.totalWorkHours} س`;
+
+  const statDelay = document.getElementById('attCardStatDelayMins');
+  if (statDelay) statDelay.textContent = `${metrics.totalDelayMinutes} د`;
+
+  const statRate = document.getElementById('attCardStatRate');
+  if (statRate) statRate.textContent = `${metrics.attendancePercentage}%`;
+
+  const statPenalties = document.getElementById('attCardStatPenalties');
+  if (statPenalties) statPenalties.textContent = `${metrics.penaltiesCount}`;
+
+  // Daily records
+  const dailyBody = document.getElementById('attCardDailyRecordsBody');
+  if (dailyBody) {
+    dailyBody.innerHTML = '';
+    const records = card.dailyRecords || [];
+    if (records.length === 0) {
+      dailyBody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-slate-400">لا توجد حركات حضور مسجلة لهذا الشهر</td></tr>`;
+    } else {
+      const daysAr = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      records.forEach(r => {
+        const d = new Date(r.date);
+        const dayName = isNaN(d) ? '' : daysAr[d.getDay()];
+
+        let statusClass = 'bg-emerald-100 text-emerald-800';
+        if (r.status === 'متأخر') statusClass = 'bg-amber-100 text-amber-800';
+        else if (r.status === 'غائب') statusClass = 'bg-rose-100 text-rose-800';
+        else if (r.status === 'إجازة') statusClass = 'bg-blue-100 text-blue-800';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-mono font-bold text-slate-700">${r.date}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-800">${dayName}</td>
+          <td class="py-2.5 px-3 font-mono text-emerald-700 font-bold">${r.check_in || '-'}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-700 font-bold">${r.check_out || '-'}</td>
+          <td class="py-2.5 px-3 font-mono font-bold text-slate-800">${r.work_hours || 0} س</td>
+          <td class="py-2.5 px-3 font-mono font-bold ${r.delay_minutes > 0 ? 'text-rose-600' : 'text-slate-400'}">${r.delay_minutes || 0} د</td>
+          <td class="py-2.5 px-3"><span class="text-[10px] font-bold px-2 py-0.5 rounded ${statusClass}">${r.status}</span></td>
+          <td class="py-2.5 px-3 text-slate-500 text-[11px]">${r.notes || '-'}</td>
+        `;
+        dailyBody.appendChild(tr);
+      });
+    }
+  }
+
+  // Linked Penalties Section
+  const penaltiesSection = document.getElementById('attCardPenaltiesSection');
+  const penaltiesBody = document.getElementById('attCardPenaltiesBody');
+  const penalties = card.penalties || [];
+
+  if (penalties.length > 0 && penaltiesSection && penaltiesBody) {
+    penaltiesSection.classList.remove('hidden');
+    penaltiesBody.innerHTML = '';
+    penalties.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="py-2 px-3 font-mono font-bold text-brand">${p.decision_no}</td>
+        <td class="py-2 px-3 font-mono text-slate-700">${p.incident_date}</td>
+        <td class="py-2 px-3 font-mono font-bold text-slate-700">${p.violation_code}</td>
+        <td class="py-2 px-4 text-slate-800">${p.violation_text}</td>
+        <td class="py-2 px-3"><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">${p.penalty_text}</span></td>
+        <td class="py-2 px-3"><span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">${p.status}</span></td>
+      `;
+      penaltiesBody.appendChild(tr);
+    });
+  } else if (penaltiesSection) {
+    penaltiesSection.classList.add('hidden');
+  }
+}
+
+function printEmployeeAttendanceCard() {
+  const printableArea = document.getElementById('printableAttendanceCardArea');
+  if (!printableArea) {
+    window.print();
+    return;
+  }
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="utf-8">
+      <title>بطاقة الحضور والانضباط للموظف - شركة جوهرة المجد</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+      <style>
+        body { font-family: 'Cairo', sans-serif; background: #fff; color: #1e293b; padding: 20px; }
+        .text-brand { color: #700c14; }
+        .border-brand { border-color: #700c14; }
+        @media print {
+          body { padding: 0; }
+          button { display: none !important; }
+        }
+      </style>
+    </head>
+    <body onload="window.print();">
+      ${printableArea.innerHTML}
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+function exportEmployeeAttendanceCardCsv() {
+  if (!currentAttCardData) return;
+  const period = currentAttCardData.period;
+  window.open(`/api/attendance/export?month=${period.month}`, '_blank');
 }
 
 /* =========================================================================

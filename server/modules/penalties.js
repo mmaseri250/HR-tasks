@@ -36,10 +36,15 @@ function getAllIssuedPenalties(filters = {}) {
     params.push(filters.category);
   }
 
+  if (filters.status) {
+    sql += ' AND p.status = ?';
+    params.push(filters.status);
+  }
+
   if (filters.search) {
-    sql += ' AND (e.full_name_ar LIKE ? OR e.emp_code LIKE ? OR p.decision_no LIKE ? OR p.violation_text LIKE ?)';
+    sql += ' AND (e.full_name_ar LIKE ? OR e.emp_code LIKE ? OR p.decision_no LIKE ? OR p.violation_text LIKE ? OR p.penalty_text LIKE ?)';
     const searchPattern = `%${filters.search}%`;
-    params.push(searchPattern, searchPattern, searchPattern, searchPattern);
+    params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
   }
 
   sql += ' ORDER BY p.id DESC';

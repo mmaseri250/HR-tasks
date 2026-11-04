@@ -27,6 +27,10 @@ const absenceNoticesModule = require('./modules/absenceNotices');
 const auditModule = require('./modules/audit');
 const rbacEngine = require('./modules/rbacEngine');
 const cacheService = require('./modules/cacheService');
+const attendanceAutomationService = require('./modules/attendanceAutomationService');
+
+// Start attendance background violation scanner
+attendanceAutomationService.startBackgroundScanner();
 
 // Initialize Seed Data if unseeded
 try {
@@ -582,8 +586,10 @@ app.get('/api/settings', (req, res) => {
 app.get('/api/dashboard/stats', cacheService.routeCache(25), (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
+    attendanceAutomationService.ensureRosterDataForDate(today);
     const saudization = employeesModule.getSaudizationMetrics();
     const attendance = attendanceModule.getAttendanceStats(today);
+    const attendanceKPIs = attendanceAutomationService.getAttendanceDashboardKPIs(today);
     const docAlerts = employeesModule.getDocumentExpiryAlerts();
     const pendingRequests = requestsModule.getAllRequests({ status: 'معلق' });
     const penalties = penaltiesModule.getAllIssuedPenalties();
@@ -606,6 +612,7 @@ app.get('/api/dashboard/stats', cacheService.routeCache(25), (req, res) => {
       data: {
         saudization,
         attendance,
+        attendanceKPIs,
         expiringDocsCount: docAlerts.length,
         expiringDocs: docAlerts, // Send full alerts for smart frontend search/filtering
         pendingRequestsCount: pendingRequests.length,
@@ -1126,9 +1133,68 @@ app.delete('/api/employees/:id', (req, res) => {
 app.get('/api/attendance/daily', (req, res) => {
   try {
     const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+    attendanceAutomationService.ensureRosterDataForDate(dateStr);
     const records = attendanceModule.getDailyAttendance(dateStr);
     const stats = attendanceModule.getAttendanceStats(dateStr);
     res.json({ success: true, stats, data: records });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Automated Attendance Violation Scanner & Linkage Engine
+app.post('/api/attendance/auto-violations/run', (req, res) => {
+  try {
+    const targetDate = req.body?.date || new Date().toISOString().split('T')[0];
+    attendanceAutomationService.ensureRosterDataForDate(targetDate);
+    const results = attendanceAutomationService.scanAndApplyAttendanceViolations(targetDate);
+    
+    // Invalidate penalties and stats cache
+    cacheService.delete('/api/dashboard/stats');
+    cacheService.delete('/api/penalties/issued');
+    
+    res.json({ 
+      success: true, 
+      message: 'تم فحص سجلات الحضور والانصراف وتطبيق المخالفات والقرارات الجزائية آلياً وفق لائحة تنظيم العمل السعودية', 
+      data: results 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Employee Attendance Card (بطاقة حضور الموظف لدورة الرواتب)
+app.get('/api/attendance/employee-card/:empId', (req, res) => {
+  try {
+    const month = req.query.month || new Date().toISOString().substring(0, 7);
+    const card = attendanceAutomationService.getEmployeeAttendanceCard(req.params.empId, month);
+    res.json({ success: true, data: card });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Attendance Report Export (Excel CSV with UTF-8 BOM)
+app.get('/api/attendance/export', (req, res) => {
+  try {
+    const date = req.query.date;
+    const month = req.query.month;
+    const csvData = attendanceAutomationService.exportAttendanceCsv(date, month);
+    const filename = `attendance_${month || date || 'report'}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvData);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Attendance Dashboard KPIs
+app.get('/api/attendance/dashboard-kpis', (req, res) => {
+  try {
+    const date = req.query.date || new Date().toISOString().split('T')[0];
+    const kpis = attendanceAutomationService.getAttendanceDashboardKPIs(date);
+    res.json({ success: true, data: kpis });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

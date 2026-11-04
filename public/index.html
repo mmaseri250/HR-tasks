@@ -1995,9 +1995,67 @@
 
         <!-- Sub-View B: Issued Decisions -->
         <div id="penaltySubViewIssued" class="card-elevated p-6 space-y-4 hidden">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="text-sm font-bold text-slate-800">سجل القرارات الجزائية الصادرة بحق الموظفين:</h3>
-            <span id="issuedPenaltiesCountBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">3 قرارات</span>
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-black text-slate-800">سجل القرارات الجزائية الصادرة بحق الموظفين</h3>
+                <span id="issuedPenaltiesCountBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">0 قرارات</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">يشمل القرارات الإدارية الرسمية والقرارات المؤتمتة الصادرة من ربط البصمة الحيوية بلائحة تنظيم العمل السعودية.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="triggerAutomatedViolationsScan()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt"></i> تشغيل الرصد والربط الآلي للبصمة
+              </button>
+              <button type="button" onclick="resetPenaltyIssuedFilters()" class="text-xs text-slate-500 hover:text-slate-800 font-bold px-2.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition">
+                <i class="fa-solid fa-arrow-rotate-right ml-1"></i> إعادة تعيين الفلاتر
+              </button>
+            </div>
+          </div>
+
+          <!-- Advanced Filtering Bar (Live Search, Category, Status, Employee) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                <i class="fa-solid fa-magnifying-glass text-brand ml-1"></i> بحث فوري ذكي:
+              </label>
+              <input type="text" id="penaltyIssuedSearchInput" oninput="filterIssuedPenalties()" placeholder="ابحث برقم القرار، اسم الموظف، كود المخالفة..." class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 bg-white focus:ring-2 focus:ring-brand font-medium">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                <i class="fa-solid fa-layer-group text-brand ml-1"></i> نوع وتصنيف المخالفة:
+              </label>
+              <select id="penaltyIssuedCategoryFilter" onchange="filterIssuedPenalties()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 bg-white focus:ring-2 focus:ring-brand font-bold text-slate-700">
+                <option value="">جميع التصنيفات (الكل)</option>
+                <option value="مخالفات مواعيد العمل">مخالفات مواعيد العمل (تأخير / غياب)</option>
+                <option value="مخالفات السلوك والعمل">مخالفات السلوك ونظام العمل</option>
+                <option value="مخالفات السلوك العام">مخالفات السلوك العام والسلامة</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                <i class="fa-solid fa-clipboard-check text-brand ml-1"></i> حالة القرار الجزائي:
+              </label>
+              <select id="penaltyIssuedStatusFilter" onchange="filterIssuedPenalties()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 bg-white focus:ring-2 focus:ring-brand font-bold text-slate-700">
+                <option value="">جميع الحالات</option>
+                <option value="معتمد - آلي">معتمد - آلي (نظام البصمة)</option>
+                <option value="معتمد ومطبق">معتمد ومطبق</option>
+                <option value="قيد التحقيق">قيد التحقيق والمراجعة</option>
+                <option value="ملغي">ملغي</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">
+                <i class="fa-solid fa-user text-brand ml-1"></i> تصفية حسب الموظف:
+              </label>
+              <select id="penaltyIssuedEmployeeFilter" onchange="filterIssuedPenalties()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 bg-white focus:ring-2 focus:ring-brand font-bold text-slate-700">
+                <option value="">كافة الموظفين (111)</option>
+                <!-- Populated via JS -->
+              </select>
+            </div>
           </div>
 
           <div class="overflow-x-auto">
@@ -2010,6 +2068,7 @@
                   <th class="py-3 px-4">تفاصيل المخالفة</th>
                   <th class="py-3 px-3">التكرار</th>
                   <th class="py-3 px-3">الجزاء المطبق</th>
+                  <th class="py-3 px-3">الحالة</th>
                   <th class="py-3 px-3">تاريخ الواقعة</th>
                   <th class="py-3 px-3 text-center">الإجراءات</th>
                 </tr>
@@ -2037,22 +2096,22 @@
               <p class="text-xs text-slate-500 mt-1">تكامل أجهزة ZKTeco البيومترية ومتابعة الانضباط وفق نظام العمل.</p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-              <button onclick="openAddDeviceModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-                <i class="fa-solid fa-plus"></i> إضافة جهاز بصمة جديد
+              <button onclick="triggerAutomatedViolationsScan()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt"></i> تشغيل الرصد الآلي للجزاءات
               </button>
-              <button onclick="triggerBiometricSimulation()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <button onclick="openEmployeeAttendanceCardModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-id-card"></i> بطاقة حضور الموظف
+              </button>
+              <button onclick="exportAttendanceReport('excel')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i class="fa-solid fa-file-excel"></i> تصدير كشف الحضور (Excel)
+              </button>
+              <button onclick="triggerBiometricSimulation()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-microchip"></i> محاكاة نبضات ZK الحية
               </button>
-              <button onclick="openModal('modalImportAttendance')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+              <button onclick="openModal('modalImportAttendance')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-file-arrow-up"></i> استيراد ملف بصمة
               </button>
-              <button onclick="exportData('attendance', 'excel')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-file-excel"></i> تصدير Excel
-              </button>
-              <button onclick="exportData('attendance', 'word')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
-                <i class="fa-solid fa-file-word"></i> تصدير Word
-              </button>
-              <button onclick="printTable('attendanceTable')" class="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+              <button onclick="printTable('attendanceTable')" class="bg-slate-600 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
                 <i class="fa-solid fa-print"></i> طباعة PDF
               </button>
             </div>
@@ -2090,6 +2149,7 @@
                   <th class="py-3 px-3">الإضافي</th>
                   <th class="py-3 px-3">الحالة</th>
                   <th class="py-3 px-3">ملاحظات النظام</th>
+                  <th class="py-3 px-3 text-center">بطاقة الحضور</th>
                 </tr>
               </thead>
               <tbody id="attendanceTableBody" class="divide-y divide-slate-100">
@@ -6123,6 +6183,231 @@
         <span class="block text-[9px] text-amber-200 font-semibold leading-none mt-0.5" id="chatBtnSub">شرح وتقديم الطلبات</span>
       </div>
     </button>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: EMPLOYEE ATTENDANCE CARD (بطاقة حضور الموظف - دورة الرواتب المعتمدة)
+       ========================================================================= -->
+  <div id="modalEmployeeAttendanceCard" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-5xl w-full p-5 sm:p-7 max-h-[94vh] overflow-y-auto space-y-5 shadow-2xl border border-slate-200">
+      
+      <!-- Top Modal Bar -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center text-xl shadow-xs border border-indigo-100">
+            <i class="fa-solid fa-id-card"></i>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              بطاقة الحضور والانضباط الشهري للموظف
+              <span class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full border border-amber-300">دورة الرواتب</span>
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">كشف رسمي معتمد بتفاصيل الحضور والانصراف، ساعات العمل، التأخيرات، والجزاءات المرصودة آلياً وفق نظام العمل.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+          <button type="button" onclick="printEmployeeAttendanceCard()" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 transition flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-print"></i> طباعة البطاقة الرسمية (PDF)
+          </button>
+          <button type="button" onclick="exportEmployeeAttendanceCardCsv()" class="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition flex items-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-file-excel text-emerald-600"></i> تصدير Excel
+          </button>
+          <button type="button" onclick="closeModal('modalEmployeeAttendanceCard')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls: Employee Selection & Payroll Cycle -->
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+        <div class="sm:col-span-7">
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">
+            <i class="fa-solid fa-user text-brand ml-1"></i> اختيار الموظف:
+          </label>
+          <select id="attCardEmpSelect" onchange="reloadCurrentEmployeeAttendanceCard()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-brand">
+            <!-- Populated via JS with 111 employees -->
+          </select>
+        </div>
+
+        <div class="sm:col-span-3">
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">
+            <i class="fa-solid fa-calendar-days text-brand ml-1"></i> دورة الرواتب (الشهر):
+          </label>
+          <input type="month" id="attCardMonthInput" value="2026-11" onchange="reloadCurrentEmployeeAttendanceCard()" class="w-full text-xs rounded-xl border border-slate-300 py-2 px-3 bg-white font-bold text-slate-800 focus:ring-2 focus:ring-brand">
+        </div>
+
+        <div class="sm:col-span-2 flex items-end">
+          <button type="button" onclick="reloadCurrentEmployeeAttendanceCard()" class="w-full py-2 px-3 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-rotate"></i> تحديث
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Card Document Area (Target for print) -->
+      <div id="printableAttendanceCardArea" class="space-y-5 p-4 sm:p-6 bg-white rounded-2xl border border-slate-200 shadow-sm print:p-0 print:border-none print:shadow-none">
+        
+        <!-- Document Header (Official Saudi Company Form) -->
+        <div class="flex justify-between items-center border-b-2 border-brand pb-4">
+          <div class="space-y-1">
+            <h2 class="text-base sm:text-lg font-black text-brand tracking-tight">شركة جوهرة المجد للتجارة</h2>
+            <p class="text-xs font-bold text-slate-600">إدارة الموارد البشرية والشؤون الإدارية</p>
+            <p class="text-[10px] text-slate-500 font-mono">س.ت: 5850024440 • نظام الموارد البشرية المتكامل</p>
+          </div>
+          <div class="text-center">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-brand/10 text-brand flex items-center justify-center text-2xl font-black mb-1">
+              <i class="fa-solid fa-gem text-brand"></i>
+            </div>
+            <span class="text-[10px] font-black uppercase text-brand tracking-widest block">JAWHARAT AL-MAJD</span>
+          </div>
+          <div class="text-left space-y-1">
+            <span class="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono border border-slate-200" id="attCardDocRef">JM-HR-ATT-2026</span>
+            <p class="text-[11px] text-slate-500 font-bold" id="attCardDateLabel">تاريخ الإصدار: 2026-11-04</p>
+            <p class="text-[11px] text-amber-700 font-bold" id="attCardCycleLabel">دورة الرواتب: نوفمبر 2026</p>
+          </div>
+        </div>
+
+        <!-- Employee Info Profile Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">اسم الموظف:</span>
+            <span id="attCardEmpName" class="font-black text-slate-900 text-sm block mt-0.5">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">الرقم الوظيفي:</span>
+            <span id="attCardEmpCode" class="font-mono font-bold text-brand block mt-0.5 text-sm">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">المسمى الوظيفي:</span>
+            <span id="attCardEmpJob" class="font-bold text-slate-800 block mt-0.5">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">الإدارة / القسم:</span>
+            <span id="attCardEmpDept" class="font-bold text-slate-800 block mt-0.5">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">الهوية / الإقامة:</span>
+            <span id="attCardEmpNationalId" class="font-mono font-bold text-slate-800 block mt-0.5">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">الفرع / موقع العمل:</span>
+            <span id="attCardEmpBranch" class="font-bold text-slate-800 block mt-0.5">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">الراتب الأساسي:</span>
+            <span id="attCardEmpSalary" class="font-mono font-bold text-emerald-700 block mt-0.5">--</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] font-bold">نوع الوردية:</span>
+            <span id="attCardEmpShift" class="font-bold text-slate-800 block mt-0.5">دوام صباحي معتمد</span>
+          </div>
+        </div>
+
+        <!-- Monthly Aggregated Metrics Badges -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 text-center text-xs">
+          <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+            <span class="text-[10px] font-bold text-emerald-800 block">أيام الحضور</span>
+            <span id="attCardStatPresent" class="text-base font-black text-emerald-700 font-mono mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200">
+            <span class="text-[10px] font-bold text-amber-800 block">أيام التأخير</span>
+            <span id="attCardStatLate" class="text-base font-black text-amber-700 font-mono mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200">
+            <span class="text-[10px] font-bold text-rose-800 block">أيام الغياب</span>
+            <span id="attCardStatAbsent" class="text-base font-black text-rose-700 font-mono mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+            <span class="text-[10px] font-bold text-blue-800 block">أيام الإجازة</span>
+            <span id="attCardStatLeave" class="text-base font-black text-blue-700 font-mono mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-50 border border-indigo-200">
+            <span class="text-[10px] font-bold text-indigo-800 block">ساعات العمل</span>
+            <span id="attCardStatHours" class="text-base font-black text-indigo-700 font-mono mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-orange-50 border border-orange-200">
+            <span class="text-[10px] font-bold text-orange-800 block">دقائق التأخير</span>
+            <span id="attCardStatDelayMins" class="text-base font-black text-orange-700 font-mono mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-purple-50 border border-purple-200">
+            <span class="text-[10px] font-bold text-purple-800 block">نسبة الانضباط</span>
+            <span id="attCardStatRate" class="text-base font-black text-purple-700 font-mono mt-0.5 block">0%</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-red-50 border border-red-200">
+            <span class="text-[10px] font-bold text-red-800 block">الجزاءات الآلية</span>
+            <span id="attCardStatPenalties" class="text-base font-black text-red-700 font-mono mt-0.5 block">0</span>
+          </div>
+        </div>
+
+        <!-- Detailed Daily Attendance Table -->
+        <div>
+          <h4 class="text-xs font-black text-slate-800 mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-brand"></i> سجل الحضور والانصراف اليومي المفصل لدورة الرواتب:
+          </h4>
+          <div class="overflow-x-auto border border-slate-200 rounded-xl">
+            <table class="w-full text-xs text-right">
+              <thead class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">التاريخ</th>
+                  <th class="py-2.5 px-3">اليوم</th>
+                  <th class="py-2.5 px-3">الدخول</th>
+                  <th class="py-2.5 px-3">الخروج</th>
+                  <th class="py-2.5 px-3">ساعات العمل</th>
+                  <th class="py-2.5 px-3">التأخير</th>
+                  <th class="py-2.5 px-3">الحالة</th>
+                  <th class="py-2.5 px-3">ملاحظات النظام</th>
+                </tr>
+              </thead>
+              <tbody id="attCardDailyRecordsBody" class="divide-y divide-slate-100">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Linked Penalties / Violations Section -->
+        <div id="attCardPenaltiesSection" class="hidden">
+          <h4 class="text-xs font-black text-rose-800 mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-gavel text-rose-600"></i> الجزاءات والخصومات الصادرة خلال هذا الشهر بموجب لائحة تنظيم العمل:
+          </h4>
+          <div class="overflow-x-auto border border-rose-200 rounded-xl bg-rose-50/30">
+            <table class="w-full text-xs text-right">
+              <thead class="bg-rose-100/70 text-rose-900 font-bold border-b border-rose-200">
+                <tr>
+                  <th class="py-2 px-3">رقم القرار</th>
+                  <th class="py-2 px-3">تاريخ الواقعة</th>
+                  <th class="py-2 px-3">كود المخالفة</th>
+                  <th class="py-2 px-4">نص المخالفة</th>
+                  <th class="py-2 px-3">الجزاء المطبق</th>
+                  <th class="py-2 px-3">حالة الاعتماد</th>
+                </tr>
+              </thead>
+              <tbody id="attCardPenaltiesBody" class="divide-y divide-rose-100">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Official Signatures Footer (Saudi HR Standard) -->
+        <div class="grid grid-cols-3 gap-6 pt-6 border-t-2 border-slate-200 text-xs text-center mt-6">
+          <div class="space-y-12">
+            <p class="font-bold text-slate-700">توقيع الموظف بالعلم والاطلاع:</p>
+            <p class="text-[11px] text-slate-400 font-mono">..........................................</p>
+          </div>
+          <div class="space-y-12">
+            <p class="font-bold text-slate-700">المدير المباشر / المشرف:</p>
+            <p class="text-[11px] text-slate-400 font-mono">..........................................</p>
+          </div>
+          <div class="space-y-12">
+            <p class="font-bold text-brand">اعتماد مدير الموارد البشرية والختم:</p>
+            <p class="text-[11px] text-slate-400 font-mono">..........................................</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 
   <!-- Main JavaScript App Controller -->
