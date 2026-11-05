@@ -1,0 +1,66 @@
+# =============================================================================
+# Jawharat Al-Majd HRMS - Platform Operating System Build Specification (.pos)
+# مواصفات بناء وتشغيل نظام موارد بشرية شركة جوهرة المجد على الأنظمة الأخرى
+# =============================================================================
+
+[PROJECT]
+NAME="jawharat-al-majd-hrms"
+VERSION="2.4.0"
+COMPANY="شركة جوهرة المجد للمقاولات والتجارة"
+CR_NUMBER="5850024190"
+DESCRIPTION="Enterprise Human Resources Management System (Saudi Labor Law & Qiwa/Muqeem/GOSI Compliant)"
+
+[TARGET_ENVIRONMENTS]
+OS_SUPPORT=["Linux (Ubuntu 20.04/22.04/24.04, Debian 11/12, Alpine 3.19+)", "Windows Server 2019/2022 / Windows 10/11", "macOS 12+", "Docker / Kubernetes / Cloud VPS"]
+CONTAINER_RUNTIME="Docker 20.10+ / Podman 4.0+"
+CONTAINER_IMAGE="node:22-alpine"
+
+[SYSTEM_PREREQUISITES]
+NODE_VERSION=">=22.5.0" # MANDATORY: Requires built-in node:sqlite DatabaseSync
+NPM_VERSION=">=10.0.0"
+DEFAULT_PORT=3000
+TIMEZONE="Asia/Riyadh"
+
+[DIRECTORIES_REQUIRED]
+PATHS=[
+  "server/database",
+  "uploads",
+  "public/assets",
+  "public/images",
+  "logs"
+]
+
+[DATABASE_SPECIFICATION]
+ENGINE="SQLite3 (node:sqlite DatabaseSync)"
+FILE_PATH="server/database/hrms.db"
+PRAGMA_SETTINGS=[
+  "PRAGMA foreign_keys = ON",
+  "PRAGMA journal_mode = WAL",
+  "PRAGMA synchronous = NORMAL"
+]
+CORE_DATA_MIGRATED=[
+  "23 Real Fleet Vehicles (منصة تم)",
+  "17 Official Company Licenses & CRs (وزارة التجارة والبلدية والجهات الرسمية)",
+  "78 Active Expat Residents (مقيمي الشركة المتطابقين)",
+  "1 Active Admin User (مدير النظام)",
+  "14 Standard Official HR Document Templates"
+]
+
+[BUILD_STEPS]
+STEP_1="Verify Node.js version >= 22 (node -v)"
+STEP_2="Install production dependencies (npm install --omit=dev --no-audit)"
+STEP_3="Create and chmod application storage folders (chmod 755 server/database uploads)"
+STEP_4="Verify database schema and data migration (node server/database/db.js)"
+STEP_5="Execute test suite (npm test)"
+
+[DEPLOYMENT_MODES]
+DOCKER="docker-compose up -d --build"
+LINUX_POSIX="bash build.sh && npm start"
+WINDOWS="build.bat"
+PM2_DAEMON="pm2 start ecosystem.config.js && pm2 save"
+SYSTEMD="systemctl enable --now jawharat-hrms"
+
+[HEALTH_CHECK]
+ENDPOINT="http://localhost:3000/api/settings"
+EXPECTED_STATUS=200
+SUCCESS_INDICATOR="company_name_ar contains 'جوهرة المجد'"

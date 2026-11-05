@@ -5,7 +5,15 @@
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
+    "build": "node scripts/build-check.js",
+    "build:pos": "bash build.sh",
+    "docker:build": "docker build -t jawharat-hrms .",
+    "docker:run": "docker-compose up -d",
     "test": "node tests/run-all-tests.js"
+  },
+  "engines": {
+    "node": ">=22.5.0",
+    "npm": ">=10.0.0"
   },
   "keywords": [
     "hrms",

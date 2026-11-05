@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "jawharat-al-majd-hrms",
+  "displayName": "نظام موارد بشرية شركة جوهرة المجد",
+  "version": "2.4.0",
+  "type": "platform-os-build",
+  "targetOS": [
+    "linux",
+    "darwin",
+    "win32",
+    "docker"
+  ],
+  "engines": {
+    "node": ">=22.5.0",
+    "npm": ">=10.0.0"
+  },
+  "environment": {
+    "NODE_ENV": "production",
+    "PORT": 3000,
+    "TZ": "Asia/Riyadh",
+    "DATA_DIR": "server/database"
+  },
+  "build": {
+    "install": "npm install --omit=dev --no-audit",
+    "preStart": "node -e \"require('./server/database/db')\"",
+    "start": "node server/server.js",
+    "test": "node tests/run-all-tests.js"
+  },
+  "ports": [
+    3000
+  ],
+  "volumes": [
+    {
+      "source": "server/database",
+      "target": "/app/server/database",
+      "type": "persistent"
+    },
+    {
+      "source": "uploads",
+      "target": "/app/uploads",
+      "type": "persistent"
+    }
+  ],
+  "healthCheck": {
+    "path": "/api/settings",
+    "port": 3000,
+    "intervalSeconds": 30,
+    "timeoutSeconds": 10
+  }
+}
