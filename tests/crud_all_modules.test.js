@@ -41,7 +41,7 @@ function runAllModulesCrudTests() {
         (SELECT COUNT(*) FROM leaves WHERE status LIKE '%بانتظار%') AS pendingLeaves
     `);
     assert.strictEqual(stats.activeEmps, 108);
-    assert.strictEqual(stats.totalDepts, 6);
+    assert.strictEqual(stats.totalDepts, 9);
     assert.strictEqual(stats.totalBranches, 5);
   });
 
@@ -289,8 +289,8 @@ function runAllModulesCrudTests() {
   // 12. إعدادات المنشأة (Company Settings)
   runSubTest('الوحدة 12 (إعدادات المنشأة): جلب وحفظ بيانات السجل التجاري وحماية الأجور', () => {
     const settings = db.get("SELECT * FROM company_settings WHERE id = 1");
-    assert.strictEqual(settings.cr_number, '7004872169');
-    assert.strictEqual(settings.wps_payer_id, 'EST7004872169');
+    assert.strictEqual(settings.cr_number, '5850024190');
+    assert.strictEqual(settings.wps_payer_id, 'EST5850024190');
     assert.strictEqual(settings.bank_code, 'RJHI');
   });
 

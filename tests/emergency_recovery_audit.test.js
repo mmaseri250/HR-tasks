@@ -82,7 +82,7 @@ const formsToTest = [
 for (const form of formsToTest) {
   const html = form.fn();
   assert(html && html.includes('شركة جوهرة المجد'), `النموذج ${form.name} يجب أن يحتوي على اسم الشركة`);
-  assert(html.includes('7004872169') || html.includes('س.ت:'), `النموذج ${form.name} يجب أن يحتوي على السجل التجاري الرسمي`);
+  assert(html.includes('5850024190') || html.includes('س.ت:'), `النموذج ${form.name} يجب أن يحتوي على السجل التجاري الرسمي`);
   console.log(`  ✓ ${form.name} تم التوليد بنجاح`);
 }
 

@@ -20,7 +20,7 @@ const { get } = require('../database/db');
 const COMPANY_BRAND = {
   nameAr: 'شركة جوهرة المجد للتجارة والمقاولات',
   nameEn: 'Jawharat Al-Majd Trading & Contracting Co.',
-  cr: '7004872169',
+  cr: '5850024190',
   vat: '310492837400003',
   address: 'المملكة العربية السعودية، منطقة عسير، أبها',
   phone: '920012405',

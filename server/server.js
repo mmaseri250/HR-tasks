@@ -70,81 +70,6 @@ try {
   console.error('Hierarchy sync error:', e.message);
 }
 
-// Automatic Workflow Integrity Check & Revert of Erroneous Actions
-try {
-  const abdulmalik = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001' OR full_name_ar LIKE '%عبدالملك سعيد الشريف%'");
-  const shama = get("SELECT id, manager_id, direct_manager_name FROM employees WHERE full_name_ar LIKE '%شامة%'");
-  if (shama) {
-    const existingReq = get("SELECT id, status, manager_status FROM requests WHERE emp_id = ? OR id = 26 OR request_no = 'REQ-2026-0001'", [shama.id]);
-    const mgrId = shama.manager_id || (abdulmalik ? abdulmalik.id : null);
-    const mgrName = shama.direct_manager_name || (abdulmalik ? abdulmalik.full_name_ar : 'عبدالملك سعيد الشريف');
-
-    if (!existingReq) {
-      run(`
-        INSERT INTO requests (
-          id, request_no, emp_id, request_type, start_date, end_date, days_count,
-          amount, destination_entity, reason, status, manager_id, manager_name,
-          manager_status, hr_verify_status, hr_director_status, created_at, updated_at
-        ) VALUES (
-          26, 'REQ-2026-0001', ?, 'إجازة سنوية', '2026-10-26', '2026-10-26', 1,
-          3000, NULL, 'طلب اجازه ', 'معلق - بانتظار موافقة المدير المباشر', ?, ?,
-          'معلق', 'معلق', 'معلق', datetime('now'), datetime('now')
-        )
-      `, [shama.id, mgrId, mgrName]);
-      console.log('✓ Re-established request REQ-2026-0001 for Shama Ali Asiri with direct manager Abdulmalik Saeed Al-Sharif.');
-    } else {
-      run(`
-        UPDATE requests
-        SET manager_id = ?,
-            manager_name = ?,
-            updated_at = datetime('now')
-        WHERE id = ?
-      `, [mgrId, mgrName, existingReq.id]);
-      console.log('✓ Successfully ensured request REQ-2026-0001 has direct manager properly bound.');
-    }
-
-    // Ensure matching leaves record exists
-    const existingLeave = get("SELECT id FROM leaves WHERE request_no = 'REQ-2026-0001' OR (emp_id = ? AND leave_type = 'إجازة سنوية')", [shama.id]);
-    let leaveId = existingLeave ? existingLeave.id : null;
-    if (!existingLeave) {
-      const leaveRes = run(`
-        INSERT INTO leaves (
-          request_no, emp_id, leave_type, start_date, end_date, days_count,
-          reason, status, manager_id, manager_name,
-          manager_status, hr_verify_status, hr_director_status, hr_status, created_at, updated_at
-        ) VALUES (
-          'REQ-2026-0001', ?, 'إجازة سنوية', '2026-10-26', '2026-10-26', 1,
-          'طلب اجازه ', 'معلق - بانتظار موافقة المدير المباشر', ?, ?,
-          'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now')
-        )
-      `, [shama.id, mgrId, mgrName]);
-      leaveId = leaveRes.lastInsertRowid;
-      console.log('✓ Synchronized leaves table record for REQ-2026-0001.');
-    }
-
-    // Ensure workflow_steps exist
-    const reqId = existingReq ? existingReq.id : 26;
-    const stepsCount = get("SELECT COUNT(*) as count FROM workflow_steps WHERE request_id = ?", [reqId])?.count || 0;
-    if (stepsCount === 0) {
-      run(`
-        INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
-        VALUES (?, ?, 1, 'موافقة المدير المباشر', 'direct_manager', ?, ?, 'معلق', datetime('now'), datetime('now'))
-      `, [reqId, leaveId, mgrId, mgrName]);
-      run(`
-        INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
-        VALUES (?, ?, 2, 'تدقيق وتحقق قسم الموارد البشرية', 'hr_specialist', NULL, 'قسم الموارد البشرية', 'مؤجل', datetime('now'), datetime('now'))
-      `, [reqId, leaveId]);
-      run(`
-        INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
-        VALUES (?, ?, 3, 'اعتماد مدير الموارد البشرية', 'hr_director', ?, ?, 'مؤجل', datetime('now'), datetime('now'))
-      `, [reqId, leaveId, abdulmalik ? abdulmalik.id : null, abdulmalik ? abdulmalik.full_name_ar : 'عبدالملك سعيد الشريف']);
-      console.log('✓ Created 3-stage workflow_steps pipeline.');
-    }
-  }
-} catch (e) {
-  console.warn('Revert migration note:', e.message);
-}
-
 // User context extractor for strict role & ownership checking
 function extractUserContext(req) {
   if (req.user && req.user.id) {
@@ -1133,6 +1058,32 @@ const photoStorage = multer.diskStorage({
   }
 });
 const uploadPhoto = multer({ storage: photoStorage });
+
+const fleetDocStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const destDir = path.join(__dirname, '..', 'uploads', 'fleet_documents');
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    cb(null, destDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeBase = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_\-\u0600-\u06FF]/g, '_');
+    cb(null, `veh-${req.params.id || 'doc'}-${Date.now()}-${safeBase}${ext}`);
+  }
+});
+
+const uploadFleetDoc = multer({
+  storage: fleetDocStorage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const dangerousExts = ['.exe', '.bat', '.cmd', '.sh', '.php', '.js', '.vbs', '.py'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (dangerousExts.includes(ext)) {
+      return cb(new Error('أنواع الملفات التنفيذية والبرمجية محظورة لأسباب أمنية.'));
+    }
+    cb(null, true);
+  }
+});
 
 // Upload Employee Photo
 app.post('/api/employees/:id/photo', uploadPhoto.single('photo'), (req, res) => {
@@ -2493,9 +2444,30 @@ app.get('/api/fleet/export/excel', (req, res) => {
   }
 });
 
-// Download Blank Import Template
+// Download Blank Import Template (Excel .xlsx)
+app.get('/api/fleet/template/excel', (req, res) => {
+  try {
+    const buffer = fleetService.getImportTemplateExcel();
+    const filename = `tamm_import_template_${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Download Blank Import Template (CSV or Excel)
 app.get('/api/fleet/template', (req, res) => {
   try {
+    const format = req.query.format;
+    if (format === 'excel' || format === 'xlsx') {
+      const buffer = fleetService.getImportTemplateExcel();
+      const filename = `tamm_import_template_${new Date().toISOString().split('T')[0]}.xlsx`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      return res.send(buffer);
+    }
     const csvTemplate = fleetService.getImportTemplateCsv();
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="fleet_import_template.csv"');
@@ -2505,8 +2477,8 @@ app.get('/api/fleet/template', (req, res) => {
   }
 });
 
-// Import Vehicles from Excel / CSV
-app.post('/api/fleet/import', upload.single('file'), (req, res) => {
+// Import Vehicles from Excel (.xlsx) or CSV (Transactional with 24 columns)
+app.post(['/api/fleet/import', '/api/fleet/import/excel'], upload.single('file'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'يرجى إرفاق ملف إكسل أو CSV للاستيراد' });
@@ -2521,10 +2493,11 @@ app.post('/api/fleet/import', upload.single('file'), (req, res) => {
 
     try { fs.unlinkSync(filePath); } catch (e) {}
 
-    const result = fleetService.importVehicles(rows);
+    const uploader = req.user?.username || req.headers['x-user-name'] || 'مدير النظام';
+    const result = fleetService.importVehicles(rows, uploader);
     res.json({
       success: true,
-      message: `تمت معالجة ${result.total_rows} صف: تم إدخال ${result.inserted} مركبة جديدة، وتحديث ${result.updated} مركبة.`,
+      message: `تمت معالجة ${result.total_rows} صف: تم استيراد ${result.valid_count} مركبة بنجاح، ورفض ${result.rejected_count} صف، وتكرار ${result.duplicate_count} مركبة.`,
       data: result
     });
   } catch (err) {
@@ -2532,6 +2505,68 @@ app.post('/api/fleet/import', upload.single('file'), (req, res) => {
       try { fs.unlinkSync(req.file.path); } catch (e) {}
     }
     res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Vehicle Documents & Photos Repository
+app.get('/api/fleet/vehicles/:id/documents', (req, res) => {
+  try {
+    const docs = fleetService.getVehicleDocuments(req.params.id);
+    res.json({ success: true, count: docs.length, data: docs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/fleet/vehicles/:id/documents', uploadFleetDoc.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'يرجى إرفاق ملف الوثيقة أو الصورة.' });
+    }
+    const uploader = req.user?.full_name || req.user?.username || 'مدير النظام';
+    const doc = fleetService.addVehicleDocument(req.params.id, {
+      ...req.body,
+      uploaded_by: uploader
+    }, req.file);
+
+    res.status(201).json({
+      success: true,
+      message: 'تم إرفاق المستند/الصورة بنجاح في ملف المركبة.',
+      data: doc
+    });
+  } catch (err) {
+    if (req.file && req.file.path) {
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
+    }
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/fleet/documents/:docId', (req, res) => {
+  try {
+    fleetService.deleteVehicleDocument(req.params.docId);
+    res.json({ success: true, message: 'تم حذف المستند بنجاح.' });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/fleet/documents/:docId/file', (req, res) => {
+  try {
+    const doc = fleetService.getVehicleDocumentById(req.params.docId);
+    if (!doc) return res.status(404).send('المستند غير موجود');
+
+    const fullPath = path.isAbsolute(doc.file_path) ? doc.file_path : path.join(__dirname, '..', 'uploads', 'fleet_documents', doc.file_path);
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).send('ملف المستند غير موجود على الخادم');
+    }
+
+    if (doc.mime_type) {
+      res.setHeader('Content-Type', doc.mime_type);
+    }
+    res.sendFile(fullPath);
+  } catch (err) {
+    res.status(500).send(err.message);
   }
 });
 

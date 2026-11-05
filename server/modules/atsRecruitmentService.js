@@ -105,85 +105,11 @@ class AtsRecruitmentService {
       )
     `);
 
-    // Seed realistic initial vacancies if empty
-    this.seedInitialDataIfEmpty();
+    // Seed disabled permanently for production clean state
   }
 
   seedInitialDataIfEmpty() {
-    const vCount = get('SELECT COUNT(*) as c FROM job_vacancies')?.c || 0;
-    if (vCount === 0) {
-      const initialVacancies = [
-        {
-          code: 'JM-VAC-2026-0001',
-          ar: 'مدير مشروع إنشائي أول',
-          en: 'Senior Construction Project Manager',
-          dept: 'إدارة المشاريع الهندسية',
-          exp: 7,
-          type: 'دوام كامل',
-          openings: 2,
-          salary: '18,000 - 24,000 ر.س',
-          reqs: 'بكالوريوس هندسة مدنية، خبرة في إدارة مشاريع البنية التحتية، إتقان إدارة العقود FIDIC والسلامة المهنية.'
-        },
-        {
-          code: 'JM-VAC-2026-0002',
-          ar: 'مهندس سلامة وصحة مهنية (HSE)',
-          en: 'Occupational Health & Safety Engineer',
-          dept: 'إدارة السلامة والجودة',
-          exp: 3,
-          type: 'دوام كامل',
-          openings: 3,
-          salary: '9,000 - 13,000 ر.س',
-          reqs: 'شهادة نيبوش NEBOSH IGC، خبرة في مواقع المقاولات والإنشاءات، إتقان تقييم المخاطر وتطبيق معايير أرامكو وسابك.'
-        },
-        {
-          code: 'JM-VAC-2026-0003',
-          ar: 'محاسب تكاليف ومقاولات',
-          en: 'Cost & Construction Accountant',
-          dept: 'الإدارة المالية',
-          exp: 4,
-          type: 'دوام كامل',
-          openings: 1,
-          salary: '8,000 - 11,000 ر.س',
-          reqs: 'بكالوريوس محاسبة، خبرة محاسبية في قطاع المقاولات والمستخلصات والمستودعات، إتقان برامج ERP.'
-        },
-        {
-          code: 'JM-VAC-2026-0004',
-          ar: 'أخصائي توظيف وموارد بشرية',
-          en: 'HR & Talent Acquisition Specialist',
-          dept: 'إدارة الموارد البشرية',
-          exp: 3,
-          type: 'دوام كامل',
-          openings: 1,
-          salary: '7,500 - 10,000 ر.س',
-          reqs: 'بكالوريوس موارد بشرية أو إدارة أعمال، إلمام تام بنظام العمل السعودي ومنصات قوى ومقيم ومدد، مهارات التفاوض.'
-        }
-      ];
-
-      initialVacancies.forEach(v => {
-        run(`
-          INSERT INTO job_vacancies (
-            job_code, title_ar, title_en, experience_years, employment_type, openings_count, salary_range, requirements, status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'مفتوح')
-        `, [v.code, v.ar, v.en, v.exp, v.type, v.openings, v.salary, v.reqs]);
-      });
-
-      // Seed sample applicants across pipeline
-      const sampleApplicants = [
-        { no: 'APP-2026-0001', vId: 1, name: 'عبدالله إبراهيم الشمري', email: 'a.shammari@example.com', phone: '0551234567', nat: 'سعودي', exp: 8, edu: 'بكالوريوس هندسة مدنية', stage: 'مقابلة_شخصية', expSal: 22000 },
-        { no: 'APP-2026-0002', vId: 2, name: 'محمد فاروق المنصور', email: 'm.mansour@example.com', phone: '0547654321', nat: 'سعودي', exp: 4, edu: 'بكالوريوس هندسة ميكانيكية', stage: 'فرز_أولي', expSal: 11000 },
-        { no: 'APP-2026-0003', vId: 3, name: 'خالد عبدالعزيز الزهراني', email: 'k.zahrani@example.com', phone: '0509876543', nat: 'سعودي', exp: 5, edu: 'بكالوريوس محاسبة وتمويل', stage: 'عرض_وظيفي', expSal: 10500 },
-        { no: 'APP-2026-0004', vId: 4, name: 'سارة فهد السديري', email: 's.sudairi@example.com', phone: '0561122334', nat: 'سعودية', exp: 3, edu: 'بكالوريوس موارد بشرية', stage: 'جديد', expSal: 9000 },
-        { no: 'APP-2026-0005', vId: 1, name: 'عمر طارق الدوسري', email: 'o.dosari@example.com', phone: '0554433221', nat: 'سعودي', exp: 9, edu: 'ماجستير إدارة مشاريع', stage: 'مقبول', expSal: 24000 }
-      ];
-
-      sampleApplicants.forEach(a => {
-        run(`
-          INSERT INTO job_applicants (
-            applicant_no, vacancy_id, full_name, email, phone, nationality, experience_years, education_level, stage, expected_salary
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [a.no, a.vId, a.name, a.email, a.phone, a.nat, a.exp, a.edu, a.stage, a.expSal]);
-      });
-    }
+    // No-op for production clean state
   }
 
   // ==========================================

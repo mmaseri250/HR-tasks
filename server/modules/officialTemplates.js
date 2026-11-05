@@ -8,7 +8,7 @@ const { get, query } = require('../database/db');
 const COMPANY = {
   nameAr: 'شركة جوهرة المجد للتجارة والمقاولات',
   nameEn: 'Jawharat Al-Majd Trading & Contracting Co.',
-  cr: '7004872169',
+  cr: '5850024190',
   vat: '310492837400003',
   addressAr: 'أبها، منطقة عسير - حي الشرقية - مول سيتي بارك',
   addressEn: 'Abha, Asir Region - Al-Sharqiah Dist. - City Park Mall',
@@ -1699,7 +1699,7 @@ function renderSalaryCertHtml(identifier, options = {}) {
         <!-- Preamble -->
         <div class="doc-box" style="margin-top: 6px;">
           <p style="margin: 0 0 4px;">
-            تشهد <strong>شركة جوهرة المجد للتجارة والمقاولات</strong> (س.ت: 7004872169) بأن الموظف الموضحة بياناته أدناه يعمل لدينا وعلى رأس العمل بموجب عقد عمل ساري المفعول حتى تاريخ إصدار هذه الشهادة:
+            تشهد <strong>شركة جوهرة المجد للتجارة والمقاولات</strong> (س.ت: 5850024190) بأن الموظف الموضحة بياناته أدناه يعمل لدينا وعلى رأس العمل بموجب عقد عمل ساري المفعول حتى تاريخ إصدار هذه الشهادة:
           </p>
           <p style="margin: 0; font-size:10.5px; color:#475569; direction:ltr; text-align:left;">
             Jawharat Al-Majd Trading & Contracting Co. hereby certifies that the employee whose details are set forth below is actively employed under a valid contract:
@@ -1805,7 +1805,7 @@ function renderSalaryCertHtml(identifier, options = {}) {
           <div class="sig-box">
             <h4>الختم الرسمي والتحقق الرقمي <span class="h4-en">Official Seal & Digital QR</span></h4>
             <p>شركة جوهرة المجد للتجارة والمقاولات</p>
-            <p>س.ت: 7004872169 • أبها، عسير</p>
+            <p>س.ت: 5850024190 • أبها، عسير</p>
             <div class="sig-line"></div>
             <p><span class="stamp-seal stamp-approved">وثيقة رسمية مختومة ومعتمدة ✓</span></p>
           </div>

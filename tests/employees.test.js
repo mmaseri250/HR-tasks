@@ -15,7 +15,7 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(initialEmployees.length, 113, 'يجب أن تحتوي قاعدة البيانات على 113 موظفاً (108 على رأس العمل + 5 منهية خدماتهم)');
   
   const depts = db.query('SELECT * FROM departments');
-  assert.strictEqual(depts.length, 6, 'يجب أن تتوفر الإدارات الـ 6 المعتمدة في الهيكل التنظيمي');
+  assert.strictEqual(depts.length, 9, 'يجب أن تتوفر الإدارات الـ 9 المعتمدة في الهيكل التنظيمي');
 
   const branches = db.query('SELECT * FROM branches');
   assert.strictEqual(branches.length, 5, 'يجب أن تتوفر الفروع الـ 5 المعتمدة بالكامل');
@@ -39,7 +39,7 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(compMetrics.metrics.workPermits.valid, 22, 'يجب أن يكون عدد رخص العمل السارية 22');
   assert.strictEqual(compMetrics.metrics.wps.complianceRate, 100, 'نسبة الالتزام بحماية الأجور يجب أن تكون 100%');
 
-  console.log('✓ نجح: التحقق من استيراد 108 موظف نشط و 5 منهية خدماتهم، و 6 إدارات و 5 فروع ومؤشر الامتثال الوزاري بنجاح');
+  console.log('✓ نجح: التحقق من استيراد 108 موظف نشط و 5 منهية خدماتهم، و 9 إدارات و 5 فروع ومؤشر الامتثال الوزاري بنجاح');
 
   // Test 2: Create Real Employee with branch and department
   const branch1 = branches[0];

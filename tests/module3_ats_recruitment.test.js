@@ -31,9 +31,9 @@ function test(name, fn) {
 console.log('--- TEST GROUP 1: Job Vacancies Management ---');
 
 const initialVacancies = atsRecruitmentService.getVacancies();
-test('Job vacancies list loads and contains seeded positions', () => {
+test('Job vacancies list loads and is clean in production (0 dummy vacancies)', () => {
   assert(Array.isArray(initialVacancies), 'Vacancies should return an array');
-  assert(initialVacancies.length >= 4, `Expected at least 4 vacancies, got ${initialVacancies.length}`);
+  assert.strictEqual(initialVacancies.length, 0, 'Clean production state must have 0 initial vacancies');
 });
 
 const newVac = atsRecruitmentService.createVacancy({
@@ -73,9 +73,9 @@ test('getVacancyById retrieves correct record with applicants count', () => {
 console.log('\n--- TEST GROUP 2: Applicants Tracking & Pipeline Stages ---');
 
 const initialApplicants = atsRecruitmentService.getApplicants();
-test('Applicants list loads and contains seeded candidates', () => {
+test('Applicants list loads and is clean in production (0 dummy applicants)', () => {
   assert(Array.isArray(initialApplicants), 'Applicants should return an array');
-  assert(initialApplicants.length >= 5, `Expected at least 5 applicants, got ${initialApplicants.length}`);
+  assert.strictEqual(initialApplicants.length, 0, 'Clean production state must have 0 initial applicants');
 });
 
 const newApplicant = atsRecruitmentService.createApplicant({
@@ -220,8 +220,8 @@ console.log('\n--- TEST GROUP 5: Recruitment KPIs & Dashboard Metrics ---');
 
 test('getRecruitmentKpis computes accurate real-time metrics across all pipeline stages', () => {
   const kpis = atsRecruitmentService.getRecruitmentKpis();
-  assert(kpis.totalVacancies >= 5);
-  assert(kpis.totalApplicants >= 6);
+  assert(kpis.totalVacancies >= 1);
+  assert(kpis.totalApplicants >= 1);
   assert(typeof kpis.stagesBreakdown.new === 'number');
   assert(typeof kpis.stagesBreakdown.screening === 'number');
   assert(typeof kpis.stagesBreakdown.interview === 'number');

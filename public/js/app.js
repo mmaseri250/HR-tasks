@@ -562,7 +562,7 @@ const FALLBACK_DATA = {
   settings: {
     company_name_ar: 'شركة جوهرة المجد',
     company_name_en: 'Jawharat Al-Majd Co.',
-    cr_number: '7004872169',
+    cr_number: '5850024190',
     tax_number: '310492837400003',
     phone: '920012405',
     email: 'info@jalmajd.com',
@@ -4148,7 +4148,7 @@ function viewEmployeePayslip(empId) {
         <img src="assets/logo.png" class="h-12 w-auto object-contain">
         <div>
           <h4 class="font-black text-brand text-sm">شركة جوهرة المجد</h4>
-          <p class="text-[10px] text-slate-400">س.ت: 7004872169</p>
+          <p class="text-[10px] text-slate-400">س.ت: 5850024190</p>
         </div>
       </div>
       <div class="text-left font-mono">
@@ -12212,6 +12212,19 @@ function renderFleetTable(vehicles) {
     countBadge.textContent = `عرض ${filtered.length} من أصل ${vehicles.length} مركبة`;
   }
 
+  if (!vehicles || vehicles.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="p-12 text-center text-slate-400 font-bold">
+          <i class="fa-solid fa-car-tunnel text-4xl mb-3 block text-slate-300"></i>
+          <p class="text-base font-black text-slate-600 mb-1">لا توجد بيانات مسجلة حالياً</p>
+          <p class="text-xs text-slate-400 font-medium">لم يتم تسجيل أو استيراد أي مركبات في منصة تم حتى الآن. يمكنك إضافة مركبة جديدة أو الاستيراد من ملف إكسل تم المعتمد.</p>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
@@ -12343,6 +12356,11 @@ function renderFleetTable(vehicles) {
                 <i class="fa-solid fa-handshake"></i>
               </button>
             `}
+
+            <!-- Documents & Photos Button -->
+            <button onclick="openVehicleDocumentsModal(${v.id}, '${(v.plate_number_ar || '').replace(/'/g, "\\'")} - ${(v.make || '').replace(/'/g, "\\'")} ${(v.model || '').replace(/'/g, "\\'")}')" title="مستندات وصور المركبة" class="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs shadow-xs transition cursor-pointer">
+              <i class="fa-solid fa-folder-open"></i>
+            </button>
 
             <!-- Edit Button -->
             <button onclick="openEditVehicleModal(${v.id})" title="تعديل بيانات المركبة" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition">
@@ -14034,9 +14052,10 @@ function renderCircularsCards(circulars) {
 
   if (!circulars || circulars.length === 0) {
     grid.innerHTML = `
-      <div class="col-span-full py-12 text-center text-slate-400">
-        <i class="fa-solid fa-bullhorn text-4xl mb-3 text-slate-300 block"></i>
-        لا توجد تعاميم إدارية مطابقة لخيارات البحث.
+      <div class="col-span-full py-16 text-center text-slate-400 font-bold">
+        <i class="fa-solid fa-file-contract text-5xl mb-3 text-slate-300 block"></i>
+        <p class="text-base font-black text-slate-600 mb-1">لا توجد بيانات مسجلة حالياً</p>
+        <p class="text-xs text-slate-400 font-medium">لم يتم إصدار أي تعاميم إدارية رسمية حتى الآن. يمكنك إنشاء تعميم جديد عبر زر "إصدار تعميم إداري جديد".</p>
       </div>
     `;
     return;
@@ -14272,9 +14291,10 @@ function renderLicensesTable(licenses) {
   if (!licenses || licenses.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" class="py-8 text-center text-slate-400">
-          <i class="fa-solid fa-file-shield text-3xl mb-2 text-slate-300 block"></i>
-          لا توجد سجلات أو تراخيص مسجلة مطابقة للبحث.
+        <td colspan="8" class="py-12 text-center text-slate-400 font-bold">
+          <i class="fa-solid fa-file-shield text-4xl mb-3 text-slate-300 block"></i>
+          <p class="text-base font-black text-slate-600 mb-1">لا توجد بيانات مسجلة حالياً</p>
+          <p class="text-xs text-slate-400 font-medium">لم يتم تسجيل أي رخص أو سجلات حكومية حتى الآن. اضغط على "إضافة ترخيص / سجل جديد" للبدء.</p>
         </td>
       </tr>
     `;

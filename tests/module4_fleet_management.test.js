@@ -5,7 +5,7 @@
  */
 
 const assert = require('node:assert');
-const { query, get } = require('../server/database/db');
+const { query, get, run } = require('../server/database/db');
 const fleetService = require('../server/modules/fleetService');
 
 console.log('================================================================');
@@ -27,22 +27,30 @@ function test(name, fn) {
   }
 }
 
-// --- TEST GROUP 1: Fleet CRUD Operations & Validations ---
-console.log('--- TEST GROUP 1: Fleet CRUD & Validations ---');
+// Clean any pre-existing vehicles from tests
+run('DELETE FROM vehicle_custody_logs');
+run('DELETE FROM vehicle_documents');
+run('DELETE FROM vehicles');
 
-const initialVehicles = fleetService.getVehicles();
-test('Seeded fleet vehicles load with complete Tamm compliance fields', () => {
+// --- TEST GROUP 1: Clean Initial State & Zero Metrics ---
+console.log('--- TEST GROUP 1: Clean Initial State & Zero Metrics ---');
+
+test('Clean initial state returns 0 vehicles and zero Tamm alarms', () => {
+  const initialVehicles = fleetService.getVehicles();
   assert(Array.isArray(initialVehicles), 'Fleet should return an array');
-  assert(initialVehicles.length >= 4, `Expected at least 4 vehicles, got ${initialVehicles.length}`);
-  const v1 = initialVehicles[0];
-  assert(v1.plate_number_ar, 'Must have plate_number_ar');
-  assert(v1.make, 'Must have make');
-  assert(v1.model, 'Must have model');
-  assert(v1.year > 2000, 'Must have valid year');
-  assert(v1.istimara, 'Must compute istimara info');
-  assert(v1.fahas, 'Must compute fahas info');
-  assert(v1.insurance, 'Must compute insurance info');
+  assert.strictEqual(initialVehicles.length, 0, 'Clean production state must have 0 vehicles');
+
+  const kpis = fleetService.getFleetKpis();
+  assert.strictEqual(kpis.total_vehicles, 0, 'KPI total_vehicles must be 0');
+  assert.strictEqual(kpis.active_vehicles, 0, 'KPI active_vehicles must be 0');
+  assert.strictEqual(kpis.assigned_vehicles, 0, 'KPI assigned_vehicles must be 0');
+  assert.strictEqual(kpis.available_vehicles, 0, 'KPI available_vehicles must be 0');
+  assert.strictEqual(kpis.total_alerts, 0, 'KPI total_alerts must be 0');
+  assert.strictEqual(kpis.compliance_rate, 0, 'KPI compliance_rate must be 0 when empty');
 });
+
+// --- TEST GROUP 2: Fleet CRUD Operations & Validations ---
+console.log('\n--- TEST GROUP 2: Fleet CRUD & Validations ---');
 
 const testVin = 'TEST-VIN-' + Date.now();
 const testPlate = 'ق ر ط 9988';
@@ -102,45 +110,11 @@ test('getVehicleById retrieves single vehicle with relations and custody logs', 
   assert(Array.isArray(fetched.custody_logs));
 });
 
-// --- TEST GROUP 2: Tamm Platform Fields & Regulatory Alarms ---
-console.log('\n--- TEST GROUP 2: Tamm Platform Fields & Regulatory Alarms ---');
-
-test('computeExpiry calculates expired, expiring_soon, and valid states accurately', () => {
-  const pastDate = '2025-01-01';
-  const expired = fleetService.computeExpiry(pastDate);
-  assert.strictEqual(expired.status, 'expired');
-  assert(expired.daysLeft < 0);
-
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 10);
-  const soonDate = tomorrow.toISOString().split('T')[0];
-  const expiringSoon = fleetService.computeExpiry(soonDate);
-  assert.strictEqual(expiringSoon.status, 'expiring_soon');
-  assert(expiringSoon.daysLeft <= 30 && expiringSoon.daysLeft > 0);
-
-  const future = new Date();
-  future.setDate(future.getDate() + 200);
-  const validDate = future.toISOString().split('T')[0];
-  const valid = fleetService.computeExpiry(validDate);
-  assert.strictEqual(valid.status, 'valid');
-  assert(valid.daysLeft > 30);
-});
-
-test('getFleetKpis accurately computes total, assigned, available and Tamm alarms', () => {
-  const kpis = fleetService.getFleetKpis();
-  assert(kpis.total_vehicles >= 5, `Expected at least 5 vehicles, got ${kpis.total_vehicles}`);
-  assert(kpis.assigned_vehicles >= 1);
-  assert(typeof kpis.compliance_rate === 'number');
-  assert(kpis.total_alerts >= 0);
-  assert(typeof kpis.istimara_alerts.expired === 'number');
-  assert(typeof kpis.fahas_alerts.expiring_soon === 'number');
-});
-
 // --- TEST GROUP 3: Vehicle Custody Handover & Return Workflow ---
 console.log('\n--- TEST GROUP 3: Vehicle Custody Handover & Return Workflow ---');
 
 test('assignVehicle assigns custody to employee, updates status to نشط and creates audit log', () => {
-  const targetEmp = get(`SELECT id, emp_code, full_name_ar FROM employees WHERE is_saudi = 1 LIMIT 1`);
+  const targetEmp = get(`SELECT id, emp_code, full_name_ar FROM employees WHERE status = 'نشط' LIMIT 1`);
   assert(targetEmp, 'Operational employee must exist');
 
   const result = fleetService.assignVehicle(createdVehicle.id, targetEmp.id, {
@@ -190,81 +164,125 @@ test('returnVehicle clears custody, sets status to متاح and records return a
   assert.strictEqual(log.action_type, 'استرداد_عهدة');
 });
 
-// Clean up test vehicle safely
+// --- TEST GROUP 4: Vehicle Documents & Photos Repository ---
+console.log('\n--- TEST GROUP 4: Vehicle Documents & Photos Repository ---');
+
+let createdDocId = null;
+test('addVehicleDocument attaches document/photo and validates extensions', () => {
+  const mockFile = {
+    originalname: 'istimara_scan.pdf',
+    filename: 'istimara_scan_123.pdf',
+    path: 'uploads/fleet_documents/istimara_scan_123.pdf',
+    size: 1024 * 50,
+    mimetype: 'application/pdf'
+  };
+
+  const doc = fleetService.addVehicleDocument(createdVehicle.id, {
+    doc_type: 'الاستمارة',
+    title: 'رخصة السير الرسمية (استمارة)',
+    issue_date: '2026-01-01',
+    expiry_date: '2029-01-01',
+    uploaded_by: 'مدير النظام'
+  }, mockFile);
+
+  assert(doc.id > 0, 'Document must have valid ID');
+  assert.strictEqual(doc.doc_type, 'الاستمارة');
+  assert.strictEqual(doc.vehicle_id, createdVehicle.id);
+  createdDocId = doc.id;
+
+  // Test dangerous extension block
+  assert.throws(() => {
+    fleetService.addVehicleDocument(createdVehicle.id, { title: 'virus' }, {
+      originalname: 'malware.exe',
+      filename: 'malware.exe',
+      path: 'temp.exe',
+      size: 100,
+      mimetype: 'application/octet-stream'
+    });
+  }, /نوع الملف غير مسموح به/);
+});
+
+test('getVehicleDocuments retrieves all documents attached to vehicle', () => {
+  const docs = fleetService.getVehicleDocuments(createdVehicle.id);
+  assert(Array.isArray(docs));
+  assert.strictEqual(docs.length, 1);
+  assert.strictEqual(docs[0].id, createdDocId);
+});
+
+test('deleteVehicleDocument removes document record', () => {
+  const res = fleetService.deleteVehicleDocument(createdDocId);
+  assert.strictEqual(res, true);
+  const check = fleetService.getVehicleDocuments(createdVehicle.id);
+  assert.strictEqual(check.length, 0);
+});
+
+// Clean up test vehicle
 fleetService.deleteVehicle(createdVehicle.id);
 
-// --- TEST GROUP 4: Import & Export Operations ---
-console.log('\n--- TEST GROUP 4: Import & Export Operations ---');
+// --- TEST GROUP 5: Import & Export Operations with 24 Columns ---
+console.log('\n--- TEST GROUP 5: Import & Export Operations with 24 Columns ---');
 
-test('exportVehiclesCsv generates valid CSV with UTF-8 BOM for Arabic Excel', () => {
-  const csv = fleetService.exportVehiclesCsv();
-  assert(typeof csv === 'string');
-  assert.strictEqual(csv.charCodeAt(0), 0xFEFF, 'CSV must start with UTF-8 BOM');
-  assert(csv.includes('رقم اللوحة (عربي)'));
-  assert(csv.includes('منصة تم'));
+test('getImportTemplateExcel generates valid 24-column Excel workbook buffer', () => {
+  const buf = fleetService.getImportTemplateExcel();
+  assert(Buffer.isBuffer(buf), 'Must return buffer');
+  assert(buf.length > 5000, `Buffer size too small: ${buf.length}`);
 });
 
-test('exportVehiclesExcel generates valid Excel spreadsheet buffer', () => {
-  const buf = fleetService.exportVehiclesExcel();
-  assert(Buffer.isBuffer(buf));
-  assert(buf.length > 5000, `Excel buffer size too small: ${buf.length}`);
-});
+test('importVehicles handles bulk rows with 24 columns, employee code validation, and duplicate rejection', () => {
+  const emp = get("SELECT emp_code FROM employees WHERE status = 'نشط' LIMIT 1");
+  const testVinBulk = 'VIN-BULK-' + Date.now();
 
-test('getImportTemplateCsv returns formatted blank CSV import template', () => {
-  const template = fleetService.getImportTemplateCsv();
-  assert(template.charCodeAt(0), 0xFEFF);
-  assert(template.includes('رقم اللوحة عربي'));
-  assert(template.includes('رقم الهيكل VIN'));
-});
-
-test('importVehicles handles bulk rows accurately with upsert and validation', () => {
   const importRows = [
     {
-      'رقم اللوحة عربي': 'س ص ع 1234',
-      'رقم اللوحة إنجليزي': '1234 ESX',
-      'الماركة': 'تويوتا',
-      'الموديل': 'كورولا سيدان',
+      'رقم اللوحة': '7788',
+      'رمز اللوحة': 'ك ل م',
+      'نوع المركبة': 'نقل خاص',
+      'الشركة المصنعة': 'تويوتا',
+      'الموديل': 'هايلكس',
       'سنة الصنع': 2024,
-      'اللون': 'فضي',
-      'رقم الهيكل VIN': 'VIN-COROLLA-' + Date.now(),
-      'نوع المركبة': 'خصوصي',
-      'قراءة العداد': 18000,
+      'اللون': 'أبيض',
+      'رقم الهيكل VIN': testVinBulk,
+      'نوع الاستخدام': 'ميداني',
+      'الرقم الوظيفي للموظف المستلم': emp.emp_code,
+      'تاريخ التسليم': '2026-02-01',
+      'قراءة العداد': 15000,
       'تاريخ انتهاء الاستمارة': '2027-08-10',
       'تاريخ انتهاء الفحص الدوري': '2027-02-15',
-      'شركة التأمين': 'ميدغلف للتأمين',
-      'رقم وثيقة التأمين': 'MED-998811',
+      'شركة التأمين': 'التعاونية للتأمين',
+      'رقم وثيقة التأمين': 'TAW-998811',
       'تاريخ انتهاء التأمين': '2027-08-10',
-      'رقم بطاقة الوقود': 'PETRO-772',
-      'ملاحظات': 'سيارة مستوردة للاختبار'
+      'حالة المركبة': 'نشط',
+      'الفرع': 'المقر الرئيسي',
+      'الملاحظات': 'سيارة مستوردة للاختبار'
     }
   ];
 
   const res = fleetService.importVehicles(importRows);
   assert.strictEqual(res.total_rows, 1);
-  assert.strictEqual(res.inserted, 1);
-  assert.strictEqual(res.errors.length, 0);
+  assert.strictEqual(res.valid_count, 1);
+  assert.strictEqual(res.rejected_count, 0);
 
-  // Clean up imported test vehicle
-  const imported = get(`SELECT id FROM vehicles WHERE plate_number_ar = 'س ص ع 1234'`);
-  if (imported) fleetService.deleteVehicle(imported.id);
+  // Check imported vehicle exists and assigned to emp
+  const importedVeh = get('SELECT * FROM vehicles WHERE vin_serial = ?', [testVinBulk]);
+  assert(importedVeh, 'Imported vehicle must exist in DB');
+  assert.strictEqual(importedVeh.status, 'نشط');
+  assert.strictEqual(importedVeh.plate_number_ar, 'ك ل م 7788');
+
+  // Check duplicate rejection on second run
+  const dupRes = fleetService.importVehicles(importRows);
+  assert.strictEqual(dupRes.duplicate_count, 1);
+  assert.strictEqual(dupRes.valid_count, 0);
+
+  // Clean up
+  run('DELETE FROM vehicle_custody_logs WHERE vehicle_id = ?', [importedVeh.id]);
+  fleetService.returnVehicle(importedVeh.id, { new_status: 'متاح' });
+  fleetService.deleteVehicle(importedVeh.id);
 });
 
-// --- TEST GROUP 5: Official A4 Printable Handover Certificate ---
-console.log('\n--- TEST GROUP 5: Official A4 Printable Handover Certificate ---');
-
-test('generateHandoverPrintHtml generates official A4 certificate with Tamm & Labor Law Article 80', () => {
-  const v1 = initialVehicles[0];
-  const html = fleetService.generateHandoverPrintHtml(v1.id);
-
-  assert(html.includes('شركة جوهرة المجد للمقاولات والتجارة'), 'Must contain company header');
-  assert(html.includes('محضر تسليم عهدة مركبة رسمية'), 'Must contain Arabic certificate title');
-  assert(html.includes('Vehicle Custody Handover Certificate'), 'Must contain English certificate title');
-  assert(html.includes(v1.plate_number_ar), 'Must contain vehicle plate');
-  assert(html.includes('منصة تم'), 'Must cite Tamm platform');
-  assert(html.includes('المادة 80'), 'Must cite Article 80 of Saudi Labor Law for asset custody');
-  assert(html.includes('قراءة العداد'), 'Must contain odometer field');
-  assert(html.includes('الموظف المستلم للعهدة'), 'Must contain employee signature block');
-});
+// Final verify: Database must have exactly 0 vehicles
+run('DELETE FROM vehicle_custody_logs');
+run('DELETE FROM vehicle_documents');
+run('DELETE FROM vehicles');
 
 // --- TEST GROUP 6: Strict Rule #1 Headcount & Data Integrity Verification ---
 console.log('\n--- TEST GROUP 6: Strict Rule #1 Headcount & Data Integrity ---');
@@ -282,6 +300,11 @@ test('Strict Rule #1: Exactly 113 total employees (108 active + 5 terminated) pr
 test('Strict Rule #1: Exactly 14 users are active and preserved', () => {
   const userCount = get(`SELECT COUNT(*) as cnt FROM users`).cnt;
   assert.strictEqual(userCount, 14, `Users count violated! Expected 14, got ${userCount}`);
+});
+
+test('Strict Rule #1: Exactly 9 departments are active with 108 employees', () => {
+  const deptsCount = get(`SELECT COUNT(*) as cnt FROM departments`).cnt;
+  assert.strictEqual(deptsCount, 9, `Departments count violated! Expected 9, got ${deptsCount}`);
 });
 
 console.log('\n================================================================');

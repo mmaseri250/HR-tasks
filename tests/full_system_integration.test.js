@@ -97,10 +97,10 @@ async function runComprehensiveSystemTests() {
     assert.ok(opsEmp.manager_id, 'الموظف التشغيلي مرتبط بمديره المباشر');
   });
 
-  await testStep('الإدارات والفروع: 6 إدارات معتمدة و 5 فروع جغرافية', () => {
+  await testStep('الإدارات والفروع: 9 إدارات معتمدة و 5 فروع جغرافية', () => {
     const depts = db.get('SELECT COUNT(*) AS total FROM departments').total;
     const branches = db.get('SELECT COUNT(*) AS total FROM branches').total;
-    assert.strictEqual(depts, 6, 'يجب أن يكون عدد الإدارات 6');
+    assert.strictEqual(depts, 9, 'يجب أن يكون عدد الإدارات 9');
     assert.strictEqual(branches, 5, 'يجب أن يكون عدد الفروع 5');
   });
 
@@ -141,11 +141,11 @@ async function runComprehensiveSystemTests() {
     assert.strictEqual(res.data.data.length, 113);
   });
 
-  await testStep('API [GET /api/departments]: جلب الإدارات الـ 6 المعتمدة', async () => {
+  await testStep('API [GET /api/departments]: جلب الإدارات الـ 9 المعتمدة', async () => {
     const res = await httpGet('/api/departments');
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
-    assert.strictEqual(res.data.data.length, 6);
+    assert.strictEqual(res.data.data.length, 9);
   });
 
   await testStep('API [GET /api/branches]: جلب الفروع الـ 5 المعتمدة', async () => {

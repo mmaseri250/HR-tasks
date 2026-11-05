@@ -6,7 +6,7 @@ const xlsx = require('xlsx');
 const COMPANY = {
   nameAr: 'شركة جوهرة المجد للتجارة والمقاولات',
   nameEn: 'Jawharat Al-Majd Trading & Contracting Co.',
-  cr: '7004872169',
+  cr: '5850024190',
   vat: '310492837400003',
   address: 'المملكة العربية السعودية، منطقة عسير، أبها - مول سيتي بارك',
   phone: '920012405',

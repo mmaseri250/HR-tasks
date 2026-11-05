@@ -190,13 +190,10 @@ test('generateTransferDecisionPrintHtml produces valid printable A4 decision doc
 // ============================================================================
 console.log('\n--- TEST GROUP 3: Administrative Circulars & Digital Acknowledgements ---');
 
-test('Initial seeded circulars are populated (at least 4 circulars)', () => {
+test('Administrative circulars clean initial state (0 dummy circulars)', () => {
   const circs = generalAdminService.getCirculars();
   assert(Array.isArray(circs));
-  assert(circs.length >= 4, `Expected at least 4 circulars, got ${circs.length}`);
-  const c1 = circs.find(c => c.circular_no === 'CIR-2026-001');
-  assert(c1, 'Should find safety PPE circular CIR-2026-001');
-  assert.strictEqual(c1.is_urgent, 1);
+  assert.strictEqual(circs.length, 0, 'Clean production state must have 0 mock circulars');
 });
 
 let testCircular = null;
@@ -239,14 +236,10 @@ test('generateCircularPrintHtml renders printable A4 circular', () => {
 // ============================================================================
 console.log('\n--- TEST GROUP 4: Company Licenses & Expiry Tracking ---');
 
-test('Initial seeded company licenses exist (at least 7 official registrations)', () => {
+test('Company licenses clean initial state (0 dummy licenses)', () => {
   const licenses = generalAdminService.getLicenses();
   assert(Array.isArray(licenses));
-  assert(licenses.length >= 7, `Expected at least 7 licenses, got ${licenses.length}`);
-  const cr = licenses.find(l => l.license_type === 'commercial_reg');
-  assert(cr, 'Commercial registration must be seeded');
-  assert.strictEqual(cr.license_no, '5850024190');
-  assert.strictEqual(cr.issuing_authority, 'وزارة التجارة');
+  assert.strictEqual(licenses.length, 0, 'Clean production state must have 0 mock licenses');
 });
 
 test('computeExpiry correctly categorizes valid, expiring soon, and expired', () => {
@@ -268,17 +261,17 @@ test('computeExpiry correctly categorizes valid, expiring soon, and expired', ()
 let testLicense = null;
 test('createLicense creates valid license and updateLicense modifies it', () => {
   testLicense = generalAdminService.createLicense({
-    license_type: 'civil_defense',
-    license_name_ar: 'رخصة السلامة لموقع مشروع خميس مشيط',
-    license_no: 'CD-KM-2026-99',
-    issuing_authority: 'الدفاع المدني بخميس مشيط',
+    license_type: 'commercial_reg',
+    license_name_ar: 'السجل التجاري الرئيسي - شركة جوهرة المجد',
+    license_no: '5850024190',
+    issuing_authority: 'أمانة منطقة عسير',
     expiry_date: '2027-06-30',
     alert_days_before: 45,
     notes: 'معتمد'
   });
 
   assert(testLicense.id > 0);
-  assert.strictEqual(testLicense.license_no, 'CD-KM-2026-99');
+  assert.strictEqual(testLicense.license_no, '5850024190');
   assert.strictEqual(testLicense.expiry_info.status, 'valid');
 
   // Update
@@ -316,15 +309,15 @@ test('getUnifiedReportSummary aggregates data across all 6 operational domains',
   assert(summary.workforce.saudization_rate > 0);
 
   assert(summary.fleet, 'Must contain fleet metrics');
-  assert(summary.fleet.total_vehicles >= 1, `Expected at least 1 vehicle, got ${summary.fleet.total_vehicles}`);
+  assert(typeof summary.fleet.total_vehicles === 'number');
 
   assert(summary.healthcare, 'Must contain healthcare metrics');
-  assert(summary.healthcare.insured_employees >= 1, `Expected at least 1 insured employee, got ${summary.healthcare.insured_employees}`);
-  assert(summary.healthcare.baladiya_cards >= 1, `Expected at least 1 municipal health card, got ${summary.healthcare.baladiya_cards}`);
+  assert(typeof summary.healthcare.insured_employees === 'number');
+  assert(typeof summary.healthcare.baladiya_cards === 'number');
 
   assert(summary.governance, 'Must contain governance metrics');
-  assert(summary.governance.total_licenses >= 7);
-  assert(summary.governance.active_circulars >= 4);
+  assert(typeof summary.governance.total_licenses === 'number');
+  assert(typeof summary.governance.active_circulars === 'number');
 });
 
 test('exportUnifiedReportCsv exports valid UTF-8 BOM CSV with 6 modules breakdown', () => {

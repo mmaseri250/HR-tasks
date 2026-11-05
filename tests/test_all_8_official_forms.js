@@ -53,7 +53,7 @@ async function runTests() {
     assert(!html.includes('غير موجود'), `${r.name} MUST NOT contain 'غير موجود' error`);
     assert(html.includes('/images/company_letterhead.png'), `${r.name} must reference company letterhead`);
     assert(html.includes(r.code), `${r.name} must contain form code ${r.code}`);
-    assert(html.includes('7004872169'), `${r.name} must contain company CR 7004872169`);
+    assert(html.includes('5850024190'), `${r.name} must contain company CR 5850024190`);
     assert(html.includes(testEmp1.full_name_ar) || html.includes('عبدالملك سعيد الشريف'), `${r.name} must contain employee name`);
     console.log(`✓ [HTML by EmpID] ${r.name} (${r.code}): Generated ${html.length} chars (100% Valid & Pre-filled)`);
   }

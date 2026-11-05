@@ -13,9 +13,11 @@
  *  - Fleet KPIs & Dashboard Statistics
  */
 
-const { query, get, run } = require('../database/db');
+const { db, query, get, run } = require('../database/db');
 const xlsx = require('xlsx');
 const branding = require('./branding');
+const path = require('node:path');
+const fs = require('node:fs');
 
 class FleetService {
   constructor() {
@@ -99,189 +101,42 @@ class FleetService {
       )
     `);
 
+    // 3. Vehicle Documents & Photos Table (Tamm Compliant)
+    run(`
+      CREATE TABLE IF NOT EXISTS vehicle_documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        vehicle_id INTEGER NOT NULL,
+        doc_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        issue_date TEXT,
+        expiry_date TEXT,
+        file_name TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        file_size INTEGER,
+        mime_type TEXT,
+        uploaded_by TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+      )
+    `);
+
     // Indexes
     run(`CREATE INDEX IF NOT EXISTS idx_vehicles_emp ON vehicles(assigned_emp_id)`);
     run(`CREATE INDEX IF NOT EXISTS idx_vehicles_istimara ON vehicles(istimara_expiry)`);
     run(`CREATE INDEX IF NOT EXISTS idx_vehicles_status ON vehicles(status)`);
     run(`CREATE INDEX IF NOT EXISTS idx_custody_vehicle ON vehicle_custody_logs(vehicle_id)`);
     run(`CREATE INDEX IF NOT EXISTS idx_custody_emp ON vehicle_custody_logs(emp_id)`);
+    run(`CREATE INDEX IF NOT EXISTS idx_veh_docs_vehicle ON vehicle_documents(vehicle_id)`);
 
-    // Seed official initial company fleet if empty
-    this.seedInitialFleet();
+    // NOTE: Automatic mock vehicle seeding is disabled permanently for production
   }
 
   /**
-   * Seed company vehicles if table is empty
+   * Seed company vehicles - Disabled permanently for production to maintain zero mock data
    */
   seedInitialFleet() {
-    const countCheck = get(`SELECT COUNT(*) as cnt FROM vehicles`);
-    if (countCheck && countCheck.cnt === 0) {
-      const initialVehicles = [
-        {
-          plate_number_ar: 'أ ب ج 1122',
-          plate_number_en: '1122 JBA',
-          make: 'تويوتا',
-          model: 'هايلكس غمارتين GLX',
-          year: 2024,
-          color: 'أبيض لؤلؤي',
-          vin_serial: 'MROAB22G801982731',
-          vehicle_type: 'نقل خاص',
-          assigned_emp_id: 1, // فارس عبدالرحمن القحطاني
-          assigned_emp_name: 'فارس عبدالرحمن القحطاني',
-          assigned_date: '2026-01-15',
-          istimara_expiry: '2027-02-14',
-          fahas_expiry: '2026-12-10',
-          insurance_company: 'التعاونية للتأمين',
-          insurance_policy_no: 'TAW-2026-98124',
-          insurance_expiry: '2027-01-20',
-          odometer: 28450,
-          status: 'نشط',
-          tamm_status: 'ساري',
-          tamm_authorization_no: 'TAMM-AUTH-90112',
-          tamm_authorization_expiry: '2027-01-15',
-          fuel_card_no: 'PETRO-4491-001',
-          notes: 'مخصصة لإدارة ومتابعة المشاريع الميدانية في منطقة عسير.'
-        },
-        {
-          plate_number_ar: 'د هـ و 3344',
-          plate_number_en: '3344 EHD',
-          make: 'إيسوزو',
-          model: 'ديماكس بيك أب 4X4',
-          year: 2023,
-          color: 'فضي معدني',
-          vin_serial: 'MPA1TF87H90218342',
-          vehicle_type: 'نقل خاص',
-          assigned_emp_id: 2, // خالد صالح الراعي
-          assigned_emp_name: 'خالد صالح الراعي',
-          assigned_date: '2026-02-01',
-          istimara_expiry: '2026-11-28', // قريب الانتهاء (< 30 يوم)
-          fahas_expiry: '2026-11-20', // قريب الانتهاء
-          insurance_company: 'تكافل الراجحي',
-          insurance_policy_no: 'RAJ-8812-44102',
-          insurance_expiry: '2027-03-10',
-          odometer: 54120,
-          status: 'نشط',
-          tamm_status: 'ساري',
-          tamm_authorization_no: 'TAMM-AUTH-90113',
-          tamm_authorization_expiry: '2026-12-31',
-          fuel_card_no: 'PETRO-4491-002',
-          notes: 'سيارة الإشراف الفني والسلامة والصحة المهنية.'
-        },
-        {
-          plate_number_ar: 'ح ط ي 5566',
-          plate_number_en: '5566 YTH',
-          make: 'هيونداي',
-          model: 'إلنترا سيدان',
-          year: 2023,
-          color: 'رمادي تيتانيوم',
-          vin_serial: 'KMHD84LF7PU102938',
-          vehicle_type: 'خصوصي',
-          assigned_emp_id: 3, // علي حسين بشرى
-          assigned_emp_name: 'علي حسين بشرى',
-          assigned_date: '2026-03-10',
-          istimara_expiry: '2026-09-15', // منتهي
-          fahas_expiry: '2026-10-01', // منتهي
-          insurance_company: 'ميدغلف للتأمين',
-          insurance_policy_no: 'MED-7719-20491',
-          insurance_expiry: '2026-11-15', // قريب الانتهاء
-          odometer: 41200,
-          status: 'نشط',
-          tamm_status: 'بانتظار التجديد',
-          tamm_authorization_no: 'TAMM-AUTH-90114',
-          tamm_authorization_expiry: '2026-10-30',
-          fuel_card_no: 'PETRO-4491-003',
-          notes: 'سيارة الحركة والمراجعات الحكومية والإدارية.'
-        },
-        {
-          plate_number_ar: 'ك ل م 7788',
-          plate_number_en: '7788 MLK',
-          make: 'تويوتا',
-          model: 'لاندكروزر برادو TXL',
-          year: 2024,
-          color: 'أسود ملوكي',
-          vin_serial: 'JTEBU5JR805192837',
-          vehicle_type: 'خصوصي',
-          assigned_emp_id: 4, // عبدالملك سعيد الشريف
-          assigned_emp_name: 'عبدالملك سعيد الشريف',
-          assigned_date: '2026-01-10',
-          istimara_expiry: '2027-05-30',
-          fahas_expiry: '2027-01-15',
-          insurance_company: 'التعاونية للتأمين',
-          insurance_policy_no: 'TAW-2026-99014',
-          insurance_expiry: '2027-05-30',
-          odometer: 19800,
-          status: 'نشط',
-          tamm_status: 'ساري',
-          tamm_authorization_no: 'TAMM-AUTH-90115',
-          tamm_authorization_expiry: '2027-01-10',
-          fuel_card_no: 'PETRO-4491-004',
-          notes: 'سيارة الإدارة التنفيذية والمشاريع الاستراتيجية.'
-        },
-        {
-          plate_number_ar: 'ص ع ف 9900',
-          plate_number_en: '9900 FES',
-          make: 'ميتسوبيشي',
-          model: 'إل 200 غمارة واحدة',
-          year: 2022,
-          color: 'أبيض',
-          vin_serial: 'MMBJLKB40PD918234',
-          vehicle_type: 'نقل خاص',
-          assigned_emp_id: null,
-          assigned_emp_name: null,
-          assigned_date: null,
-          istimara_expiry: '2027-04-10',
-          fahas_expiry: '2026-12-25',
-          insurance_company: 'تكافل الراجحي',
-          insurance_policy_no: 'RAJ-8812-55099',
-          insurance_expiry: '2027-04-10',
-          odometer: 82300,
-          status: 'متاح',
-          tamm_status: 'ساري',
-          tamm_authorization_no: null,
-          tamm_authorization_expiry: null,
-          fuel_card_no: 'PETRO-4491-005',
-          notes: 'مركبة حرة متاحة في ساحة الشركة لنقل المعدات ومساندة المشاريع.'
-        }
-      ];
-
-      for (const v of initialVehicles) {
-        run(`
-          INSERT INTO vehicles (
-            plate_number_ar, plate_number_en, make, model, year, color,
-            vin_serial, vehicle_type, assigned_emp_id, assigned_emp_name,
-            assigned_date, istimara_expiry, fahas_expiry, insurance_company,
-            insurance_policy_no, insurance_expiry, odometer, status,
-            tamm_status, tamm_authorization_no, tamm_authorization_expiry,
-            fuel_card_no, notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          v.plate_number_ar, v.plate_number_en, v.make, v.model, v.year, v.color,
-          v.vin_serial, v.vehicle_type, v.assigned_emp_id, v.assigned_emp_name,
-          v.assigned_date, v.istimara_expiry, v.fahas_expiry, v.insurance_company,
-          v.insurance_policy_no, v.insurance_expiry, v.odometer, v.status,
-          v.tamm_status, v.tamm_authorization_no, v.tamm_authorization_expiry,
-          v.fuel_card_no, v.notes
-        ]);
-      }
-
-      // Also seed an initial custody log for vehicle #1
-      const v1 = get(`SELECT id FROM vehicles WHERE plate_number_ar = 'أ ب ج 1122'`);
-      if (v1) {
-        run(`
-          INSERT INTO vehicle_custody_logs (
-            vehicle_id, emp_id, emp_name, emp_code, action_type, action_date,
-            odometer, fuel_level, accessories_check, body_condition_notes,
-            supervisor_name, notes
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          v1.id, 1, 'فارس عبدالرحمن القحطاني', 'JM-0004', 'تسليم_عهدة', '2026-01-15',
-          25000, 'ممتلئ', JSON.stringify(['استمارة أصلية', 'مفتاح احتياطي', 'طفاية حريق', 'إطار احتياطي', 'حقيبة إسعافات']),
-          'السيارة بحالة الوكالة ممتازة وخالية من أية صدمات أو حكات.',
-          'مدير الشؤون الإدارية والأسطول',
-          'تم تسليم السيارة كعهدة عمل رسمية للمشرف الميداني.'
-        ]);
-      }
-    }
+    // No-op for production clean state
   }
 
   /**
@@ -709,46 +564,59 @@ class FleetService {
     const vehicles = this.getVehicles();
 
     const totalVehicles = vehicles.length;
+    const activeVehicles = vehicles.filter(v => v.status === 'نشط').length;
     const assignedVehicles = vehicles.filter(v => v.assigned_emp_id !== null).length;
     const availableVehicles = vehicles.filter(v => v.assigned_emp_id === null && v.status === 'متاح').length;
     const maintenanceVehicles = vehicles.filter(v => v.status === 'صيانة').length;
 
+    let validIstimara = 0;
     let expiredIstimara = 0;
     let expiringIstimara = 0;
+    let validFahas = 0;
     let expiredFahas = 0;
     let expiringFahas = 0;
+    let validInsurance = 0;
     let expiredInsurance = 0;
     let expiringInsurance = 0;
 
     for (const v of vehicles) {
+      if (v.istimara.status === 'valid') validIstimara++;
       if (v.istimara.status === 'expired') expiredIstimara++;
       if (v.istimara.status === 'expiring_soon') expiringIstimara++;
+
+      if (v.fahas.status === 'valid') validFahas++;
       if (v.fahas.status === 'expired') expiredFahas++;
       if (v.fahas.status === 'expiring_soon') expiringFahas++;
+
+      if (v.insurance.status === 'valid') validInsurance++;
       if (v.insurance.status === 'expired') expiredInsurance++;
       if (v.insurance.status === 'expiring_soon') expiringInsurance++;
     }
 
     const totalAlerts = expiredIstimara + expiringIstimara + expiredFahas + expiringFahas + expiredInsurance + expiringInsurance;
     const tammCompliantVehicles = vehicles.filter(v => !v.has_alert && v.tamm_status === 'ساري').length;
-    const complianceRate = totalVehicles > 0 ? Math.round((tammCompliantVehicles / totalVehicles) * 100) : 100;
+    const complianceRate = totalVehicles > 0 ? Math.round((tammCompliantVehicles / totalVehicles) * 100) : 0;
 
     return {
       total_vehicles: totalVehicles,
+      active_vehicles: activeVehicles,
       assigned_vehicles: assignedVehicles,
       available_vehicles: availableVehicles,
       maintenance_vehicles: maintenanceVehicles,
       compliance_rate: complianceRate,
       total_alerts: totalAlerts,
       istimara_alerts: {
+        valid: validIstimara,
         expired: expiredIstimara,
         expiring_soon: expiringIstimara
       },
       fahas_alerts: {
+        valid: validFahas,
         expired: expiredFahas,
         expiring_soon: expiringFahas
       },
       insurance_alerts: {
+        valid: validInsurance,
         expired: expiredInsurance,
         expiring_soon: expiringInsurance
       }
@@ -870,41 +738,57 @@ class FleetService {
    */
   getImportTemplateCsv() {
     const headers = [
-      'رقم اللوحة عربي',
-      'رقم اللوحة إنجليزي',
-      'الماركة',
+      'رقم اللوحة',
+      'رمز اللوحة',
+      'نوع المركبة',
+      'الشركة المصنعة',
       'الموديل',
       'سنة الصنع',
       'اللون',
       'رقم الهيكل VIN',
-      'نوع المركبة',
+      'نوع الاستخدام',
+      'اسم الموظف المستلم',
+      'الرقم الوظيفي للموظف المستلم',
+      'تاريخ التسليم',
       'قراءة العداد',
+      'تاريخ إصدار الاستمارة',
       'تاريخ انتهاء الاستمارة',
+      'تاريخ الفحص الدوري',
       'تاريخ انتهاء الفحص الدوري',
       'شركة التأمين',
       'رقم وثيقة التأمين',
+      'تاريخ بداية التأمين',
       'تاريخ انتهاء التأمين',
-      'رقم بطاقة الوقود',
-      'ملاحظات'
+      'حالة المركبة',
+      'الفرع',
+      'الملاحظات'
     ];
 
     const sampleRow = [
-      'ق ر س 4455',
-      '4455 SRQ',
+      '1122',
+      'أ ب ج',
+      'نقل خاص',
       'تويوتا',
-      'هايلكس غمارتين',
+      'هايلكس غمارتين GLX',
       '2024',
       'أبيض',
-      'MROAB99X001928374',
-      'نقل خاص',
-      '15000',
-      '2027-05-20',
-      '2026-12-15',
+      'MROAB22G801982731',
+      'ميداني',
+      'فارس عبدالرحمن القحطاني',
+      'JM-0004',
+      '2026-01-15',
+      '25000',
+      '2024-02-14',
+      '2027-02-14',
+      '2025-12-10',
+      '2026-12-10',
       'التعاونية للتأمين',
-      'TAW-7712-9901',
-      '2027-05-20',
-      'PETRO-4491-099',
-      'سيارة مساندة للمشاريع'
+      'TAW-2026-98124',
+      '2026-01-20',
+      '2027-01-20',
+      'نشط',
+      'المقر الرئيسي',
+      'مركبة الإشراف والمشاريع الميدانية'
     ];
 
     const escapeCsv = (val) => `"${String(val).replace(/"/g, '""')}"`;
@@ -915,109 +799,318 @@ class FleetService {
   }
 
   /**
-   * Import vehicles from parsed JSON array (from Excel or CSV)
+   * Return official Tamm Excel (.xlsx) Import Template with all 24 columns and guidelines
    */
-  importVehicles(rows) {
+  getImportTemplateExcel() {
+    const headers = [
+      'رقم اللوحة',
+      'رمز اللوحة',
+      'نوع المركبة',
+      'الشركة المصنعة',
+      'الموديل',
+      'سنة الصنع',
+      'اللون',
+      'رقم الهيكل VIN',
+      'نوع الاستخدام',
+      'اسم الموظف المستلم',
+      'الرقم الوظيفي للموظف المستلم',
+      'تاريخ التسليم',
+      'قراءة العداد',
+      'تاريخ إصدار الاستمارة',
+      'تاريخ انتهاء الاستمارة',
+      'تاريخ الفحص الدوري',
+      'تاريخ انتهاء الفحص الدوري',
+      'شركة التأمين',
+      'رقم وثيقة التأمين',
+      'تاريخ بداية التأمين',
+      'تاريخ انتهاء التأمين',
+      'حالة المركبة',
+      'الفرع',
+      'الملاحظات'
+    ];
+
+    const sampleRows = [
+      [
+        '1122',
+        'أ ب ج',
+        'نقل خاص',
+        'تويوتا',
+        'هايلكس غمارتين GLX',
+        2024,
+        'أبيض',
+        'MROAB22G801982731',
+        'ميداني',
+        'فارس عبدالرحمن القحطاني',
+        'JM-0004',
+        '2026-01-15',
+        25000,
+        '2024-02-14',
+        '2027-02-14',
+        '2025-12-10',
+        '2026-12-10',
+        'التعاونية للتأمين',
+        'TAW-2026-98124',
+        '2026-01-20',
+        '2027-01-20',
+        'نشط',
+        'المقر الرئيسي',
+        'مركبة الإشراف والمشاريع الميدانية'
+      ],
+      [
+        '3344',
+        'د هـ و',
+        'نقل خاص',
+        'إيسوزو',
+        'ديماكس بيك أب',
+        2023,
+        'فضي',
+        'MPA1TF87H90218342',
+        'ميداني',
+        'خالد احمد محمد راعي',
+        'JM-0002',
+        '2026-02-01',
+        54000,
+        '2023-11-28',
+        '2026-11-28',
+        '2025-11-20',
+        '2026-11-20',
+        'تكافل الراجحي',
+        'RAJ-8812-44102',
+        '2026-03-10',
+        '2027-03-10',
+        'نشط',
+        'سيتي بارك',
+        'مركبة السلامة والصحة المهنية'
+      ]
+    ];
+
+    const wb = xlsx.utils.book_new();
+    const wsData = [headers, ...sampleRows];
+    const ws = xlsx.utils.aoa_to_sheet(wsData);
+
+    ws['!cols'] = headers.map(() => ({ wch: 22 }));
+
+    xlsx.utils.book_append_sheet(wb, ws, 'قالب استيراد المركبات');
+
+    const instructionsData = [
+      ['إرشادات وضوابط استيراد مركبات منصة تم - شركة جوهرة المجد للمقاولات والتجارة'],
+      ['1. الحقول الإلزامية: رقم اللوحة، رمز اللوحة، الشركة المصنعة، الموديل، سنة الصنع، ورقم الهيكل VIN.'],
+      ['2. حقل (الرقم الوظيفي للموظف المستلم): يجب أن يطابق تماماً الرقم الوظيفي المعتمد في المنظومة (مثل: JM-0004). في حال عدم التعيين، يُترك الحقل فارغاً لتسجيل المركبة كـ (متاحة).'],
+      ['3. صيغة التواريخ المعتمدة: YYYY-MM-DD (مثال: 2026-12-31).'],
+      ['4. يتم التحقق تلقائياً من عدم تكرار أرقام اللوحات أو أرقام الهيكل VIN في قاعدة البيانات.'],
+      ['5. يتم تسجيل واقعة تسليم العهدة آلياً في سجلات العهد وسجل الرقابة عند تعيين موظف مستلم.']
+    ];
+    const wsInst = xlsx.utils.aoa_to_sheet(instructionsData);
+    wsInst['!cols'] = [{ wch: 100 }];
+    xlsx.utils.book_append_sheet(wb, wsInst, 'تعليمات الاستيراد');
+
+    return xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  }
+
+  /**
+   * Transactional import of vehicles from parsed JSON array (supporting all 24 Tamm fields)
+   */
+  importVehicles(rows, uploadedBy = 'مدير النظام') {
     if (!Array.isArray(rows) || rows.length === 0) {
       throw new Error('الملف فارغ أو لا يحتوي على صفوف صالحة.');
     }
 
     let inserted = 0;
-    let updated = 0;
+    let duplicates = 0;
+    let rejected = 0;
     const errors = [];
+    const importedVehicles = [];
+
+    const seenPlates = new Set();
+    const seenVins = new Set();
+
+    const insertVehicleStmt = db.prepare(`
+      INSERT INTO vehicles (
+        plate_number_ar, plate_number_en, make, model, year, color,
+        vin_serial, vehicle_type, assigned_emp_id, assigned_emp_name,
+        assigned_date, istimara_expiry, fahas_expiry, insurance_company,
+        insurance_policy_no, insurance_expiry, odometer, status,
+        tamm_status, fuel_card_no, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertLogStmt = db.prepare(`
+      INSERT INTO vehicle_custody_logs (
+        vehicle_id, emp_id, emp_name, emp_code, action_type, action_date,
+        odometer, fuel_level, supervisor_name, notes
+      ) VALUES (?, ?, ?, ?, 'تسليم_عهدة', ?, ?, 'ممتلئ', ?, 'تسليم عهدة عبر استيراد منصة تم المعتمد')
+    `);
+
+    const pendingInsert = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const rowNum = i + 2; // accounts for header
+      const rowNum = i + 2;
 
-      const plateAr = (row['رقم اللوحة عربي'] || row['رقم اللوحة (عربي)'] || row['plate_number_ar'] || '').toString().trim();
-      const plateEn = (row['رقم اللوحة إنجليزي'] || row['رقم اللوحة (إنجليزي)'] || row['plate_number_en'] || '').toString().trim();
-      const make = (row['الماركة'] || row['الشركة الصانعة'] || row['make'] || '').toString().trim();
-      const model = (row['الموديل'] || row['الموديل والطراز'] || row['model'] || '').toString().trim();
-      const year = parseInt(row['سنة الصنع'] || row['year'] || '2024', 10);
-      const color = (row['اللون'] || row['color'] || '').toString().trim();
-      const vin = (row['رقم الهيكل VIN'] || row['رقم الهيكل (VIN)'] || row['vin_serial'] || '').toString().trim();
-      const vehicleType = (row['نوع المركبة'] || row['vehicle_type'] || 'نقل خاص').toString().trim();
+      let plateNum = String(row['رقم اللوحة'] || row['رقم اللوحة عربي'] || row['رقم اللوحة (عربي)'] || row['plate_number_ar'] || '').trim();
+      const plateCode = String(row['رمز اللوحة'] || '').trim();
+      if (plateCode && !plateNum.includes(plateCode)) {
+        plateNum = `${plateCode} ${plateNum}`.trim();
+      }
+
+      const plateEn = String(row['رقم اللوحة إنجليزي'] || row['رقم اللوحة (إنجليزي)'] || row['plate_number_en'] || '').trim();
+      const make = String(row['الشركة المصنعة'] || row['الماركة'] || row['الشركة الصانعة'] || row['make'] || '').trim();
+      const model = String(row['الموديل'] || row['الموديل والطراز'] || row['model'] || '').trim();
+      const year = parseInt(row['سنة الصنع'] || row['السنة'] || row['year'] || '2024', 10);
+      const color = String(row['اللون'] || row['color'] || 'أبيض').trim();
+      const vin = String(row['رقم الهيكل VIN'] || row['رقم الهيكل (VIN)'] || row['رقم الهيكل'] || row['vin_serial'] || '').trim();
+      const vehicleType = String(row['نوع المركبة'] || row['نوع الاستخدام'] || row['vehicle_type'] || 'نقل خاص').trim();
+      const empCode = String(row['الرقم الوظيفي للموظف المستلم'] || row['الرقم الوظيفي'] || row['assigned_emp_code'] || '').trim();
+      const handoverDate = row['تاريخ التسليم'] || new Date().toISOString().split('T')[0];
       const odometer = parseInt(row['قراءة العداد'] || row['قراءة العداد (كم)'] || row['odometer'] || '0', 10);
-      const istimara = (row['تاريخ انتهاء الاستمارة'] || row['انتهاء الاستمارة'] || row['istimara_expiry'] || '').toString().trim();
-      const fahas = (row['تاريخ انتهاء الفحص الدوري'] || row['انتهاء الفحص الدوري'] || row['fahas_expiry'] || '').toString().trim();
-      const insCompany = (row['شركة التأمين'] || row['insurance_company'] || '').toString().trim();
-      const insPolicy = (row['رقم وثيقة التأمين'] || row['رقم الوثيقة'] || row['insurance_policy_no'] || '').toString().trim();
-      const insExpiry = (row['تاريخ انتهاء التأمين'] || row['انتهاء التأمين'] || row['insurance_expiry'] || '').toString().trim();
-      const fuelCard = (row['رقم بطاقة الوقود'] || row['بطاقة الوقود'] || row['fuel_card_no'] || '').toString().trim();
-      const notes = (row['ملاحظات'] || row['notes'] || '').toString().trim();
+      const istimaraExpiry = row['تاريخ انتهاء الاستمارة'] || row['انتهاء الاستمارة'] || row['istimara_expiry'] || null;
+      const fahasExpiry = row['تاريخ انتهاء الفحص الدوري'] || row['انتهاء الفحص الدوري'] || row['fahas_expiry'] || null;
+      const insCompany = String(row['شركة التأمين'] || row['insurance_company'] || '').trim() || null;
+      const insPolicy = String(row['رقم وثيقة التأمين'] || row['رقم الوثيقة'] || row['insurance_policy_no'] || '').trim() || null;
+      const insExpiry = row['تاريخ انتهاء التأمين'] || row['انتهاء التأمين'] || row['insurance_expiry'] || null;
+      const vehicleStatus = String(row['حالة المركبة'] || row['status'] || 'نشط').trim();
+      const branchName = String(row['الفرع'] || row['الموقع'] || '').trim();
+      const notes = String(row['الملاحظات'] || row['ملاحظات'] || row['notes'] || '').trim();
 
-      if (!plateAr || !make || !model) {
-        errors.push(`السطر ${rowNum}: تم التجاهل لعدم توفر رقم اللوحة أو الماركة أو الطراز.`);
+      if (!plateNum || !make || !model) {
+        errors.push(`السطر ${rowNum}: تم الرفض - الحقول الإلزامية ناقصة (رقم اللوحة والشركة المصنعة والموديل مطلوبة).`);
+        rejected++;
         continue;
       }
 
-      try {
-        // Check if vehicle exists by VIN or Plate
-        let existing = null;
-        if (vin) {
-          existing = get(`SELECT id FROM vehicles WHERE vin_serial = ?`, [vin]);
-        }
-        if (!existing) {
-          existing = get(`SELECT id FROM vehicles WHERE plate_number_ar = ?`, [plateAr]);
-        }
+      let existingByPlate = get('SELECT id FROM vehicles WHERE plate_number_ar = ?', [plateNum]);
+      let existingByVin = vin ? get('SELECT id FROM vehicles WHERE vin_serial = ?', [vin]) : null;
 
-        if (existing) {
-          // Update
-          run(`
-            UPDATE vehicles SET
-              plate_number_ar = ?,
-              plate_number_en = COALESCE(NULLIF(?, ''), plate_number_en),
-              make = ?,
-              model = ?,
-              year = ?,
-              color = COALESCE(NULLIF(?, ''), color),
-              vin_serial = COALESCE(NULLIF(?, ''), vin_serial),
-              vehicle_type = COALESCE(NULLIF(?, ''), vehicle_type),
-              odometer = CASE WHEN ? > 0 THEN ? ELSE odometer END,
-              istimara_expiry = COALESCE(NULLIF(?, ''), istimara_expiry),
-              fahas_expiry = COALESCE(NULLIF(?, ''), fahas_expiry),
-              insurance_company = COALESCE(NULLIF(?, ''), insurance_company),
-              insurance_policy_no = COALESCE(NULLIF(?, ''), insurance_policy_no),
-              insurance_expiry = COALESCE(NULLIF(?, ''), insurance_expiry),
-              fuel_card_no = COALESCE(NULLIF(?, ''), fuel_card_no),
-              notes = COALESCE(NULLIF(?, ''), notes),
-              updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-          `, [
-            plateAr, plateEn, make, model, year, color, vin, vehicleType,
-            odometer, odometer, istimara, fahas, insCompany, insPolicy, insExpiry,
-            fuelCard, notes, existing.id
-          ]);
-          updated++;
-        } else {
-          // Insert
-          run(`
-            INSERT INTO vehicles (
-              plate_number_ar, plate_number_en, make, model, year, color,
-              vin_serial, vehicle_type, odometer, istimara_expiry, fahas_expiry,
-              insurance_company, insurance_policy_no, insurance_expiry, fuel_card_no,
-              notes, status, tamm_status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'متاح', 'ساري')
-          `, [
-            plateAr, plateEn || null, make, model, year, color || null,
-            vin || null, vehicleType, odometer || 0, istimara || null, fahas || null,
-            insCompany || null, insPolicy || null, insExpiry || null, fuelCard || null,
-            notes || null
-          ]);
+      if (existingByPlate || existingByVin || seenPlates.has(plateNum) || (vin && seenVins.has(vin))) {
+        errors.push(`السطر ${rowNum}: تم الرفض - المركبة مكررة برقم اللوحة (${plateNum}) أو رقم الهيكل (${vin}).`);
+        duplicates++;
+        continue;
+      }
+
+      seenPlates.add(plateNum);
+      if (vin) seenVins.add(vin);
+
+      let assignedEmp = null;
+      if (empCode && empCode !== 'لايوجد' && empCode !== 'غير محدد') {
+        assignedEmp = get('SELECT id, emp_code, full_name_ar FROM employees WHERE emp_code = ? AND status = \'نشط\'', [empCode]);
+        if (!assignedEmp) {
+          errors.push(`السطر ${rowNum}: تم الرفض - الرقم الوظيفي (${empCode}) غير مسجل لموظف نشط في النظام.`);
+          rejected++;
+          continue;
+        }
+      }
+
+      const assignedEmpId = assignedEmp ? assignedEmp.id : null;
+      const assignedEmpName = assignedEmp ? assignedEmp.full_name_ar : null;
+      const finalStatus = assignedEmp ? 'نشط' : (vehicleStatus === 'صيانة' ? 'صيانة' : 'متاح');
+
+      const vehicleParams = [
+        plateNum, plateEn || null, make, model, year, color,
+        vin || null, vehicleType, assignedEmpId, assignedEmpName,
+        assignedEmp ? handoverDate : null, istimaraExpiry, fahasExpiry, insCompany,
+        insPolicy, insExpiry, odometer, finalStatus,
+        'ساري', null, notes ? `${notes} ${branchName ? `[${branchName}]` : ''}`.trim() : (branchName || null)
+      ];
+
+      const logParams = assignedEmp ? [
+        assignedEmp.id, assignedEmp.full_name_ar, assignedEmp.emp_code,
+        handoverDate, odometer, uploadedBy
+      ] : null;
+
+      pendingInsert.push({ plate: plateNum, vehicleParams, logParams });
+    }
+
+    if (pendingInsert.length > 0) {
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        for (const item of pendingInsert) {
+          const res = insertVehicleStmt.run(...item.vehicleParams);
+          const newVehicleId = res.lastInsertRowid;
+          if (item.logParams) {
+            insertLogStmt.run(newVehicleId, ...item.logParams);
+          }
+          importedVehicles.push({ id: newVehicleId, plate: item.plate });
           inserted++;
         }
+        db.exec('COMMIT');
       } catch (err) {
-        errors.push(`السطر ${rowNum} (${plateAr}): ${err.message}`);
+        db.exec('ROLLBACK');
+        throw err;
       }
     }
 
     return {
+      success: true,
       total_rows: rows.length,
+      valid_count: inserted,
       inserted,
-      updated,
-      errors
+      duplicate_count: duplicates,
+      rejected_count: rejected,
+      errors,
+      imported_vehicles: importedVehicles
     };
+  }
+
+  /**
+   * =========================================================================
+   * VEHICLE DOCUMENTS & PHOTOS REPOSITORY (Tamm & Fleet Compliance)
+   * =========================================================================
+   */
+
+  addVehicleDocument(vehicleId, docData, file) {
+    if (!vehicleId) throw new Error('معرف المركبة مطلوب.');
+    const v = get('SELECT id, plate_number_ar FROM vehicles WHERE id = ?', [vehicleId]);
+    if (!v) throw new Error('المركبة غير موجودة.');
+    if (!file) throw new Error('الملف المرفق مطلوب.');
+
+    const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.pdf', '.docx'];
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (!allowedExts.includes(ext)) {
+      throw new Error(`نوع الملف غير مسموح به (${ext}). الملفات المسموحة: صور (PNG/JPG) ومستندات (PDF/DOCX).`);
+    }
+
+    const docType = docData.doc_type || 'مستندات أخرى';
+    const title = docData.title || file.originalname;
+    const description = docData.description || '';
+    const issueDate = docData.issue_date || null;
+    const expiryDate = docData.expiry_date || null;
+    const uploadedBy = docData.uploaded_by || 'مدير النظام';
+
+    const res = run(`
+      INSERT INTO vehicle_documents (
+        vehicle_id, doc_type, title, description, issue_date, expiry_date,
+        file_name, file_path, file_size, mime_type, uploaded_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      vehicleId, docType, title, description, issueDate, expiryDate,
+      file.originalname, file.filename || file.path, file.size, file.mimetype, uploadedBy
+    ]);
+
+    return get('SELECT * FROM vehicle_documents WHERE id = ?', [res.lastInsertRowid]);
+  }
+
+  getVehicleDocuments(vehicleId) {
+    return query(`SELECT * FROM vehicle_documents WHERE vehicle_id = ? ORDER BY id DESC`, [vehicleId]);
+  }
+
+  getVehicleDocumentById(docId) {
+    return get(`SELECT * FROM vehicle_documents WHERE id = ?`, [docId]);
+  }
+
+  deleteVehicleDocument(docId) {
+    const doc = get(`SELECT * FROM vehicle_documents WHERE id = ?`, [docId]);
+    if (!doc) throw new Error('المستند غير موجود.');
+
+    if (doc.file_path) {
+      const fullPath = path.isAbsolute(doc.file_path) ? doc.file_path : path.join(__dirname, '..', '..', 'uploads', 'fleet_documents', doc.file_path);
+      try {
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      } catch (e) {}
+    }
+
+    run(`DELETE FROM vehicle_documents WHERE id = ?`, [docId]);
+    return true;
   }
 
   /**

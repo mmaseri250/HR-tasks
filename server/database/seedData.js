@@ -54,7 +54,7 @@ function seedDatabase() {
       'مصرف الراجحي',
       'RJHI',
       'SA4480000392608010049283',
-      'EST7004872169',
+      'EST5850024190',
       18.2164,
       42.5053,
       300,
@@ -69,16 +69,19 @@ function seedDatabase() {
       updated_at = datetime('now')
   `);
 
-  // 2. Setup Official 6 Departments & 5 Branches
-  run("DELETE FROM departments WHERE code NOT IN ('DEPT-HQ', 'DEPT-BRANCHES', 'DEPT-CONTRACTS', 'DEPT-WH', 'DEPT-MAINT', 'DEPT-ENG')");
+  // 2. Setup Official 9 Departments & 5 Branches
+  run("DELETE FROM departments WHERE code NOT IN ('DEPT-HQ', 'DEPT-BR-CITYPARK', 'DEPT-BR-MUWADAF', 'DEPT-BR-DOWNTOWN', 'DEPT-BR-HABIL', 'DEPT-WH', 'DEPT-CONTRACTS', 'DEPT-MAINT', 'DEPT-ENG')");
   run("DELETE FROM branches WHERE code NOT IN ('BR-HQ', 'BR-MUWADAF', 'BR-CITYPARK', 'BR-HABIL', 'BR-DOWNTOWN')");
 
   const officialDepartments = [
     { code: 'DEPT-HQ', name_ar: 'الإدارة الرئيسية', name_en: 'Headquarters', manager_name: 'عبدالملك سعيد الشريف' },
-    { code: 'DEPT-BRANCHES', name_ar: 'إدارة الفروع', name_en: 'Branches Management', manager_name: 'علي سعد حسين البشري' },
+    { code: 'DEPT-BR-CITYPARK', name_ar: 'إدارة الفروع — سيتي بارك', name_en: 'Branches Management — City Park', manager_name: 'هاني عبدالرحمن صالح القحطاني' },
+    { code: 'DEPT-BR-MUWADAF', name_ar: 'إدارة الفروع — حي الموظفين', name_en: 'Branches Management — Hay Al-Muwadafeen', manager_name: 'علي سعد حسين البشري' },
+    { code: 'DEPT-BR-DOWNTOWN', name_ar: 'إدارة الفروع — مجمع وسط البلد', name_en: 'Branches Management — Downtown Complex', manager_name: 'احمد عبدالرحمن علي يعن الله' },
+    { code: 'DEPT-BR-HABIL', name_ar: 'إدارة الفروع — الحبيل', name_en: 'Branches Management — Al-Habil', manager_name: 'تامر جمعه احمد عبدالله' },
+    { code: 'DEPT-WH', name_ar: 'إدارة المستودع الرئيسي', name_en: 'Main Warehouse Management', manager_name: 'فيروز علي جان محمد' },
     { code: 'DEPT-CONTRACTS', name_ar: 'إدارة المقاولات', name_en: 'Contracting Department', manager_name: 'فارس عبدالرحمن القحطاني' },
-    { code: 'DEPT-WH', name_ar: 'إدارة المستودع الرئيسي', name_en: 'Central Warehouse', manager_name: 'هاني علي شامي عسيري' },
-    { code: 'DEPT-MAINT', name_ar: 'إدارة الصيانة والورشة', name_en: 'Maintenance & Workshop', manager_name: 'فيروز علي جان محمد' },
+    { code: 'DEPT-MAINT', name_ar: 'إدارة الصيانة والورشة', name_en: 'Maintenance & Workshop Department', manager_name: 'عبدالملك سعيد الشريف' },
     { code: 'DEPT-ENG', name_ar: 'الإدارة الهندسية', name_en: 'Engineering Department', manager_name: 'فارس عبدالرحمن القحطاني' }
   ];
 
@@ -147,10 +150,10 @@ function seedDatabase() {
       return { deptId: deptMap['الإدارة الرئيسية'], branchId: branchMap['المقر الرئيسي'] };
     }
     const s = deptStr.trim();
-    if (s.includes('حي الموظفين')) return { deptId: deptMap['إدارة الفروع'], branchId: branchMap['حي الموظفين'] };
-    if (s.includes('سيتي بارك')) return { deptId: deptMap['إدارة الفروع'], branchId: branchMap['سيتي بارك'] };
-    if (s.includes('الحبيل')) return { deptId: deptMap['إدارة الفروع'], branchId: branchMap['الحبيل'] };
-    if (s.includes('وسط البلد')) return { deptId: deptMap['إدارة الفروع'], branchId: branchMap['مجمع وسط البلد'] };
+    if (s.includes('حي الموظفين')) return { deptId: deptMap['إدارة الفروع — حي الموظفين'], branchId: branchMap['حي الموظفين'] };
+    if (s.includes('سيتي بارك')) return { deptId: deptMap['إدارة الفروع — سيتي بارك'], branchId: branchMap['سيتي بارك'] };
+    if (s.includes('الحبيل')) return { deptId: deptMap['إدارة الفروع — الحبيل'], branchId: branchMap['الحبيل'] };
+    if (s.includes('وسط البلد')) return { deptId: deptMap['إدارة الفروع — مجمع وسط البلد'], branchId: branchMap['مجمع وسط البلد'] };
     if (s.includes('المقاولات')) return { deptId: deptMap['إدارة المقاولات'], branchId: branchMap['المقر الرئيسي'] };
     if (s.includes('المستودع الرئيسي')) return { deptId: deptMap['إدارة المستودع الرئيسي'], branchId: branchMap['المقر الرئيسي'] };
     if (s.includes('الصيانة والورشة')) return { deptId: deptMap['إدارة الصيانة والورشة'], branchId: branchMap['المقر الرئيسي'] };

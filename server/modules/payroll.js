@@ -262,7 +262,7 @@ function generateWpsSifContent(periodId) {
   const fileDate = now.toISOString().split('T')[0].replace(/-/g, '');
   const fileTime = now.toTimeString().substring(0, 5).replace(':', '');
   const payerBank = settings.bank_code || 'RJHI';
-  const employerCr = settings.cr_number || '7004872169';
+  const employerCr = settings.cr_number || '5850024190';
   const employerEst = settings.wps_payer_id || `EST${employerCr}`;
 
   // Standard Header Record (SCR)
