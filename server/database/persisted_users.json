@@ -2,7 +2,7 @@
   {
     "id": 1,
     "username": "admin",
-    "password": "Jj123@AdminSecure",
+    "password": "Jj123",
     "full_name": "مدير النظام",
     "email": "admin@jalmajd.com",
     "role": "admin",
@@ -12,6 +12,11 @@
     "emp_id": null,
     "custom_data_scope": null,
     "avatar_url": null,
-    "is_active": 1
+    "is_active": 1,
+    "status": "نشط",
+    "activation_token": null,
+    "activation_token_expires_at": null,
+    "activated_at": "2026-11-05 19:55:53",
+    "created_at": "2026-10-28 22:34:23"
   }
 ]

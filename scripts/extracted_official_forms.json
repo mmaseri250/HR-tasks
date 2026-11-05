@@ -1,0 +1,1861 @@
+[
+  {
+    "index": 1,
+    "header_table_idx": 0,
+    "title": "إشعار حالة موظف\nEmployee Status Notification",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 1,
+        "rows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 2,
+        "rows": [
+          [
+            "1 – نوع الحالة",
+            "1 – نوع الحالة",
+            "1 – نوع الحالة",
+            "1 – Status Type",
+            "1 – Status Type",
+            "1 – Status Type"
+          ],
+          [
+            "مباشرة تحت الاختبار\nJoining – Probation",
+            "مباشرة بعد إجازة\nResumption after Leave",
+            "نقل\nTransfer",
+            "نقل\nTransfer",
+            "مباشرة بعد نقل\nResumption after Transfer",
+            "انقطاع\nAbsence from Work"
+          ]
+        ]
+      },
+      {
+        "table_idx": 3,
+        "rows": [
+          [
+            "2 – بيانات الموظف/ـة",
+            "2 – بيانات الموظف/ـة",
+            "2 – Employee Information",
+            "2 – Employee Information"
+          ],
+          [
+            "الاسم",
+            "",
+            "",
+            "Name"
+          ],
+          [
+            "هوية رقم",
+            "",
+            "",
+            "ID / Iqama No."
+          ],
+          [
+            "الجنسية",
+            "",
+            "",
+            "Nationality"
+          ]
+        ]
+      },
+      {
+        "table_idx": 4,
+        "rows": [
+          [
+            "3 – بيانات الوظيفة",
+            "3 – بيانات الوظيفة",
+            "3 – بيانات الوظيفة",
+            "3 – بيانات الوظيفة",
+            "3 – Employment Information",
+            "3 – Employment Information",
+            "3 – Employment Information",
+            "3 – Employment Information"
+          ],
+          [
+            "الفرع",
+            "",
+            "من\nFrom",
+            "",
+            "",
+            "إلى\nTo",
+            "",
+            ""
+          ],
+          [
+            "Branch",
+            "في حالة النقل: من الفرع / إلى الفرع  •  If transferred: from branch / to branch",
+            "في حالة النقل: من الفرع / إلى الفرع  •  If transferred: from branch / to branch",
+            "في حالة النقل: من الفرع / إلى الفرع  •  If transferred: from branch / to branch",
+            "في حالة النقل: من الفرع / إلى الفرع  •  If transferred: from branch / to branch",
+            "في حالة النقل: من الفرع / إلى الفرع  •  If transferred: from branch / to branch",
+            "في حالة النقل: من الفرع / إلى الفرع  •  If transferred: from branch / to branch",
+            "في حالة النقل: من الفرع / إلى الفرع  •  If transferred: from branch / to branch"
+          ],
+          [
+            "القسم",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "Department"
+          ],
+          [
+            "المهنة",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "Profession"
+          ]
+        ]
+      },
+      {
+        "table_idx": 5,
+        "rows": [
+          [
+            "4 – التاريخ",
+            "4 – التاريخ",
+            "4 – Date",
+            "4 – Date"
+          ],
+          [
+            "التاريخ",
+            "00/00/0000م",
+            "00/00/0000م",
+            "Date"
+          ]
+        ]
+      },
+      {
+        "table_idx": 6,
+        "rows": [
+          [
+            "مدير الموارد البشرية\nHR Manager",
+            "الختم\nCompany Stamp"
+          ],
+          [
+            "التوقيع  \nSignature",
+            "الختم  \nStamp"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 2,
+    "header_table_idx": 7,
+    "title": "طلب سلفة\nEmployee Advance Request",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 8,
+        "rows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 9,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "الاسم\nName",
+            "",
+            "الفرع\nBranch",
+            ""
+          ],
+          [
+            "رقم الإقامة\nIqama No.",
+            "",
+            "القسم\nDepartment",
+            ""
+          ],
+          [
+            "الجنسية\nNationality",
+            "",
+            "المهنة\nProfession",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 10,
+        "rows": [
+          [
+            "2 – بيانات السلفة المطلوبة",
+            "2 – بيانات السلفة المطلوبة",
+            "2 – Advance Request Details",
+            "2 – Advance Request Details"
+          ],
+          [
+            "تاريخ الطلب\nRequest Date",
+            "المبلغ المطلوب\nRequested Amount",
+            "المبلغ المطلوب\nRequested Amount",
+            "توقيع الموظف\nEmployee Signature"
+          ],
+          [
+            "00/00/0000م",
+            "[                    ]  ريال سعودي\nSAR",
+            "[                    ]  ريال سعودي\nSAR",
+            ""
+          ],
+          [
+            "مبررات طلب السلفة\nJustification for Advance",
+            "مبررات طلب السلفة\nJustification for Advance",
+            "مبررات طلب السلفة\nJustification for Advance",
+            "توقيع المدير\nManager Signature"
+          ],
+          [
+            "إجازة.\nLeave (Vacation).\n…………………………………………………………………………………………………",
+            "إجازة.\nLeave (Vacation).\n…………………………………………………………………………………………………",
+            "إجازة.\nLeave (Vacation).\n…………………………………………………………………………………………………",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 11,
+        "rows": [
+          [
+            "3 – إفادة قسم الحسابات",
+            "3 – إفادة قسم الحسابات",
+            "3 – Accounts Department Review",
+            "3 – Accounts Department Review"
+          ],
+          [
+            "السلف السابقة\nPrevious Advances",
+            "السلف المتبقية\nRemaining Advances",
+            "السلف المتبقية\nRemaining Advances",
+            "توقيع المحاسب\nAccountant Signature"
+          ],
+          [
+            "[            ]  ريال\nSAR",
+            "[            ]  ريال\nSAR",
+            "[            ]  ريال\nSAR",
+            ""
+          ],
+          [
+            "....../....../.......20 م\nDate",
+            "....../....../.......20 م\nDate",
+            "....../....../.......20 م\nDate",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 12,
+        "rows": [
+          [
+            "4 – الاعتماد",
+            "4 – Authorization"
+          ],
+          [
+            "مدير الموارد البشرية\nHR Manager",
+            "رئيس مجلس الإدارة\nChairman of the Board"
+          ],
+          [
+            "التوقيع  \nSignature",
+            "التوقيع  \nSignature"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 3,
+    "header_table_idx": 13,
+    "title": "نموذج استلام إقامة\nIqama Receipt Acknowledgment",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 14,
+        "rows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 15,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "الاسم\nName",
+            "",
+            "الفرع\nBranch",
+            ""
+          ],
+          [
+            "إقامة رقم\nIqama No.",
+            "",
+            "القسم\nDepartment",
+            ""
+          ],
+          [
+            "الجنسية\nNationality",
+            "",
+            "المهنة\nProfession",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 16,
+        "rows": [
+          [
+            "التاريخ",
+            "00/00/0000م",
+            "Date"
+          ]
+        ]
+      },
+      {
+        "table_idx": 17,
+        "rows": [
+          [
+            "2 – إقرار الاستلام",
+            "2 – Receipt Acknowledgment"
+          ],
+          [
+            "اقر أنا الموقع أدناه بأنني استلمت أصل الاقامة الخاصة بي في يوم: ........ الموافق 00/00/0000م وأنني أتحمل المسؤولية التامة في حالة أتلافها أو فقدانها.",
+            "I, the undersigned, hereby acknowledge that I have received my original Iqama on (day): ........ corresponding to 00/00/0000, and that I bear full responsibility in the event of its damage or loss."
+          ]
+        ]
+      },
+      {
+        "table_idx": 18,
+        "rows": [
+          [
+            "3 – التوقيع بالاستلام",
+            "3 – التوقيع بالاستلام",
+            "3 – Receipt Signature",
+            "3 – Receipt Signature"
+          ],
+          [
+            "الاسم\nName",
+            "",
+            "إقامة رقم\nIqama No.",
+            ""
+          ],
+          [
+            "تاريخ الاستلام\nReceipt Date",
+            "00/00/0000م",
+            "التوقيع\nSignature",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 19,
+        "rows": [
+          [
+            "4 – الاعتماد",
+            "4 – Authorization"
+          ],
+          [
+            "مدير الموارد البشرية\nHR Manager",
+            "الختم\nCompany Stamp"
+          ],
+          [
+            "التوقيع  \nSignature",
+            "الختم  \nStamp"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 4,
+    "header_table_idx": 20,
+    "title": "خروج نهائي\nFinal Exit Request",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 21,
+        "rows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 22,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "الاسم",
+            "",
+            "",
+            "Name"
+          ],
+          [
+            "إقامة رقم",
+            "",
+            "",
+            "Iqama No."
+          ],
+          [
+            "الجنسية",
+            "",
+            "",
+            "Nationality"
+          ]
+        ]
+      },
+      {
+        "table_idx": 23,
+        "rows": [
+          [
+            "2 – بيانات الوظيفة",
+            "2 – بيانات الوظيفة",
+            "2 – Employment Information",
+            "2 – Employment Information"
+          ],
+          [
+            "الفرع",
+            "",
+            "",
+            "Branch"
+          ],
+          [
+            "القسم",
+            "",
+            "",
+            "Department"
+          ],
+          [
+            "المهنة",
+            "",
+            "",
+            "Profession"
+          ]
+        ]
+      },
+      {
+        "table_idx": 24,
+        "rows": [
+          [
+            "3 – بيانات الطلب",
+            "3 – بيانات الطلب",
+            "3 – Request Details",
+            "3 – Request Details"
+          ],
+          [
+            "الموضوع",
+            "خروج نهائي.\nFinal Exit.",
+            "خروج نهائي.\nFinal Exit.",
+            "Subject"
+          ]
+        ]
+      },
+      {
+        "table_idx": 25,
+        "rows": [
+          [
+            "4 – إقرار وتوقيع الموظف",
+            "4 – إقرار وتوقيع الموظف",
+            "4 – Employee Acknowledgment & Signature",
+            "4 – Employee Acknowledgment & Signature",
+            "4 – Employee Acknowledgment & Signature"
+          ],
+          [
+            "توقيع الموظف\nEmployee Signature",
+            "",
+            "",
+            "البصمة\nThumbprint",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 26,
+        "rows": [
+          [
+            "5 – اعتماد الموارد البشرية",
+            "5 – HR Authorization"
+          ],
+          [
+            "مدير الموارد البشرية\nHR Manager",
+            "الختم\nCompany Stamp"
+          ],
+          [
+            "التوقيع  \nSignature",
+            "الختم  \nStamp"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 5,
+    "header_table_idx": 27,
+    "title": "نقل كفالة\nSponsorship Transfer Request",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 28,
+        "rows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 29,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "الاسم",
+            "",
+            "",
+            "Name"
+          ],
+          [
+            "إقامة رقم",
+            "",
+            "",
+            "Iqama No."
+          ],
+          [
+            "الجنسية",
+            "",
+            "",
+            "Nationality"
+          ]
+        ]
+      },
+      {
+        "table_idx": 30,
+        "rows": [
+          [
+            "2 – بيانات الوظيفة",
+            "2 – بيانات الوظيفة",
+            "2 – Employment Information",
+            "2 – Employment Information"
+          ],
+          [
+            "الفرع",
+            "",
+            "",
+            "Branch"
+          ],
+          [
+            "القسم",
+            "",
+            "",
+            "Department"
+          ],
+          [
+            "المهنة",
+            "",
+            "",
+            "Profession"
+          ]
+        ]
+      },
+      {
+        "table_idx": 31,
+        "rows": [
+          [
+            "3 – بيانات الطلب",
+            "3 – بيانات الطلب",
+            "3 – Request Details",
+            "3 – Request Details"
+          ],
+          [
+            "الموضوع",
+            "نقل كفالة واستقالة عن العمل.\nSponsorship Transfer and Resignation from Work.",
+            "نقل كفالة واستقالة عن العمل.\nSponsorship Transfer and Resignation from Work.",
+            "Subject"
+          ]
+        ]
+      },
+      {
+        "table_idx": 32,
+        "rows": [
+          [
+            "4 – إقرار وتوقيع الموظف",
+            "4 – إقرار وتوقيع الموظف",
+            "4 – Employee Acknowledgment & Signature",
+            "4 – Employee Acknowledgment & Signature",
+            "4 – Employee Acknowledgment & Signature"
+          ],
+          [
+            "توقيع الموظف\nEmployee Signature",
+            "",
+            "",
+            "البصمة\nThumbprint",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 33,
+        "rows": [
+          [
+            "5 – اعتماد الموارد البشرية",
+            "5 – HR Authorization"
+          ],
+          [
+            "مدير الموارد البشرية\nHR Manager",
+            "الختم\nCompany Stamp"
+          ],
+          [
+            "التوقيع  \nSignature",
+            "الختم  \nStamp"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 6,
+    "header_table_idx": 34,
+    "title": "تصفية موظف/ـة\nEmployee Clearance Form",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 35,
+        "rows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 36,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "الاسم",
+            "",
+            "",
+            "Name"
+          ],
+          [
+            "رقم الإقامة",
+            "",
+            "",
+            "Iqama No."
+          ],
+          [
+            "الجنسية",
+            "",
+            "",
+            "Nationality"
+          ]
+        ]
+      },
+      {
+        "table_idx": 37,
+        "rows": [
+          [
+            "2 – بيانات الوظيفة",
+            "2 – بيانات الوظيفة",
+            "2 – Employment Information",
+            "2 – Employment Information"
+          ],
+          [
+            "الفرع",
+            "",
+            "",
+            "Branch"
+          ],
+          [
+            "القسم",
+            "",
+            "",
+            "Department"
+          ],
+          [
+            "المهنة",
+            "",
+            "",
+            "Profession"
+          ]
+        ]
+      },
+      {
+        "table_idx": 38,
+        "rows": [
+          [
+            "3 – بيانات التصفية",
+            "3 – بيانات التصفية",
+            "3 – Clearance Details",
+            "3 – Clearance Details"
+          ],
+          [
+            "آخر يوم عمل\nLast Working Day",
+            "إجمالي الغياب\nTotal Absence",
+            "إجمالي الغياب\nTotal Absence",
+            "إجمالي الغياب\nTotal Absence"
+          ],
+          [
+            "آخر يوم عمل\nLast Working Day",
+            "يوم\nDays",
+            "يوم\nDays",
+            "ساعة\nHours"
+          ],
+          [
+            "00/00/0000م",
+            "[            ]",
+            "[            ]",
+            "[            ]"
+          ]
+        ]
+      },
+      {
+        "table_idx": 39,
+        "rows": [
+          [
+            "4 – الاعتماد",
+            "4 – Authorization"
+          ],
+          [
+            "مدير الموارد البشرية\nHR Manager",
+            "رئيس مجلس الإدارة\nChairman of the Board"
+          ],
+          [
+            "التوقيع  \nSignature",
+            "التوقيع  \nSignature"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 7,
+    "header_table_idx": 40,
+    "title": "وثيقة إبراء ذمة واستلام المستحقات\nFull and Final Settlement & Release",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 41,
+        "rows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 42,
+        "rows": [
+          [
+            "العربية",
+            "English"
+          ],
+          [
+            "التاريخ: //هـ\nالموافق: //م\nاليوم:",
+            "Date: // AH\nCorresponding to: // AD\nDay:"
+          ],
+          [
+            "وثيقة إبراء ذمة واستلام المستحقات",
+            "Full and Final Settlement & Release Acknowledgment"
+          ],
+          [
+            "1.  أقـر أنـا الموقـع أدناه: (الاسم/)، (الجنسية/) (هوية وطنية أو إقامة نظامية/)  أعمـل في شركة جوهـرة المـجـد للتـجـارة بوظيفـة: () بموجب عقد العمل المبرم بتاريخ: (//م)، وبأن آخر يوم عمل لي كان بتاريخ (//م) وذلك نتيجة ().",
+            "1.  I, the undersigned: (Name/), (Nationality/) (National ID or Legal Iqama/), work at Jawharat Al-Majd Trading Company in the position of: () under the employment contract concluded on: (//), and that my last working day was on (//), as a result of ()."
+          ],
+          [
+            "2.  أقر بأنني قد استلمت كافة حقوقي وكافة مستحقاتي من الرواتب والبدلات والمستحقات النظامية وفق نظام العمل وعقد العمل المحرر وذلك طبقاً للمخالصة المالية المتفق عليها بمبلغ (). وبهذا أكون قد أخليت مسؤولية شركة جوهرة المجد للتجارة من أي مطالبات أو دعاوى مستقبلية، وبموجب هذا الإقرار أبرئ ذمة شركة جوهرة المجد للتجارة وليس لي الحق نهائياً في الرجوع على الشركة والمطالبة بأي حقوق أو تقديم أي دعوى ضد الشركة سواءً كانت مطالبة مالية أو حقوقية، وأقر بأنني قد وقعت هذا الإقرار وأنا بكامل الحالة المعتبرة شرعاً ونظاماً.",
+            "2.  I acknowledge that I have received all of my rights and all of my entitlements of salaries, allowances and statutory entitlements in accordance with the Labor Law and the executed employment contract, pursuant to the agreed financial settlement in the amount of (). I have thereby released Jawharat Al-Majd Trading Company from any future claims or lawsuits, and by virtue of this acknowledgment I discharge Jawharat Al-Majd Trading Company, and I have absolutely no right to have recourse against the Company, claim any rights or file any lawsuit against the Company, whether a financial claim or a claim of rights; and I acknowledge that I have signed this acknowledgment while in full capacity as recognized by Sharia and law."
+          ],
+          [
+            "3.  كما ألتزم بإعادة جميع العهد المسلّمة لي وفي حال عدم التزامي بإعادة هذه العُهد عند التوقيع على هذه الوثيقة فإني عرضةً للمساءلة النظامية.",
+            "3.  I also undertake to return all custody items handed over to me, and in the event that I fail to return such custody items upon signing this document, I shall be subject to legal accountability."
+          ],
+          [
+            "الاسم:\nالتوقيع:\nالبصمة:",
+            "Name:\nSignature:\nThumbprint:"
+          ]
+        ]
+      },
+      {
+        "table_idx": 43,
+        "rows": [
+          [
+            "توقيع مستلم العهد\nCustody Recipient Signature",
+            "توقيع مستلم العهد المالية\nFinancial Custody Recipient Signature",
+            "توقيع المحاسب \nAccountant Signature"
+          ],
+          [
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 44,
+        "rows": [
+          [
+            "مدير الموارد البشرية\nHR Manager",
+            "رئيس مجلس الإدارة\nChairman of the Board"
+          ],
+          [
+            "",
+            ""
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 8,
+    "header_table_idx": 45,
+    "title": "إخطار عقوبة – غياب\nNotice of Penalty – Absence",
+    "meta": "Form No: JM-HR-F-004\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 46,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "التاريخ",
+            "",
+            "",
+            "Date"
+          ],
+          [
+            "الاسم",
+            "",
+            "",
+            "Name"
+          ],
+          [
+            "الرقم الوظيفي",
+            "",
+            "",
+            "Emp#"
+          ]
+        ]
+      },
+      {
+        "table_idx": 47,
+        "rows": [
+          [
+            "2 – تفاصيل الإخطار",
+            "2 – Notice Details"
+          ],
+          [
+            "بالإشارة إلى تقرير إدارتكم الوارد إلينا بشأن غيابكم عن العمل لمدة (      ) يوم بتاريخ 00/00/2026 دون تقديم أي إذن مسبق أو عذر مقبول، نود إحاطتكم بما يلي:\nاستنادًا إلى لائحة العمل، المنصوص عليه في المادة (1/11) الواردة في الفصل الثامن عشر من جدول المخالفات والجزاءات، والتي تنص على أن:\nالغياب دون إذن كتابي أو عذر مقبول لمدة يوم واحد خلال السنة العقدية الواحدة (للمرة الأولى)، فإن الجزاء الوارد فيها خصم (             ) يوم بالإضافة إلى خصم أجر مدة الغياب.\nوبناءً على ذلك، فقد تقرر تطبيق الجزاء المنصوص عليه أعلاه بحقكم، مع التأكيد على ضرورة عدم تكرار هذا السلوك مستقبلاً، وفي حال تكراره سيتم اتخاذ إجراءات أشد وفق ما تقضي به الأنظمة واللوائح المعمول بها.",
+            "With reference to the report submitted by your department regarding your absence from work for (      ) day(s) on 00/00/2026 without prior authorization or an acceptable justification, please be informed of the following:\nAccording to the Work Regulations, specifically Article (1/11) in Chapter Eighteen of the Violations and Penalties Schedule, “absence without written permission or an acceptable excuse for one day during the contractual year (first occurrence) results in a penalty of deducting (      ) day(s), in addition to deducting the wage for the period of absence.”\nAccordingly, the stated penalty has been applied. You are reminded to avoid repeating this violation, as any recurrence will result in stricter measures in line with applicable regulations."
+          ]
+        ]
+      },
+      {
+        "table_idx": 48,
+        "rows": [
+          [
+            "3 – الاعتماد والإقرار",
+            "3 – Approval & Acknowledgement"
+          ],
+          [
+            "الموارد البشرية  Human Resources",
+            "الإقرار (للموظف)  Employee Acknowledgement"
+          ],
+          [
+            "الاسم: ______________________\nName\nالتوقيع: ______________________\nSignature",
+            "الاسم: ______________________\nName\nالتوقيع: ______________________\nSignature"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 9,
+    "header_table_idx": 49,
+    "title": "إخطار عقوبة – مخالفة الأوامر والتعليمات\nNotice of Penalty – Non-Compliance with Instructions",
+    "meta": "Form No: JM-HR-F-004\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 50,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "التاريخ",
+            "",
+            "",
+            "Date"
+          ],
+          [
+            "الاسم",
+            "",
+            "",
+            "Name"
+          ],
+          [
+            "الرقم الوظيفي",
+            "",
+            "",
+            "Emp#"
+          ]
+        ]
+      },
+      {
+        "table_idx": 51,
+        "rows": [
+          [
+            "2 – تفاصيل الإخطار",
+            "2 – Notice Details"
+          ],
+          [
+            "بالإشارة إلى تقرير إدارتكم الوارد إلينا بشأن عدم اتباعكم للتعليمات الخاصة بالعمل وذلك في بتاريخ 00/00/2026م   ، نود إحاطتكم بما يلي:\nاستنادًا إلى لائحة العمل، المنصوص عليه في المادة (1/15) الواردة في الفصل الثامن عشر من جدول المخالفات المتعلقة بتنظيم العمل ، والتي تنص على أن:\nعدم إطاعة الأوامر العادية الخاصة بالعمل أو عدم تنفيذ التعليمات الخاصة بالعمل والمعلقة في مكان ظاهر. (للمرة الأولى)، فإن الجزاء الوارد فيها خصم (             )  من الأجر اليومي.\nوبناءً على ذلك، فقد تقرر تطبيق الجزاء المنصوص عليه أعلاه بحقكم، مع التأكيد على ضرورة عدم تكرار هذا السلوك مستقبلاً، وفي حال تكراره سيتم اتخاذ إجراءات أشد وفق ما تقضي به الأنظمة واللوائح المعمول بها.",
+            "With reference to the report submitted by your department regarding your failure to follow the work-related instructions on 00/00/2026, please be informed of the following:\nIn accordance with the Work Regulations, specifically Article (1/15) stated in Chapter Eighteen of the Violations Related to Work Organization, which provides that:\n“Failure to comply with ordinary work instructions or failure to follow posted work-related directives (first occurrence) shall result in a penalty of deducting (      ) from the daily wage.”\nAccordingly, the above-mentioned penalty has been applied to you. You are reminded of the importance of avoiding such conduct in the future, as any recurrence will result in stricter measures in accordance with the applicable regulations and policies."
+          ]
+        ]
+      },
+      {
+        "table_idx": 52,
+        "rows": [
+          [
+            "3 – الاعتماد والإقرار",
+            "3 – Approval & Acknowledgement"
+          ],
+          [
+            "الموارد البشرية  Human Resources",
+            "الإقرار (للموظف)  Employee Acknowledgement"
+          ],
+          [
+            "الاسم: ______________________\nName\nالتوقيع: ______________________\nSignature",
+            "الاسم: ______________________\nName\nالتوقيع: ______________________\nSignature"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 10,
+    "header_table_idx": 53,
+    "title": "إشعار عدم تجديد العقد\nNotice of Non-Renewal of Contract",
+    "meta": "Form No: JM-HR-F-001\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 54,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "التاريخ",
+            "",
+            "",
+            "Date"
+          ],
+          [
+            "الاسم",
+            "",
+            "",
+            "Name"
+          ],
+          [
+            "الرقم الوظيفي",
+            "",
+            "",
+            "Emp#"
+          ]
+        ]
+      },
+      {
+        "table_idx": 55,
+        "rows": [
+          [
+            "2 – نص الإشعار",
+            "2 – Notice Details"
+          ],
+          [
+            "بالإشارة الى الموضوع أعلاه وإلى عقد العمل المبرم بيننا والذي يبدأ من تاريخ 00-00-2025م وينتهي في 00-00-2026 تتجدد لمدة أو مدد مماثلة ما لم يشعر أحد الطرفين الأخر خطياً بعدم رغبته في التجديد قبل (30) يوماً من تاريخ انتهاء العقد.\nو استناداً لأحكام المادة (55) من نظام العمل السعودي والتي نصت على \" ينتهي عقد العمل المحدد المدة بانقضاء مدته، فإذا استمر طرفاه في تنفيذه عدّ العقد مجدداً لمدة غير محددة\" مع مراعاة ما نصت عليه المادة (37) من هذا النظام بالنسبة إلى غير السعوديين\"\nعليه نفيدكم بعدم رغبة الشركة في تجديد العقد معكم علماً بان اخر يوم عمل لكم سيكون بنهاية عقد العمل في تاريخ 00/00/2026م.\nنأمل منكم التنسيق فيما يخص إنهاء كافة الاجراءات الخاصة بإخلاء طرفكم وتسليم ما بعهدتكم من متعلقات حسب النظام ,\nمع تمنياتنا لكم بالتوفيق",
+            "With reference to the above-mentioned subject and to the employment contract concluded between us, which commenced on 00-00-2025 and will expire on 00-00-2026, and which is renewable for a similar term(s) unless either party notifies the other in writing of their desire not to renew at least thirty (30) days prior to the contract’s expiry; and pursuant to the provisions of Article (55) of the Saudi Labor Law, which states that “a fixed-term employment contract shall terminate upon the expiry of its term, and if both parties continue to implement it, it shall be deemed renewed for an indefinite period”, taking into consideration the provisions of Article (37) of the same Law with respect to non-Saudis,\nWe hereby inform you that the company does not wish to renew your employment contract. Accordingly, your last working day will be the , 00-00-2026.\nWe kindly request you to coordinate with the Human Resources Department to finalize all clearance procedures and to hand over any company property in your possession, in accordance with applicable regulations."
+          ]
+        ]
+      },
+      {
+        "table_idx": 56,
+        "rows": [
+          [
+            "3 – الاعتماد والإقرار",
+            "3 – Approval & Acknowledgement"
+          ],
+          [
+            "الموارد البشرية  Human Resources",
+            "الإقرار (للموظف)  Employee Acknowledgement"
+          ],
+          [
+            "الاسم: ______________________\nName\nالتوقيع: ______________________\nSignature",
+            "الاسم: ______________________\nName\nالتوقيع: ______________________\nSignature"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 11,
+    "header_table_idx": 57,
+    "title": "نموذج إخلاء طرف موظف\nEmployee Clearance Form",
+    "meta": "Form No: JM-HR-F-005\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 58,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Details",
+            "1 – Employee Details"
+          ],
+          [
+            "الاسم بالكامل",
+            "",
+            "",
+            "Full Name"
+          ],
+          [
+            "الرقم الوظيفي",
+            "",
+            "",
+            "Employee ID"
+          ],
+          [
+            "القسم / الإدارة",
+            "",
+            "",
+            "Department"
+          ],
+          [
+            "آخر يوم عمل",
+            "",
+            "",
+            "Last Working Day"
+          ]
+        ]
+      },
+      {
+        "table_idx": 59,
+        "rows": [
+          [
+            "2 – سبب إخلاء الطرف",
+            "2 – سبب إخلاء الطرف",
+            "2 – Reason for Clearance",
+            "2 – Reason for Clearance"
+          ],
+          [
+            "☐ إجازة  Leave",
+            "☐ استقالة  Resignation",
+            "☐ انتهاء عقد  Contract End",
+            "☐ أخرى  Other"
+          ]
+        ]
+      },
+      {
+        "table_idx": 60,
+        "rows": [
+          [
+            "3 – إقرار وتعهد الموظف",
+            "3 – Acknowledgment & Commitment"
+          ],
+          [
+            "أقر أنا الموقع أدناه بأني قمت بتسليم جميع العهد والممتلكات التابعة لشركة جوهرة المجد، بما في ذلك الأجهزة والوثائق والبطاقات وأي عهد مالية، كما أقر بإبراء ذمة الشركة من أي مستحقات مالية أو حقوق نظامية بعد استلامي كامل مستحقاتي النهائية، ولا يحق لي المطالبة بها مستقبلاً.",
+            "I, the undersigned, acknowledge the return of all Jawharat Al-Majd company assets, including devices, documents, access cards and financial liabilities. I release the company from all financial and legal obligations upon receipt of my final settlement."
+          ],
+          [
+            "توقيع الموظف / Employee Signature  ____________________",
+            "التاريخ / Date  ____________________"
+          ]
+        ]
+      },
+      {
+        "table_idx": 61,
+        "rows": [
+          [
+            "4 – اعتمادات الإدارات",
+            "4 – اعتمادات الإدارات",
+            "4 – Departmental Approvals",
+            "4 – Departmental Approvals"
+          ],
+          [
+            "الإدارة  Department",
+            "الحالة  Status",
+            "الحالة  Status",
+            "التوقيع  Signature"
+          ],
+          [
+            "المدير المباشر  Direct Manager",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "الإدارة المالية  Finance Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "إدارة التسويق  Marketing Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "إدارة المشتريات  Procurement Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "إدارة الصيانة  Maintenance Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "إدارة المستودعات  Warehouses Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "إدارة التشغيل  Operations Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "تقنية المعلومات  IT Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "إدارة السكنات  Accommodations",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ],
+          [
+            "الموارد البشرية  HR Dept",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            "☐ تم الإخلاء Cleared      ☐ قيد المراجعة In Review      ☐ لا ينطبق N/A",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 62,
+        "rows": [
+          [
+            "5 – مدير الموارد البشرية",
+            "5 – مدير الموارد البشرية",
+            "5 – HR Manager",
+            "5 – HR Manager"
+          ],
+          [
+            "الاسم / Name  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التاريخ / Date  ____________________"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 12,
+    "header_table_idx": 63,
+    "title": "نموذج إجراء جزائي\nPenalty Procedure Form",
+    "meta": "Form No: JM-HR-F-002\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 64,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Data",
+            "1 – Employee Data"
+          ],
+          [
+            "الاسم  Name",
+            "",
+            "الرقم الوظيفي  Emp. No.",
+            ""
+          ],
+          [
+            "الإدارة  Management",
+            "",
+            "مسمى الوظيفة  Job Title",
+            ""
+          ],
+          [
+            "تاريخ المخالفة  Violation Date",
+            "",
+            "تكرار المخالفة  Repetition",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 65,
+        "rows": [
+          [
+            "2 – وصف المخالفة",
+            "2 – Violation Description"
+          ],
+          [
+            "وصف المخالفة  Violation Description",
+            "وصف المخالفة  Violation Description"
+          ],
+          [
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 66,
+        "rows": [
+          [
+            "3 – الإجراء الجزائي",
+            "3 – Penalty Procedure"
+          ],
+          [
+            "الإجراء الجزائي  Penalty Procedure",
+            "الإجراء الجزائي  Penalty Procedure"
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "توقيع الموظف / Employee Signature  ____________________",
+            "التاريخ / Date  ____________________"
+          ],
+          [
+            "مدير الإدارة / Dept. Manager  ____________________",
+            "التوقيع / Signature  ____________________"
+          ]
+        ]
+      },
+      {
+        "table_idx": 67,
+        "rows": [
+          [
+            "4 – ملاحظات",
+            "4 – Remarks / Observations"
+          ],
+          [
+            "ملاحظات  Remarks",
+            "ملاحظات  Remarks"
+          ],
+          [
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 68,
+        "rows": [
+          [
+            "5 – اعتماد مدير إدارة الموارد البشرية",
+            "5 – HR Manager Approval"
+          ],
+          [
+            "التوقيع / Signature  ____________________",
+            "التاريخ / Date  ____________________"
+          ]
+        ]
+      },
+      {
+        "table_idx": 69,
+        "rows": [
+          [
+            "☐ الأصل لملف الموظف  Original – Employee File",
+            "☐ صورة لشؤون الموظفين  Copy – Personnel",
+            "☐ صورة لمحاسب الرواتب  Copy – Payroll"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 13,
+    "header_table_idx": 70,
+    "title": "نموذج الاستقالة وإنهاء عقد العمل\nResignation & Contract Termination Form",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 71,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "اسم الموظف  Employee Name",
+            "",
+            "الرقم الوظيفي  Employee ID",
+            ""
+          ],
+          [
+            "الجنسية  Nationality",
+            "",
+            "رقم الهوية / الإقامة  ID / Iqama No.",
+            ""
+          ],
+          [
+            "القسم  Section",
+            "",
+            "الإدارة  Department",
+            ""
+          ],
+          [
+            "تاريخ التعيين  Joining Date",
+            "",
+            "المسمى الوظيفي  Job Title",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 72,
+        "rows": [
+          [
+            "2 – نوع الطلب",
+            "2 – نوع الطلب",
+            "2 – نوع الطلب",
+            "2 – Request Type",
+            "2 – Request Type",
+            "2 – Request Type"
+          ],
+          [
+            "☐ استقالة  Resignation",
+            "☐ انتهاء عقد  Contract Expiry",
+            "☐ إنهاء خدمة  Termination",
+            "☐ إنهاء خدمة  Termination",
+            "☐ عدم اجتياز التجربة  Probation Failure",
+            "☐ أخرى  Other"
+          ],
+          [
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)"
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 73,
+        "rows": [
+          [
+            "3 – معلومات انتهاء الخدمة",
+            "3 – معلومات انتهاء الخدمة",
+            "3 – End of Employment Information",
+            "3 – End of Employment Information"
+          ],
+          [
+            "تاريخ تقديم الطلب  Submission Date",
+            "",
+            "فترة الإشعار  Notice Period",
+            ""
+          ],
+          [
+            "تاريخ انتهاء الخدمة  Employment End Date",
+            "",
+            "آخر يوم عمل  Last Working Day",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 74,
+        "rows": [
+          [
+            "4 – إقرار الموظف",
+            "4 – إقرار الموظف",
+            "4 – Employee Declaration",
+            "4 – Employee Declaration"
+          ],
+          [
+            "أقر أنا الموقع أدناه بأنني تقدمت بهذا الطلب بإرادتي الكاملة، وألتزم بإكمال جميع إجراءات التسليم والإخلاء وتسوية أي التزامات أو عهد تخص عملي لدى جوهرة المجد.",
+            "أقر أنا الموقع أدناه بأنني تقدمت بهذا الطلب بإرادتي الكاملة، وألتزم بإكمال جميع إجراءات التسليم والإخلاء وتسوية أي التزامات أو عهد تخص عملي لدى جوهرة المجد.",
+            "I hereby confirm that I have submitted this request voluntarily and undertake to complete all handover, clearance, and settlement requirements related to my employment with Jawharat Al-Majd.",
+            "I hereby confirm that I have submitted this request voluntarily and undertake to complete all handover, clearance, and settlement requirements related to my employment with Jawharat Al-Majd."
+          ],
+          [
+            "الاسم / Name  ____________",
+            "التوقيع / Signature  ____________",
+            "التوقيع / Signature  ____________",
+            "التاريخ / Date  ____________"
+          ]
+        ]
+      },
+      {
+        "table_idx": 75,
+        "rows": [
+          [
+            "5 – توصية المدير المباشر",
+            "5 – توصية المدير المباشر",
+            "5 – Direct Manager Recommendation",
+            "5 – Direct Manager Recommendation"
+          ],
+          [
+            "☐ موافق  Approved",
+            "☐ موافق  Approved",
+            "☐ غير موافق  Not Approved",
+            "☐ غير موافق  Not Approved"
+          ],
+          [
+            "سبب عدم الموافقة  Reason for Rejection",
+            "سبب عدم الموافقة  Reason for Rejection",
+            "سبب عدم الموافقة  Reason for Rejection",
+            "سبب عدم الموافقة  Reason for Rejection"
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "الاسم / Name  ____________",
+            "التوقيع / Signature  ____________",
+            "التوقيع / Signature  ____________",
+            "التاريخ / Date  ____________"
+          ]
+        ]
+      },
+      {
+        "table_idx": 76,
+        "rows": [
+          [
+            "6 – قسم شؤون الموظفين",
+            "6 – قسم شؤون الموظفين",
+            "6 – HR Personnel Section",
+            "6 – HR Personnel Section"
+          ],
+          [
+            "تاريخ انتهاء العقد  Contract End Date",
+            "",
+            "نوع العقد  Contract Type",
+            ""
+          ],
+          [
+            "هل تم رفع الطلب على منصة قوى؟  Submitted on Qiwa?",
+            "☐ نعم Yes    ☐ لا No",
+            "هل يوجد لدى الموظف قرارات جزائية؟  Disciplinary decisions?",
+            "☐ نعم Yes    ☐ لا No"
+          ],
+          [
+            "آخر تقييم للأداء %  Last Performance Appraisal %",
+            "",
+            "هل تم تعبئة مقابلة نهاية الخدمة؟  End-of-service interview done?",
+            "☐ نعم Yes    ☐ لا No"
+          ]
+        ]
+      },
+      {
+        "table_idx": 77,
+        "rows": [
+          [
+            "7 – اعتماد مدير الموارد البشرية",
+            "7 – اعتماد مدير الموارد البشرية",
+            "7 – HR Director Approval",
+            "7 – HR Director Approval"
+          ],
+          [
+            "الاسم / Name  ____________",
+            "التوقيع / Signature  ____________",
+            "التوقيع / Signature  ____________",
+            "التاريخ / Date  ____________"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 14,
+    "header_table_idx": 78,
+    "title": "نموذج طلب إجازة\nLeave Request Form",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 79,
+        "rows": [
+          [
+            "1 – بيانات الموظف",
+            "1 – بيانات الموظف",
+            "1 – Employee Information",
+            "1 – Employee Information"
+          ],
+          [
+            "الاسم الكامل  Full Name",
+            "",
+            "الرقم الوظيفي  Employee ID",
+            ""
+          ],
+          [
+            "الجنسية  Nationality",
+            "",
+            "المسمى الوظيفي  Position",
+            ""
+          ],
+          [
+            "القسم  Division",
+            "",
+            "الإدارة  Department",
+            ""
+          ],
+          [
+            "رقم الهوية  ID No.",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 80,
+        "rows": [
+          [
+            "2 – نوع الإجازة",
+            "2 – نوع الإجازة",
+            "2 – Leave Type",
+            "2 – Leave Type"
+          ],
+          [
+            "☐ إجازة سنوية  Annual Leave",
+            "☐ إجازة مرضية  Sick Leave",
+            "☐ إجازة بدون راتب  Unpaid Leave",
+            "☐ أخرى  Other"
+          ],
+          [
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)",
+            "يرجى التوضيح (في حال أخرى)  Please specify (if Other)"
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 81,
+        "rows": [
+          [
+            "3 – تفاصيل الطلب",
+            "3 – تفاصيل الطلب",
+            "3 – Request Details",
+            "3 – Request Details"
+          ],
+          [
+            "تاريخ بداية الإجازة  Leave Start Date",
+            "",
+            "تاريخ نهاية الإجازة  Leave End Date",
+            ""
+          ],
+          [
+            "الموظف البديل  Substitute Employee",
+            "",
+            "عدد أيام الإجازة  Duration (days)",
+            ""
+          ],
+          [
+            "توقيع البديل  Substitute Signature",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 82,
+        "rows": [
+          [
+            "4 – توقيع الموظف",
+            "4 – توقيع الموظف",
+            "4 – Employee Signature",
+            "4 – Employee Signature"
+          ],
+          [
+            "الاسم / Name  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التاريخ / Date  ____________________"
+          ]
+        ]
+      },
+      {
+        "table_idx": 83,
+        "rows": [
+          [
+            "5 – تفاصيل التأشيرة والتذكرة",
+            "5 – Visa & Ticket Details"
+          ],
+          [
+            "نوع التأشيرة المطلوبة  Required Visa Type",
+            "إصدار تذكرة سفر؟  Issue Travel Ticket?"
+          ],
+          [
+            "☐ سفرة واحدة  Single        ☐ متعددة  Multiple",
+            "☐ نعم  Yes        ☐ لا  No"
+          ]
+        ]
+      },
+      {
+        "table_idx": 84,
+        "rows": [
+          [
+            "6 – اعتماد المدير المباشر",
+            "6 – اعتماد المدير المباشر",
+            "6 – Line Manager Approval",
+            "6 – Line Manager Approval"
+          ],
+          [
+            "الاسم / Name  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التاريخ / Date  ____________________"
+          ]
+        ]
+      },
+      {
+        "table_idx": 85,
+        "rows": [
+          [
+            "7 – لاستخدام إدارة الموارد البشرية فقط",
+            "7 – لاستخدام إدارة الموارد البشرية فقط",
+            "7 – For HR Department Use Only",
+            "7 – For HR Department Use Only"
+          ],
+          [
+            "رصيد الإجازة المتبقي  Leave Balance",
+            "",
+            "تاريخ العودة من آخر إجازة  Last Return Date",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 86,
+        "rows": [
+          [
+            "8 – اعتماد مدير إدارة الموارد البشرية",
+            "8 – اعتماد مدير إدارة الموارد البشرية",
+            "8 – HR Department Director Approval",
+            "8 – HR Department Director Approval"
+          ],
+          [
+            "الاسم / Name  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التوقيع / Signature  ____________________",
+            "التاريخ / Date  ____________________"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "index": 15,
+    "header_table_idx": 87,
+    "title": "تعريف بالراتب\nSalary Certificate",
+    "meta": "Form No: JM-HR-F-_______\nVersion: 1.0\nIssue Date: __ / __ / ____\nPage 1 of 1",
+    "sections": [
+      {
+        "table_idx": 88,
+        "rows": [
+          [
+            "1 – بيانات الطلب",
+            "1 – بيانات الطلب",
+            "1 – Request Details",
+            "1 – Request Details"
+          ],
+          [
+            "التاريخ  Date",
+            "",
+            "الجهة الموجّه إليها  Addressed To",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 89,
+        "rows": [
+          [
+            "2 – بيانات الموظف",
+            "2 – بيانات الموظف",
+            "2 – Employee Information",
+            "2 – Employee Information"
+          ],
+          [
+            "اسم الموظف  Employee Name",
+            "",
+            "الرقم الوظيفي  Employee ID",
+            ""
+          ],
+          [
+            "الجنسية  Nationality",
+            "",
+            "رقم الهوية / الإقامة  ID / Iqama No.",
+            ""
+          ],
+          [
+            "المسمى الوظيفي  Job Title",
+            "",
+            "تاريخ الالتحاق  Joining Date",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 90,
+        "rows": [
+          [
+            "3 – نص التعريف",
+            "3 – Certificate Statement"
+          ],
+          [
+            "تشهد شركة جوهرة المجد للتجارة بأن الموظف المذكور بياناته أعلاه يعمل لديها منذ تاريخ التحاقه وحتى تاريخه، ويتقاضى راتباً شهرياً إجمالياً وفق التفاصيل الموضحة أدناه.\nوقد أُعطي هذا التعريف بناءً على طلبه دون أدنى مسؤولية على الشركة.",
+            "Jawharat Al-Majd Trading Company certifies that the above-mentioned employee has been working with the company since the joining date until present, and receives a gross monthly salary as detailed below.\nThis certificate has been issued upon the employee’s request without any liability on the company."
+          ]
+        ]
+      },
+      {
+        "table_idx": 91,
+        "rows": [
+          [
+            "4 – تفاصيل الراتب الشهري",
+            "4 – تفاصيل الراتب الشهري",
+            "4 – Monthly Salary Details",
+            "4 – Monthly Salary Details"
+          ],
+          [
+            "الراتب الأساسي  Basic Salary",
+            "ريال  SAR",
+            "بدل السكن  Housing Allowance",
+            "ريال  SAR"
+          ],
+          [
+            "بدل النقل  Transportation Allowance",
+            "ريال  SAR",
+            "بدلات أخرى  Other Allowances",
+            "ريال  SAR"
+          ],
+          [
+            "إجمالي الراتب الشهري  Total Monthly Salary",
+            "إجمالي الراتب الشهري  Total Monthly Salary",
+            "ريال  SAR",
+            "ريال  SAR"
+          ],
+          [
+            "المبلغ كتابةً  Amount in Words",
+            "المبلغ كتابةً  Amount in Words",
+            "المبلغ كتابةً  Amount in Words",
+            "المبلغ كتابةً  Amount in Words"
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      {
+        "table_idx": 92,
+        "rows": [
+          [
+            "5 – الاعتماد",
+            "5 – Approval"
+          ],
+          [
+            "مدير الموارد البشرية  HR Manager",
+            "ختم الشركة  Company Stamp"
+          ],
+          [
+            "الاسم: ______________________\nName\nالتوقيع: ______________________\nSignature",
+            ""
+          ]
+        ]
+      }
+    ]
+  }
+]

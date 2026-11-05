@@ -553,6 +553,12 @@ function initSchema() {
   } catch (e) {
     // Column already exists
   }
+  try { db.exec('ALTER TABLE users ADD COLUMN status TEXT DEFAULT "نشط";'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN activation_token TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN activation_token_expires_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN activated_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN last_login_at TEXT;'); } catch (e) {}
+  try { db.exec("UPDATE users SET status = 'نشط', activated_at = CURRENT_TIMESTAMP WHERE username = 'admin' AND (activated_at IS NULL OR status IS NULL);"); } catch (e) {}
 
   try { db.exec('ALTER TABLE requests ADD COLUMN manager_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN manager_approved_at TEXT;'); } catch (e) {}

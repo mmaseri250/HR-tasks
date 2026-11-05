@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفعيل الحساب وتعيين كلمة المرور • شركة جوهرة المجد</title>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+    * { font-family: 'Cairo', sans-serif; }
+    body {
+      background: radial-gradient(circle at 50% 20%, #4a0008 0%, #1a0104 60%, #0d0002 100%);
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4">
+  <div class="max-w-md w-full bg-slate-900/90 backdrop-blur-xl border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl text-white relative overflow-hidden">
+    <!-- Header Glow -->
+    <div class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-amber-400 via-rose-500 to-amber-300"></div>
+
+    <!-- Company Logo & Title -->
+    <div class="text-center mb-6">
+      <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-white/10 p-2 flex items-center justify-center shadow-lg border border-white/20">
+        <img src="/assets/logo.png" alt="جوهرة المجد" class="w-full h-full object-contain" onerror="this.src='/images/logo.png'">
+      </div>
+      <h1 class="text-xl font-black text-amber-300">شركة جوهرة المجد للتجارة والمقاولات</h1>
+      <p class="text-xs text-slate-300 mt-1 font-semibold">بوابة تفعيل الحساب وتعيين كلمة المرور الجديدة</p>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="py-10 text-center space-y-3">
+      <i class="fa-solid fa-circle-notch fa-spin text-3xl text-amber-400"></i>
+      <p class="text-xs text-slate-300 font-bold">جاري التحقق من صلاحية رابط التفعيل...</p>
+    </div>
+
+    <!-- Expired or Invalid State -->
+    <div id="errorState" class="hidden text-center py-6 space-y-4">
+      <div class="w-14 h-14 mx-auto rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-2xl border border-rose-500/40">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-black text-rose-300" id="errorTitle">رابط التفعيل غير صالح</h3>
+        <p class="text-xs text-slate-300 mt-2 leading-relaxed" id="errorMessage">
+          انتهت مهلة الـ 24 ساعة المحددة لتفعيل هذا الحساب، أو تم استخدامه مسبقاً.
+        </p>
+      </div>
+      <div class="p-3 bg-white/5 rounded-2xl border border-white/10 text-[11px] text-amber-200 text-right space-y-1">
+        <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-amber-400"></i> معايير الأمان المؤسسي:</p>
+        <p class="text-slate-300">لأسباب أمنية ولحماية خصوصية بياناتك، تنتهي صلاحية روابط التفعيل تلقائياً بعد 24 ساعة من إنشائها.</p>
+        <p class="text-slate-300">يرجى التواصل مع مدير النظام أو قسم الموارد البشرية لإعادة إصدار رابط تفعيل جديد.</p>
+      </div>
+      <a href="/index.html" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition border border-white/20">
+        <i class="fa-solid fa-arrow-right"></i>
+        <span>العودة لصفحة تسجيل الدخول</span>
+      </a>
+    </div>
+
+    <!-- Active Setup Form -->
+    <div id="formState" class="hidden space-y-4">
+      <!-- User Profile Snapshot -->
+      <div class="p-3.5 bg-white/5 rounded-2xl border border-white/10 space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-400 font-bold">الموظف:</span>
+          <span id="userFullName" class="font-black text-amber-300">--</span>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-400 font-bold">اسم المستخدم:</span>
+          <span id="userUsername" class="font-mono font-bold text-white">--</span>
+        </div>
+        <div class="flex items-center justify-between text-xs border-t border-white/10 pt-2">
+          <span class="text-slate-400 font-bold">الوقت المتبقي للصلاحية:</span>
+          <span id="countdownTimer" class="font-mono font-bold text-emerald-400 flex items-center gap-1">
+            <i class="fa-solid fa-clock text-[10px]"></i> <span id="timeRemainingText">24 ساعة</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Password Setup Form -->
+      <form id="activateForm" onsubmit="handleActivateSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">كلمة المرور الجديدة: *</label>
+          <div class="relative">
+            <input type="password" id="newPassword" required minlength="6" placeholder="أدخل كلمة مرور قوية (6 خانات على الأقل)" class="w-full bg-slate-800/90 rounded-xl border border-slate-700 py-2.5 px-3.5 pr-10 text-white text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
+            <button type="button" onclick="togglePassVisibility('newPassword', 'eyeNew')" class="absolute left-3 top-2.5 text-slate-400 hover:text-white">
+              <i id="eyeNew" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">تأكيد كلمة المرور: *</label>
+          <div class="relative">
+            <input type="password" id="confirmPassword" required minlength="6" placeholder="أعد كتابة كلمة المرور للمطابقة" class="w-full bg-slate-800/90 rounded-xl border border-slate-700 py-2.5 px-3.5 pr-10 text-white text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
+            <button type="button" onclick="togglePassVisibility('confirmPassword', 'eyeConfirm')" class="absolute left-3 top-2.5 text-slate-400 hover:text-white">
+              <i id="eyeConfirm" class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="passFeedback" class="hidden text-[11px] font-bold text-rose-400 p-2 bg-rose-500/10 rounded-xl border border-rose-500/20"></div>
+
+        <button type="submit" id="btnSubmitActivation" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs shadow-lg transition transform active:scale-98 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-shield-check text-sm"></i>
+          <span>تفعيل الحساب وحفظ كلمة المرور</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Success State -->
+    <div id="successState" class="hidden text-center py-6 space-y-4">
+      <div class="w-14 h-14 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl border border-emerald-500/40">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-black text-emerald-300">تم تفعيل حسابك بنجاح!</h3>
+        <p class="text-xs text-slate-300 mt-2">تم تعيين كلمة المرور وتفعيل الحساب. جاري توجيهك لصفحة تسجيل الدخول...</p>
+      </div>
+      <a href="/index.html" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition">
+        <span>الدخول للنظام الآن</span>
+        <i class="fa-solid fa-arrow-left"></i>
+      </a>
+    </div>
+
+    <div class="mt-6 text-center text-[10px] text-slate-400 border-t border-white/10 pt-3">
+      منظومة إدارة الموارد البشرية والتحكم الإداري • شركة جوهرة المجد © 2026
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    let userExpiresAt = null;
+    let timerInterval = null;
+
+    function togglePassVisibility(inputId, eyeId) {
+      const el = document.getElementById(inputId);
+      const eye = document.getElementById(eyeId);
+      if (!el || !eye) return;
+      if (el.type === 'password') {
+        el.type = 'text';
+        eye.className = 'fa-solid fa-eye-slash';
+      } else {
+        el.type = 'password';
+        eye.className = 'fa-solid fa-eye';
+      }
+    }
+
+    async function initActivation() {
+      if (!token) {
+        showError('رابط التفعيل غير مكتمل', 'الرابط المستخدم يفتقد رمز التفعيل (Token). يرجى التأكد من نسخ الرابط بالكامل.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/auth/verify-activation?token=${encodeURIComponent(token)}`);
+        const json = await res.json();
+
+        if (json.success && json.user) {
+          showForm(json.user);
+        } else {
+          showError(json.error || 'رابط التفعيل غير صالح', json.error || 'انتهت صلاحية هذا الرابط أو تم استخدامه مسبقاً.');
+        }
+      } catch (err) {
+        showError('خطأ في الاتصال بالخادم', 'تعذر التحقق من رابط التفعيل: ' + err.message);
+      }
+    }
+
+    function showForm(user) {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('errorState').classList.add('hidden');
+      document.getElementById('successState').classList.add('hidden');
+      document.getElementById('formState').classList.remove('hidden');
+
+      document.getElementById('userFullName').textContent = user.full_name || user.username;
+      document.getElementById('userUsername').textContent = user.username;
+
+      userExpiresAt = new Date(user.expires_at).getTime();
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      if (!userExpiresAt) return;
+      const now = Date.now();
+      const diff = userExpiresAt - now;
+
+      if (diff <= 0) {
+        clearInterval(timerInterval);
+        showError('انتهت صلاحية الرابط', 'انتهت مهلة الـ 24 ساعة المحددة لتفعيل الحساب. يرجى مراجعة إدارة الموارد البشرية لإعادة إرسال رابط التفعيل.');
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const text = `${hours} س و ${minutes} د و ${seconds} ث`;
+      const timerEl = document.getElementById('timeRemainingText');
+      if (timerEl) timerEl.textContent = text;
+    }
+
+    function showError(title, msg) {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('formState').classList.add('hidden');
+      document.getElementById('successState').classList.add('hidden');
+      document.getElementById('errorState').classList.remove('hidden');
+
+      document.getElementById('errorTitle').textContent = title;
+      document.getElementById('errorMessage').textContent = msg;
+    }
+
+    async function handleActivateSubmit(e) {
+      e.preventDefault();
+      const pass = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+      const feedback = document.getElementById('passFeedback');
+      const btn = document.getElementById('btnSubmitActivation');
+
+      feedback.classList.add('hidden');
+
+      if (pass !== confirm) {
+        feedback.textContent = 'كلمتا المرور غير متطابقتين، يرجى إعادة التحقق.';
+        feedback.classList.remove('hidden');
+        return;
+      }
+
+      if (pass.length < 6) {
+        feedback.textContent = 'كلمة المرور يجب أن لا تقل عن 6 أحرف أو أرقام.';
+        feedback.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ كلمة المرور وتفعيل الحساب...';
+
+      try {
+        const res = await fetch('/api/auth/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password: pass })
+        });
+
+        const json = await res.json();
+        if (json.success) {
+          document.getElementById('formState').classList.add('hidden');
+          document.getElementById('successState').classList.remove('hidden');
+          setTimeout(() => {
+            window.location.href = '/index.html';
+          }, 3500);
+        } else {
+          feedback.textContent = json.error || 'حدث خطأ أثناء التفعيل';
+          feedback.classList.remove('hidden');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-shield-check text-sm"></i> <span>تفعيل الحساب وحفظ كلمة المرور</span>';
+        }
+      } catch (err) {
+        feedback.textContent = 'تعذر الاتصال بالخادم: ' + err.message;
+        feedback.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-shield-check text-sm"></i> <span>تفعيل الحساب وحفظ كلمة المرور</span>';
+      }
+    }
+
+    initActivation();
+  </script>
+</body>
+</html>

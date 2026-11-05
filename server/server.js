@@ -251,6 +251,46 @@ app.post('/api/auth/logout', (req, res) => {
   }
 });
 
+app.get('/api/auth/verify-activation', (req, res) => {
+  try {
+    const result = usersModule.verifyActivationToken(req.query.token);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/activate', (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const result = usersModule.activateAccount(token, password);
+    auditModule.logAuditEvent(req, {
+      action: 'ACTIVATE_ACCOUNT',
+      entity_type: 'user',
+      performed_by_name: result.full_name || result.username,
+      comment: `تفعيل حساب المستخدم وتعيين كلمة المرور: ${result.username}`
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/users/:id/resend-activation', rbacEngine.requirePermission('users.edit'), (req, res) => {
+  try {
+    const result = usersModule.resendActivation(req.params.id);
+    auditModule.logAuditEvent(req, {
+      action: 'RESEND_ACTIVATION',
+      entity_type: 'user',
+      entity_id: req.params.id,
+      comment: `إعادة إصدار وتمديد رابط تفعيل المستخدم معرّف ${req.params.id} لمدة 24 ساعة`
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/users', rbacEngine.requirePermission('users.view'), (req, res) => {
   try {
     const users = usersModule.getAllUsers();

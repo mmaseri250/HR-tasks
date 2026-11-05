@@ -57,6 +57,16 @@ function getUserEffectivePermissions(userId) {
     }
   });
 
+  // 3. Direct JSON permissions grants from users table
+  try {
+    const jsonPerms = typeof user.permissions === 'string' ? JSON.parse(user.permissions || '[]') : (user.permissions || []);
+    if (Array.isArray(jsonPerms)) {
+      jsonPerms.forEach(p => {
+        if (p) rolePerms.add(p);
+      });
+    }
+  } catch (e) {}
+
   return Array.from(rolePerms);
 }
 
@@ -68,13 +78,20 @@ function hasPermission(user, permissionCode) {
   if (user.role === 'admin') return true;
 
   // If user object has pre-computed effective_permissions
-  if (user.effective_permissions && Array.isArray(user.effective_permissions)) {
-    return user.effective_permissions.includes(permissionCode) || user.effective_permissions.includes('all');
+  const perms = (user.effective_permissions && Array.isArray(user.effective_permissions))
+    ? user.effective_permissions
+    : getUserEffectivePermissions(user.id);
+
+  if (perms.includes('all') || perms.includes('*')) return true;
+  if (perms.includes(permissionCode)) return true;
+
+  // Prefix matching: e.g. 'employees' covers 'employees.view', 'employees.edit'
+  if (typeof permissionCode === 'string') {
+    const prefix = permissionCode.split('.')[0];
+    if (perms.includes(prefix)) return true;
   }
 
-  // Fallback to DB check
-  const perms = getUserEffectivePermissions(user.id);
-  return perms.includes(permissionCode) || perms.includes('all');
+  return false;
 }
 
 /**
