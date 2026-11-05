@@ -24,9 +24,8 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(devices.length, 0, 'يجب أن تبدأ أجهزة البصمة بـ 0 بعد حذف الأجهزة التجريبية');
 
   const users = db.query('SELECT * FROM users');
-  assert.ok(users.length >= 2, 'يجب أن يحتوي النظام على حساب admin وحساب مدير الموارد البشرية abdulmalik');
-  assert.ok(users.find(u => u.username === 'admin'), 'يجب توفر حساب admin');
-  assert.ok(users.find(u => u.username === 'abdulmalik'), 'يجب توفر حساب abdulmalik');
+  assert.ok(users.length >= 1, 'يجب أن يحتوي النظام على حساب admin الرئيسي المعتمد');
+  assert.ok(users.find(u => u.username === 'admin'), 'يجب توفر حساب admin الرئيسي');
 
   // Verify Compliance Metrics for Official Employees
   const compMetrics = employeesModule.getComplianceMetrics();

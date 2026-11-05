@@ -56,73 +56,114 @@
   <!-- =========================================================================
        TOP GLOBAL HEADER (Executive Royal Styling, 100% Reliable)
        ========================================================================= -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm border-t-4 border-brand">
-    <div class="w-full max-w-none px-4 sm:px-8 lg:px-10 h-18 sm:h-20 flex items-center justify-between gap-3">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs border-t-4 border-brand">
+    <div class="w-full max-w-none px-4 sm:px-8 lg:px-10 h-18 sm:h-20 flex items-center justify-between gap-4">
       
-      <!-- Brand & Company Title -->
-      <div class="flex items-center gap-2.5 sm:gap-4 flex-shrink-0">
-        <img src="assets/logo.png" alt="شركة جوهرة المجد" class="h-11 sm:h-14 w-auto object-contain cursor-pointer transition hover:scale-105" onclick="switchTab('dashboard')">
-        <div class="border-r border-slate-200 pr-2.5 sm:pr-4">
+      <!-- Right Side: System Title & Company Brand -->
+      <div class="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+        <img src="assets/logo.png" alt="شركة جوهرة المجد" class="h-10 sm:h-12 w-auto object-contain cursor-pointer transition hover:scale-105" onclick="switchTab('dashboard')">
+        <div class="border-r border-slate-200 pr-3 sm:pr-4">
           <div class="flex items-center gap-2">
-            <h1 class="text-base sm:text-xl font-black text-brand leading-none" data-i18n="brand_name">شركة جوهرة المجد</h1>
-            <span class="hidden xl:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-900 border border-amber-300 shadow-xs">
-              <i class="fa-solid fa-crown text-amber-500 text-[10px]"></i> المنظومة المؤسسية
-            </span>
+            <h1 class="text-base sm:text-lg font-black text-slate-900 leading-none" data-i18n="system_title">نظام إدارة الموارد البشرية</h1>
+            <span class="text-slate-300 font-light">|</span>
+            <span class="text-xs font-bold text-brand leading-none">جوهرة المجد</span>
           </div>
-          <p class="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1" data-i18n="header_subtitle">نظام إدارة الموارد البشرية والتحكم الإداري • أبها، عسير</p>
+          <p class="text-[10px] text-slate-400 font-medium mt-1">المنظومة المؤسسية للقيادة والتحكم الإداري</p>
         </div>
       </div>
 
-      <!-- Active User Controls (Left) -->
-      <div class="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+      <!-- Center: Universal System Search Bar -->
+      <div class="flex-1 max-w-lg hidden md:block">
+        <div class="relative">
+          <input type="text" id="globalSystemSearch" oninput="handleGlobalSystemSearch(this.value)" placeholder="بحث في النظام (موظف، طلب، تقرير، ...)" class="w-full bg-slate-100/90 hover:bg-slate-100 focus:bg-white text-xs py-2 px-4 pr-10 rounded-full border border-slate-200 focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition">
+          <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-2.5 text-slate-400 text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Left Side: User Avatar, Profile, Notifications & Controls -->
+      <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         
+        <!-- Search icon for mobile -->
+        <button class="md:hidden text-slate-500 hover:text-slate-700 p-2 text-sm" onclick="document.getElementById('mobileSearchModal')?.classList.toggle('hidden')">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+
+        <!-- Help Button -->
+        <button type="button" onclick="switchTab('docs')" title="دليل النظام والمساعدة" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition border border-slate-200 shadow-xs">
+          <i class="fa-solid fa-question"></i>
+        </button>
+
+        <!-- Messages Button -->
+        <button type="button" onclick="switchTab('circulars')" title="الرسائل والتعاميم" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition border border-slate-200 shadow-xs">
+          <i class="fa-regular fa-envelope"></i>
+        </button>
+
+        <!-- Notification Bell with Badge (3) -->
+        <div class="relative">
+          <button type="button" onclick="toggleNotificationsMenu()" title="التنبيهات الإدارية" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs transition border border-slate-200 shadow-xs relative">
+            <i class="fa-regular fa-bell"></i>
+            <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-600 text-white rounded-full text-[9px] font-black flex items-center justify-center border-2 border-white">3</span>
+          </button>
+        </div>
+
         <!-- Language Selector Dropdown -->
-        <div class="relative" id="headerLangDropdownContainer">
-          <button type="button" onclick="toggleLangMenu()" id="headerLangBtn" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl border border-slate-300 transition shadow-sm">
+        <div class="relative hidden sm:block" id="headerLangDropdownContainer">
+          <button type="button" onclick="toggleLangMenu()" id="headerLangBtn" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-1.5 rounded-xl border border-slate-200 transition shadow-xs">
             <i class="fa-solid fa-globe text-brand"></i>
-            <span id="currentLangLabel">🇸🇦 العربية</span>
+            <span id="currentLangLabel">🇸🇦</span>
+            <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+          </button>
+          <div id="headerLangMenu" class="hidden absolute left-0 mt-1.5 w-40 bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 z-50 text-xs space-y-0.5">
+            <button onclick="setLanguage('ar'); closeLangMenu();" class="w-full text-right px-3 py-1.5 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇸🇦 العربية</span></button>
+            <button onclick="setLanguage('en'); closeLangMenu();" class="w-full text-right px-3 py-1.5 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇬🇧 English</span></button>
+          </div>
+        </div>
+
+        <!-- Executive User Profile Widget (With Avatar Picture & Upload) -->
+        <div class="relative" id="headerProfileDropdownContainer">
+          <div onclick="toggleUserProfileMenu()" class="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100/90 border border-slate-200 p-1.5 pr-3 rounded-2xl cursor-pointer transition shadow-xs">
             <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
-          </button>
-          <div id="headerLangMenu" class="hidden absolute left-0 mt-1.5 w-44 bg-white rounded-2xl shadow-2xl border border-slate-200 p-1.5 z-50 text-xs space-y-0.5">
-            <button onclick="setLanguage('ar'); closeLangMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇸🇦 العربية</span><span class="text-[10px] text-slate-400">AR</span></button>
-            <button onclick="setLanguage('en'); closeLangMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇬🇧 English</span><span class="text-[10px] text-slate-400">EN</span></button>
-            <button onclick="setLanguage('bn'); closeLangMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇧🇩 বাংলা</span><span class="text-[10px] text-slate-400">BN</span></button>
-            <button onclick="setLanguage('ur'); closeLangMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇵🇰 اردو</span><span class="text-[10px] text-slate-400">UR</span></button>
-            <button onclick="setLanguage('hi'); closeLangMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇮🇳 हिन्दी</span><span class="text-[10px] text-slate-400">HI</span></button>
-          </div>
-        </div>
-
-        <!-- User Badge & Integrated Always-Visible Logout Button -->
-        <div class="flex items-center gap-2 bg-slate-50 border border-slate-200/90 p-1 sm:p-1.5 sm:pr-2.5 rounded-2xl shadow-xs">
-          <div class="w-8 h-8 rounded-xl bg-brand text-amber-300 flex items-center justify-center text-sm font-black shadow-inner flex-shrink-0">
-            <i class="fa-solid fa-user-shield"></i>
-          </div>
-          <div class="text-right hidden sm:block">
-            <div class="flex items-center gap-1.5">
-              <span id="activeUserName" class="text-xs font-black text-slate-800 block leading-tight">admin</span>
-              <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" title="متصل الآن"></span>
+            <div class="text-right hidden sm:block">
+              <span id="activeUserName" class="text-xs font-bold text-slate-800 block leading-tight">أ. عبدالعزيز السلمي</span>
+              <span id="activeUserRoleBadge" class="text-[10px] text-slate-500 font-semibold block leading-tight">المدير العام</span>
             </div>
-            <span id="activeUserRoleBadge" class="text-[10px] font-bold text-brand block leading-tight">مدير عام النظام</span>
+            <div class="relative group">
+              <img src="assets/avatar-admin.png" alt="الصورة الشخصية" id="headerUserAvatarImg" class="user-profile-avatar-img w-9 h-9 rounded-full object-cover border-2 border-amber-400/80 shadow-xs">
+              <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white text-[10px]" title="تغيير الصورة">
+                <i class="fa-solid fa-camera"></i>
+              </div>
+            </div>
           </div>
-          
-          <!-- Primary Logout Button (Prominent Red, Always Visible) -->
-          <button onclick="promptLogout()" title="تسجيل الخروج من النظام" class="mr-1 sm:mr-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-black px-3 py-1.5 rounded-xl transition shadow flex items-center gap-1.5 flex-shrink-0 cursor-pointer">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            <span data-i18n="logout">تسجيل الخروج</span>
-          </button>
+
+          <!-- Hidden File Input for Avatar Upload -->
+          <input type="file" id="userAvatarFileInput" accept="image/*" class="hidden" onchange="uploadUserProfilePicture(event)">
+
+          <!-- Profile Dropdown Menu -->
+          <div id="headerUserProfileMenu" class="hidden absolute left-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 text-xs space-y-1">
+            <div class="px-3 py-2 border-b border-slate-100 mb-1">
+              <p class="font-bold text-slate-800" id="dropdownUserFullName">أ. عبدالعزيز السلمي</p>
+              <p class="text-[11px] text-slate-400 font-medium" id="dropdownUserRole">المدير العام (مسؤول النظام)</p>
+            </div>
+            <button onclick="triggerAvatarUpload(); closeUserProfileMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold flex items-center gap-2">
+              <i class="fa-solid fa-camera text-brand"></i>
+              <span>رفع / تغيير الصورة الشخصية</span>
+            </button>
+            <button onclick="openProfileEditModal(); closeUserProfileMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold flex items-center gap-2">
+              <i class="fa-solid fa-user-pen text-amber-600"></i>
+              <span>تعديل البيانات الشخصية</span>
+            </button>
+            <button onclick="switchTab('data-exchange'); closeUserProfileMenu();" class="w-full text-right px-3 py-2 rounded-xl hover:bg-slate-50 text-slate-700 font-bold flex items-center gap-2">
+              <i class="fa-solid fa-file-import text-blue-600"></i>
+              <span>استيراد وتصدير البيانات</span>
+            </button>
+            <div class="border-t border-slate-100 pt-1 mt-1">
+              <button onclick="promptLogout()" class="w-full text-right px-3 py-2 rounded-xl hover:bg-rose-50 text-rose-600 font-bold flex items-center gap-2">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>تسجيل الخروج</span>
+              </button>
+            </div>
+          </div>
         </div>
-
-        <!-- Global Cloud Sync & Save Button (أيقونة المزامنة والحفظ السحابي) -->
-        <button id="btnHeaderGlobalSync" onclick="syncAndSaveAllData()" title="مزامنة وحفظ بيانات المستخدمين والمدخلات سحابياً" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm active:scale-95">
-          <i id="globalSyncIcon" class="fa-solid fa-cloud-arrow-up text-emerald-600 text-sm"></i>
-          <span id="globalSyncText" class="hidden sm:inline" data-i18n="sync_and_save">حفظ ومزامنة</span>
-        </button>
-
-        <!-- User Management Button (For Admins) -->
-        <button id="headerUsersBtn" onclick="switchTab('users')" title="إدارة المستخدمين والصلاحيات" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl border border-slate-300 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-users-gear text-brand"></i>
-          <span class="hidden xl:inline" data-i18n="nav_users">المستخدمين</span>
-        </button>
 
       </div>
 
@@ -272,305 +313,226 @@
            ===================================================================== -->
       <section id="view-dashboard" class="space-y-6">
         
-        <!-- Welcome Hero (Executive Redesign) -->
-        <div class="brand-gradient text-white rounded-2xl p-6 sm:p-7 shadow-md relative overflow-hidden flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 border border-brand-gold/30">
-          <div class="relative z-10 max-w-2xl">
-            <div class="flex items-center gap-2 mb-2 flex-wrap">
-              <span class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-amber-200 text-xs px-3 py-1 rounded-full font-bold border border-white/20">
-                <i class="fa-solid fa-star text-amber-300"></i> منظومة جوهرة المجد الذكية 2026
-              </span>
-              <span class="inline-flex items-center gap-1 bg-amber-400/20 text-amber-100 text-[11px] px-2.5 py-0.5 rounded-full font-bold border border-amber-300/30">
-                <i class="fa-solid fa-shield-check text-emerald-400"></i> الربط المؤسسي نشط
-              </span>
+        <!-- 1. Executive Hero Banner (Exact Match to ChatGPT 5 Nov 2026 Reference) -->
+        <div class="relative rounded-3xl overflow-hidden shadow-lg border border-brand/20 bg-gradient-to-l from-[#6e0a24] via-[#851132] to-[#9b173c] text-white">
+          <div class="flex flex-col lg:flex-row items-stretch justify-between relative z-10 min-h-[175px]">
+            
+            <!-- Right side: Executive Text & Badges (in RTL, appears on right) -->
+            <div class="p-6 sm:p-8 flex-1 flex flex-col justify-center space-y-2 max-w-2xl">
+              <div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#c59a3f]/25 text-[#f5d78e] border border-[#c59a3f]/40 shadow-xs">
+                  <i class="fa-solid fa-crown text-[#ffd700]"></i> لوحة القيادة التنفيذية
+                </span>
+              </div>
+              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">نظرة شاملة على الموارد البشرية</h2>
+              <p class="text-white/85 text-xs sm:text-sm font-medium">مؤشرات أداء رئيسية وملخص لحالة القوى العاملة والعمليات التشغيلية</p>
             </div>
-            <h2 class="text-xl sm:text-2xl lg:text-3xl font-black leading-tight">مرحباً بك في لوحة القيادة والتحكم الإداري الموحد</h2>
-            <p class="text-white/85 text-xs sm:text-sm mt-1.5 leading-relaxed">
-              منظومة متكاملة لإدارة شؤون الموظفين، الحضور الحي بالبصمة، سير الموافقات الإلكتروني، ومسيرات الأجور المتوافقة مع متطلبات وزارة الموارد البشرية.
-            </p>
-          </div>
-          <div class="relative z-10 flex gap-2.5 flex-wrap items-center">
-            <button onclick="triggerBiometricSimulation()" class="bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/30 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-2">
-              <i class="fa-solid fa-fingerprint text-amber-300"></i> محاكاة نبضات البصمة
-            </button>
-            <button onclick="switchTab('employees-db'); setTimeout(() => openModal('modalAddEmployee'), 150);" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-brand font-black text-xs px-3.5 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5">
-              <i class="fa-solid fa-user-plus"></i> إضافة موظف
-            </button>
-            <button onclick="switchTab('leaves'); setTimeout(() => openModal('modalNewLeave'), 150);" class="bg-white/15 hover:bg-white/25 active:scale-95 text-white border border-white/30 font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
-              <i class="fa-solid fa-calendar-plus text-teal-300"></i> طلب إجازة
-            </button>
+
+            <!-- Left side: Architectural HQ Building with Jawharat Al-Majd Brand Facade -->
+            <div class="lg:w-1/2 relative min-h-[160px] overflow-hidden flex items-center justify-end">
+              <img src="assets/dashboard-hero-banner.png" alt="جوهرة المجد" class="w-full h-full object-cover object-left" style="mask-image: linear-gradient(to right, black 65%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 65%, transparent 100%);">
+            </div>
+
           </div>
         </div>
 
-        <!-- KPI Cards Grid (Glassmorphism & Calm Gradients) -->
+        <!-- Filter Bar: Current Period & Real-Time Sync Indicator -->
+        <div class="flex items-center justify-between gap-3 flex-wrap bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div class="flex items-center gap-2">
+            <button class="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-200 transition flex items-center gap-2 shadow-xs">
+              <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+              <i class="fa-regular fa-calendar text-slate-500"></i>
+              <span>الفترة: هذا الشهر</span>
+            </button>
+            <span class="text-xs font-bold text-slate-500 font-mono" id="heroPeriodDates">من 01 مايو 2025 إلى 31 مايو 2025</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadExecutiveDashboard()" title="تحديث لحظي من قاعدة البيانات" class="text-xs font-bold text-slate-600 hover:text-brand bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-arrows-rotate text-[11px] text-brand"></i>
+              <span>تحديث فوري</span>
+            </button>
+            <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> متصل بقاعدة البيانات
+            </span>
+          </div>
+        </div>
+
+        <!-- 2. KPI Summary Cards Grid (4 Cards Exactly as Reference Image) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          <!-- KPI 1: Workforce -->
-          <div class="glass-stat-card stat-theme-workforce" onclick="switchTab('employees-db')">
-            <div class="flex justify-between items-start">
+          <!-- Card 1 (Right): إجمالي الموظفين -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition relative flex flex-col justify-between">
+            <div class="flex items-start justify-between">
               <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-brand animate-pulse"></span>
-                  <p class="text-xs font-bold text-slate-500" data-i18n="kpi_total_employees">إجمالي القوى العاملة</p>
-                </div>
-                <h3 id="statTotalEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">108</h3>
-                <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <i class="fa-solid fa-arrow-trend-up text-[9px]"></i> 100% نشط
-                  </span>
-                  <span class="text-[10px] text-slate-500 font-bold font-mono"><span id="statTotalEmployeesSub">30 سعودي • 78 مقيم</span></span>
-                </div>
+                <p class="text-xs font-bold text-slate-500">إجمالي الموظفين</p>
+                <h3 id="heroStatEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">111</h3>
               </div>
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand/15 to-brand/5 text-brand flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-brand/20">
+              <div class="w-11 h-11 rounded-2xl bg-[#700b24] text-white flex items-center justify-center text-lg shadow-sm">
                 <i class="fa-solid fa-users"></i>
               </div>
             </div>
-          </div>
-
-          <!-- KPI 2: Compliance -->
-          <div class="glass-stat-card stat-theme-compliance" onclick="switchTab('compliance')">
-            <div class="flex justify-between items-start">
-              <div class="flex-1 min-w-0 pr-1">
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                  <p class="text-xs font-bold text-slate-500" data-i18n="kpi_compliance">مؤشر الامتثال النظامي</p>
-                  <span class="text-[9px] bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded-full mr-auto">قوى ومقيم</span>
-                </div>
-                <div class="flex items-baseline gap-2 mt-2">
-                  <h3 id="statComplianceRate" class="text-3xl font-black text-amber-600 font-mono tracking-tight">54%</h3>
-                  <span class="text-[11px] text-amber-700 font-bold">حالة المتابعة</span>
-                </div>
-                <!-- Dynamic Mini Progress Bar -->
-                <div class="w-full bg-amber-100/70 rounded-full h-1.5 mt-2 overflow-hidden">
-                  <div id="statComplianceProgressBar" class="bg-gradient-to-r from-amber-500 to-amber-600 h-1.5 rounded-full transition-all duration-500" style="width: 54%;"></div>
-                </div>
-                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  <span id="statComplianceSub" class="text-[10px] text-amber-800 font-bold">3 سارية • 61 إقامة تتطلب تجديد</span>
-                </div>
-              </div>
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-100 text-amber-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-amber-300/40 mr-2">
-                <i class="fa-solid fa-shield-halved"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- KPI 3: Attendance -->
-          <div class="glass-stat-card stat-theme-attendance" onclick="switchTab('attendance')">
-            <div class="flex justify-between items-start">
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                  <p class="text-xs font-bold text-slate-500" data-i18n="kpi_attendance">نسبة الحضور اليومي</p>
-                  <span class="text-[9px] bg-blue-100 text-blue-800 font-black px-1.5 py-0.5 rounded-full">بصمة ذكية</span>
-                </div>
-                <h3 id="statAttendanceRate" class="text-3xl font-black text-blue-600 mt-2 font-mono tracking-tight">100%</h3>
-                <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    <i class="fa-solid fa-fingerprint text-[9px]"></i> بصمة حية
-                  </span>
-                  <p id="statAttendanceSummaryText" class="text-[10px] text-slate-500 font-bold font-mono">110 حاضر • 0 في إجازة</p>
-                </div>
-              </div>
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400/20 to-blue-100 text-blue-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-blue-300/40">
-                <i class="fa-solid fa-user-check"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- KPI 4: Payroll & WPS -->
-          <div class="glass-stat-card stat-theme-payroll" onclick="switchTab('payroll')">
-            <div class="flex justify-between items-start">
-              <div>
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <p class="text-xs font-bold text-slate-500" id="statPayrollPeriodTitle" data-i18n="kpi_payroll">مسير الأجور الشهري</p>
-                </div>
-                <h3 id="statPayrollAmount" class="text-2xl font-black text-emerald-700 mt-2 font-mono tracking-tight">367,000 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
-                <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200" id="statPayrollStatusSubtitle">
-                    <i class="fa-solid fa-circle-check text-emerald-600"></i> حماية الأجور (WPS)
-                  </span>
-                  <span class="text-[10px] text-slate-500 font-bold">مصرف الراجحي</span>
-                </div>
-              </div>
-              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-emerald-100 text-emerald-700 flex items-center justify-center text-xl flex-shrink-0 shadow-xs border border-emerald-300/40">
-                <i class="fa-solid fa-file-invoice-dollar"></i>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Charts (Interactive SVG ApexCharts with Fallback) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          <!-- Chart 1: Workforce by Department -->
-          <div class="card-elevated p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3 flex-wrap gap-2">
-              <div>
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <i class="fa-solid fa-chart-pie text-brand"></i> توزيع القوى العاملة حسب الإدارات
-                </h3>
-                <p class="text-[11px] text-slate-400 mt-0.5">مخطط تفاعلي يوضح نسب الموظفين وتوزيعهم التشغيلي</p>
-              </div>
-              <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-brand/10 text-brand border border-brand/20">
-                <i class="fa-solid fa-sitemap ml-1"></i> <span id="deptChartCountBadge">15 إدارة</span>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <i class="fa-solid fa-arrow-trend-up text-[10px]"></i> +6.7% عن الشهر الماضي
               </span>
-            </div>
-            <div class="relative min-h-[300px] flex items-center justify-center">
-              <div id="apexDeptChart" class="w-full"></div>
-              <canvas id="deptChart" class="hidden"></canvas>
+              <span class="text-[10px] text-slate-400 font-bold" id="heroStatEmployeesSub">108 نشط</span>
             </div>
           </div>
 
-          <!-- Chart 2: Attendance Velocity & Trends -->
-          <div class="card-elevated p-6 space-y-4">
-            <div class="flex justify-between items-center border-b pb-3 flex-wrap gap-2">
+          <!-- Card 2: نسبة الحضور -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition relative flex flex-col justify-between">
+            <div class="flex items-start justify-between">
               <div>
-                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <i class="fa-solid fa-chart-column text-blue-600"></i> مؤشرات الانضباط ومسار الحضور الحي
-                </h3>
-                <p class="text-[11px] text-slate-400 mt-0.5">متابعة فورية لنبضات الحضور والتأخير والإجازات</p>
+                <p class="text-xs font-bold text-slate-500">نسبة الحضور</p>
+                <h3 id="heroStatAttendance" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">95.4%</h3>
               </div>
-              <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
-                <button type="button" onclick="setAttendanceChartType('daily')" id="btnAttTypeDaily" class="smart-filter-pill active">اليومي</button>
-                <button type="button" onclick="setAttendanceChartType('weekly')" id="btnAttTypeWeekly" class="smart-filter-pill">الأسبوعي</button>
+              <div class="w-11 h-11 rounded-2xl bg-[#d97706] text-white flex items-center justify-center text-lg shadow-sm">
+                <i class="fa-regular fa-calendar-check"></i>
               </div>
             </div>
-            <div class="relative min-h-[300px] flex items-center justify-center">
-              <div id="apexAttendanceChart" class="w-full"></div>
-              <canvas id="attendanceChart" class="hidden"></canvas>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <i class="fa-solid fa-arrow-trend-up text-[10px]"></i> +1.8% مقارنة بالشهر الماضي
+              </span>
+              <span class="text-[10px] text-blue-600 font-bold">بصمة ذكية</span>
+            </div>
+          </div>
+
+          <!-- Card 3: طلبات معلقة -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition relative flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">طلبات معلقة</p>
+                <h3 id="heroStatPendingRequests" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">58</h3>
+              </div>
+              <div class="w-11 h-11 rounded-2xl bg-[#d97706] text-white flex items-center justify-center text-lg shadow-sm">
+                <i class="fa-regular fa-file-lines"></i>
+              </div>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                <i class="fa-solid fa-circle-exclamation text-[10px] text-amber-500"></i> تحتاج إلى إجراء
+              </span>
+              <button onclick="switchTab('requests')" class="text-[10px] text-slate-400 hover:text-brand font-bold">عرض الطلبات</button>
+            </div>
+          </div>
+
+          <!-- Card 4 (Left): مسير الرواتب -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition relative flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-500">مسير الرواتب</p>
+                <h3 id="heroStatPayroll" class="text-2xl sm:text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">3,286,750 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
+              </div>
+              <div class="w-11 h-11 rounded-2xl bg-[#700b24] text-white flex items-center justify-center text-lg shadow-sm">
+                <i class="fa-solid fa-coins"></i>
+              </div>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <i class="fa-solid fa-check text-[10px]"></i> جاهز للصرف
+              </span>
+              <button onclick="switchTab('payroll')" class="text-[10px] text-slate-400 hover:text-brand font-bold">حماية الأجور WPS</button>
             </div>
           </div>
 
         </div>
 
-        <!-- Smart Interactive Tables: Expiration Alerts & Disciplinary Actions -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 3. Middle Row: 3 Interactive Charts (Exact Reference Layout) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
           
-          <!-- Smart Table 1: Expiration & Compliance Alerts -->
-          <div class="card-elevated p-6 flex flex-col justify-between">
+          <!-- Column 1 (Right): حركة طلبات الموظفين -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
             <div>
-              <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm shadow-xs border border-amber-200">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                  </div>
-                  <div>
-                    <h3 class="text-sm font-bold text-slate-800">تنبيهات الوثائق والإقامات والعقود</h3>
-                    <p class="text-[10px] text-slate-400">متابعة آلية لتجديد الإقامات، الجوازات، ورخص العمل</p>
-                  </div>
-                </div>
-                <span id="alertsCountBadge" class="text-xs font-black bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full border border-rose-200">
-                  61 تنبيهاً
-                </span>
+              <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+                <button title="تكبير المخطط" class="text-slate-400 hover:text-slate-600 p-1">
+                  <i class="fa-solid fa-up-right-and-down-left-from-center text-xs"></i>
+                </button>
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span>حركة طلبات الموظفين</span>
+                  <i class="fa-regular fa-clipboard text-amber-700"></i>
+                </h4>
               </div>
-
-              <!-- Interactive Controls (Search & Quick Filter Pills) -->
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
-                <div class="relative flex-1">
-                  <i class="fa-solid fa-magnifying-glass absolute right-2.5 top-2.5 text-slate-400 text-xs"></i>
-                  <input type="text" id="dashboardAlertsSearch" oninput="filterDashboardAlerts()" placeholder="بحث باسم الموظف أو نوع الوثيقة..." class="w-full text-xs pr-8 pl-3 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-brand transition">
-                </div>
-                <div class="flex items-center gap-1 flex-wrap">
-                  <button type="button" onclick="setAlertsFilter('all')" class="smart-filter-pill active" data-alert-filter="all">الكل</button>
-                  <button type="button" onclick="setAlertsFilter('iqama')" class="smart-filter-pill" data-alert-filter="iqama">الإقامات</button>
-                  <button type="button" onclick="setAlertsFilter('passport')" class="smart-filter-pill" data-alert-filter="passport">الجوازات</button>
-                  <button type="button" onclick="setAlertsFilter('critical')" class="smart-filter-pill" data-alert-filter="critical">عاجل</button>
-                </div>
+              <div class="relative min-h-[250px] flex items-center justify-center">
+                <div id="chartRequestsMovement" class="w-full"></div>
               </div>
-
-              <!-- Interactive Table with Sortable Columns -->
-              <div class="overflow-x-auto rounded-xl border border-slate-200/90 shadow-xs">
-                <table class="w-full text-xs text-right">
-                  <thead class="bg-slate-100/80 text-slate-600 font-bold border-b border-slate-200 select-none">
-                    <tr>
-                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardAlerts('name')">
-                        الموظف <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
-                      </th>
-                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardAlerts('type')">
-                        نوع الوثيقة <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
-                      </th>
-                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardAlerts('date')">
-                        تاريخ الانتهاء <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
-                      </th>
-                      <th class="py-2.5 px-3 text-center">الحالة</th>
-                      <th class="py-2.5 px-3 text-center">إجراء</th>
-                    </tr>
-                  </thead>
-                  <tbody id="dashboardAlertsTableBody" class="divide-y divide-slate-100 bg-white">
-                    <!-- Populated dynamically via JS -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span id="alertsShowingSummary">عرض أحدث التنبيهات</span>
-              <button onclick="switchTab('compliance')" class="text-brand font-bold hover:underline flex items-center gap-1">
-                الانتقال لمركز الامتثال والإقامات <i class="fa-solid fa-arrow-left text-[10px]"></i>
-              </button>
             </div>
           </div>
 
-          <!-- Smart Table 2: Recent Disciplinary Decisions -->
-          <div class="card-elevated p-6 flex flex-col justify-between">
+          <!-- Column 2 (Middle): مؤشر الحضور الشهري -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
             <div>
-              <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-xl bg-rose-50 text-brand flex items-center justify-center text-sm shadow-xs border border-brand/20">
-                    <i class="fa-solid fa-gavel"></i>
-                  </div>
-                  <div>
-                    <h3 class="text-sm font-bold text-slate-800">أحدث القرارات الجزائية الصادرة</h3>
-                    <p class="text-[10px] text-slate-400">القرارات الإدارية، الخصومات ولائحة العمل المعتمدة</p>
-                  </div>
-                </div>
-                <button onclick="switchTab('penalties')" class="text-xs text-brand font-bold hover:underline flex items-center gap-1">
-                  سجل الجزاءات <i class="fa-solid fa-arrow-left text-[10px]"></i>
+              <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+                <button title="تكبير المخطط" class="text-slate-400 hover:text-slate-600 p-1">
+                  <i class="fa-solid fa-up-right-and-down-left-from-center text-xs"></i>
                 </button>
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span>مؤشر الحضور الشهري</span>
+                  <i class="fa-regular fa-calendar text-amber-700"></i>
+                </h4>
               </div>
-
-              <!-- Interactive Controls (Search & Quick Filter Pills) -->
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-3 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
-                <div class="relative flex-1">
-                  <i class="fa-solid fa-magnifying-glass absolute right-2.5 top-2.5 text-slate-400 text-xs"></i>
-                  <input type="text" id="dashboardPenaltiesSearch" oninput="filterDashboardPenalties()" placeholder="بحث برقم القرار، اسم الموظف، المخالفة..." class="w-full text-xs pr-8 pl-3 py-1.5 rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-brand transition">
-                </div>
-                <div class="flex items-center gap-1 flex-wrap">
-                  <button type="button" onclick="setPenaltiesFilter('all')" class="smart-filter-pill active" data-pen-filter="all">الكل</button>
-                  <button type="button" onclick="setPenaltiesFilter('deduction')" class="smart-filter-pill" data-pen-filter="deduction">خصومات</button>
-                  <button type="button" onclick="setPenaltiesFilter('warning')" class="smart-filter-pill" data-pen-filter="warning">إنذارات</button>
-                </div>
-              </div>
-
-              <!-- Interactive Table with Sortable Columns -->
-              <div class="overflow-x-auto rounded-xl border border-slate-200/90 shadow-xs">
-                <table class="w-full text-xs text-right">
-                  <thead class="bg-slate-100/80 text-slate-600 font-bold border-b border-slate-200 select-none">
-                    <tr>
-                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardPenalties('number')">
-                        رقم القرار <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
-                      </th>
-                      <th class="py-2.5 px-3 cursor-pointer hover:text-brand" onclick="sortDashboardPenalties('name')">
-                        الموظف <i class="fa-solid fa-sort text-[10px] text-slate-400 mr-1"></i>
-                      </th>
-                      <th class="py-2.5 px-3">المخالفة</th>
-                      <th class="py-2.5 px-3 text-center">الجزاء</th>
-                      <th class="py-2.5 px-3 text-center">إجراء</th>
-                    </tr>
-                  </thead>
-                  <tbody id="dashboardPenaltiesTableBody" class="divide-y divide-slate-100 bg-white">
-                    <!-- Populated dynamically via JS -->
-                  </tbody>
-                </table>
+              <div class="relative min-h-[250px] flex items-center justify-center">
+                <div id="chartMonthlyAttendance" class="w-full"></div>
               </div>
             </div>
+          </div>
 
-            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-              <span id="penaltiesShowingSummary">عرض أحدث القرارات الجزائية</span>
-              <button onclick="switchTab('penalties'); setTimeout(() => openModal('modalAddPenalty'), 150);" class="text-brand font-bold hover:underline flex items-center gap-1">
-                + إصدار قرار جديد
+          <!-- Column 3 (Left): توزيع الموظفين حسب الإدارة -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2.5">
+                <button title="تكبير المخطط" class="text-slate-400 hover:text-slate-600 p-1">
+                  <i class="fa-solid fa-up-right-and-down-left-from-center text-xs"></i>
+                </button>
+                <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span>توزيع الموظفين حسب الإدارة</span>
+                  <i class="fa-solid fa-users-gear text-amber-700"></i>
+                </h4>
+              </div>
+              <div class="relative min-h-[250px] flex items-center justify-center">
+                <div id="chartDeptDistribution" class="w-full"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 4. Bottom Row: Action Items & Alerts (Exact Reference Layout) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          
+          <!-- Column 1 (Right): الإجراءات المطلوبة -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <button onclick="switchTab('leaves')" class="text-xs font-bold text-slate-500 hover:text-brand flex items-center gap-1">
+                <span>عرض الكل</span>
+                <i class="fa-solid fa-chevron-left text-[10px]"></i>
               </button>
+              <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>الإجراءات المطلوبة</span>
+                <i class="fa-regular fa-square-check text-rose-800"></i>
+              </h4>
+            </div>
+
+            <div class="space-y-3" id="dashboardActionItemsList">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Column 2 (Left): التنبيهات -->
+          <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <button onclick="switchTab('compliance')" class="text-xs font-bold text-slate-500 hover:text-brand flex items-center gap-1">
+                <span>عرض الكل</span>
+                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+              </button>
+              <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>التنبيهات</span>
+                <i class="fa-regular fa-bell text-rose-800"></i>
+              </h4>
+            </div>
+
+            <div class="space-y-3" id="dashboardAlertsList">
+              <!-- Rendered dynamically -->
             </div>
           </div>
 

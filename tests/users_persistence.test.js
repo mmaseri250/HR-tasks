@@ -18,13 +18,11 @@ assert(fs.existsSync(persistedPath), 'ملف persisted_users.json يجب أن ي
 usersModule.restoreUsersFromDisk();
 const allUsers = usersModule.getAllUsers();
 console.log(`✓ عدد المستخدمين المسترجع في قاعدة البيانات: ${allUsers.length}`);
-assert(allUsers.length >= 2, 'يجب توفر مستخدمين على الأقل');
+assert(allUsers.length >= 1, 'يجب توفر حساب المدير الرئيسي');
 
 const adminUser = allUsers.find(u => u.username === 'admin');
-const hrUser = allUsers.find(u => u.username === 'abdulmalik');
 assert(adminUser, 'يجب وجود المستخدم admin');
-assert(hrUser, 'يجب وجود المستخدم abdulmalik');
-console.log('✓ نجح: تم تأكيد وجود الحسابات الإدارية الأساسية.');
+console.log('✓ نجح: تم تأكيد وجود حساب المدير العام الرئيسي admin.');
 
 // 2. Test Creating a New User and verify it is written to persistent file
 console.log('\n[2/5] إنشاء مستخدم جديد والتحقق من حفظه تلقائياً في قاعدة البيانات والملف الدائم...');

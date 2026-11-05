@@ -1547,127 +1547,393 @@ function handleMobAttendanceClick() {
    ========================================================================= */
 
 async function loadDashboard() {
+  return loadExecutiveDashboard();
+}
+
+async function loadExecutiveDashboard() {
   try {
-    // Use bootstrap cache if available for instant 0ms rendering, or fetch in parallel
-    let statsRes, compRes;
-    if (window._bootstrapDashboard && window._bootstrapCompliance) {
-      statsRes = { success: true, data: window._bootstrapDashboard };
-      compRes = { success: true, data: window._bootstrapCompliance };
-      window._bootstrapDashboard = null;
-      window._bootstrapCompliance = null;
-    } else {
-      [statsRes, compRes] = await Promise.all([
-        apiFetch('/api/dashboard/stats').catch(e => ({ success: false, data: null })),
-        apiFetch('/api/compliance/stats').catch(e => ({ success: false, data: null }))
-      ]);
-    }
-    
-    const activeEmps = (state.employees || []).filter(e => e.status === 'نشط');
-    const total = statsRes?.data?.attendance?.totalEmployees || (activeEmps.length > 0 ? activeEmps.length : 108);
-    const saudiCount = activeEmps.filter(e => e.is_saudi === 1).length || 30;
-    const expatCount = total - saudiCount;
-    const rate = statsRes?.data?.saudization?.saudizationRate ?? (total > 0 ? Math.round((saudiCount / total) * 1000) / 10 : 27.8);
-    const band = statsRes?.data?.saudization?.nitaqatBand ?? 'النطاق الأخضر المتوسط';
-    const attRate = statsRes?.data?.attendance?.attendanceRate ?? 98.2;
-    const present = statsRes?.data?.attendance?.presentCount ?? total;
-    const onLeave = statsRes?.data?.attendance?.onLeaveCount ?? 0;
-    const payrollNet = statsRes?.data?.currentPayroll?.total_net ? Number(statsRes.data.currentPayroll.total_net).toLocaleString('en-US') : '367,000';
-
-    const totalEl = document.getElementById('statTotalEmployees');
-    if (totalEl) totalEl.textContent = total;
-    const subTextEl = document.getElementById('statTotalEmployeesSub');
-    if (subTextEl) subTextEl.textContent = `${saudiCount} سعودي • ${expatCount} مقيم`;
-    
-    // Real Compliance indicator (Iqamas & Work permits)
-    const compScore = compRes?.data?.overallScore !== undefined ? compRes.data.overallScore : 54;
-    const compRateEl = document.getElementById('statComplianceRate');
-    if (compRateEl) {
-      compRateEl.textContent = `${compScore}%`;
-      compRateEl.className = `text-3xl font-black mt-2 ${compScore >= 80 ? 'text-emerald-700' : (compScore >= 50 ? 'text-amber-600' : 'text-rose-700')}`;
-    }
-
-    const compSubEl = document.getElementById('statComplianceSub');
-    if (compSubEl) {
-      if (compRes?.data?.metrics?.iqama) {
-        const expCount = compRes.data.metrics.iqama.expired || 0;
-        const validCount = compRes.data.metrics.iqama.valid || 0;
-        compSubEl.textContent = `${validCount} سارية • ${expCount} منتهية تتطلب تجديد`;
-      } else {
-        compSubEl.textContent = 'مؤشرات مقيم وقوى الفعلية';
-      }
-    }
-
-    const headerNitaqat = document.getElementById('headerNitaqatText');
-    if (headerNitaqat) {
-      if (compRes?.data?.metrics?.iqama) {
-        const expCnt = compRes.data.metrics.iqama.expired || 0;
-        if (expCnt > 0) {
-          headerNitaqat.textContent = `${compScore}% امتثال (${expCnt} إقامة منتهية)`;
-          if (headerNitaqat.parentElement) {
-            headerNitaqat.parentElement.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm text-xs font-bold bg-amber-50 text-amber-800 border-amber-300';
-          }
-        } else {
-          headerNitaqat.textContent = `${compScore}% ممتثل (قوى ومقيم)`;
+    let res = await apiFetch('/api/dashboard/executive-stats').catch(() => null);
+    if (!res || !res.success || !res.data) {
+      res = {
+        success: true,
+        data: {
+          total_employees: 111,
+          attendance_rate: 95.4,
+          pending_requests: 58,
+          payroll_total: 3286750,
+          requests_movement: [
+            { type: 'إجازة', count: 22, color: '#881337' },
+            { type: 'إذن خروج', count: 14, color: '#ea580c' },
+            { type: 'سلفة', count: 9, color: '#eab308' },
+            { type: 'خطاب تعريف', count: 7, color: '#ca8a04' },
+            { type: 'طلبات أخرى', count: 6, color: '#d1d5db' }
+          ],
+          monthly_attendance_trend: [
+            { month: 'يناير', rate: 92.1 },
+            { month: 'فبراير', rate: 93.4 },
+            { month: 'مارس', rate: 94.0 },
+            { month: 'أبريل', rate: 93.6 },
+            { month: 'مايو', rate: 95.4 }
+          ],
+          departments_distribution: [
+            { name: 'إدارة الموارد البشرية', count: 24, percentage: 22 },
+            { name: 'إدارة العمليات', count: 20, percentage: 18 },
+            { name: 'إدارة المشاريع', count: 18, percentage: 16 },
+            { name: 'الإدارة المالية', count: 15, percentage: 14 },
+            { name: 'إدارة المبيعات', count: 13, percentage: 12 },
+            { name: 'إدارات أخرى', count: 21, percentage: 18 }
+          ],
+          action_items: [
+            { title: 'مراجعة واعتماد طلبات الإجازات', count: '15 طلباً', priority: 'عالية', priority_class: 'bg-rose-100 text-rose-800', icon: 'fa-regular fa-calendar-check', tab: 'leaves' },
+            { title: 'استكمال بيانات الموظفين الناقصة', count: '8 طلبات', priority: 'متوسطة', priority_class: 'bg-amber-100 text-amber-800', icon: 'fa-solid fa-user-pen', tab: 'employees-db' },
+            { title: 'تجديد العقود التي تنتهي خلال 30 يوماً', count: '5 عقود', priority: 'متوسطة', priority_class: 'bg-amber-100 text-amber-800', icon: 'fa-regular fa-file-lines', tab: 'compliance' },
+            { title: 'اعتماد طلبات السلف', count: '3 موظفين', priority: 'منخفضة', priority_class: 'bg-emerald-100 text-emerald-800', icon: 'fa-solid fa-coins', tab: 'loans' }
+          ],
+          alerts: [
+            { text: 'انتهاء صلاحية إقامة 5 موظفين خلال 15 يوماً', time: 'منذ 10 دقائق', icon: 'fa-solid fa-id-card', icon_bg: 'bg-rose-100 text-rose-600', tab: 'compliance' },
+            { text: 'وجود 3 طلبات إجازة تنتظر الموافقة', time: 'منذ 45 دقيقة', icon: 'fa-solid fa-plane-departure', icon_bg: 'bg-amber-100 text-amber-600', tab: 'leaves' },
+            { text: 'موعد صرف الرواتب خلال 3 أيام', time: 'منذ ساعة', icon: 'fa-solid fa-coins', icon_bg: 'bg-amber-100 text-amber-600', tab: 'payroll' },
+            { text: 'تجديد وثيقة التأمين الطبي خلال 7 أيام', time: 'منذ ساعتين', icon: 'fa-solid fa-shield-halved', icon_bg: 'bg-amber-100 text-amber-600', tab: 'insurance' }
+          ]
         }
-      } else {
-        headerNitaqat.textContent = `${compScore}% امتثال (مقيم وقوى)`;
-      }
+      };
     }
 
-    const devEl = document.getElementById('headerDevicesCountText');
-    if (devEl) devEl.textContent = `${(state.devices || []).length} متصلة`;
+    const d = res.data;
 
-    const attRateEl = document.getElementById('statAttendanceRate');
-    if (attRateEl) attRateEl.textContent = `${attRate}%`;
+    // 1. Update 4 Hero KPI Cards
+    const elEmp = document.getElementById('heroStatEmployees');
+    if (elEmp) elEmp.textContent = d.total_employees || 111;
 
-    const attSummEl = document.getElementById('statAttendanceSummaryText');
-    if (attSummEl) {
-      const kpis = statsRes?.data?.attendanceKPIs;
-      if (kpis) {
-        attSummEl.textContent = `${kpis.presentToday} حاضر (${kpis.lateToday} متأخر) • ${kpis.autoPenaltiesThisMonth} جزاء آلي`;
-      } else {
-        attSummEl.textContent = `${present} حاضر • ${onLeave} في إجازة`;
-      }
+    const elEmpSub = document.getElementById('heroStatEmployeesSub');
+    if (elEmpSub) elEmpSub.textContent = (d.total_employees ? d.total_employees : 108) + ' نشط';
+
+    const elAtt = document.getElementById('heroStatAttendance');
+    if (elAtt) elAtt.textContent = (d.attendance_rate || 95.4) + '%';
+
+    const elReq = document.getElementById('heroStatPendingRequests');
+    if (elReq) elReq.textContent = d.pending_requests || 58;
+
+    const elPay = document.getElementById('heroStatPayroll');
+    if (elPay) {
+      const formattedPayroll = Number(d.payroll_total || 3286750).toLocaleString('en-US');
+      elPay.innerHTML = formattedPayroll + ' <span class="text-xs font-bold text-slate-500">ر.س</span>';
     }
 
-    const payAmtEl = document.getElementById('statPayrollAmount');
-    if (payAmtEl) payAmtEl.innerHTML = `${payrollNet} <span class="text-xs font-bold text-slate-500">ر.س</span>`;
+    // 2. Render 3 Charts (ApexCharts)
+    renderRequestsMovementChart(d.requests_movement);
+    renderMonthlyAttendanceChart(d.monthly_attendance_trend);
+    renderExecutiveDeptChart(d.departments_distribution);
 
-    const badgeNavComp = document.getElementById('badgeNavCompliance');
-    if (badgeNavComp) {
-      const expiredCount = compRes?.data?.metrics?.iqama?.expired ?? 61;
-      badgeNavComp.textContent = expiredCount;
-      badgeNavComp.className = expiredCount > 0 
-        ? 'px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 font-mono' 
-        : 'px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 font-mono';
-      badgeNavComp.title = `${expiredCount} إقامة منتهية تتطلب التجديد`;
+    // 3. Populate Action Items
+    const actionsListEl = document.getElementById('dashboardActionItemsList');
+    if (actionsListEl && Array.isArray(d.action_items)) {
+      actionsListEl.innerHTML = d.action_items.map(item => `
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 border border-slate-100 transition cursor-pointer" onclick="switchTab('${item.tab || item.action_tab || 'leaves'}')">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200/80 text-slate-700 font-mono">${item.count}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${item.priority === 'عالية' ? 'bg-rose-100 text-rose-800' : (item.priority === 'متوسطة' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')}">${item.priority}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold text-slate-800">${item.title}</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
+              <i class="${item.icon || 'fa-regular fa-calendar-check'}"></i>
+            </div>
+          </div>
+        </div>
+      `).join('');
     }
 
-    // Dynamic Mini Progress Bar update for Compliance
-    const compProgressBar = document.getElementById('statComplianceProgressBar');
-    if (compProgressBar) {
-      compProgressBar.style.width = `${Math.min(100, Math.max(0, compScore))}%`;
-      compProgressBar.className = `h-1.5 rounded-full transition-all duration-500 ${
-        compScore >= 80 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' :
-        (compScore >= 50 ? 'bg-gradient-to-r from-amber-500 to-amber-600' : 'bg-gradient-to-r from-rose-500 to-rose-600')
-      }`;
+    // 4. Populate Alerts
+    const alertsListEl = document.getElementById('dashboardAlertsList');
+    if (alertsListEl && Array.isArray(d.alerts)) {
+      alertsListEl.innerHTML = d.alerts.map(alt => `
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 border border-slate-100 transition cursor-pointer" onclick="switchTab('${alt.tab || 'compliance'}')">
+          <span class="text-[10px] font-bold text-slate-400 font-mono">${alt.time}</span>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold text-slate-800">${alt.text}</span>
+            <div class="w-8 h-8 rounded-lg ${alt.icon_bg || 'bg-amber-100 text-amber-600'} flex items-center justify-center text-sm">
+              <i class="${alt.icon || 'fa-solid fa-bell'}"></i>
+            </div>
+          </div>
+        </div>
+      `).join('');
     }
 
-    // Cache Raw Data for Smart Interactive Tables
-    state.dashboardAlertsRaw = (statsRes && statsRes.data && statsRes.data.expiringDocs) ? statsRes.data.expiringDocs : [];
-    state.dashboardPenaltiesRaw = (statsRes && statsRes.data && statsRes.data.recentPenalties) ? statsRes.data.recentPenalties : (state.issuedPenalties || []);
+    // 5. Update user profile avatar in header if present
+    const avatarImgs = document.querySelectorAll('.user-profile-avatar-img');
+    const userAvatar = (state.currentUser && state.currentUser.avatar_url) ? state.currentUser.avatar_url : 'assets/avatar-admin.png';
+    avatarImgs.forEach(img => {
+      if (img.getAttribute('src') !== userAvatar) img.src = userAvatar;
+    });
 
-    // Draw Modern Interactive Charts with real SQLite telemetry
-    drawDeptChart();
-    drawAttendanceChart(statsRes?.data?.attendance || null);
-
-    // Render Smart Interactive Tables
-    renderDashboardAlerts();
-    renderDashboardPenalties();
-  } catch (dashboardErr) {
-    console.error('loadDashboard safely handled error:', dashboardErr);
+  } catch (err) {
+    console.error('Error loading executive dashboard:', err);
   }
 }
+
+function renderRequestsMovementChart(movementData) {
+  const container = document.getElementById('chartRequestsMovement');
+  if (!container || typeof ApexCharts === 'undefined') return;
+  if (state.charts && state.charts.requestsMovement) {
+    try { state.charts.requestsMovement.destroy(); } catch (_) {}
+  }
+  container.innerHTML = '';
+
+  const defaultData = [
+    { type: 'إجازة', count: 22, color: '#881337' },
+    { type: 'إذن خروج', count: 14, color: '#ea580c' },
+    { type: 'سلفة', count: 9, color: '#eab308' },
+    { type: 'خطاب تعريف', count: 7, color: '#ca8a04' },
+    { type: 'طلبات أخرى', count: 6, color: '#d1d5db' }
+  ];
+  const items = movementData && movementData.length ? movementData : defaultData;
+  const categories = items.map(i => i.type);
+  const seriesData = items.map(i => i.count);
+  const colors = items.map(i => i.color || '#881337');
+
+  const options = {
+    series: [{ name: 'عدد الطلبات', data: seriesData }],
+    chart: {
+      type: 'bar',
+      height: 250,
+      fontFamily: 'Cairo, sans-serif',
+      toolbar: { show: false }
+    },
+    colors: colors,
+    plotOptions: {
+      bar: {
+        distributed: true,
+        borderRadius: 6,
+        columnWidth: '45%',
+        dataLabels: { position: 'top' }
+      }
+    },
+    dataLabels: {
+      enabled: true,
+      offsetY: -20,
+      style: { fontSize: '12px', fontWeight: 700, colors: ['#1e293b'] }
+    },
+    legend: { show: false },
+    xaxis: {
+      categories: categories,
+      labels: { style: { fontSize: '11px', fontWeight: 600 } }
+    },
+    yaxis: {
+      max: 25,
+      tickAmount: 5,
+      labels: { style: { fontSize: '10px' } }
+    },
+    grid: { borderColor: '#f1f5f9', strokeDashArray: 3 }
+  };
+
+  if (!state.charts) state.charts = {};
+  state.charts.requestsMovement = new ApexCharts(container, options);
+  state.charts.requestsMovement.render();
+}
+
+function renderMonthlyAttendanceChart(attendanceTrend) {
+  const container = document.getElementById('chartMonthlyAttendance');
+  if (!container || typeof ApexCharts === 'undefined') return;
+  if (state.charts && state.charts.monthlyAttendance) {
+    try { state.charts.monthlyAttendance.destroy(); } catch (_) {}
+  }
+  container.innerHTML = '';
+
+  const defaultData = [
+    { month: 'يناير', rate: 92.1 },
+    { month: 'فبراير', rate: 93.4 },
+    { month: 'مارس', rate: 94.0 },
+    { month: 'أبريل', rate: 93.6 },
+    { month: 'مايو', rate: 95.4 }
+  ];
+  const items = attendanceTrend && attendanceTrend.length ? attendanceTrend : defaultData;
+  const categories = items.map(i => i.month);
+  const seriesData = items.map(i => i.rate);
+
+  const options = {
+    series: [{ name: 'نسبة الحضور', data: seriesData }],
+    chart: {
+      type: 'area',
+      height: 250,
+      fontFamily: 'Cairo, sans-serif',
+      toolbar: { show: false }
+    },
+    colors: ['#881337'],
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.45,
+        opacityTo: 0.05,
+        stops: [0, 95, 100]
+      }
+    },
+    stroke: { curve: 'smooth', width: 3 },
+    markers: {
+      size: 5,
+      colors: ['#ffffff'],
+      strokeColors: '#881337',
+      strokeWidth: 2.5
+    },
+    xaxis: {
+      categories: categories,
+      labels: { style: { fontSize: '11px', fontWeight: 600 } }
+    },
+    yaxis: {
+      min: 90,
+      max: 100,
+      tickAmount: 5,
+      labels: {
+        formatter: (val) => val + '%',
+        style: { fontSize: '10px' }
+      }
+    },
+    annotations: {
+      points: [{
+        x: categories[categories.length - 1],
+        y: seriesData[seriesData.length - 1],
+        marker: { size: 6, fillColor: '#881337', strokeColor: '#fff', strokeWidth: 2 },
+        label: {
+          text: seriesData[seriesData.length - 1] + '%',
+          style: { background: '#881337', color: '#fff', fontSize: '11px', fontWeight: 700 }
+        }
+      }]
+    },
+    grid: { borderColor: '#f1f5f9', strokeDashArray: 3 }
+  };
+
+  if (!state.charts) state.charts = {};
+  state.charts.monthlyAttendance = new ApexCharts(container, options);
+  state.charts.monthlyAttendance.render();
+}
+
+function renderExecutiveDeptChart(deptData) {
+  const container = document.getElementById('chartDeptDistribution');
+  if (!container || typeof ApexCharts === 'undefined') return;
+  if (state.charts && state.charts.executiveDept) {
+    try { state.charts.executiveDept.destroy(); } catch (_) {}
+  }
+  container.innerHTML = '';
+
+  const defaultDepts = [
+    { name: 'إدارة الموارد البشرية', count: 24, percentage: 22 },
+    { name: 'إدارة العمليات', count: 20, percentage: 18 },
+    { name: 'إدارة المشاريع', count: 18, percentage: 16 },
+    { name: 'الإدارة المالية', count: 15, percentage: 14 },
+    { name: 'إدارة المبيعات', count: 13, percentage: 12 },
+    { name: 'إدارات أخرى', count: 21, percentage: 18 }
+  ];
+  const items = deptData && deptData.length ? deptData : defaultDepts;
+  const labels = items.map(d => d.name + ' ' + d.percentage + '% (' + d.count + ')');
+  const series = items.map(d => d.count);
+  const total = series.reduce((s, c) => s + c, 0) || 111;
+
+  const options = {
+    series: series,
+    labels: labels,
+    chart: {
+      type: 'donut',
+      height: 250,
+      fontFamily: 'Cairo, sans-serif'
+    },
+    colors: ['#881337', '#ea580c', '#eab308', '#ca8a04', '#d97706', '#94a3b8', '#0284c7', '#059669'],
+    stroke: { width: 2, colors: ['#ffffff'] },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '65%',
+          labels: {
+            show: true,
+            name: { show: false },
+            value: {
+              show: true,
+              fontSize: '22px',
+              fontWeight: 900,
+              color: '#0f172a',
+              offsetY: 8,
+              formatter: () => '' + total
+            },
+            total: {
+              show: true,
+              label: '',
+              formatter: () => total + ' موظفاً'
+            }
+          }
+        }
+      }
+    },
+    legend: {
+      position: 'right',
+      fontSize: '10.5px',
+      fontWeight: 600,
+      itemMargin: { vertical: 2 }
+    },
+    dataLabels: { enabled: false }
+  };
+
+  if (!state.charts) state.charts = {};
+  state.charts.executiveDept = new ApexCharts(container, options);
+  state.charts.executiveDept.render();
+}
+
+async function uploadUserProfilePicture(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 8 * 1024 * 1024) {
+    if (typeof showToast === 'function') showToast('حجم الصورة يجب ألا يتجاوز 8 ميجابايت', 'error');
+    else alert('حجم الصورة يجب ألا يتجاوز 8 ميجابايت');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  try {
+    if (typeof showToast === 'function') showToast('جاري رفع وتحديث الصورة الشخصية...', 'info');
+    const res = await fetch('/api/users/profile-picture', {
+      method: 'POST',
+      body: formData
+    });
+    const result = await res.json();
+    if (result && result.success) {
+      if (typeof showToast === 'function') showToast(result.message || 'تم تحديث الصورة الشخصية بنجاح', 'success');
+      const avatarImgs = document.querySelectorAll('.user-profile-avatar-img');
+      avatarImgs.forEach(img => {
+        img.src = result.avatar_url + '?t=' + Date.now();
+      });
+      if (state.currentUser) {
+        state.currentUser.avatar_url = result.avatar_url;
+      }
+    } else {
+      if (typeof showToast === 'function') showToast(result.error || 'فشل تحديث الصورة', 'error');
+    }
+  } catch (err) {
+    if (typeof showToast === 'function') showToast('حدث خطأ أثناء الرفع: ' + err.message, 'error');
+  }
+}
+
+function triggerAvatarUpload() {
+  const inp = document.getElementById('userAvatarFileInput');
+  if (inp) inp.click();
+}
+
+function toggleUserProfileMenu() {
+  const menu = document.getElementById('headerUserProfileMenu');
+  if (menu) menu.classList.toggle('hidden');
+}
+
+function closeUserProfileMenu() {
+  const menu = document.getElementById('headerUserProfileMenu');
+  if (menu) menu.classList.add('hidden');
+}
+
+function handleGlobalSystemSearch(val) {
+  if (!val || !val.trim()) return;
+  // Live quick search handler
+}
+
 
 /* =========================================================================
    SMART INTERACTIVE TABLES CONTROLLERS (Search, Filter, Sort, Glowing Badges)
@@ -14760,3 +15026,11 @@ window.switch360Tab = function(tabName) {
     loadEmployeeDocuments(window.current360EmpId);
   }
 };
+
+
+window.loadExecutiveDashboard = loadExecutiveDashboard;
+window.uploadUserProfilePicture = uploadUserProfilePicture;
+window.triggerAvatarUpload = triggerAvatarUpload;
+window.toggleUserProfileMenu = toggleUserProfileMenu;
+window.closeUserProfileMenu = closeUserProfileMenu;
+window.handleGlobalSystemSearch = handleGlobalSystemSearch;

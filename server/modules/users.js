@@ -29,6 +29,7 @@ function persistUsersToDisk() {
         permissions: perms,
         emp_id: u.emp_id,
         custom_data_scope: u.custom_data_scope,
+        avatar_url: u.avatar_url || 'assets/avatar-admin.png',
         is_active: u.is_active,
         created_at: u.created_at
       };
@@ -106,21 +107,23 @@ function restoreUsersFromDisk() {
       const email = u.email || null;
       const empId = u.emp_id ? Number(u.emp_id) : null;
       const isActive = u.is_active !== undefined ? Number(u.is_active) : 1;
+      const avatarUrl = u.avatar_url || 'assets/avatar-admin.png';
 
       if (!existing) {
         run(`
-          INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [u.username.trim(), pass, fullName, email, role, permsStr, empId, isActive]);
+          INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active, avatar_url)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [u.username.trim(), pass, fullName, email, role, permsStr, empId, isActive, avatarUrl]);
       } else {
         // Keep updated details without losing password if not provided
         const finalPass = (u.password && u.password.trim() !== '') ? u.password.trim() : existing.password;
         run(`
           UPDATE users SET
             password = ?, full_name = ?, email = ?,
-            role = ?, permissions = ?, emp_id = ?, is_active = ?
+            role = ?, permissions = ?, emp_id = ?, is_active = ?,
+            avatar_url = COALESCE(?, avatar_url)
           WHERE id = ?
-        `, [finalPass, fullName, email, role, permsStr, empId, isActive, existing.id]);
+        `, [finalPass, fullName, email, role, permsStr, empId, isActive, avatarUrl, existing.id]);
       }
     }
     reconcileUserEmployeeLinks();
@@ -195,7 +198,7 @@ function login(username, password) {
 }
 
 function getAllUsers() {
-  const users = query('SELECT id, username, full_name, email, role, permissions, emp_id, custom_data_scope, is_active, created_at FROM users ORDER BY id ASC');
+  const users = query('SELECT id, username, full_name, email, role, permissions, emp_id, custom_data_scope, avatar_url, is_active, created_at FROM users ORDER BY id ASC');
   return users.map(u => {
     try {
       u.permissions = JSON.parse(u.permissions || '[]');

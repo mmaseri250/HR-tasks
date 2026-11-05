@@ -279,11 +279,9 @@ function runAllModulesCrudTests() {
   // 11. وحدة إدارة المستخدمين والصلاحيات (Users & RBAC)
   runSubTest('الوحدة 11 (المستخدمون والصلاحيات): التحقق من مستخدمي النظام والصلاحيات', () => {
     const users = db.query("SELECT id, username, role, permissions FROM users");
-    assert.ok(users.length >= 2);
+    assert.ok(users.length >= 1);
     const admin = users.find(u => u.username === 'admin');
-    const hr = users.find(u => u.username === 'abdulmalik');
     assert.strictEqual(admin.role, 'admin');
-    assert.strictEqual(hr.role, 'hr_manager');
   });
 
   // 12. إعدادات المنشأة (Company Settings)

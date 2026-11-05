@@ -12,6 +12,7 @@ function getCompanyLogoBase64() {
   if (cachedLogoBase64) return cachedLogoBase64;
   const candidatePaths = [
     path.join(__dirname, '..', '..', 'public', 'assets', 'logo.png'),
+    path.join(__dirname, '..', '..', 'public', 'assets', 'logo.jpg'),
     path.join(__dirname, '..', '..', 'public', 'images', 'logo.png'),
     path.join(__dirname, '..', '..', 'لوجو.png')
   ];
@@ -19,7 +20,13 @@ function getCompanyLogoBase64() {
     if (fs.existsSync(p)) {
       try {
         const buf = fs.readFileSync(p);
-        cachedLogoBase64 = `data:image/png;base64,${buf.toString('base64')}`;
+        let mime = 'image/png';
+        if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xd8) {
+          mime = 'image/jpeg';
+        } else if (buf.length >= 8 && buf.toString('hex', 0, 8) === '89504e470d0a1a0a') {
+          mime = 'image/png';
+        }
+        cachedLogoBase64 = `data:${mime};base64,${buf.toString('base64')}`;
         return cachedLogoBase64;
       } catch (e) {
         console.error('Failed to read logo at', p, e.message);

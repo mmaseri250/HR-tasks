@@ -530,6 +530,11 @@ function initSchema() {
   } catch (e) {
     // Column already exists
   }
+  try {
+    db.exec('ALTER TABLE users ADD COLUMN avatar_url TEXT;');
+  } catch (e) {
+    // Column already exists
+  }
 
   try { db.exec('ALTER TABLE requests ADD COLUMN manager_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN manager_approved_at TEXT;'); } catch (e) {}
