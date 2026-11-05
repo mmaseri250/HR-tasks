@@ -1268,6 +1268,8 @@ function buildFullSettlementDoc(emp, params = {}) {
   });
 }
 
+const { fillOfficialWordForm } = require('./officialDocxFiller');
+
 async function generateWordForm(formType, empId, params = {}) {
   let emp = null;
   const baseSql = `
@@ -1296,102 +1298,7 @@ async function generateWordForm(formType, empId, params = {}) {
     throw new Error('الموظف غير موجود بالنظام');
   }
 
-  let doc = null;
-  let filename = '';
-
-  switch (formType) {
-    case 'employee_status':
-    case 'status_notification':
-    case 'esn':
-      doc = buildEmployeeStatusDoc(emp, params);
-      filename = `إشعار_حالة_موظف_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'iqama_receipt':
-    case 'ira':
-      doc = buildIqamaReceiptDoc(emp, params);
-      filename = `استلام_إقامة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'final_exit':
-    case 'fer':
-      doc = buildFinalExitDoc(emp, params);
-      filename = `خروج_نهائي_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'sponsorship_transfer':
-    case 'str':
-      doc = buildSponsorshipTransferDoc(emp, params);
-      filename = `نقل_كفالة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'clearance_settlement':
-    case 'ecf':
-      doc = buildClearanceSettlementDoc(emp, params);
-      filename = `تصفية_موظف_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'full_settlement':
-    case 'ffs':
-      doc = buildFullSettlementDoc(emp, params);
-      filename = `إبراء_ذمة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'leave_request':
-      doc = buildLeaveRequestDoc(emp, params);
-      filename = `طلب_إجازة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'absence_penalty':
-    case 'penalty_absence':
-      doc = buildAbsencePenaltyNoticeDoc(emp, params);
-      filename = `إشعار_عقوبة_غياب_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'instruction_penalty':
-    case 'penalty_instructions':
-      doc = buildInstructionPenaltyNoticeDoc(emp, params);
-      filename = `إشعار_عقوبة_مخالفة_التعليمات_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'clearance':
-    case 'clearance_form':
-      doc = buildClearanceDoc(emp, params);
-      filename = `إخلاء_طرف_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'contract_non_renewal':
-      doc = buildContractNonRenewalDoc(emp, params);
-      filename = `إشعار_عدم_تجديد_عقد_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'penalty_procedure':
-      doc = buildPenaltyProcedureDoc(emp, params);
-      filename = `إجراء_جزائي_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'resignation_termination':
-    case 'termination_request':
-      doc = buildResignationTerminationDoc(emp, params);
-      filename = `طلب_إنهاء_خدمة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'loan_advance':
-      doc = buildAdvanceRequestDoc(emp, params);
-      filename = `طلب_سلفة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'scf':
-    case 'jm-hr-f-015':
-    case 'salary_cert':
-      doc = buildSalaryCertDoc(emp, params);
-      filename = `تعريف_بالراتب_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'return_from_leave':
-      doc = buildReturnFromLeaveDoc(emp, params);
-      filename = `مباشرة_بعد_إجازة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'permission_request':
-      doc = buildPermissionRequestDoc(emp, params);
-      filename = `طلب_استئذان_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    case 'work_mission':
-    case 'mission_request':
-      doc = buildWorkMissionDoc(emp, params);
-      filename = `مهمة_عمل_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
-      break;
-    default:
-      throw new Error(`نوع النموذج غير معروف: ${formType}`);
-  }
-
-  const buffer = await Packer.toBuffer(doc);
-  return { buffer, filename };
+  return await fillOfficialWordForm(formType, emp, params);
 }
 
 module.exports = {

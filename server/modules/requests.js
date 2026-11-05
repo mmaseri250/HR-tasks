@@ -91,7 +91,7 @@ function getRequestById(id, user = null) {
   return reqRow;
 }
 
-function submitRequest(data) {
+function submitRequest(data, userContext = null) {
   const {
     emp_id,
     request_type,
@@ -110,6 +110,19 @@ function submitRequest(data) {
 
   if (!emp_id || !request_type || !reason) {
     throw new Error('يرجى تحديد الموظف ونوع الطلب وسبب الطلب');
+  }
+
+  // Strict Governance & Compliance Check:
+  // Admin cannot impersonate or submit self-service requests on behalf of employees
+  if (userContext) {
+    const userRole = userContext.role || 'employee';
+    const userEmpId = userContext.emp_id ? Number(userContext.emp_id) : null;
+    if (userRole === 'admin' && !userEmpId) {
+      throw new Error('غير مصرح نظاماً: لا يحق لمدير النظام تقديم طلبات خدمة ذاتية بالنيابة عن الموظف. طلب الخدمة الذاتية يعد إقراراً وتوقيعاً إلكترونياً شخصياً يصدر حصراً عن الموظف صاحب الشأن وفق نظام العمل.');
+    }
+    if (userRole === 'employee' && userEmpId && Number(emp_id) !== userEmpId) {
+      throw new Error('غير مصرح نظاماً: لا يحق للموظف تقديم طلب خدمة ذاتية بالنيابة عن موظف آخر. الخدمة الذاتية مخصصة لحساب الموظف الشخصي فقط.');
+    }
   }
 
   // Handle Replacement Employee for Leave Requests

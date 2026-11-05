@@ -1833,7 +1833,8 @@ app.get('/api/requests/:id', (req, res) => {
 
 app.post('/api/requests', (req, res) => {
   try {
-    const newReq = requestsModule.submitRequest(req.body);
+    const user = extractUserContext(req);
+    const newReq = requestsModule.submitRequest(req.body, user);
     res.status(201).json({ success: true, message: 'تم تقديم الطلب بنجاح', data: newReq });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -2185,7 +2186,8 @@ app.get('/api/leaves', (req, res) => {
 
 app.post('/api/leaves', (req, res) => {
   try {
-    const newLeave = leavesModule.submitLeaveRequest(req.body);
+    const user = extractUserContext(req);
+    const newLeave = leavesModule.submitLeaveRequest(req.body, user);
     res.status(201).json({ success: true, message: 'تم إرسال طلب الإجازة للمدير المباشر بنجاح', data: newLeave });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });

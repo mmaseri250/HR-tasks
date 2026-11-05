@@ -219,7 +219,7 @@ function getBalanceAdjustments(empId = null) {
 /**
  * Submit a new leave request (routes through Direct Manager -> HR Manager)
  */
-function submitLeaveRequest(data) {
+function submitLeaveRequest(data, userContext = null) {
   const {
     emp_id,
     leave_type = 'إجازة سنوية',
@@ -233,6 +233,19 @@ function submitLeaveRequest(data) {
 
   if (!emp_id || !start_date || !end_date || !days_count) {
     throw new Error('بيانات الإجازة غير مكتملة (الموظف، تاريخ البداية، تاريخ النهاية، عدد الأيام)');
+  }
+
+  // Strict Governance & Compliance Check:
+  // Admin cannot impersonate or submit self-service leave on behalf of employees
+  if (userContext) {
+    const userRole = userContext.role || 'employee';
+    const userEmpId = userContext.emp_id ? Number(userContext.emp_id) : null;
+    if (userRole === 'admin' && !userEmpId) {
+      throw new Error('غير مصرح نظاماً: لا يحق لمدير النظام تقديم طلب إجازة خدمة ذاتية بالنيابة عن الموظف. طلب الإجازة يعد إقراراً شخصياً ملزماً يصدر حصراً عن الموظف نفسه.');
+    }
+    if (userRole === 'employee' && userEmpId && Number(emp_id) !== userEmpId) {
+      throw new Error('غير مصرح نظاماً: لا يحق للموظف تقديم طلب إجازة بالنيابة عن موظف آخر.');
+    }
   }
 
   const days = Number(days_count);

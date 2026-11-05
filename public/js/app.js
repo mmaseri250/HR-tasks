@@ -5384,11 +5384,32 @@ async function loadSelfService() {
   const titleEl = document.getElementById('essEmployeeTitle');
   const balEl = document.getElementById('essLeaveBalance');
   const selector = document.getElementById('essEmpSelector');
+  const govNotice = document.getElementById('essAdminGovernanceNotice');
+
+  if (govNotice) {
+    if (curUser.role === 'admin' && !curUser.emp_id) {
+      govNotice.classList.remove('hidden');
+    } else {
+      govNotice.classList.add('hidden');
+    }
+  }
 
   if (emp) {
     currentEssEmpId = emp.id;
-    if (nameEl) nameEl.textContent = emp.full_name_ar;
-    if (titleEl) titleEl.textContent = `${emp.job_title_ar || 'موظف'} • ${emp.department_name_ar || 'شركة جوهرة المجد'}`;
+    if (nameEl) {
+      if (curUser.role === 'admin' && !curUser.emp_id) {
+        nameEl.textContent = `إدارة النظام (وضع التدقيق والمطالعة - ${emp.full_name_ar})`;
+      } else {
+        nameEl.textContent = emp.full_name_ar;
+      }
+    }
+    if (titleEl) {
+      if (curUser.role === 'admin' && !curUser.emp_id) {
+        titleEl.textContent = `استعراض تدقيقي لملف الموظف: ${emp.full_name_ar} • ${emp.job_title_ar || 'موظف'}`;
+      } else {
+        titleEl.textContent = `${emp.job_title_ar || 'موظف'} • ${emp.department_name_ar || 'شركة جوهرة المجد'}`;
+      }
+    }
     
     // Fetch live balance from SQLite API (Single Source of Truth)
     let leaveBal = Number(emp.annual_leave_balance || 0);
@@ -5842,14 +5863,22 @@ function renderSelfServiceRequests() {
 }
 
 function openModalRequest(category = 'إجازة', specificType = null) {
+  // Strict Governance: Admin cannot submit ESS requests on behalf of employees
+  if (state.currentUser && state.currentUser.role === 'admin' && !state.currentUser.emp_id) {
+    alert('غير مصرح نظاماً وقانونياً:\n\nلا يحق لمدير النظام تقديم طلب خدمة ذاتية بالنيابة عن الموظف؛ لأن تقديم الطلب يعد إقراراً وتوقيعاً إلكترونياً شخصياً يصدر حصراً عن الموظف صاحب الشأن وفق نظام العمل السعودي.\n\n• لاعتماد طلبات الموظفين المقدمة منهم: يرجى التوجه إلى شاشة (سير الموافقات والاعتمادات).\n• لتقديم طلب شخصي: يجب تسجيل الدخول بحساب الموظف المعني.');
+    return;
+  }
+
   const catSelect = document.getElementById('reqCategorySelect');
   if (catSelect) {
     catSelect.value = category;
   }
 
-  // Populate Target Employee Select (For Admin / Manager or Self)
+  // Target Employee: Locked strictly to current employee
   const targetEmpSelect = document.getElementById('reqTargetEmp');
   const targetContainer = document.getElementById('reqTargetEmpContainer');
+  if (targetContainer) targetContainer.classList.add('hidden'); // Never allow switching target employee in ESS
+
   const activeEmps = (state.employees || []).filter(e => e.status !== 'منتهي عقد');
   const currentUserEmpId = (state.currentUser && state.currentUser.emp_id) ? Number(state.currentUser.emp_id) : (currentEssEmpId ? Number(currentEssEmpId) : null);
 
@@ -6181,6 +6210,11 @@ async function handleRequestFormSubmit(e) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
+
+  if (!apiRes || !apiRes.success) {
+    alert('تعذر تقديم الطلب: ' + (apiRes?.error || 'حدث خطأ في النظام'));
+    return;
+  }
 
   const backendData = apiRes && apiRes.data ? apiRes.data : null;
 

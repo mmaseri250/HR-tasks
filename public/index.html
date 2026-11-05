@@ -5470,6 +5470,31 @@
           </button>
         </div>
         
+        <!-- Institutional Governance Warning Banner for Admin -->
+        <div id="essAdminGovernanceNotice" class="hidden p-4 rounded-3xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-950 shadow-sm mb-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-800 flex items-center justify-center text-xl shrink-0 border border-amber-500/30">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <h4 class="text-sm font-black text-amber-950">تنبيه حوكمة نظامي: وضع الرقابة والتدقيق لمدير النظام</h4>
+                  <span class="text-[10px] bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full font-extrabold border border-amber-300">نظام العمل ولائحة الشركة</span>
+                </div>
+                <p class="text-xs text-amber-900 leading-relaxed font-semibold">
+                  طبقاً للمادة (58) من نظام العمل واللائحة المعتمدة، تعد طلبات الخدمة الذاتية (الإجازات، السلف، الاستئذانات) إقرارات وتواقيع شخصية ملزمة تصدر حصراً عن الموظف عبر حسابه الشخصي. 
+                  <strong>لا يحق لمدير النظام تقديم طلبات نيابة عن الموظف.</strong> بصفتك مديراً، يمكنك استعراض الملفات وتدقيقها فقط، أو اعتماد الطلبات عبر شاشة الموافقات.
+                </p>
+              </div>
+            </div>
+            <button type="button" onclick="switchTab('leaves')" class="shrink-0 px-4 py-2 rounded-2xl bg-[#700c14] hover:bg-[#8B0000] text-white font-bold text-xs flex items-center gap-2 shadow transition">
+              <i class="fa-solid fa-list-check text-amber-300"></i>
+              <span>سير الموافقات والاعتمادات</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Top Banner: Employee Profile & Quick Snapshot -->
         <div class="p-6 rounded-3xl bg-gradient-to-r from-[#700c14] via-[#8B0000] to-[#50080e] !bg-[#700c14] text-white shadow-xl relative overflow-hidden border border-amber-500/30">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
@@ -5479,8 +5504,8 @@
               </div>
               <div>
                 <span class="text-xs bg-white/20 text-amber-200 px-3 py-0.5 rounded-full font-bold border border-white/20">بوابة الخدمة الذاتية للموظفين (ESS)</span>
-                <h2 id="essEmployeeName" class="text-2xl font-black mt-1 text-white">سارة عبدالله الشهري</h2>
-                <p id="essEmployeeTitle" class="text-xs text-white/90">أخصائية موارد بشرية وعلاقات موظفين • شركة جوهرة المجد</p>
+                <h2 id="essEmployeeName" class="text-2xl font-black mt-1 text-white">بوابة الخدمة الذاتية</h2>
+                <p id="essEmployeeTitle" class="text-xs text-white/90">منظومة الخدمة الذاتية والطلبات الإلكترونية • شركة جوهرة المجد</p>
                 <div id="essEmpSelectorContainer" class="mt-2.5 flex items-center gap-2">
                   <span class="text-[11px] font-bold text-amber-200">عرض ملف الموظف:</span>
                   <select id="essEmpSelector" onchange="onEssEmpSelected(this.value)" class="rounded-xl border border-amber-400/40 bg-black/40 text-white font-bold text-xs py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-amber-400">
