@@ -260,6 +260,64 @@ function seedDatabase() {
         '2026-11-05', monthlyAccrualRate, annualLeaveBalance
       );
     }
+  } else {
+    const jsonPath = path.join(__dirname, 'officialEmployeesClean.json');
+    if (fs.existsSync(jsonPath)) {
+      const emps = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      const upsertEmpStmt = db.prepare(`
+        INSERT INTO employees (
+          emp_code, full_name_ar, full_name_en, national_id, nationality,
+          is_saudi, gender, phone, email, department_id, branch_id, section,
+          section_id, job_title_ar, job_title_en, join_date, basic_salary,
+          housing_allowance, transport_allowance, other_allowance, iban,
+          iqama_expiry, direct_manager_name, opening_leave_balance,
+          accrual_start_date, monthly_accrual_rate, annual_leave_balance, status
+        ) VALUES (
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
+          ?, ?, ?,
+          ?, ?, ?, 'نشط'
+        )
+        ON CONFLICT(emp_code) DO UPDATE SET
+          full_name_ar = excluded.full_name_ar,
+          national_id = excluded.national_id,
+          nationality = excluded.nationality,
+          is_saudi = excluded.is_saudi,
+          gender = excluded.gender,
+          phone = excluded.phone,
+          email = excluded.email,
+          department_id = excluded.department_id,
+          branch_id = excluded.branch_id,
+          section = excluded.section,
+          section_id = excluded.section_id,
+          job_title_ar = excluded.job_title_ar,
+          join_date = excluded.join_date,
+          basic_salary = excluded.basic_salary,
+          housing_allowance = excluded.housing_allowance,
+          transport_allowance = excluded.transport_allowance,
+          other_allowance = excluded.other_allowance,
+          iban = excluded.iban,
+          iqama_expiry = excluded.iqama_expiry,
+          direct_manager_name = excluded.direct_manager_name,
+          opening_leave_balance = excluded.opening_leave_balance,
+          annual_leave_balance = excluded.annual_leave_balance,
+          status = 'نشط'
+      `);
+
+      for (const e of emps) {
+        if (e.status !== 'نشط') continue;
+        upsertEmpStmt.run(
+          e.emp_code, e.full_name_ar, e.full_name_en, e.national_id, e.nationality,
+          e.is_saudi, e.gender, e.phone, e.email, e.department_id, e.branch_id, e.section || '',
+          e.section_id, e.job_title_ar, e.job_title_en, e.join_date, e.basic_salary,
+          e.housing_allowance, e.transport_allowance, e.other_allowance, e.iban,
+          e.iqama_expiry, e.direct_manager_name, e.opening_leave_balance || 0,
+          e.accrual_start_date || '2026-11-05', e.monthly_accrual_rate || 1.75, e.annual_leave_balance || 0
+        );
+      }
+    }
   }
 
   // 4. Seed 5 Terminated Employees
