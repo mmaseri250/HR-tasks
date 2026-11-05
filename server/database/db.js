@@ -845,17 +845,8 @@ function syncEmployeeIqamaExpiries() {
 }
 
 function ensureOfficialFleetAndLicenses() {
-  try {
-    const vCount = db.prepare('SELECT COUNT(*) as c FROM vehicles').get()?.c || 0;
-    const lCount = db.prepare('SELECT COUNT(*) as c FROM company_licenses').get()?.c || 0;
-    if (vCount < 23 || lCount < 17) {
-      console.log(`[DB Init] Detected fleet (${vCount}/23) or licenses (${lCount}/17) requiring migration. Migrating official data...`);
-      const { migrate } = require('../../scripts/migrate_real_fleet_licenses');
-      migrate();
-    }
-  } catch (err) {
-    console.error('[DB Init] Error checking/migrating fleet and licenses:', err.message);
-  }
+  // Purged permanently: Zero mock data policy. 
+  // Company fleet and licenses must come strictly from official user imports or manual entries.
 }
 
 function ensureOfficialUsersClean() {

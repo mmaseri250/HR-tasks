@@ -255,28 +255,11 @@ function runEnterpriseMigration() {
     CREATE INDEX IF NOT EXISTS idx_lic_exp ON company_licenses(expiry_date);
   `);
 
-  // Seed official company licenses and vehicle fleet if empty
-  const licCount = db.prepare('SELECT COUNT(*) as c FROM company_licenses').get().c;
-  const vCount = db.prepare('SELECT COUNT(*) as c FROM vehicles').get().c;
-  if (licCount < 17 || vCount < 23) {
-    try {
-      const { migrate } = require('../../scripts/migrate_real_fleet_licenses');
-      migrate();
-      console.log('✓ Successfully migrated 17 official licenses and 23 fleet vehicles.');
-    } catch (mErr) {
-      console.error('Error running fleet/licenses migration in enterprise_migration:', mErr.message);
-    }
-  }
+  // Zero mock data policy: No automatic seeding of vehicles or licenses.
+  // Vehicles and licenses are only populated by user import or manual entries.
 
-  // Seed default medical insurance policy if empty
-  const insCount = db.prepare('SELECT COUNT(*) as c FROM medical_insurance_policies').get().c;
-  if (insCount === 0) {
-    db.prepare(`
-      INSERT INTO medical_insurance_policies (policy_no, provider_name, policy_start, policy_end, category, status)
-      VALUES ('POL-MED-JM-2026', 'شركة بوبا العربية للتأمين التعاوني', '2026-01-01', '2026-12-31', 'وثيقة الموظفين الموحدة CCHI', 'سارية')
-    `).run();
-    console.log('✓ Seeded default medical insurance policy.');
-  }
+  // Zero mock data policy: No default medical insurance policy seeding.
+  // Policies are managed strictly by user entry or import.
 
   console.log('✅ Enterprise Schema Migration Completed Successfully!');
 }

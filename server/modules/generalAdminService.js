@@ -125,93 +125,11 @@ class GeneralAdminService {
   }
 
   /**
-   * Seed realistic initial circulars and licenses - Disabled for production clean state
+   * Zero mock data policy: No automatic seeding of licenses or circulars.
    */
   seedInitialData() {
-    // 1. Seed Company Licenses
-    const licCount = get(`SELECT COUNT(*) as c FROM company_licenses`).c;
-    if (licCount === 0) {
-      run(`
-        INSERT INTO company_licenses (license_type, license_name_ar, license_no, issuing_authority, issue_date, expiry_date, alert_days_before, status, notes)
-        VALUES 
-        ('commercial_reg', 'السجل التجاري الرئيسي - شركة جوهرة المجد للمقاولات والتجارة', '5850024190', 'وزارة التجارة', '2023-01-15', '2027-01-14', 60, 'سارية', 'المركز الرئيسي - أبها'),
-        ('baladiya', 'رخصة الأنشطة البلدية والمقر الإداري والمستودعات', '4409120391', 'أمانة منطقة عسير', '2024-03-01', '2027-02-28', 60, 'سارية', 'مبنى الإدارة - سيتي بارك'),
-        ('civil_defense', 'شهادة استيفاء متطلبات السلامة والوقاية من الحريق', 'CD-ASR-2024-88', 'المديرية العامة للدفاع المدني', '2025-01-10', '2027-01-09', 45, 'سارية', 'نظام إنذار وإطفاء معتمد'),
-        ('chamber', 'اشتراك الغرفة التجارية والصناعية بأبها', 'CH-774920', 'غرفة أبها', '2024-01-01', '2027-01-01', 30, 'سارية', 'الدرجة الممتازة'),
-        ('saudization_cert', 'شهادة التوطين الرسمية ونطاقات', 'SAUDI-2026-901', 'وزارة الموارد البشرية والتنمية الاجتماعية', '2026-01-01', '2027-01-01', 30, 'سارية', 'النطاق الأخضر المرتفع'),
-        ('zakat_cert', 'شهادة الزكاة والضريبة والجمارك (ZATCA)', 'ZATCA-1029384', 'هيئة الزكاة والضريبة والجمارك', '2025-04-30', '2026-04-30', 60, 'سارية', 'إقرار زكوي ساري ومسدد'),
-        ('gosi_cert', 'شهادة التأمينات الاجتماعية والالتزام بنظام العمل', 'GOSI-99210-2026', 'المؤسسة العامة للتأمينات الاجتماعية', '2026-01-01', '2026-12-31', 30, 'سارية', 'التزام بنظام حماية الأجور WPS')
-      `);
-    } else {
-      const gosi = get("SELECT id FROM company_licenses WHERE license_type = 'gosi_cert'");
-      if (!gosi) {
-        run(`
-          INSERT INTO company_licenses (license_type, license_name_ar, license_no, issuing_authority, issue_date, expiry_date, alert_days_before, status, notes)
-          VALUES ('gosi_cert', 'شهادة التأمينات الاجتماعية والالتزام بنظام العمل', 'GOSI-99210-2026', 'المؤسسة العامة للتأمينات الاجتماعية', '2026-01-01', '2026-12-31', 30, 'سارية', 'التزام بنظام حماية الأجور WPS')
-        `);
-      }
-    }
-
-    // 2. Seed Administrative Circulars
-    const circCount = get(`SELECT COUNT(*) as c FROM administrative_circulars`).c;
-    if (circCount === 0) {
-      const initialCirculars = [
-        {
-          circular_no: 'CIR-2026-001',
-          title: 'الالتزام التام بتعليمات السلامة وارتداء مهمات الوقاية الشخصية (PPE) بمواقع المشاريع',
-          category: 'سلامة وصحة مهنية',
-          target_audience: 'كافة المهندسين والمشرفين والعاملين بالمشاريع الميدانية',
-          issued_by: 'المدير التنفيذي لإدارة المشاريع والسلامة',
-          issued_at: '2026-01-10',
-          is_urgent: 1,
-          acknowledgement_required: 1,
-          content: 'بناءً على لائحة السلامة والصحة المهنية الصادرة عن وزارة الموارد البشرية، وحرصاً على سلامة كافة منسوبي شركة جوهرة المجد:\n1. يُلزم جميع العاملين والمهندسين والزوار بارتداء معدات الوقاية الشخصية كاملة (خوذة الأمان، سترة عاكسة، حذاء سلامة، ونظارات واقية) فور دخول أي موقع إنشائي.\n2. يُمنع منعاً باتاً التواجد في أماكن الرفع والأعمال الثقيلة دون التنسيق مع ضابط السلامة بالمشروع.\n3. ستُطبق الجزاءات النظامية بحق أي مخالف لهذه التعليمات حفاظاً على الأرواح والممتلكات.'
-        },
-        {
-          circular_no: 'CIR-2026-002',
-          title: 'ضوابط استخدام أسطول سيارات الشركة وتفويضات القيادة عبر منصة تم الرسمية',
-          category: 'إداري وتنظيمي',
-          target_audience: 'كافة الموظفين المسلّمة لهم عهد مركبات وسائقو الشركة',
-          issued_by: 'مدير الخدمات المساندة وشعبة الحركة',
-          issued_at: '2026-01-20',
-          is_urgent: 0,
-          acknowledgement_required: 1,
-          content: 'نظراً لأهمية المحافظة على أصول وأسطول الشركة والامتثال لأنظمة المرور ومنصة تم:\n1. تُعتبر المركبة المسلمة للموظف عهدة رسمية شخصية مخصصة لأغراض العمل، ولا يجوز تمكين أي شخص آخر غير مفوض نظامياً من قيادتها.\n2. يتحمل السائق المفوض كافة المخالفات المرورية المسجلة على المركبة خلال فترة استلامه للعهدة.\n3. يجب إبلاغ مسؤول الحركة فوراً عند اقتراب موعد الفحص الدوري أو رخصة السير أو الحاجة للصيانة.'
-        },
-        {
-          circular_no: 'CIR-2026-003',
-          title: 'تنظيم مواعيد العمل وساعات الدوام وشهر رمضان المبارك 1447هـ',
-          category: 'مواعيد الدوام والعمل',
-          target_audience: 'كافة منسوبي شركة جوهرة المجد',
-          issued_by: 'إدارة الموارد البشرية',
-          issued_at: '2026-02-05',
-          is_urgent: 0,
-          acknowledgement_required: 1,
-          content: 'بمناسبة قرب حلول شهر رمضان المبارك، نود إحاطتكم بأن ساعات العمل اليومية لكافة الموظفين المسلمين ستكون (6) ساعات عمل فعلية يومياً، وفقاً للمادة (98) من نظام العمل السعودي.\nيبدأ الدوام الصباحي من الساعة 10:00 صباحاً وحتى الساعة 4:00 مساءً. سائلين الله تعالى أن يتقبل من الجميع صالح الأعمال.'
-        },
-        {
-          circular_no: 'CIR-2026-004',
-          title: 'إلزامية تحديث بيانات التأمين الطبي التعاوني والتابعين عبر بوابة الخدمة الذاتية',
-          category: 'رعاية صحية وتأمين',
-          target_audience: 'جميع الموظفين والموظفات',
-          issued_by: 'قسم المزايا والتعويضات - الموارد البشرية',
-          issued_at: '2026-03-01',
-          is_urgent: 0,
-          acknowledgement_required: 1,
-          content: 'حرصاً على استمرار التغطية التأمينية لكافة منسوبي الشركة وعائلاتهم المعتمدين لدى مجلس الضمان الصحي (CCHI)، يُرجى التأكد من صحة بيانات الهوية الوطنية/الإقامة وإضافة المواليد الجدد خلال 30 يوماً من تاريخ الواقعة.'
-        }
-      ];
-
-      for (const c of initialCirculars) {
-        run(`
-          INSERT INTO administrative_circulars (
-            circular_no, title, content, category, target_audience, issued_by, issued_at, is_urgent, acknowledgement_required
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-          c.circular_no, c.title, c.content.trim(), c.category, c.target_audience, c.issued_by, c.issued_at, c.is_urgent, c.acknowledgement_required
-        ]);
-      }
-    }
+    // Disabled permanently for clean production state.
+    return;
   }
 
   /* =========================================================================
