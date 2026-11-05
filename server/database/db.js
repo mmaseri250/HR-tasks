@@ -847,6 +847,23 @@ function syncEmployeeIqamaExpiries() {
 function ensureOfficialFleetAndLicenses() {
   // Purged permanently: Zero mock data policy. 
   // Company fleet and licenses must come strictly from official user imports or manual entries.
+  try {
+    // If persistent disk database contains mock fleet records with fabricated VINs, purge them immediately
+    const mockCheck = db.prepare("SELECT COUNT(*) as c FROM vehicles WHERE vin_serial LIKE 'VIN-%'").get()?.c || 0;
+    if (mockCheck > 0) {
+      db.prepare("DELETE FROM vehicles WHERE vin_serial LIKE 'VIN-%'").run();
+      console.log(`[Purge] Cleaned ${mockCheck} mock vehicles from persistent database.`);
+    }
+    // If persistent disk database contains fabricated licenses, purge them immediately
+    const mockLic = db.prepare("SELECT COUNT(*) as c FROM company_licenses WHERE license_no IN ('5850029400', '5850031120', '5850034590', 'MUN-440912-ABH', 'MUN-441205-KHM', 'MUN-450320-ABH', 'CD-881290-ABH', '5850024190', '4409120391', 'CD-ASR-2024-88', 'CH-774920', 'SAUDI-2026-901', 'ZATCA-1029384', 'GOSI-99210-2026')").get()?.c || 0;
+    if (mockLic > 0) {
+      db.prepare("DELETE FROM company_licenses WHERE license_no IN ('5850029400', '5850031120', '5850034590', 'MUN-440912-ABH', 'MUN-441205-KHM', 'MUN-450320-ABH', 'CD-881290-ABH', '5850024190', '4409120391', 'CD-ASR-2024-88', 'CH-774920', 'SAUDI-2026-901', 'ZATCA-1029384', 'GOSI-99210-2026')").run();
+      console.log(`[Purge] Cleaned ${mockLic} mock licenses from persistent database.`);
+    }
+    db.prepare("DELETE FROM medical_insurance_policies WHERE policy_no = 'POL-MED-JM-2026'").run();
+  } catch (err) {
+    console.error('[Purge] Error cleaning mock fleet/licenses from persistent DB:', err.message);
+  }
 }
 
 function ensureOfficialUsersClean() {
