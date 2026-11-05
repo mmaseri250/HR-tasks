@@ -751,88 +751,49 @@ function initSchema() {
   try {
     const countCheck = db.prepare('SELECT count(*) as cnt FROM muqeem_residents').get();
     if (countCheck && countCheck.cnt === 0) {
-      seedMuqeemResidentsFromExcel();
+      syncMuqeemFromEmployees();
     }
   } catch (e) {
     console.error('Error checking muqeem_residents seed:', e.message);
   }
 }
 
-function seedMuqeemResidentsFromExcel() {
+function syncMuqeemFromEmployees() {
   try {
-    const xlsx = require('xlsx');
-    const rootDir = path.join(__dirname, '..', '..');
-    const primaryPath = path.join(rootDir, 'المقيمين النشطين 04_11_2026.xlsx');
-    const excelPath = fs.existsSync(primaryPath) ? primaryPath : path.join(rootDir, 'المقيمين النشطين10_5_2026.xlsx');
-    if (!fs.existsSync(excelPath)) return;
-    const wb = xlsx.readFile(excelPath);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = xlsx.utils.sheet_to_json(ws);
+    const expats = db.prepare("SELECT national_id, full_name_ar, gender, nationality, job_title_ar, passport_expiry, iqama_expiry, birth_date FROM employees WHERE is_saudi = 0 AND status = 'نشط' ORDER BY id ASC").all();
+    if (!expats || expats.length === 0) return;
 
+    db.exec('DELETE FROM muqeem_residents');
     const stmt = db.prepare(`
-      INSERT OR REPLACE INTO muqeem_residents (
+      INSERT INTO muqeem_residents (
         iqama_number, full_name, gender, nationality, occupation,
         passport_number, passport_expiry, iqama_issue_date,
         iqama_expiry_gregorian, iqama_expiry_hijri, birth_date,
         is_outside_ksa, employer_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, NULL, ?, NULL, ?, NULL, ?, 0, '7013999755')
     `);
 
-    const updateEmpStmt = db.prepare(`
-      UPDATE employees SET
-        iqama_expiry = COALESCE(?, iqama_expiry),
-        passport_expiry = COALESCE(?, passport_expiry)
-      WHERE national_id = ?
-    `);
-
-    for (const row of data) {
-      const iqama = String(row['رقم الاقامة'] || '').trim();
-      if (!iqama) continue;
-
-      const iqamaExpiry = String(row['تاريخ انتهاء الاقامة'] || '').trim();
-      const passportExpiry = String(row['تاريخ انتهاء الجواز'] || '').trim();
-
+    for (const exp of expats) {
       stmt.run(
-        iqama,
-        String(row['الاسم'] || '').trim(),
-        String(row['الجنس'] || 'ذكر').trim(),
-        String(row['الجنسية'] || '').trim(),
-        String(row['المهنة'] || '').trim(),
-        String(row['رقم الجواز'] || '').trim(),
-        passportExpiry,
-        String(row['تاريخ اصدار الاقامة'] || '').trim(),
-        iqamaExpiry,
-        String(row['تاريخ انتهاء الاقامة بالهجري'] || '').trim(),
-        String(row['تاريخ الميلاد'] || '').trim(),
-        String(row['خارج المملكه'] || '').trim() === 'نعم' ? 1 : 0,
-        String(row['رقم صاحب العمل'] || '7013999755').trim()
+        exp.national_id,
+        exp.full_name_ar,
+        exp.gender === 'F' ? 'أنثى' : 'ذكر',
+        exp.nationality,
+        exp.job_title_ar,
+        exp.passport_expiry || null,
+        exp.iqama_expiry || null,
+        exp.birth_date || null
       );
-
-      updateEmpStmt.run(iqamaExpiry || null, passportExpiry || null, iqama);
     }
-
-    // Only residents genuinely present in the Muqeem Excel sheet are inserted.
-    // Zero fabrication: do NOT synthesize fake passport or iqama dates for missing records.
-
-    // Delete any resident not in the company's employee database
-    db.prepare('DELETE FROM muqeem_residents WHERE iqama_number NOT IN (SELECT national_id FROM employees WHERE is_saudi = 0)').run();
-  } catch (err) {
-    console.error('Could not auto-seed muqeem residents:', err.message);
+    console.log(`[DB Init] Synchronized ${expats.length} active expats from employees table to muqeem_residents`);
+  } catch (e) {
+    console.error('Error syncing muqeem_residents from employees:', e.message);
   }
 }
 
 function syncEmployeeIqamaExpiries() {
   try {
-    db.prepare(`
-      UPDATE employees SET
-        iqama_expiry = (
-          SELECT iqama_expiry_gregorian FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
-        ),
-        passport_expiry = (
-          SELECT passport_expiry FROM muqeem_residents WHERE muqeem_residents.iqama_number = employees.national_id
-        )
-      WHERE is_saudi = 0 AND national_id IN (SELECT iqama_number FROM muqeem_residents);
-    `).run();
+    syncMuqeemFromEmployees();
   } catch (err) {
     console.error('Error syncing employee iqama expiries:', err.message);
   }

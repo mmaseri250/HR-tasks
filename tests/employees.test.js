@@ -34,9 +34,9 @@ function runEmployeeAndRequestTests() {
   assert.strictEqual(compMetrics.metrics.expatCount, 78, 'يجب أن يكون عدد غير السعوديين النشطين 78 موظفاً');
   assert.strictEqual(compMetrics.metrics.saudiCount, 30, 'يجب أن يكون عدد السعوديين النشطين 30 موظفاً');
   assert.strictEqual(compMetrics.metrics.workPermits.active, 78, 'يجب أن تتوفر 78 رخصة عمل للمقيمين النشطين');
-  assert.strictEqual(compMetrics.metrics.iqama.valid, 22, 'يجب أن يكون عدد الإقامات السارية 22 (تشمل السارية والتي قاربت على الانتهاء)');
-  assert.strictEqual(compMetrics.metrics.iqama.expired, 56, 'يجب أن يكون عدد الإقامات المنتهية 56');
-  assert.strictEqual(compMetrics.metrics.workPermits.valid, 22, 'يجب أن يكون عدد رخص العمل السارية 22');
+  assert.strictEqual(compMetrics.metrics.iqama.valid, 17, 'يجب أن يكون عدد الإقامات السارية 17 (تشمل السارية والتي قاربت على الانتهاء)');
+  assert.strictEqual(compMetrics.metrics.iqama.expired, 61, 'يجب أن يكون عدد الإقامات المنتهية 61');
+  assert.strictEqual(compMetrics.metrics.workPermits.valid, 17, 'يجب أن يكون عدد رخص العمل السارية 17');
   assert.strictEqual(compMetrics.metrics.wps.complianceRate, 100, 'نسبة الالتزام بحماية الأجور يجب أن تكون 100%');
 
   console.log('✓ نجح: التحقق من استيراد 108 موظف نشط و 5 منهية خدماتهم، و 9 إدارات و 5 فروع ومؤشر الامتثال الوزاري بنجاح');

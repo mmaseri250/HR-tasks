@@ -26,7 +26,7 @@ function getMuqeemReport(filters = {}) {
   sql += ' ORDER BY id ASC';
   const allRows = query(sql, params);
 
-  const now = new Date('2026-10-17'); // Operational reference date
+  const now = new Date(); // Operational reference date
   const processed = allRows.map(r => {
     let daysRemaining = null;
     let iqamaStatus = 'سارية وممتثلة';
@@ -259,97 +259,57 @@ function syncEmployeeExpiry(iqama, iqamaExpiry, passportExpiry) {
   }
 }
 
-function getLatestMuqeemExcelPath() {
-  const rootDir = path.join(__dirname, '..', '..');
-  const primaryPath = path.join(rootDir, 'المقيمين النشطين 04_11_2026.xlsx');
-  if (fs.existsSync(primaryPath)) return primaryPath;
-
-  const files = fs.readdirSync(rootDir).filter(f => f.startsWith('المقيمين النشطين') && f.endsWith('.xlsx'));
-  if (files.length > 0) {
-    files.sort().reverse();
-    return path.join(rootDir, files[0]);
-  }
-  return path.join(rootDir, 'المقيمين النشطين10_5_2026.xlsx');
+function syncFromExcel() {
+  return syncFromEmployees();
 }
 
-function syncFromExcel() {
-  const xlsx = require('xlsx');
-  const excelPath = getLatestMuqeemExcelPath();
-  if (!fs.existsSync(excelPath)) {
-    throw new Error('ملف المقيمين النشطين غير موجود في المجلد الرئيسي');
-  }
-  const wb = xlsx.readFile(excelPath);
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const data = xlsx.utils.sheet_to_json(ws);
+function syncFromEmployees() {
+  try {
+    const expats = query(`
+      SELECT e.national_id, e.full_name_ar, e.gender, e.nationality, e.job_title_ar,
+             e.passport_expiry, e.iqama_expiry, e.birth_date
+      FROM employees e
+      WHERE e.is_saudi = 0 AND e.status = 'نشط'
+      ORDER BY e.id ASC
+    `);
 
-  let inserted = 0;
-  let updated = 0;
+    const existingPassports = {};
+    try {
+      const existing = query('SELECT iqama_number, passport_number FROM muqeem_residents WHERE passport_number IS NOT NULL');
+      for (const r of existing) existingPassports[r.iqama_number] = r.passport_number;
+    } catch (_) {}
 
-  const currentIqamas = new Set(data.map(r => String(r['رقم الاقامة'] || '').trim()).filter(Boolean));
+    run('DELETE FROM muqeem_residents');
+    const insertSql = `
+      INSERT INTO muqeem_residents (
+        iqama_number, full_name, gender, nationality, occupation,
+        passport_number, passport_expiry, iqama_expiry_gregorian,
+        birth_date, is_outside_ksa, employer_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '7013999755')
+    `;
 
-  // Remove any resident not in the active Muqeem file
-  const oldResidents = query('SELECT iqama_number FROM muqeem_residents');
-  for (const r of oldResidents) {
-    if (!currentIqamas.has(String(r.iqama_number).trim())) {
-      run('DELETE FROM muqeem_residents WHERE iqama_number = ?', [r.iqama_number]);
-    }
-  }
-
-  for (const row of data) {
-    const iqama = String(row['رقم الاقامة'] || '').trim();
-    if (!iqama) continue;
-
-    const fullName = String(row['الاسم'] || '').trim();
-    const gender = String(row['الجنس'] || 'ذكر').trim();
-    const nationality = String(row['الجنسية'] || '').trim();
-    const occupation = String(row['المهنة'] || '').trim();
-    const passportNumber = String(row['رقم الجواز'] || '').trim();
-    const passportExpiry = String(row['تاريخ انتهاء الجواز'] || '').trim();
-    const iqamaIssueDate = String(row['تاريخ اصدار الاقامة'] || '').trim();
-    const iqamaExpiryGregorian = String(row['تاريخ انتهاء الاقامة'] || '').trim();
-    const iqamaExpiryHijri = String(row['تاريخ انتهاء الاقامة بالهجري'] || '').trim();
-    const birthDate = String(row['تاريخ الميلاد'] || '').trim();
-    const isOutside = String(row['خارج المملكه'] || '').trim() === 'نعم' ? 1 : 0;
-    const employerId = String(row['رقم صاحب العمل'] || '7013999755').trim();
-
-    const existing = get('SELECT id FROM muqeem_residents WHERE iqama_number = ?', [iqama]);
-    if (existing) {
-      run(`
-        UPDATE muqeem_residents SET
-          full_name = ?, gender = ?, nationality = ?, occupation = ?,
-          passport_number = ?, passport_expiry = ?, iqama_issue_date = ?,
-          iqama_expiry_gregorian = ?, iqama_expiry_hijri = ?, birth_date = ?,
-          is_outside_ksa = ?, employer_id = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `, [
-        fullName, gender, nationality, occupation,
-        passportNumber, passportExpiry, iqamaIssueDate,
-        iqamaExpiryGregorian, iqamaExpiryHijri, birthDate,
-        isOutside, employerId, existing.id
+    for (const exp of expats) {
+      run(insertSql, [
+        exp.national_id,
+        exp.full_name_ar,
+        exp.gender === 'F' ? 'أنثى' : 'ذكر',
+        exp.nationality,
+        exp.job_title_ar,
+        existingPassports[exp.national_id] || null,
+        exp.passport_expiry || null,
+        exp.iqama_expiry || null,
+        exp.birth_date || null
       ]);
-      updated++;
-    } else {
-      run(`
-        INSERT INTO muqeem_residents (
-          iqama_number, full_name, gender, nationality, occupation,
-          passport_number, passport_expiry, iqama_issue_date,
-          iqama_expiry_gregorian, iqama_expiry_hijri, birth_date,
-          is_outside_ksa, employer_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        iqama, fullName, gender, nationality, occupation,
-        passportNumber, passportExpiry, iqamaIssueDate,
-        iqamaExpiryGregorian, iqamaExpiryHijri, birthDate,
-        isOutside, employerId
-      ]);
-      inserted++;
     }
 
-    syncEmployeeExpiry(iqama, iqamaExpiryGregorian, passportExpiry);
+    return {
+      success: true,
+      count: expats.length,
+      message: `تمت المزامنة بنجاح من قاعدة بيانات الموظفين الفعلية (${expats.length} مقيماً نشطاً).`
+    };
+  } catch (err) {
+    return { success: false, error: 'فشل مزامنة المقيمين من الموظفين: ' + err.message };
   }
-
-  const finalCount = get('SELECT count(*) as cnt FROM muqeem_residents').cnt;
-  return { success: true, message: `تمت مزامنة بيانات مقيم بنجاح: ${inserted} جديد، ${updated} محدث (المطابق للموظفين: ${finalCount})`, count: finalCount };
 }
 
 module.exports = {

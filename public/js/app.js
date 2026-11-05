@@ -1413,7 +1413,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -4265,19 +4265,19 @@ async function loadMuqeemReport() {
 function updateMuqeemKPIs(s) {
   if (!s) return;
   const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setEl('muqKpiTotal', Number(s.totalResidents !== undefined ? s.totalResidents : 80).toLocaleString('en-US'));
-  setEl('muqKpiInside', Number(s.insideKsa !== undefined ? s.insideKsa : 73).toLocaleString('en-US'));
-  setEl('muqKpiOutside', Number(s.outsideKsa !== undefined ? s.outsideKsa : 7).toLocaleString('en-US'));
-  setEl('muqKpiValid', Number(s.validIqamas !== undefined ? s.validIqamas : 19).toLocaleString('en-US'));
-  setEl('muqKpiExpiring', Number(s.expiringSoon !== undefined ? s.expiringSoon : 16).toLocaleString('en-US'));
+  setEl('muqKpiTotal', Number(s.totalResidents !== undefined ? s.totalResidents : 78).toLocaleString('en-US'));
+  setEl('muqKpiInside', Number(s.insideKsa !== undefined ? s.insideKsa : 78).toLocaleString('en-US'));
+  setEl('muqKpiOutside', Number(s.outsideKsa !== undefined ? s.outsideKsa : 0).toLocaleString('en-US'));
+  setEl('muqKpiValid', Number(s.validIqamas !== undefined ? s.validIqamas : 6).toLocaleString('en-US'));
+  setEl('muqKpiExpiring', Number(s.expiringSoon !== undefined ? s.expiringSoon : 11).toLocaleString('en-US'));
   setEl('muqKpiExpired', Number(s.expiredIqamas !== undefined ? s.expiredIqamas : 61).toLocaleString('en-US'));
-  setEl('muqKpiFees', `${Number(s.totalMonthlyFees !== undefined ? s.totalMonthlyFees : 58400).toLocaleString('en-US')} ر.س`);
+  setEl('muqKpiFees', `${Number(s.totalMonthlyFees !== undefined ? s.totalMonthlyFees : 62400).toLocaleString('en-US')} ر.س`);
 
-  setEl('countMuqAll', Number(s.totalResidents !== undefined ? s.totalResidents : 80).toLocaleString('en-US'));
-  setEl('countMuqInside', Number(s.insideKsa !== undefined ? s.insideKsa : 73).toLocaleString('en-US'));
-  setEl('countMuqOutside', Number(s.outsideKsa !== undefined ? s.outsideKsa : 7).toLocaleString('en-US'));
-  setEl('countMuqExpiring', Number(s.expiringSoon !== undefined ? s.expiringSoon : 16).toLocaleString('en-US'));
-  setEl('countMuqValid', Number(s.validIqamas !== undefined ? s.validIqamas : 19).toLocaleString('en-US'));
+  setEl('countMuqAll', Number(s.totalResidents !== undefined ? s.totalResidents : 78).toLocaleString('en-US'));
+  setEl('countMuqInside', Number(s.insideKsa !== undefined ? s.insideKsa : 78).toLocaleString('en-US'));
+  setEl('countMuqOutside', Number(s.outsideKsa !== undefined ? s.outsideKsa : 0).toLocaleString('en-US'));
+  setEl('countMuqExpiring', Number(s.expiringSoon !== undefined ? s.expiringSoon : 11).toLocaleString('en-US'));
+  setEl('countMuqValid', Number(s.validIqamas !== undefined ? s.validIqamas : 6).toLocaleString('en-US'));
   setEl('countMuqExpired', Number(s.expiredIqamas !== undefined ? s.expiredIqamas : 61).toLocaleString('en-US'));
 }
 
@@ -4546,17 +4546,17 @@ async function deleteMuqeemResident(id) {
 }
 
 async function syncMuqeemFromExcel() {
-  if (!confirm('هل تريد إعادة مزامنة بيانات المقيمين من ملف Excel (المقيمين النشطين10_5_2026.xlsx)؟')) return;
   try {
+    showToast('جاري تحديث تقرير مقيم مباشرة من قاعدة بيانات الموظفين...', 'info');
     const res = await apiFetch('/api/compliance/muqeem/sync', { method: 'POST' });
     if (res && res.success) {
-      showToast(res.message || 'تمت مزامنة بيانات مقيم بنجاح', 'success');
-      loadMuqeemReport();
+      showToast(res.message || 'تم تحديث بيانات مقيم بنجاح', 'success');
+      await loadMuqeemReport();
     } else {
-      showToast(res.error || 'تعذر المزامنة', 'error');
+      showToast(res.error || 'تعذر التحديث', 'error');
     }
   } catch (err) {
-    showToast('خطأ في المزامنة: ' + err.message, 'error');
+    showToast('خطأ: ' + err.message, 'error');
   }
 }
 
@@ -9799,6 +9799,7 @@ window.toggleMuqeemLocation = toggleMuqeemLocation;
 window.handleMuqeemResidentSubmit = handleMuqeemResidentSubmit;
 window.deleteMuqeemResident = deleteMuqeemResident;
 window.syncMuqeemFromExcel = syncMuqeemFromExcel;
+window.syncMuqeemFromDatabase = syncMuqeemFromExcel;
 window.exportMuqeemExcel = exportMuqeemExcel;
 
 // Employee Self-Service (ESS) Tasks Integration

@@ -342,7 +342,7 @@ function getSaudizationMetrics() {
 }
 
 function getComplianceMetrics() {
-  const now = new Date('2026-10-17');
+  const now = new Date();
   const emps = query(`
     SELECT e.*, 
            COALESCE(e.iqama_expiry, m.iqama_expiry_gregorian) as iqama_expiry,
@@ -379,7 +379,7 @@ function getComplianceMetrics() {
 
     if (emp.is_saudi === 0) {
       totalIqamas++;
-      const expiryStr = emp.iqama_expiry || (emp.join_date ? '2026-09-21' : null);
+      const expiryStr = emp.iqama_expiry;
       if (expiryStr) {
         const expDate = new Date(expiryStr);
         daysRemaining = Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -433,7 +433,7 @@ function getComplianceMetrics() {
       department_name: emp.department_name || 'عام',
       branch_name: emp.branch_name || 'الفرع الرئيسي',
       contract_end: emp.contract_end,
-      iqama_expiry: emp.iqama_expiry || (emp.is_saudi === 0 ? '2026-09-21' : null),
+      iqama_expiry: emp.iqama_expiry,
       days_remaining: daysRemaining,
       iqama_status: iqamaStatus,
       status_class: statusClass,

@@ -1939,13 +1939,13 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
               </div>
               <div>
-                <span class="font-black text-amber-950 block">بيانات تقرير مقيم مطابقة لموظفي الشركة الوافدين في قاعدة البيانات (80 مقيماً نشطاً)</span>
+                <span class="font-black text-amber-950 block">بيانات تقرير مقيم مستمدة ومحدثة لحظياً ومباشرة من قاعدة بيانات الموظفين الرسمية (78 مقيماً نشطاً)</span>
                 <span class="text-[11px] text-amber-800">يمكنك تعديل أي مقيم، تغيير حالة التواجد (داخل / خارج السعودية)، أو إضافة مقيمين جدد مع احتساب فوري للمؤشرات ورخص العمل.</span>
               </div>
             </div>
-            <button onclick="syncMuqeemFromExcel()" class="px-3.5 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0 transition shadow-sm">
-              <i class="fa-solid fa-rotate"></i> إعادة مزامنة ملف Excel
-            </button>
+            <button onclick="loadMuqeemReport()" class="px-3.5 py-1.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs flex items-center gap-1.5 flex-shrink-0 transition shadow-sm">
+            <i class="fa-solid fa-rotate"></i> تحديث من قاعدة البيانات
+          </button>
           </div>
 
           <!-- Muqeem Table Card -->
@@ -5554,13 +5554,6 @@
           </div>
         </div>
       </section>
-                <!-- JS populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </section>
 
       <!-- =====================================================================
            VIEW 7: ORGANIZATION
@@ -7865,7 +7858,6 @@
           </div>
 
             <!-- Initials -->
-          </div>
           <div>
             <div class="flex items-center gap-2 flex-wrap">
               <h3 id="emp360FullNameAr" class="text-lg sm:text-xl font-black">--</h3>
