@@ -3,7 +3,7 @@
     "id": 1,
     "username": "admin",
     "password": "Jj123@AdminSecure",
-    "full_name": "أ. عبدالعزيز السلمي",
+    "full_name": "مدير النظام",
     "email": "admin@jalmajd.com",
     "role": "admin",
     "permissions": [

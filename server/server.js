@@ -37,14 +37,6 @@ const generalAdminService = require('./modules/generalAdminService');
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
 
-// Initialize schema safely without re-seeding or re-injecting demo data
-try {
-  // Schema creation if tables do not exist
-  initSchema();
-} catch (e) {
-  console.warn('[Startup] Schema init:', e.message);
-}
-
 // Ensure organizational hierarchy and manager integrity on startup
 try {
   // Purge any lingering obsolete board members if present by full name

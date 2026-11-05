@@ -7476,7 +7476,7 @@ function filterInspectorTable(query) {
 window.openEffectivePermissionsInspector = openEffectivePermissionsInspector;
 window.filterInspectorTable = filterInspectorTable;
 
-async async function deleteUserAccount(id) {
+async function deleteUserAccount(id) {
   if (!canDelete()) {
     alert('عذراً، حذف المستخدمين يتطلب صلاحيات مدير النظام (Super Admin) حصراً.');
     return;

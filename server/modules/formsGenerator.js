@@ -1111,7 +1111,7 @@ function buildEmployeeStatusDoc(emp, params = {}) {
         createSignaturesTable([
           { title: 'الموظف المعني', name: emp.full_name_ar },
           { title: 'مدير الموارد البشرية', name: 'عبدالملك سعيد الشريف' },
-          { title: 'المدير العام (الاعتماد النهائي)', name: 'أ. عبدالعزيز السلمي' }
+          { title: 'المدير العام (الاعتماد النهائي)', name: 'المدير العام' }
         ])
       ]
     }]
@@ -1170,7 +1170,7 @@ function buildFinalExitDoc(emp, params = {}) {
         createSignaturesTable([
           { title: 'الموظف المعني', name: emp.full_name_ar },
           { title: 'مدير الموارد البشرية', name: 'عبدالملك سعيد الشريف' },
-          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+          { title: 'اعتماد المدير العام', name: 'المدير العام' }
         ])
       ]
     }]
@@ -1200,7 +1200,7 @@ function buildSponsorshipTransferDoc(emp, params = {}) {
         createSignaturesTable([
           { title: 'الموظف طالب النقل', name: emp.full_name_ar },
           { title: 'مدير الموارد البشرية', name: 'عبدالملك سعيد الشريف' },
-          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+          { title: 'اعتماد المدير العام', name: 'المدير العام' }
         ])
       ]
     }]
@@ -1231,7 +1231,7 @@ function buildClearanceSettlementDoc(emp, params = {}) {
           { title: 'الموظف المعني', name: emp.full_name_ar },
           { title: 'مدير العمليات', name: 'علي حسين بشري' },
           { title: 'المدير المالي', name: 'الإدارة المالية' },
-          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+          { title: 'اعتماد المدير العام', name: 'المدير العام' }
         ])
       ]
     }]
@@ -1261,7 +1261,7 @@ function buildFullSettlementDoc(emp, params = {}) {
         createSignaturesTable([
           { title: 'الموظف المقر بما فيه', name: emp.full_name_ar },
           { title: 'الإدارة المالية', name: 'قسم التدقيق' },
-          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+          { title: 'اعتماد المدير العام', name: 'المدير العام' }
         ])
       ]
     }]
