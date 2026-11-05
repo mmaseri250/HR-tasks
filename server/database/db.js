@@ -867,10 +867,23 @@ function ensureOfficialUsersClean() {
   }
 }
 
+function purgeLegacyTestArtifacts() {
+  try {
+    db.prepare("DELETE FROM requests WHERE request_no = 'REQ-2026-0001' OR request_no LIKE 'REQ-TEST%'").run();
+    db.prepare("DELETE FROM leaves WHERE request_no = 'REQ-2026-0001' OR request_no LIKE 'REQ-TEST%'").run();
+    db.prepare("DELETE FROM absence_notices WHERE notice_no LIKE 'ABS-2026-%'").run();
+    db.prepare("DELETE FROM notifications WHERE user_id IS NULL OR title LIKE '%اختبار%'").run();
+  } catch (err) {
+    console.error('[DB Init] Error purging test artifacts:', err.message);
+  }
+}
+
 initSchema();
 syncEmployeeIqamaExpiries();
 ensureOfficialFleetAndLicenses();
 ensureOfficialUsersClean();
+purgeLegacyTestArtifacts();
+
 
 module.exports = {
   db,
