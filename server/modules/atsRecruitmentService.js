@@ -13,6 +13,7 @@
  */
 
 const { query, get, run } = require('../database/db');
+const branding = require('./branding');
 
 class AtsRecruitmentService {
   constructor() {
@@ -561,15 +562,13 @@ class AtsRecruitmentService {
     <!-- Header -->
     <div class="flex justify-between items-start border-b-2 brand-border pb-4">
       <div class="space-y-0.5">
-        <h1 class="text-lg font-black brand-text">شركة جوهرة المجد للمقاولات والتجارة</h1>
-        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">JAWHARAT AL-MAJD CONTRACTING & TRADING CO.</h2>
-        <p class="text-[10px] text-slate-500 font-mono">سجل تجاري: 5850024440 • المملكة العربية السعودية</p>
+        <h1 class="text-lg font-black brand-text">${branding.companyNameAr}</h1>
+        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">${(branding.companyNameEn || '').toUpperCase()}</h2>
+        <p class="text-[10px] text-slate-500 font-mono">سجل تجاري: ${branding.commercialRegister} • المملكة العربية السعودية</p>
       </div>
       <div class="text-center">
-        <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-[#700c14] border border-amber-200 flex items-center justify-center text-2xl font-black">
-          <i class="fa-solid fa-user-plus"></i>
-        </div>
-        <span class="text-[9px] font-mono text-slate-400">HR-FRM-REC-01</span>
+        <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-12 max-w-[140px] object-contain mx-auto" />
+        <span class="text-[9px] font-mono text-[#700c14] font-bold block mt-0.5">HR-FRM-REC-01</span>
       </div>
       <div class="text-left space-y-0.5">
         <span class="inline-block bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-brand">
@@ -745,15 +744,13 @@ class AtsRecruitmentService {
     <!-- Header -->
     <div class="flex justify-between items-start border-b-2 brand-border pb-4">
       <div class="space-y-0.5">
-        <h1 class="text-lg font-black brand-text">شركة جوهرة المجد للمقاولات والتجارة</h1>
-        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">JAWHARAT AL-MAJD CONTRACTING & TRADING CO.</h2>
-        <p class="text-[10px] text-slate-500 font-mono">سجل تجاري: 5850024440 • المملكة العربية السعودية</p>
+        <h1 class="text-lg font-black brand-text">${branding.companyNameAr}</h1>
+        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">${(branding.companyNameEn || '').toUpperCase()}</h2>
+        <p class="text-[10px] text-slate-500 font-mono">سجل تجاري: ${branding.commercialRegister} • المملكة العربية السعودية</p>
       </div>
       <div class="text-center">
-        <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-[#700c14] border border-amber-200 flex items-center justify-center text-2xl font-black">
-          <i class="fa-solid fa-award"></i>
-        </div>
-        <span class="text-[9px] font-mono text-slate-400">HR-OFFER-2026</span>
+        <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-12 max-w-[140px] object-contain mx-auto" />
+        <span class="text-[9px] font-mono text-[#700c14] font-bold block mt-0.5">HR-OFFER-2026</span>
       </div>
       <div class="text-left space-y-0.5">
         <span class="inline-block bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-brand">
@@ -956,15 +953,13 @@ class AtsRecruitmentService {
     <!-- Header -->
     <div class="flex justify-between items-start border-b-2 brand-border pb-4">
       <div class="space-y-0.5">
-        <h1 class="text-lg font-black brand-text">شركة جوهرة المجد للمقاولات والتجارة</h1>
-        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">JAWHARAT AL-MAJD CONTRACTING & TRADING CO.</h2>
-        <p class="text-[10px] text-slate-500 font-mono">سجل تجاري: 5850024440 • المملكة العربية السعودية</p>
+        <h1 class="text-lg font-black brand-text">${branding.companyNameAr}</h1>
+        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider">${(branding.companyNameEn || '').toUpperCase()}</h2>
+        <p class="text-[10px] text-slate-500 font-mono">سجل تجاري: ${branding.commercialRegister} • المملكة العربية السعودية</p>
       </div>
       <div class="text-center">
-        <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-[#700c14] border border-amber-200 flex items-center justify-center text-2xl font-black">
-          <i class="fa-solid fa-lock"></i>
-        </div>
-        <span class="text-[9px] font-mono text-slate-400">HR-NDA-03</span>
+        <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-12 max-w-[140px] object-contain mx-auto" />
+        <span class="text-[9px] font-mono text-[#700c14] font-bold block mt-0.5">HR-NDA-03</span>
       </div>
       <div class="text-left space-y-0.5">
         <span class="inline-block bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-brand">

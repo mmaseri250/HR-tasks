@@ -23,12 +23,12 @@ console.log('✓ نجح: إنشاء وحذف سياسة دوام مفتوحة ا
 
 // 2. Departments Management Test
 const depts = db.query('SELECT * FROM departments');
-assert.strictEqual(depts.length, 15, 'يجب أن تتوفر 15 إدارة أساسية معتمدة وفق البيان التنظيمي');
+assert.strictEqual(depts.length, 6, 'يجب أن تتوفر 6 إدارات أساسية معتمدة وفق الهيكل الجديد');
 console.log(`✓ نجح: ربط الإدارات بعدد ${depts.length} إدارة مع مدراء الإدارات`);
 
 // 3. Branches Management Test
 const branches = db.query('SELECT * FROM branches');
-assert.strictEqual(branches.length, 10, 'يجب أن تتوفر الفروع الـ 10 الأساسية');
+assert.strictEqual(branches.length, 5, 'يجب أن تتوفر الفروع الـ 5 المعتمدة');
 const mainBranch = branches.find(b => b.is_main === 1) || branches[0];
 console.log(`✓ نجح: التحقق من الفروع بعدد ${branches.length} فروع (مع تحديد ${mainBranch.name_ar})`);
 

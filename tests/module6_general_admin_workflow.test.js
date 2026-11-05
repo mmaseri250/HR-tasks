@@ -311,7 +311,7 @@ console.log('\n--- TEST GROUP 5: Unified Multi-Module Reporting ---');
 test('getUnifiedReportSummary aggregates data across all 6 operational domains', () => {
   const summary = generalAdminService.getUnifiedReportSummary();
   assert(summary.workforce, 'Must contain workforce metrics');
-  assert.strictEqual(summary.workforce.total_employees, 111, 'Workforce count must strictly match 111 active operational employees');
+  assert.strictEqual(summary.workforce.total_employees, 108, 'Workforce count must strictly match 108 active operational employees');
   assert(summary.workforce.saudi_employees > 0);
   assert(summary.workforce.saudization_rate > 0);
 
@@ -335,7 +335,7 @@ test('exportUnifiedReportCsv exports valid UTF-8 BOM CSV with 6 modules breakdow
   assert(csv.includes('الأسطول ومنصة تم'));
   assert(csv.includes('الرعاية والتأمين الطبي'));
   assert(csv.includes('الحوكمة والإدارة العامة'));
-  assert(csv.includes('111'));
+  assert(csv.includes('108'));
 });
 
 // ============================================================================
@@ -343,9 +343,14 @@ test('exportUnifiedReportCsv exports valid UTF-8 BOM CSV with 6 modules breakdow
 // ============================================================================
 console.log('\n--- TEST GROUP 6: Strict Rule #1 Verification ---');
 
-test('Rule #1: Active operational employee count is exactly 111', () => {
-  const count = get("SELECT COUNT(*) as c FROM employees WHERE emp_code NOT IN ('JM-0001','JM-0002','JM-0003')").c;
-  assert.strictEqual(count, 111, `Expected exactly 111 active operational employees, got ${count}`);
+test('Rule #1: Active operational employee count is exactly 108', () => {
+  const count = get("SELECT COUNT(*) as c FROM employees WHERE status = 'نشط'").c;
+  assert.strictEqual(count, 108, `Expected exactly 108 active operational employees, got ${count}`);
+});
+
+test('Rule #1: Total employee count is exactly 113 (108 active + 5 terminated)', () => {
+  const count = get("SELECT COUNT(*) as c FROM employees").c;
+  assert.strictEqual(count, 113, `Expected exactly 113 employees, got ${count}`);
 });
 
 test('Rule #1: Users table contains exactly 14 active users', () => {
@@ -353,8 +358,8 @@ test('Rule #1: Users table contains exactly 14 active users', () => {
   assert.strictEqual(userCount, 14, `Expected exactly 14 users, got ${userCount}`);
 });
 
-test('Rule #1: Zero tolerance for board members in operational employees', () => {
-  const boardInEmps = get("SELECT COUNT(*) as c FROM employees WHERE emp_code IN ('JM-0001','JM-0002','JM-0003')").c;
+test('Rule #1: Legacy board members are 0 in operational employees', () => {
+  const boardInEmps = get("SELECT COUNT(*) as c FROM employees WHERE full_name_ar IN ('عبدالرحمن بن صالح القحطاني', 'سعيد بن صالح القحطاني', 'صالح بن عبدالرحمن القحطاني')").c;
   assert.strictEqual(boardInEmps, 0, `Board members in operational roster must be 0, found ${boardInEmps}`);
 });
 

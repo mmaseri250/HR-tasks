@@ -581,6 +581,21 @@ function initSchema() {
   try { db.exec('ALTER TABLE tasks ADD COLUMN attachments TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN qualification_degree TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN qualification_major TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN opening_leave_balance REAL DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN accrual_start_date TEXT DEFAULT "2026-11-05";'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN monthly_accrual_rate REAL DEFAULT 1.75;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN photo_url TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN termination_date TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN termination_reason TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN section_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN replacement_emp_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN rejection_reason TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN replacement_emp_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN target_dept_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN target_branch_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN target_section_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN transfer_reason TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN rejection_reason TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN emergency_phone TEXT;'); } catch (e) {}
 
   // 1. Audit Logs Table (سجل الرقابة والعمليات الشامل)
@@ -670,6 +685,33 @@ function initSchema() {
   `);
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS sections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      department_id INTEGER,
+      branch_id INTEGER,
+      name_ar TEXT NOT NULL,
+      name_en TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL,
+      FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_sections_name_ar ON sections(name_ar);
+
+    CREATE TABLE IF NOT EXISTS employee_documents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      emp_id INTEGER NOT NULL,
+      doc_type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      file_name TEXT NOT NULL,
+      file_size INTEGER DEFAULT 0,
+      mime_type TEXT,
+      uploaded_by INTEGER,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (emp_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_emp_docs_emp ON employee_documents(emp_id);
+
     CREATE TABLE IF NOT EXISTS employee_qualifications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       emp_id INTEGER NOT NULL,

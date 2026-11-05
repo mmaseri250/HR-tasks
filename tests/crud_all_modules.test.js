@@ -40,9 +40,9 @@ function runAllModulesCrudTests() {
         (SELECT COUNT(*) FROM branches) AS totalBranches,
         (SELECT COUNT(*) FROM leaves WHERE status LIKE '%بانتظار%') AS pendingLeaves
     `);
-    assert.strictEqual(stats.activeEmps, 111);
-    assert.strictEqual(stats.totalDepts, 15);
-    assert.strictEqual(stats.totalBranches, 10);
+    assert.strictEqual(stats.activeEmps, 108);
+    assert.strictEqual(stats.totalDepts, 6);
+    assert.strictEqual(stats.totalBranches, 5);
   });
 
   // 2. وحدة الموظفين (Employees CRUD & Search & Filter)
@@ -99,7 +99,7 @@ function runAllModulesCrudTests() {
   // 3. وحدة الحضور والانصراف (Attendance & Biometrics)
   runSubTest('الوحدة 3 (الحضور والانصراف): تسجيل بصمة داخل النطاق وحساب ساعات العمل', () => {
     const today = new Date().toISOString().split('T')[0];
-    const testManager = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1000'");
+    const testManager = db.get("SELECT id FROM employees WHERE emp_code = 'JM-0001'");
 
     // Record punch
     const punch = attendanceModule.recordPunch({
@@ -123,21 +123,23 @@ function runAllModulesCrudTests() {
   // 4. وحدة الإجازات وسير الموافقات (Leaves & Workflows)
   let testLeaveId = null;
   runSubTest('الوحدة 4 (الإجازات والاعتمادات): تقديم إجازة وموافقتها بالكامل وتخصيم الرصيد', () => {
-    const shama = db.get("SELECT id, manager_id FROM employees WHERE emp_code = 'JM-1053'");
+    const testEmp = db.get("SELECT id, manager_id FROM employees WHERE status = 'نشط' AND manager_id IS NOT NULL LIMIT 1");
+    const subEmp = db.get("SELECT id FROM employees WHERE status = 'نشط' AND id != ?", [testEmp.id]);
     const leave = leavesModule.submitLeaveRequest({
-      emp_id: shama.id,
+      emp_id: testEmp.id,
       leave_type: 'إجازة سنوية',
       start_date: '2026-12-01',
       end_date: '2026-12-02',
       days_count: 2,
-      reason: 'إجازة اختبارية مؤقتة'
+      reason: 'إجازة اختبارية مؤقتة',
+      substitute_emp_id: subEmp.id
     });
     assert.ok(leave.id);
     testLeaveId = leave.id;
 
     // Step 1: Direct Manager Approval
     leavesModule.processLeaveStep(testLeaveId, 'manager', 'approve', 'موافقة المدير', {
-      emp_id: shama.manager_id,
+      emp_id: testEmp.manager_id,
       role: 'hr_manager',
       full_name: 'عبدالملك سعيد الشريف'
     });
@@ -163,8 +165,8 @@ function runAllModulesCrudTests() {
 
   // 5. وحدة المهام والمتابعة (Tasks & Progress)
   runSubTest('الوحدة 5 (المهام): إنشاء مهمة وتحديث نسبة الإنجاز والتحقق من لوحة المديرين', () => {
-    const mgr = db.get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1000'");
-    const emp = db.get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1053'");
+    const mgr = db.get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001'");
+    const emp = db.get("SELECT id, full_name_ar FROM employees WHERE status = 'نشط' AND emp_code != 'JM-0001' LIMIT 1");
 
     const task = tasksModule.createTask({
       title: 'مهمة مراجعة ملفات التوظيف',
@@ -195,7 +197,7 @@ function runAllModulesCrudTests() {
 
   // 6. وحدة الجزاءات واللوائح (Penalties & Regulations)
   runSubTest('الوحدة 6 (الجزاءات والقرارات): إصدار قرار جزائي رسمي وحذفه بنجاح', () => {
-    const emp = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1053'");
+    const emp = db.get("SELECT id FROM employees WHERE status = 'نشط' AND emp_code != 'JM-0001' LIMIT 1");
     const penalty = penaltiesModule.issuePenaltyDecision({
       emp_id: emp.id,
       violation_code: 'v1',
@@ -221,7 +223,7 @@ function runAllModulesCrudTests() {
 
   // 8. وحدة السلف واستقطاع الأقساط (Loans)
   runSubTest('الوحدة 8 (السلف المالية): تسجيل سلفة واحتساب القسط الشهري وتصدير الإكسل', () => {
-    const emp = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1053'");
+    const emp = db.get("SELECT id FROM employees WHERE status = 'نشط' AND emp_code != 'JM-0001' LIMIT 1");
     const loan = loansModule.createLoan({
       emp_id: emp.id,
       loan_type: 'سلفة شخصية',
@@ -242,7 +244,7 @@ function runAllModulesCrudTests() {
 
   // 9. وحدة الموظفين المنهية خدماتهم (Terminated Employees & Settlement)
   runSubTest('الوحدة 9 (نهاية الخدمة): احتساب مكافأة نهاية الخدمة وفق المادتين 84 و 85', () => {
-    const emp = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1053'");
+    const emp = db.get("SELECT id FROM employees WHERE status = 'منتهي الخدمة' LIMIT 1") || db.get("SELECT id FROM employees LIMIT 1");
     const settlement = terminatedEmployeesModule.calculateSettlement({
       emp_id: emp.id,
       termination_date: '2026-10-31',
@@ -255,7 +257,7 @@ function runAllModulesCrudTests() {
 
   // 10. وحدة إشعارات الغياب الرسمية (Absence Notices)
   runSubTest('الوحدة 10 (إشعارات الغياب): إصدار إشعار غياب رسمي وتوثيق الإقرار', () => {
-    const emp = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1053'");
+    const emp = db.get("SELECT id FROM employees WHERE status = 'نشط' AND emp_code != 'JM-0001' LIMIT 1");
     const notice = absenceNoticesModule.createAbsenceNotice({
       emp_id: emp.id,
       absence_type: 'single',

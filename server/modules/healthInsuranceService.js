@@ -14,6 +14,7 @@
 
 const { query, get, run } = require('../database/db');
 const xlsx = require('xlsx');
+const branding = require('./branding');
 
 class HealthInsuranceService {
   constructor() {
@@ -158,9 +159,10 @@ class HealthInsuranceService {
     }
 
     // 2. Seed Employee Insurance Cards
-    const cardCount = get(`SELECT COUNT(*) as c FROM employee_insurance_cards`).c;
-    if (cardCount === 0) {
-      const emps = query(`SELECT id, emp_code, full_name_ar, is_saudi FROM employees LIMIT 8`);
+    const validCards = get(`SELECT COUNT(*) as c FROM employee_insurance_cards c JOIN employees e ON c.emp_id = e.id`).c;
+    if (validCards < 4) {
+      run(`DELETE FROM employee_insurance_cards WHERE emp_id NOT IN (SELECT id FROM employees)`);
+      const emps = query(`SELECT id, emp_code, full_name_ar, is_saudi FROM employees WHERE status = 'نشط' ORDER BY id ASC LIMIT 8`);
       const defaultPol = get(`SELECT id FROM medical_insurance_policies LIMIT 1`);
       const polId = defaultPol ? defaultPol.id : 1;
 
@@ -174,7 +176,7 @@ class HealthInsuranceService {
         const deps = idx % 2 === 0 ? (emp.is_saudi ? 3 : 0) : 1;
 
         run(`
-          INSERT INTO employee_insurance_cards (
+          INSERT OR REPLACE INTO employee_insurance_cards (
             emp_id, emp_code, policy_id, member_id, class_category,
             issue_date, expiry_date, copay_percent, dependents_count,
             blood_group, status, notes
@@ -184,12 +186,14 @@ class HealthInsuranceService {
     }
 
     // 3. Seed Municipal Health Cards (البلدية)
-    const healthCardCount = get(`SELECT COUNT(*) as c FROM health_cards`).c;
-    if (healthCardCount === 0) {
+    const validHealth = get(`SELECT COUNT(*) as c FROM health_cards h JOIN employees e ON h.emp_id = e.id`).c;
+    if (validHealth < 3) {
+      run(`DELETE FROM health_cards WHERE emp_id NOT IN (SELECT id FROM employees)`);
       // Find workers or operational staff
       const workers = query(`
         SELECT id, emp_code, full_name_ar, job_title_ar FROM employees
-        WHERE job_title_ar LIKE '%عامل%' OR job_title_ar LIKE '%خباز%' OR job_title_ar LIKE '%طاه%' OR id > 0
+        WHERE status = 'نشط'
+        ORDER BY id ASC
         LIMIT 6
       `);
 
@@ -255,7 +259,7 @@ class HealthInsuranceService {
         const emp = workers[idx % workers.length];
         if (emp) {
           run(`
-            INSERT INTO health_cards (
+            INSERT OR REPLACE INTO health_cards (
               emp_id, emp_code, card_no, municipality_name, profession,
               issue_date, expiry_date, medical_center, fitness_result, status, notes
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -968,15 +972,13 @@ class HealthInsuranceService {
     <!-- Official Header -->
     <div class="flex items-center justify-between border-b-2 brand-border pb-4">
       <div class="text-right space-y-1">
-        <h2 class="font-black text-lg text-slate-900">شركة جوهرة المجد للمقاولات والتجارة</h2>
+        <h2 class="font-black text-lg text-slate-900">${branding.companyNameAr}</h2>
         <p class="text-xs font-semibold text-slate-600">إدارة الموارد البشرية والخدمات الطبية</p>
         <p class="text-[11px] text-slate-500">معتمد لدى مجلس الضمان الصحي التعاوني (CCHI)</p>
       </div>
-      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-rose-50/40">
-        <div class="w-12 h-12 mx-auto rounded-full bg-[#700c14] text-amber-400 flex items-center justify-center text-xl shadow mb-1">
-          <i class="fa-solid fa-notes-medical"></i>
-        </div>
-        <span class="text-[10px] font-black tracking-widest text-[#700c14] block">CCHI HEALTH CARD</span>
+      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-white shadow-sm">
+        <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-12 max-w-[140px] object-contain mx-auto" />
+        <span class="text-[9px] font-black tracking-widest text-[#700c14] block mt-1">CCHI HEALTH CARD</span>
       </div>
       <div class="text-left space-y-1 text-xs">
         <div class="font-bold text-slate-700">رقم العضوية: <span class="font-mono text-slate-900 font-black">${card.member_id}</span></div>
@@ -1144,13 +1146,11 @@ class HealthInsuranceService {
       <div class="text-right space-y-1">
         <h2 class="font-black text-base text-slate-900">${card.municipality_name}</h2>
         <p class="text-xs font-semibold text-slate-600">الإدارة العامة لصحة البيئة والرقابة الشاملة</p>
-        <p class="text-[11px] text-emerald-700 font-bold">شركة جوهرة المجد للمقاولات والتجارة (المنشأة المشغلة)</p>
+        <p class="text-[11px] text-emerald-700 font-bold">${branding.companyNameAr} (المنشأة المشغلة)</p>
       </div>
-      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-emerald-50/50">
-        <div class="w-12 h-12 mx-auto rounded-full bg-emerald-700 text-white flex items-center justify-center text-xl shadow mb-1">
-          <i class="fa-solid fa-id-card-clip"></i>
-        </div>
-        <span class="text-[10px] font-black tracking-widest text-emerald-800 block">MUNICIPAL HEALTH CARD</span>
+      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-white shadow-sm">
+        <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-12 max-w-[140px] object-contain mx-auto" />
+        <span class="text-[9px] font-black tracking-widest text-emerald-800 block mt-1">MUNICIPAL HEALTH CARD</span>
       </div>
       <div class="text-left space-y-1 text-xs">
         <div class="font-bold text-slate-700">رقم الشهادة: <span class="font-mono text-slate-900 font-black">${card.card_no}</span></div>

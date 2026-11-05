@@ -1114,6 +1114,9 @@ function userHasPermissionForTab(tabId) {
 
   // Dashboard, ESS and Circulars portals are universally accessible to all authenticated users
   if (tabId === 'dashboard' || tabId === 'selfservice' || tabId === 'circulars') return true;
+  if (tabId === 'hr-center') {
+    return role === 'admin' || role === 'hr_manager' || role === 'dept_manager' || role === 'direct_manager' || role === 'hr_specialist';
+  }
 
   const effPerms = state.currentUser.effective_permissions || state.currentUser.permissions || [];
   if (effPerms.includes('all') || effPerms.includes('*')) return true;
@@ -1166,7 +1169,7 @@ function applyRolePermissions() {
   }
 
   // Desktop Aside navigation items - strictly driven by RBAC permissions
-  const allTabs = ['dashboard', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
 
   allTabs.forEach(t => {
     const el = document.getElementById(`nav-${t}`);
@@ -1559,8 +1562,11 @@ async function loadDashboard() {
       ]);
     }
     
-    const total = statsRes?.data?.attendance?.totalEmployees ?? (state.employees && state.employees.length > 0 ? state.employees.length : 110);
-    const rate = statsRes?.data?.saudization?.saudizationRate ?? (total > 0 && state.employees ? Math.round((state.employees.filter(e => e.is_saudi === 1).length / total) * 1000) / 10 : 27.3);
+    const activeEmps = (state.employees || []).filter(e => e.status === 'نشط');
+    const total = statsRes?.data?.attendance?.totalEmployees || (activeEmps.length > 0 ? activeEmps.length : 108);
+    const saudiCount = activeEmps.filter(e => e.is_saudi === 1).length || 30;
+    const expatCount = total - saudiCount;
+    const rate = statsRes?.data?.saudization?.saudizationRate ?? (total > 0 ? Math.round((saudiCount / total) * 1000) / 10 : 27.8);
     const band = statsRes?.data?.saudization?.nitaqatBand ?? 'النطاق الأخضر المتوسط';
     const attRate = statsRes?.data?.attendance?.attendanceRate ?? 98.2;
     const present = statsRes?.data?.attendance?.presentCount ?? total;
@@ -1569,6 +1575,8 @@ async function loadDashboard() {
 
     const totalEl = document.getElementById('statTotalEmployees');
     if (totalEl) totalEl.textContent = total;
+    const subTextEl = document.getElementById('statTotalEmployeesSub');
+    if (subTextEl) subTextEl.textContent = `${saudiCount} سعودي • ${expatCount} مقيم`;
     
     // Real Compliance indicator (Iqamas & Work permits)
     const compScore = compRes?.data?.overallScore !== undefined ? compRes.data.overallScore : 54;
@@ -2489,7 +2497,20 @@ function filterEmployeesTable() {
   const contractType = document.getElementById('empContractTypeFilter')?.value || '';
   const salaryRange = document.getElementById('empSalaryRangeFilter')?.value || '';
 
+  const activeSubTab = (typeof empDbState !== 'undefined' && empDbState.activeSubTab) ? empDbState.activeSubTab : 'active';
+
+  // Update SubTab Badges
+  const activeCount = (state.employees || []).filter(e => e.status === 'نشط').length;
+  const terminatedCount = (state.employees || []).filter(e => e.status === 'منتهي الخدمة').length;
+  const badgeActive = document.getElementById('badgeEmpActiveTabCount');
+  if (badgeActive) badgeActive.textContent = activeCount;
+  const badgeTerminated = document.getElementById('badgeEmpTerminatedTabCount');
+  if (badgeTerminated) badgeTerminated.textContent = terminatedCount;
+
   const filtered = (state.employees || []).filter(e => {
+    // Sub-tab filter: active vs terminated
+    if (activeSubTab === 'active' && e.status !== 'نشط') return false;
+    if (activeSubTab === 'terminated' && e.status !== 'منتهي الخدمة') return false;
     const matchesSearch = !search ||
       (e.full_name_ar && e.full_name_ar.toLowerCase().includes(search)) ||
       (e.full_name_en && e.full_name_en.toLowerCase().includes(search)) ||
@@ -2558,9 +2579,18 @@ function openEmployee360Modal(id) {
   window.current360EmpId = emp.id;
 
   // Header Banner
-  const initials = emp.full_name_ar ? emp.full_name_ar.split(' ').slice(0, 2).map(w => w[0]).join('') : 'ج';
   const avatarEl = document.getElementById('emp360AvatarCircle');
-  if (avatarEl) avatarEl.textContent = initials;
+  if (avatarEl) {
+    if (emp.photo_url) {
+      avatarEl.innerHTML = `<img src="${emp.photo_url}" class="w-full h-full object-cover">`;
+    } else {
+      const initials = emp.full_name_ar ? emp.full_name_ar.split(' ').slice(0, 2).map(w => w[0]).join('') : 'ج';
+      avatarEl.textContent = initials;
+    }
+  }
+  if (typeof loadEmployeeDocuments === 'function') {
+    loadEmployeeDocuments(emp.id);
+  }
 
   const setT = (elId, val) => {
     const el = document.getElementById(elId);
@@ -8710,8 +8740,10 @@ async function onLeaveEmpChanged(empId) {
     const res = await apiFetch(`/api/leaves/balances?emp_id=${empId}`);
     if (res && res.success && res.data) {
       const b = res.data;
+      const flooredBal = (b.display_balance !== undefined) ? b.display_balance : Math.floor(b.current_balance);
+      window._currentLeaveBalance = flooredBal;
       if (document.getElementById('leaveFormCurrentBalanceText')) {
-        document.getElementById('leaveFormCurrentBalanceText').textContent = b.current_balance;
+        document.getElementById('leaveFormCurrentBalanceText').textContent = flooredBal;
       }
       if (document.getElementById('leaveFormDailyRateText')) {
         document.getElementById('leaveFormDailyRateText').textContent = `الاستحقاق: ${b.annual_entitlement} يوماً سنوياً (${b.daily_accrual_rate} يوم/يوم) | سنوات الخدمة: ${b.service_years} سنة`;
@@ -8754,6 +8786,18 @@ async function handleNewLeaveSubmit(e) {
   if (!emp_id || !start_date || !end_date) {
     alert('يرجى استكمال الحقول الإلزامية');
     return;
+  }
+
+  if (!substitute_emp_id) {
+    alert('حقل الموظف البديل إلزامي لتقديم طلب الإجازة.');
+    return;
+  }
+
+  if (leave_type === 'إجازة سنوية' && window._currentLeaveBalance !== undefined) {
+    if (days_count > window._currentLeaveBalance) {
+      alert(`لا يمكن تقديم الطلب: عدد الأيام المطلوبة (${days_count} يوم) يتجاوز رصيد الإجازة السنوية المتاح (${window._currentLeaveBalance} يوم).`);
+      return;
+    }
   }
 
   try {
@@ -14494,3 +14538,204 @@ window.exportUnifiedReportCsv = exportUnifiedReportCsv;
 
 
 
+
+
+/* =========================================================================
+   CENTRAL HR CONTROL CENTER & EMPLOYEE OVERHAUL FUNCTIONS
+   ========================================================================= */
+
+// Filter HR Center Cards
+function filterHrCenterCards(query) {
+  const q = (query || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('#hrCenterCardsGrid .hr-hub-card');
+  cards.forEach(c => {
+    const title = (c.getAttribute('data-card-title') || '').toLowerCase();
+    const text = c.textContent.toLowerCase();
+    if (!q || title.includes(q) || text.includes(q)) {
+      c.style.display = 'flex';
+    } else {
+      c.style.display = 'none';
+    }
+  });
+}
+
+// Active vs Terminated Sub-tab state
+if (typeof empDbState !== 'undefined') {
+  empDbState.activeSubTab = 'active';
+}
+
+function setEmployeeSubTab(tab) {
+  if (typeof empDbState !== 'undefined') {
+    empDbState.activeSubTab = tab;
+  }
+  const btnActive = document.getElementById('btnEmpSubTabActive');
+  const btnTerminated = document.getElementById('btnEmpSubTabTerminated');
+
+  if (tab === 'active') {
+    if (btnActive) {
+      btnActive.className = 'px-4 py-2 rounded-xl text-xs font-black transition subtab-active-pill flex items-center gap-2';
+    }
+    if (btnTerminated) {
+      btnTerminated.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition flex items-center gap-2';
+    }
+  } else {
+    if (btnActive) {
+      btnActive.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition flex items-center gap-2';
+    }
+    if (btnTerminated) {
+      btnTerminated.className = 'px-4 py-2 rounded-xl text-xs font-black transition subtab-active-pill flex items-center gap-2';
+    }
+  }
+
+  if (typeof filterEmployeesTable === 'function') {
+    filterEmployeesTable();
+  }
+}
+
+// Employee Photo Upload Trigger
+function triggerEmpPhotoUpload() {
+  const input = document.getElementById('empPhotoUploadInput');
+  if (input) input.click();
+}
+
+async function handleEmpPhotoFileSelected(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  const empId = window.current360EmpId;
+  if (!empId) {
+    alert('لم يتم تحديد الموظف');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  try {
+    const res = await fetch(`/api/employees/${empId}/photo`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (typeof showToast === 'function') showToast('تم تحديث الصورة الشخصية للموظف بنجاح', 'success');
+      else alert('تم تحديث الصورة الشخصية للموظف بنجاح');
+
+      // Update avatar circle in modal
+      const avatarCircle = document.getElementById('emp360AvatarCircle');
+      if (avatarCircle && data.photo_url) {
+        avatarCircle.innerHTML = `<img src="${data.photo_url}" class="w-full h-full object-cover">`;
+      }
+      // Reload employees state
+      if (typeof loadEmployees === 'function') loadEmployees();
+    } else {
+      alert(data.error || 'فشل تحديث الصورة');
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء رفع الصورة: ' + err.message);
+  }
+}
+
+// Load and Upload Employee Documents
+async function loadEmployeeDocuments(empId) {
+  const tbody = document.getElementById('empDocsTableBody');
+  const countBadge = document.getElementById('empDocsCountBadge');
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-slate-400">جاري التحميل...</td></tr>';
+
+  try {
+    const res = await apiFetch(`/api/employees/${empId}/documents`);
+    const docs = (res && res.success && res.data) ? res.data : [];
+    if (countBadge) countBadge.textContent = `${docs.length} مستندات`;
+
+    if (docs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-400">لا توجد وثائق مرفوعة لهذا الموظف حتى الآن.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = docs.map(d => `
+      <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+        <td class="py-2.5 px-3 font-bold text-slate-700">${d.doc_type}</td>
+        <td class="py-2.5 px-3 font-medium text-slate-800">${d.title || d.file_name}</td>
+        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${d.file_size ? Math.round(d.file_size / 1024) + ' KB' : '—'}</td>
+        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${d.created_at ? d.created_at.split(' ')[0] : '—'}</td>
+        <td class="py-2.5 px-3 text-center space-x-1.5 space-x-reverse">
+          <a href="${d.file_path}" target="_blank" class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 text-[11px] font-bold inline-flex items-center gap-1">
+            <i class="fa-solid fa-eye"></i> معاينة
+          </a>
+          <button type="button" onclick="deleteEmployeeDocument(${d.id})" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-bold inline-flex items-center gap-1">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-rose-500 font-bold">حدث خطأ أثناء تحميل المستندات</td></tr>';
+  }
+}
+
+async function uploadEmployeeDocument() {
+  const empId = window.current360EmpId;
+  if (!empId) return alert('لم يتم تحديد الموظف');
+
+  const fileInput = document.getElementById('empDocFileInput');
+  const typeSelect = document.getElementById('empDocTypeSelect');
+  const titleInput = document.getElementById('empDocTitleInput');
+
+  const file = fileInput?.files && fileInput.files[0];
+  if (!file) return alert('يرجى اختيار ملف لرفعه');
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('doc_type', typeSelect?.value || 'مستند رسمي');
+  formData.append('title', titleInput?.value || file.name);
+
+  try {
+    const res = await fetch(`/api/employees/${empId}/documents`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (typeof showToast === 'function') showToast('تم رفع المستند بنجاح', 'success');
+      else alert('تم رفع المستند بنجاح');
+      if (fileInput) fileInput.value = '';
+      if (titleInput) titleInput.value = '';
+      loadEmployeeDocuments(empId);
+    } else {
+      alert(data.error || 'فشل رفع المستند');
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+
+async function deleteEmployeeDocument(docId) {
+  const empId = window.current360EmpId;
+  if (!empId || !docId) return;
+  if (!confirm('هل أنت متأكد من حذف هذا المستند؟')) return;
+
+  try {
+    const res = await apiFetch(`/api/employees/${empId}/documents/${docId}`, { method: 'DELETE' });
+    if (res && res.success) {
+      if (typeof showToast === 'function') showToast('تم حذف المستند بنجاح', 'success');
+      loadEmployeeDocuments(empId);
+    } else {
+      alert(res?.error || 'فشل حذف المستند');
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء الحذف: ' + err.message);
+  }
+}
+
+// Hook loadEmployeeDocuments when opening Employee 360 Documents Tab
+const originalSwitch360Tab = window.switch360Tab;
+window.switch360Tab = function(tabName) {
+  if (typeof originalSwitch360Tab === 'function') {
+    originalSwitch360Tab(tabName);
+  }
+  if (tabName === 'documents' && window.current360EmpId) {
+    loadEmployeeDocuments(window.current360EmpId);
+  }
+};

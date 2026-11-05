@@ -14,7 +14,7 @@ async function runLeavesTasksHierarchyTests() {
   seedDatabase();
 
   const employees = employeesModule.getAllEmployees();
-  assert.strictEqual(employees.length, 111, 'يجب أن يكون عدد الموظفين 111 موظفاً معتمداً');
+  assert.strictEqual(employees.length, 113, 'يجب أن يكون عدد الموظفين 113 موظفاً (108 نشط + 5 منتهي الخدمة)');
 
   // =========================================================================
   // 1. Leave Accrual & Balance Rules (نظام الإجازات والاستحقاق اليومي)
@@ -31,7 +31,8 @@ async function runLeavesTasksHierarchyTests() {
     email: 'junior.test@jalmajd.com',
     join_date: '2024-01-01',
     basic_salary: 7000,
-    annual_leave_balance: 21
+    annual_leave_balance: 21,
+    opening_leave_balance: 15
   });
 
   const juniorRate = leavesModule.getAnnualAccrualRate(empJunior.join_date, '2026-01-01');
@@ -75,7 +76,8 @@ async function runLeavesTasksHierarchyTests() {
     start_date: '2026-11-10',
     end_date: '2026-11-14',
     days_count: 5,
-    reason: 'إجازة عائلية اعتيادية'
+    reason: 'إجازة عائلية اعتيادية',
+    substitute_emp_id: empSenior.id
   });
 
   assert(leaveReq && leaveReq.id, 'يجب إنشاء طلب الإجازة');

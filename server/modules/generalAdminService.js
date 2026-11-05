@@ -13,6 +13,7 @@
 
 const { query, get, run } = require('../database/db');
 const xlsx = require('xlsx');
+const branding = require('./branding');
 
 class GeneralAdminService {
   constructor() {
@@ -496,15 +497,13 @@ class GeneralAdminService {
     <!-- Header -->
     <div class="flex items-center justify-between border-b-2 brand-border pb-4">
       <div class="text-right space-y-1">
-        <h2 class="font-black text-lg text-slate-900">شركة جوهرة المجد للمقاولات والتجارة</h2>
+        <h2 class="font-black text-lg text-slate-900">${branding.companyNameAr}</h2>
         <p class="text-xs font-semibold text-slate-600">الإدارة العامة للموارد البشرية والخدمات المساندة</p>
-        <p class="text-[11px] text-slate-500">سجل تجاري: 5850028731 | المركز الرئيسي - أبها</p>
+        <p class="text-[11px] text-slate-500">سجل تجاري: ${branding.commercialRegister} | المركز الرئيسي - أبها</p>
       </div>
-      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-rose-50/40">
-        <div class="w-12 h-12 mx-auto rounded-full bg-[#700c14] text-amber-400 flex items-center justify-center text-xl shadow mb-1">
-          <i class="fa-solid fa-arrow-right-arrow-left"></i>
-        </div>
-        <span class="text-[10px] font-black tracking-widest text-[#700c14] block">TRANSFER DECISION</span>
+      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-white shadow-sm">
+        <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-12 max-w-[140px] object-contain mx-auto" />
+        <span class="text-[9px] font-black tracking-widest text-[#700c14] block mt-1">TRANSFER DECISION</span>
       </div>
       <div class="text-left space-y-1 text-xs">
         <div class="font-bold text-slate-700">رقم الطلب: <span class="font-mono text-slate-900 font-bold">${tr.request_no}</span></div>
@@ -948,14 +947,9 @@ class GeneralAdminService {
 
           <!-- Center: Luxury Crest / Official Emblem -->
           <div class="text-center flex flex-col items-center justify-center">
-            <div class="w-14 h-14 rounded-2xl border-2 border-[#d4af37] bg-gradient-to-b from-rose-50 via-white to-amber-50 flex items-center justify-center shadow-sm relative">
-              <i class="fa-solid fa-shield-halved text-2xl text-[#700c14]"></i>
-              <div class="absolute -bottom-1.5 bg-[#700c14] text-[#d4af37] text-[8px] font-black px-2 py-0.2 rounded-full border border-[#d4af37] shadow">
-                JM HRMS
-              </div>
-            </div>
-            <span class="text-xs font-black text-slate-900 mt-2 block tracking-wide">تعميم إداري رسمي معتمد</span>
-            <span class="text-[8px] font-bold text-[#700c14] tracking-widest block uppercase font-mono">Administrative Circular</span>
+            <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-16 max-w-[190px] object-contain mx-auto" />
+            <span class="text-xs font-black text-slate-900 mt-1 block tracking-wide">تعميم إداري رسمي معتمد</span>
+            <span class="text-[8px] font-bold text-[#700c14] tracking-widest block uppercase font-mono">ADMINISTRATIVE CIRCULAR</span>
           </div>
 
           <!-- Left: Circular Metadata Card -->
@@ -1319,8 +1313,9 @@ ${c.content}
         <h2 class="font-black text-lg text-slate-900">شركة جوهرة المجد للمقاولات والتجارة</h2>
         <p class="text-xs font-semibold text-slate-600">الشؤون الإدارية والحوكمة — سجلات وتراخيص المنشأة</p>
       </div>
-      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-rose-50/40">
-        <span class="text-[10px] font-black tracking-widest text-[#700c14] block">COMPANY LICENSES REGISTER</span>
+      <div class="text-center px-4 py-2 border brand-border rounded-xl bg-white shadow-sm">
+        <img src="${branding.logoBase64}" alt="شعار شركة جوهرة المجد" class="h-12 max-w-[140px] object-contain mx-auto" />
+        <span class="text-[9px] font-black tracking-widest text-[#700c14] block mt-1">COMPANY LICENSES REGISTER</span>
       </div>
       <div class="text-left space-y-1 text-xs">
         <div class="font-bold text-slate-700">تاريخ التقرير: <span class="font-mono text-slate-900 font-bold">${now}</span></div>
@@ -1377,8 +1372,8 @@ ${c.content}
      ========================================================================= */
 
   getUnifiedReportSummary(filters = {}) {
-    const activeEmployeesCount = get(`SELECT COUNT(*) as c FROM employees WHERE emp_code NOT IN ('JM-0001','JM-0002','JM-0003')`).c;
-    const saudiCount = get(`SELECT COUNT(*) as c FROM employees WHERE is_saudi = 1 AND emp_code NOT IN ('JM-0001','JM-0002','JM-0003')`).c;
+    const activeEmployeesCount = get(`SELECT COUNT(*) as c FROM employees WHERE status = 'نشط'`).c;
+    const saudiCount = get(`SELECT COUNT(*) as c FROM employees WHERE status = 'نشط' AND is_saudi = 1`).c;
     const expatCount = activeEmployeesCount - saudiCount;
     const saudizationRate = activeEmployeesCount > 0 ? Math.round((saudiCount / activeEmployeesCount) * 100) : 0;
 

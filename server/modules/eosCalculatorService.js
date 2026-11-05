@@ -6,6 +6,7 @@
  */
 
 const { query, get, run } = require('../database/db');
+const branding = require('./branding');
 
 /**
  * Official Saudi Labor Law Termination Cases & Entitlement Rules
@@ -763,16 +764,14 @@ class EosCalculatorService {
     <!-- Header -->
     <div class="flex justify-between items-start border-b-2 brand-border pb-5">
       <div class="space-y-1">
-        <h1 class="text-xl font-black brand-text">شركة جوهرة المجد للتجارة</h1>
+        <h1 class="text-xl font-black brand-text">${branding.companyNameAr}</h1>
         <p class="text-xs font-bold text-slate-600">إدارة الشؤون الإدارية والموارد البشرية</p>
-        <p class="text-[11px] text-slate-500 font-mono">سجل تجاري: 5850024440 • المملكة العربية السعودية</p>
+        <p class="text-[11px] text-slate-500 font-mono">سجل تجاري: ${branding.commercialRegister} • المملكة العربية السعودية</p>
       </div>
 
       <div class="text-center">
-        <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 text-[#700c14] border border-amber-200 flex items-center justify-center text-3xl font-black mb-1">
-          <i class="fa-solid fa-gem"></i>
-        </div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">JAWHARAT AL-MAJD</span>
+        <img src="${branding.logoBase64}" alt="شعار جوهرة المجد" class="h-14 max-w-[160px] object-contain mx-auto" />
+        <span class="text-[9px] font-black uppercase tracking-widest text-[#700c14] block mt-1">JAWHARAT AL-MAJD</span>
       </div>
 
       <div class="text-left space-y-1">

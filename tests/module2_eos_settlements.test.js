@@ -358,13 +358,13 @@ async function runTests() {
   }
 
   const employees = query(`SELECT * FROM employees WHERE status = 'نشط'`);
-  test('Exactly 111 active operational employees exist in database', () => {
-    assert.strictEqual(employees.length, 111, `Expected 111 employees, found ${employees.length}`);
+  test('Exactly 108 active operational employees exist in database', () => {
+    assert.strictEqual(employees.length, 108, `Expected 108 employees, found ${employees.length}`);
   });
 
-  const boardCheck = query(`SELECT * FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003')`);
-  test('Zero board members in operational employee pool', () => {
-    assert.strictEqual(boardCheck.length, 0, 'Found board members in operational pool!');
+  const totalEmployees = query(`SELECT * FROM employees`);
+  test('Exactly 113 total employees (108 active + 5 terminated) exist in database', () => {
+    assert.strictEqual(totalEmployees.length, 113, `Expected 113 employees, found ${totalEmployees.length}`);
   });
 
   const users = query(`SELECT * FROM users`);

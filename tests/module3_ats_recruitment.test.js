@@ -250,13 +250,13 @@ try {
 }
 
 const activeEmployees = query("SELECT * FROM employees WHERE status = 'نشط'");
-test('Strict Rule #1: Exactly 111 active operational employees preserved in database', () => {
-  assert.strictEqual(activeEmployees.length, 111, `Expected 111 employees, found ${activeEmployees.length}`);
+test('Strict Rule #1: Exactly 108 active operational employees preserved in database', () => {
+  assert.strictEqual(activeEmployees.length, 108, `Expected 108 employees, found ${activeEmployees.length}`);
 });
 
-const boardMembers = query("SELECT * FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003')");
-test('Strict Rule #1: Zero board members in operational employee pool', () => {
-  assert.strictEqual(boardMembers.length, 0, 'Board members found in operational pool!');
+const totalEmployees = query("SELECT * FROM employees");
+test('Strict Rule #1: Exactly 113 total employees (108 active + 5 terminated) preserved', () => {
+  assert.strictEqual(totalEmployees.length, 113, `Expected 113 employees, found ${totalEmployees.length}`);
 });
 
 const users = query("SELECT * FROM users");

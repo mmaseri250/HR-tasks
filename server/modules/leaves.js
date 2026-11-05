@@ -25,10 +25,12 @@ function getAnnualAccrualRate(joinDateStr) {
 
 /**
  * Get or initialize leave balance for an employee, calculating daily accrual automatically
+ * based on Certified Opening Balance as of 2026-11-05 and post-baseline daily accrual
  */
 function getEmployeeLeaveBalance(empId) {
   const emp = get(`
     SELECT e.id, e.emp_code, e.full_name_ar, e.join_date, e.annual_leave_balance,
+           e.opening_leave_balance, e.accrual_start_date, e.monthly_accrual_rate,
            d.name_ar AS department_name, b.name_ar AS branch_name
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
@@ -40,37 +42,34 @@ function getEmployeeLeaveBalance(empId) {
     throw new Error('الموظف غير موجود');
   }
 
+  const openingBal = typeof emp.opening_leave_balance === 'number' ? emp.opening_leave_balance : 0;
+  const accrualStartStr = emp.accrual_start_date || '2026-11-05';
+  const accrualStartDate = new Date(accrualStartStr);
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
+
   const serviceYears = calculateServiceYears(emp.join_date, now);
-  const annualEntitlement = serviceYears > 5 ? 30 : 21;
-  const dailyRate = annualEntitlement / 365.0;
-
-  let balanceRow = get('SELECT * FROM leave_balances WHERE emp_id = ?', [empId]);
-
-  if (!balanceRow) {
-    // Initialize if not present
-    const baseBal = Number(emp.annual_leave_balance) || 0;
-    run(`
-      INSERT INTO leave_balances (
-        emp_id, base_balance, accrual_rate_annual, accrued_days, used_days,
-        manual_adjustment, current_balance, last_accrual_date, updated_at
-      ) VALUES (?, ?, ?, 0, 0, 0, ?, ?, datetime('now'))
-    `, [empId, baseBal, annualEntitlement, baseBal, todayStr]);
-
-    balanceRow = get('SELECT * FROM leave_balances WHERE emp_id = ?', [empId]);
+  // Monthly rate per Saudi Labor Law (Article 109): 2.5 (>= 5 yrs) or 1.75 (< 5 yrs)
+  let monthlyRate = serviceYears >= 5 ? 2.5 : 1.75;
+  if (emp.monthly_accrual_rate && typeof emp.monthly_accrual_rate === 'number') {
+    if (serviceYears >= 5) monthlyRate = Math.max(2.5, emp.monthly_accrual_rate);
+    else monthlyRate = emp.monthly_accrual_rate;
   }
+  const annualEntitlement = Math.round(monthlyRate * 12); // 21 or 30 days
+  const dailyRate = monthlyRate / 30.0;
 
-  // Calculate daily accrual since last accrual date
-  const lastDate = balanceRow.last_accrual_date ? new Date(balanceRow.last_accrual_date) : now;
-  const daysElapsed = Math.max(0, Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)));
-
-  let newAccrued = balanceRow.accrued_days;
-  if (daysElapsed > 0) {
-    newAccrued += daysElapsed * dailyRate;
+  // Accrual days since certified baseline date (2026-11-05)
+  let daysElapsed = 0;
+  if (now.getTime() > accrualStartDate.getTime()) {
+    daysElapsed = Math.floor((now.getTime() - accrualStartDate.getTime()) / (1000 * 60 * 60 * 24));
   }
+  const accruedSinceStart = Math.max(0, daysElapsed * dailyRate);
 
-  // Calculate total used days from approved leaves
+  // Manual adjustments from leave_balance_adjustments
+  const adjRow = get(`SELECT COALESCE(SUM(adjustment_days), 0) AS total_adj FROM leave_balance_adjustments WHERE emp_id = ?`, [empId]);
+  const manualAdj = adjRow ? Number(adjRow.total_adj) : 0;
+
+  // Total used days from approved leaves
   const usedRow = get(`
     SELECT COALESCE(SUM(days_count), 0) AS total_used
     FROM leaves
@@ -78,24 +77,38 @@ function getEmployeeLeaveBalance(empId) {
   `, [empId]);
   const approvedUsedDays = usedRow ? Number(usedRow.total_used) : 0;
 
-  const currentBal = Math.max(0, Math.round((balanceRow.base_balance + newAccrued + balanceRow.manual_adjustment - approvedUsedDays) * 100) / 100);
+  // Exact floating balance internally
+  const rawBalance = Math.max(0, openingBal + accruedSinceStart + manualAdj - approvedUsedDays);
+  const currentBal = Math.round(rawBalance * 10000) / 10000;
+  // Floored integer days for display and operational entitlement
+  const displayBal = Math.floor(currentBal);
 
-  // Update table if days elapsed or rate changed
-  if (daysElapsed > 0 || balanceRow.accrual_rate_annual !== annualEntitlement || balanceRow.used_days !== approvedUsedDays) {
+  // Sync leave_balances table
+  let balanceRow = get('SELECT * FROM leave_balances WHERE emp_id = ?', [empId]);
+  if (!balanceRow) {
+    run(`
+      INSERT INTO leave_balances (
+        emp_id, base_balance, accrual_rate_annual, accrued_days, used_days,
+        manual_adjustment, current_balance, last_accrual_date, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `, [empId, openingBal, annualEntitlement, accruedSinceStart, approvedUsedDays, manualAdj, currentBal, todayStr]);
+  } else {
     run(`
       UPDATE leave_balances
-      SET accrual_rate_annual = ?,
+      SET base_balance = ?,
+          accrual_rate_annual = ?,
           accrued_days = ?,
           used_days = ?,
+          manual_adjustment = ?,
           current_balance = ?,
           last_accrual_date = ?,
           updated_at = datetime('now')
       WHERE emp_id = ?
-    `, [annualEntitlement, newAccrued, approvedUsedDays, currentBal, todayStr, empId]);
-
-    // Keep employee annual_leave_balance synced
-    run('UPDATE employees SET annual_leave_balance = ? WHERE id = ?', [currentBal, empId]);
+    `, [openingBal, annualEntitlement, accruedSinceStart, approvedUsedDays, manualAdj, currentBal, todayStr, empId]);
   }
+
+  // Update employee annual_leave_balance with display integer
+  run('UPDATE employees SET annual_leave_balance = ? WHERE id = ?', [displayBal, empId]);
 
   return {
     emp_id: emp.id,
@@ -106,12 +119,15 @@ function getEmployeeLeaveBalance(empId) {
     join_date: emp.join_date,
     service_years: Math.round(serviceYears * 10) / 10,
     annual_entitlement: annualEntitlement,
-    daily_accrual_rate: Math.round(dailyRate * 1000) / 1000,
-    base_balance: balanceRow.base_balance,
-    accrued_days: Math.round(newAccrued * 100) / 100,
+    monthly_accrual_rate: monthlyRate,
+    daily_accrual_rate: Math.round(dailyRate * 10000) / 10000,
+    opening_balance: openingBal,
+    accrual_start_date: accrualStartStr,
+    accrued_days: Math.round(accruedSinceStart * 100) / 100,
     used_days: approvedUsedDays,
-    manual_adjustment: balanceRow.manual_adjustment,
+    manual_adjustment: manualAdj,
     current_balance: currentBal,
+    display_balance: displayBal,
     last_accrual_date: todayStr
   };
 }
@@ -238,12 +254,17 @@ function submitLeaveRequest(data) {
   const managerId = emp.manager_id || null;
   const managerName = emp.direct_manager_name || emp.manager_full_name || 'المدير المباشر';
 
+  const substituteId = substitute_emp_id || data.replacement_emp_id;
+  if (!substituteId) {
+    throw new Error('حقل الموظف البديل إلزامي لتقديم طلب الإجازة.');
+  }
+
   // 1. Mandatory Direct Manager Check
-  if (!emp.manager_id && emp.emp_code !== 'JM-1000' && emp.emp_code !== 'JM-0004') {
+  if (!emp.manager_id && emp.emp_code !== 'JM-0001' && emp.emp_code !== 'JM-0108') {
     throw new Error('لا يمكن تقديم الطلب: لا يوجد مدير مباشر معين للموظف في قاعدة البيانات. يرجى مراجعة إدارة الموارد البشرية لربط المدير المباشر.');
   }
 
-  // 2. Strict Server-side Overdraft Prevention with Pending Reserved Days
+  // 2. Strict Server-side Overdraft Prevention with Floored Display Balance
   if (leave_type === 'إجازة سنوية') {
     const balInfo = getEmployeeLeaveBalance(emp_id);
     const pendingRow = get(`
@@ -252,10 +273,10 @@ function submitLeaveRequest(data) {
       WHERE emp_id = ? AND leave_type = 'إجازة سنوية' AND (status LIKE '%معلق%' OR status LIKE '%بانتظار%')
     `, [emp_id]);
     const pendingDays = pendingRow ? Number(pendingRow.total_pending) : 0;
-    const availableNetBalance = balInfo.current_balance - pendingDays;
+    const availableNetBalance = Math.max(0, balInfo.display_balance - pendingDays);
 
     if (days > availableNetBalance) {
-      throw new Error(`لا يمكن تقديم الطلب؛ عدد الأيام المطلوبة (${days} يوم) يتجاوز رصيد الإجازة السنوية المتاح (${availableNetBalance} يوم). الرصيد الإجمالي: ${balInfo.current_balance} يوم، المحجوز بطلبات معلقة: ${pendingDays} يوم.`);
+      throw new Error(`لا يمكن تقديم الطلب؛ عدد الأيام المطلوبة (${days} يوم) يتجاوز رصيد الإجازة السنوية المتاح (${availableNetBalance} يوم). الرصيد المستحق المتاح: ${balInfo.display_balance} يوم، المحجوز بطلبات معلقة: ${pendingDays} يوم.`);
     }
   }
 
@@ -269,14 +290,14 @@ function submitLeaveRequest(data) {
   const sql = `
     INSERT INTO leaves (
       request_no, emp_id, leave_type, start_date, end_date, days_count,
-      reason, substitute_emp_id, attachment, status, manager_id, manager_name,
+      reason, substitute_emp_id, replacement_emp_id, attachment, status, manager_id, manager_name,
       manager_status, hr_verify_status, hr_director_status, hr_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
   `;
 
   const result = run(sql, [
     request_no, emp_id, leave_type, start_date, end_date, days,
-    reason, substitute_emp_id, attachment, initialStatus, managerId, managerName
+    reason, substituteId, substituteId, attachment, initialStatus, managerId, managerName
   ]);
   const leaveId = result.lastInsertRowid;
 
@@ -461,6 +482,11 @@ function approveLeave(id, action, role = 'manager', comment = '', approverName =
   // 1. Strict Self-Approval Prevention
   if (userEmpId && Number(userEmpId) === Number(leave.emp_id)) {
     throw new Error('غير مصرح: لا يحق للموظف مقدم الطلب اعتماد أو تدقيق طلب إجازته الشخصية إطلاقاً.');
+  }
+
+  // 1.1 Mandatory Rejection Reason
+  if (action === 'reject' && (!comment || !comment.trim())) {
+    throw new Error('يرجى ذكر سبب الرفض (إلزامي).');
   }
 
   if (role === 'reset' || role === 'revert') {

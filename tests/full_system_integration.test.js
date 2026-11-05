@@ -78,30 +78,30 @@ async function runComprehensiveSystemTests() {
 
   // 1. قاعدة البيانات والبيانات الأساسية
   console.log('--- 1. التحقق من سلامة قاعدة البيانات والموظفين والهيكل التنظيمي ---');
-  await testStep('قاعدة البيانات: تطابق عدد الموظفين الـ 111 الفعليين دون أي بيانات وهمية أو إدارة تنفيذية', () => {
+  await testStep('قاعدة البيانات: تطابق عدد الموظفين الـ 108 النشطين و 5 منهية خدماتهم دون أي بيانات وهمية', () => {
     const total = db.get('SELECT COUNT(*) AS total FROM employees').total;
-    assert.strictEqual(total, 111, 'يجب أن يكون عدد الموظفين 111 موظفاً بالضبط');
+    assert.strictEqual(total, 113, 'يجب أن يكون إجمالي الموظفين 113 موظفاً (108 نشط + 5 منتهي)');
     
-    const saudis = db.get('SELECT COUNT(*) AS total FROM employees WHERE is_saudi = 1').total;
-    const nonSaudis = db.get('SELECT COUNT(*) AS total FROM employees WHERE is_saudi = 0').total;
-    assert.strictEqual(saudis, 31, 'عدد الموظفين السعوديين 31');
-    assert.strictEqual(nonSaudis, 80, 'عدد الموظفين غير السعوديين 80');
+    const saudis = db.get("SELECT COUNT(*) AS total FROM employees WHERE is_saudi = 1 AND status = 'نشط'").total;
+    const nonSaudis = db.get("SELECT COUNT(*) AS total FROM employees WHERE is_saudi = 0 AND status = 'نشط'").total;
+    assert.strictEqual(saudis, 30, 'عدد الموظفين السعوديين النشطين 30');
+    assert.strictEqual(nonSaudis, 78, 'عدد الموظفين غير السعوديين النشطين 78');
   });
 
   await testStep('الهيكل التنظيمي: 100% من الموظفين مرتبطون بمدير مباشر صحيح', () => {
-    // مدير الموارد البشرية عبدالملك الشريف ومدير المشاريع فارس القحطاني هما القيادة التشغيلية
-    const abdulmalik = db.get("SELECT manager_id FROM employees WHERE emp_code = 'JM-1000'");
+    // مدير الموارد البشرية عبدالملك الشريف هو القيادة
+    const abdulmalik = db.get("SELECT manager_id FROM employees WHERE emp_code = 'JM-0001'");
     assert.strictEqual(abdulmalik.manager_id, null, 'عبدالملك الشريف هو المدير التنفيذي للموارد البشرية');
 
-    const shama = db.get("SELECT manager_id FROM employees WHERE emp_code = 'JM-1053'");
-    assert.ok(shama.manager_id, 'شامة مرتبطة بمديرها المباشر');
+    const opsEmp = db.get("SELECT manager_id FROM employees WHERE emp_code = 'JM-0010'");
+    assert.ok(opsEmp.manager_id, 'الموظف التشغيلي مرتبط بمديره المباشر');
   });
 
-  await testStep('الإدارات والفروع: 15 إدارة معتمدة و 10 فروع جغرافية', () => {
+  await testStep('الإدارات والفروع: 6 إدارات معتمدة و 5 فروع جغرافية', () => {
     const depts = db.get('SELECT COUNT(*) AS total FROM departments').total;
     const branches = db.get('SELECT COUNT(*) AS total FROM branches').total;
-    assert.strictEqual(depts, 15, 'يجب أن يكون عدد الإدارات 15');
-    assert.strictEqual(branches, 10, 'يجب أن يكون عدد الفروع 10');
+    assert.strictEqual(depts, 6, 'يجب أن يكون عدد الإدارات 6');
+    assert.strictEqual(branches, 5, 'يجب أن يكون عدد الفروع 5');
   });
 
   // 2. فحص واجهة المستخدم والترابط الشبكي
@@ -138,21 +138,21 @@ async function runComprehensiveSystemTests() {
     const res = await httpGet('/api/employees');
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
-    assert.strictEqual(res.data.data.length, 111);
+    assert.strictEqual(res.data.data.length, 113);
   });
 
-  await testStep('API [GET /api/departments]: جلب الإدارات الـ 15 المعتمدة', async () => {
+  await testStep('API [GET /api/departments]: جلب الإدارات الـ 6 المعتمدة', async () => {
     const res = await httpGet('/api/departments');
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
-    assert.strictEqual(res.data.data.length, 15);
+    assert.strictEqual(res.data.data.length, 6);
   });
 
-  await testStep('API [GET /api/branches]: جلب الفروع الـ 10 المعتمدة', async () => {
+  await testStep('API [GET /api/branches]: جلب الفروع الـ 5 المعتمدة', async () => {
     const res = await httpGet('/api/branches');
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.success, true);
-    assert.strictEqual(res.data.data.length, 10);
+    assert.strictEqual(res.data.data.length, 5);
   });
 
   await testStep('API [GET /api/leaves/kpis]: مؤشرات الإجازات المتطابقة مع قاعدة البيانات', async () => {
@@ -163,7 +163,7 @@ async function runComprehensiveSystemTests() {
   });
 
   await testStep('API [GET /api/approvals/pending]: إرجاع طلبات الموافقة المعلقة للمدير المباشر', async () => {
-    const abdulmalik = db.get("SELECT id FROM employees WHERE emp_code = 'JM-1000'");
+    const abdulmalik = db.get("SELECT id FROM employees WHERE emp_code = 'JM-0001'");
     const res = await httpGet('/api/approvals/pending', {
       'x-user-id': '2',
       'x-user-role': 'hr_manager',

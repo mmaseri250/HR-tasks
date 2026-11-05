@@ -371,16 +371,19 @@ class AttendanceAutomationService {
    */
   ensureRosterDataForDate(dateStr = null) {
     const targetDate = dateStr || new Date().toISOString().split('T')[0];
-    const existingCount = get('SELECT COUNT(*) as c FROM attendance_daily_summary WHERE date = ?', [targetDate])?.c || 0;
+    const employees = query("SELECT id, emp_code, full_name_ar, shift_type FROM employees WHERE status = 'نشط' ORDER BY id ASC");
+    const existing = query("SELECT emp_id FROM attendance_daily_summary WHERE date = ?", [targetDate]);
+    const existingEmpIds = new Set(existing.map(r => r.emp_id));
 
-    if (existingCount > 0) {
-      return { seeded: false, count: existingCount, date: targetDate };
+    const missingEmployees = employees.filter(emp => !existingEmpIds.has(emp.id));
+
+    if (missingEmployees.length === 0) {
+      return { seeded: false, count: existing.length, date: targetDate };
     }
 
-    const employees = query("SELECT id, emp_code, full_name_ar, shift_type FROM employees WHERE status = 'نشط' ORDER BY id ASC");
     let inserted = 0;
 
-    employees.forEach((emp, index) => {
+    missingEmployees.forEach((emp, index) => {
       // Deterministic realistic variance based on employee id & date hash
       const hash = (emp.id * 17 + targetDate.split('-').reduce((a, b) => a + Number(b), 0)) % 100;
       

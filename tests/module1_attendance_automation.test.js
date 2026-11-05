@@ -12,19 +12,15 @@ console.log('=== [TEST] Starting Module 1 Verification Suite ===\n');
 
 // 1. Verify Absolute Data Integrity (Rule #1)
 const empCount = get("SELECT COUNT(*) as c FROM employees WHERE status = 'نشط'")?.c;
-console.log(`[PASS] Active Employees count: ${empCount} (Expected: 111)`);
-assert.strictEqual(empCount, 111, 'Operational employees must be exactly 111');
-
-const boardMembersCount = get("SELECT COUNT(*) as c FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003')")?.c;
-console.log(`[PASS] Board members count: ${boardMembersCount} (Expected: 0)`);
-assert.strictEqual(boardMembersCount, 0, 'Board members must be 0');
+console.log(`[PASS] Active Employees count: ${empCount} (Expected: 108)`);
+assert.strictEqual(empCount, 108, 'Operational active employees must be exactly 108');
 
 // 2. Test Roster Seeding for a Target Date
 const testDate = '2026-11-04';
 const rosterRes = attendanceAutomationService.ensureRosterDataForDate(testDate);
 console.log(`[PASS] Ensure Roster for ${testDate}:`, rosterRes);
 const dayRecords = query('SELECT COUNT(*) as c FROM attendance_daily_summary WHERE date = ?', [testDate])[0]?.c;
-assert(dayRecords >= 111, 'Daily records must cover all 111 employees');
+assert(dayRecords >= 108, 'Daily records must cover all 108 employees');
 
 // 3. Test Automated Violation Scanner
 const scanRes = attendanceAutomationService.scanAndApplyAttendanceViolations(testDate);

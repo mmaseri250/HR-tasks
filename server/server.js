@@ -56,44 +56,15 @@ try {
 
 // Ensure organizational hierarchy and manager integrity on startup
 try {
-  // Completely purge Executive Leadership (JM-0001, JM-0002, JM-0003) from operational employee roster
-  // Note: Only exact names of the 3 board members - do NOT delete operational managers like Hani Abdulrahman (JM-1041)
-  run("DELETE FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003') OR full_name_ar = 'عبدالرحمن صالح القحطاني' OR full_name_ar = 'سعيد محمد القحطاني' OR full_name_ar = 'صالح سعيد القحطاني'");
-  run("DELETE FROM users WHERE emp_id IN ('JM-0001', 'JM-0002', 'JM-0003') OR username IN ('abdulrahman.qahtani', 'saeed.qahtani', 'salih.qahtani', 'admin.qahtani') OR full_name = 'عبدالرحمن صالح القحطاني' OR full_name = 'سعيد محمد القحطاني' OR full_name = 'صالح سعيد القحطاني'");
-  run("DELETE FROM absence_notices WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003') OR emp_name IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
-  run("DELETE FROM penalties_issued WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
-  run("DELETE FROM requests WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
-  run("DELETE FROM leaves WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
-  run("DELETE FROM leave_balances WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
-  run("DELETE FROM payroll_items WHERE emp_id IN (SELECT id FROM employees WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003'))");
+  // Purge any lingering obsolete board members if present by full name
+  run("DELETE FROM employees WHERE full_name_ar IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
+  run("DELETE FROM users WHERE username IN ('abdulrahman.qahtani', 'saeed.qahtani', 'salih.qahtani', 'admin.qahtani') OR full_name IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
+  run("DELETE FROM absence_notices WHERE emp_name IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
   run("UPDATE branches SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
   run("UPDATE departments SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
 
-  const dept = get("SELECT id FROM departments WHERE name_ar = 'إدارة المشاريع والمقاولات'") || get("SELECT id FROM departments LIMIT 1");
-  const branch = get("SELECT id FROM branches WHERE is_main = 1") || get("SELECT id FROM branches LIMIT 1");
-
-  const farisExists = get("SELECT id FROM employees WHERE emp_code = 'JM-0004'");
-  if (!farisExists) {
-    run(`
-      INSERT INTO employees (
-        emp_code, full_name_ar, full_name_en, national_id, nationality,
-        is_saudi, gender, email, phone, department_id, branch_id, section,
-        job_title_ar, job_title_en, grade_level, basic_salary, housing_allowance,
-        transport_allowance, other_allowance, bank_name, bank_code, iban,
-        annual_leave_balance, direct_manager_name, shift_type, join_date, status, role
-      ) VALUES (
-        'JM-0004', 'فارس عبدالرحمن القحطاني', 'Faris Abdulrahman Al-Qahtani', '1001122334', 'سعودي',
-        1, 'M', 'projects.dir@jalmajd.com', '920012405', ?, ?, 'المقاولات',
-        'مدير المشاريع', 'Projects Manager', 'P-1', 12000, 3000,
-        1000, 0, 'مصرف الراجحي', 'RJHI', '',
-        21, NULL, 'دوام صباحي', '2017-01-01', 'نشط', 'dept_manager'
-      )
-    `, [dept ? dept.id : null, branch ? branch.id : null]);
-    console.log('Restored Projects Manager JM-0004');
-  }
-
   // Ensure department heads report independently (manager_id = NULL)
-  run("UPDATE employees SET manager_id = NULL, direct_manager_name = NULL WHERE emp_code IN ('JM-1000', 'JM-0004')");
+  run("UPDATE employees SET manager_id = NULL, direct_manager_name = NULL WHERE emp_code IN ('JM-0001', 'JM-0108')");
   run("UPDATE employees SET direct_manager_name = 'تامر جمعه احمد عبدالله' WHERE direct_manager_name = 'تامر جمعة احمد عبدالله'");
 } catch (e) {
   console.error('Hierarchy sync error:', e.message);
@@ -101,7 +72,7 @@ try {
 
 // Automatic Workflow Integrity Check & Revert of Erroneous Actions
 try {
-  const abdulmalik = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-1000'");
+  const abdulmalik = get("SELECT id, full_name_ar FROM employees WHERE emp_code = 'JM-0001' OR full_name_ar LIKE '%عبدالملك سعيد الشريف%'");
   const shama = get("SELECT id, manager_id, direct_manager_name FROM employees WHERE full_name_ar LIKE '%شامة%'");
   if (shama) {
     const existingReq = get("SELECT id, status, manager_status FROM requests WHERE emp_id = ? OR id = 26 OR request_no = 'REQ-2026-0001'", [shama.id]);
@@ -165,8 +136,8 @@ try {
       `, [reqId, leaveId]);
       run(`
         INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
-        VALUES (?, ?, 3, 'اعتماد مدير الموارد البشرية', 'hr_director', 9551, 'عبدالملك سعيد الشريف', 'مؤجل', datetime('now'), datetime('now'))
-      `, [reqId, leaveId]);
+        VALUES (?, ?, 3, 'اعتماد مدير الموارد البشرية', 'hr_director', ?, ?, 'مؤجل', datetime('now'), datetime('now'))
+      `, [reqId, leaveId, abdulmalik ? abdulmalik.id : null, abdulmalik ? abdulmalik.full_name_ar : 'عبدالملك سعيد الشريف']);
       console.log('✓ Created 3-stage workflow_steps pipeline.');
     }
   }
@@ -244,6 +215,7 @@ app.use((req, res, next) => {
 
 // Static frontend
 app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // File upload setup for import
 const upload = multer({ dest: path.join(__dirname, '..', 'uploads') });
@@ -1130,6 +1102,124 @@ app.delete('/api/employees/:id', (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+// -------------------------------------------------------------
+// Employee Photo & Official Documents Management
+// -------------------------------------------------------------
+const docStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const destDir = path.join(__dirname, '..', 'uploads', 'employee_docs');
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    cb(null, destDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const safeBase = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_\-\u0600-\u06FF]/g, '_');
+    cb(null, `emp-${req.params.id || 'doc'}-${Date.now()}-${safeBase}${ext}`);
+  }
+});
+const uploadDoc = multer({ storage: docStorage });
+
+const photoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const destDir = path.join(__dirname, '..', 'uploads', 'photos');
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    cb(null, destDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `avatar-emp-${req.params.id}-${Date.now()}${ext}`);
+  }
+});
+const uploadPhoto = multer({ storage: photoStorage });
+
+// Upload Employee Photo
+app.post('/api/employees/:id/photo', uploadPhoto.single('photo'), (req, res) => {
+  try {
+    const empId = req.params.id;
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'لم يتم إرسال ملف الصورة' });
+    }
+    const photoUrl = `/uploads/photos/${req.file.filename}`;
+    run('UPDATE employees SET photo_url = ? WHERE id = ?', [photoUrl, empId]);
+    res.json({ success: true, message: 'تم تحديث الصورة الشخصية بنجاح', photo_url: photoUrl });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Upload Employee Official Document
+app.post('/api/employees/:id/documents', uploadDoc.single('file'), (req, res) => {
+  try {
+    const empId = req.params.id;
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'لم يتم إرسال الملف' });
+    }
+    const { doc_type = 'مستند رسمي', title } = req.body;
+    const docTitle = title || req.file.originalname;
+    const filePath = `/uploads/employee_docs/${req.file.filename}`;
+    const fileSize = req.file.size;
+    const mimeType = req.file.mimetype;
+    const user = extractUserContext(req);
+    const uploadedBy = user ? user.id : null;
+
+    const result = run(`
+      INSERT INTO employee_documents (
+        emp_id, doc_type, title, file_path, file_name, file_size, mime_type, uploaded_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `, [empId, doc_type, docTitle, filePath, req.file.originalname, fileSize, mimeType, uploadedBy]);
+
+    res.status(201).json({
+      success: true,
+      message: 'تم رفع المستند وحفظه بنجاح',
+      data: {
+        id: result.lastInsertRowid,
+        emp_id: empId,
+        doc_type,
+        title: docTitle,
+        file_path: filePath,
+        file_name: req.file.originalname,
+        file_size: fileSize,
+        mime_type: mimeType
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get Employee Documents
+app.get('/api/employees/:id/documents', (req, res) => {
+  try {
+    const empId = req.params.id;
+    const docs = query('SELECT * FROM employee_documents WHERE emp_id = ? ORDER BY id DESC', [empId]);
+    res.json({ success: true, data: docs });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete Employee Document
+app.delete('/api/employees/:id/documents/:docId', (req, res) => {
+  try {
+    const { id: empId, docId } = req.params;
+    const doc = get('SELECT * FROM employee_documents WHERE id = ? AND emp_id = ?', [docId, empId]);
+    if (!doc) {
+      return res.status(404).json({ success: false, error: 'المستند غير موجود' });
+    }
+    run('DELETE FROM employee_documents WHERE id = ?', [docId]);
+    try {
+      const fullPath = path.join(__dirname, '..', doc.file_path);
+      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+    } catch (e) {}
+
+    res.json({ success: true, message: 'تم حذف المستند بنجاح' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 /* =========================================================================
    5. ATTENDANCE & BIOMETRIC ROUTES

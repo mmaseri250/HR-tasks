@@ -118,9 +118,14 @@ function createEmployee(data) {
       join_date, contract_start, contract_end, iqama_expiry, passport_expiry,
       insurance_expiry, basic_salary, housing_allowance, transport_allowance,
       other_allowance, gosi_number, bank_name, bank_code, iban,
-      annual_leave_balance, shift_type, status, role
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      annual_leave_balance, shift_type, status, role,
+      opening_leave_balance, monthly_accrual_rate, accrual_start_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
+
+  const openingBal = data.opening_leave_balance !== undefined ? Number(data.opening_leave_balance) : (data.annual_leave_balance !== undefined ? Number(data.annual_leave_balance) : 0);
+  const monthlyRate = data.monthly_accrual_rate !== undefined ? Number(data.monthly_accrual_rate) : 1.75;
+  const accrualStart = data.accrual_start_date || '2026-11-05';
 
   const result = run(sql, [
     data.emp_code,
@@ -158,7 +163,10 @@ function createEmployee(data) {
     data.annual_leave_balance !== undefined ? Number(data.annual_leave_balance) : 0,
     data.shift_type || 'دوام صباحي',
     data.status || 'نشط',
-    data.role || 'employee'
+    data.role || 'employee',
+    openingBal,
+    monthlyRate,
+    accrualStart
   ]);
 
   return getEmployeeById(result.lastInsertRowid);

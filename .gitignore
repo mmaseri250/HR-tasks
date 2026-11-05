@@ -9,3 +9,4 @@ uploads/*
 server/database/backups/
 scripts/check_db_board.js
 scripts/restore_hani.js
+backups/

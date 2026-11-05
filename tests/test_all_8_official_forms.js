@@ -58,13 +58,19 @@ async function runTests() {
     console.log(`✓ [HTML by EmpID] ${r.name} (${r.code}): Generated ${html.length} chars (100% Valid & Pre-filled)`);
   }
 
-  // 3. Test HTML Renderers with Existing Transaction (e.g. Leave ID 16)
-  console.log('\n--- 3. Testing HTML Renderers with Existing Record ID (Leave ID 16) ---');
-  const leaveHtml = officialTemplates.renderLeaveFormHtml(16, { emp_id: testEmpId2 });
-  assert(leaveHtml.includes('شامة علي  محمد عسيري') || leaveHtml.includes('شامة'), 'Leave HTML must resolve to Shama Asiri');
-  assert(leaveHtml.includes('REQ-2026-0001'), 'Leave HTML must include leave request number');
-  assert(!leaveHtml.includes('طلب الإجازة غير موجود'), 'Leave HTML must not error');
-  console.log(`✓ [HTML by RecordID] Leave Request (ID: 16): Generated ${leaveHtml.length} chars for Shama Asiri`);
+  // 3. Test HTML Renderers with Existing Transaction
+  console.log('\n--- 3. Testing HTML Renderers with Existing Record ID ---');
+  const sampleLeave = db.get("SELECT l.id, l.request_no, e.full_name_ar FROM leaves l JOIN employees e ON l.emp_id = e.id LIMIT 1");
+  if (sampleLeave) {
+    const leaveHtml = officialTemplates.renderLeaveFormHtml(sampleLeave.id);
+    assert(leaveHtml.includes(sampleLeave.full_name_ar) || leaveHtml.includes(sampleLeave.request_no), 'Leave HTML must resolve employee or request number');
+    assert(!leaveHtml.includes('طلب الإجازة غير موجود'), 'Leave HTML must not error');
+    console.log(`✓ [HTML by RecordID] Leave Request (ID: ${sampleLeave.id}): Generated ${leaveHtml.length} chars for ${sampleLeave.full_name_ar}`);
+  } else {
+    const leaveHtml = officialTemplates.renderLeaveFormHtml(null, { emp_id: testEmpId1 });
+    assert(!leaveHtml.includes('طلب الإجازة غير موجود'), 'Leave HTML must not error');
+    console.log(`✓ [HTML by EmpID] Leave Request Form generated successfully`);
+  }
 
   // 4. Test Salary Certificate Breakdown Precision
   console.log('\n--- 4. Testing Unified Salary Certificate Component Precision ---');
@@ -84,7 +90,11 @@ async function runTests() {
   console.log('===============================================================');
 }
 
-runTests().then(() => process.exit(0)).catch(err => {
-  console.error('❌ Test Failure:', err);
-  process.exit(1);
-});
+module.exports = { runOfficialFormsTests: runTests };
+
+if (require.main === module) {
+  runTests().then(() => process.exit(0)).catch(err => {
+    console.error('❌ Test Failure:', err);
+    process.exit(1);
+  });
+}

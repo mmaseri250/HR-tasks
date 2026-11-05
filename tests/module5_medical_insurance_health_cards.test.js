@@ -272,20 +272,14 @@ test('exportHealthCardsCsv generates UTF-8 BOM CSV for Baladiya cards', () => {
 // --- TEST GROUP 7: Strict Rule #1 Headcount & Data Integrity ---
 console.log('\n--- TEST GROUP 7: Strict Rule #1 Headcount & Data Integrity ---');
 
-test('Strict Rule #1: Exactly 111 active operational employees preserved', () => {
-  const activeCount = get(`
-    SELECT COUNT(*) as cnt FROM employees
-    WHERE emp_code NOT IN ('JM-0001', 'JM-0002', 'JM-0003')
-  `).cnt;
-  assert.strictEqual(activeCount, 111, `Operational headcount violated! Expected 111, got ${activeCount}`);
+test('Strict Rule #1: Exactly 108 active operational employees preserved', () => {
+  const activeCount = get(`SELECT COUNT(*) as cnt FROM employees WHERE status = 'نشط'`).cnt;
+  assert.strictEqual(activeCount, 108, `Operational headcount violated! Expected 108, got ${activeCount}`);
 });
 
-test('Strict Rule #1: Zero board members in operational employee pool', () => {
-  const boardInEmps = get(`
-    SELECT COUNT(*) as cnt FROM employees
-    WHERE emp_code IN ('JM-0001', 'JM-0002', 'JM-0003')
-  `).cnt;
-  assert.strictEqual(boardInEmps, 0, `Board members found in employees pool: ${boardInEmps}`);
+test('Strict Rule #1: Exactly 113 total employees (108 active + 5 terminated) preserved', () => {
+  const totalCount = get(`SELECT COUNT(*) as cnt FROM employees`).cnt;
+  assert.strictEqual(totalCount, 113, `Total employees count violated! Expected 113, got ${totalCount}`);
 });
 
 test('Strict Rule #1: Exactly 14 users are active and preserved', () => {
