@@ -100,11 +100,23 @@ function submitRequest(data) {
     days_count = 0,
     amount = 0,
     destination_entity = null,
-    reason
+    reason,
+    permission_hours = 0,
+    permission_minutes = 0,
+    permission_time_out = null,
+    permission_time_in = null,
+    replacement_emp_id = null
   } = data;
 
   if (!emp_id || !request_type || !reason) {
     throw new Error('يرجى تحديد الموظف ونوع الطلب وسبب الطلب');
+  }
+
+  // Handle Replacement Employee for Leave Requests
+  let replacementEmpName = null;
+  if (replacement_emp_id) {
+    const repRow = get('SELECT full_name_ar FROM employees WHERE id = ?', [replacement_emp_id]);
+    if (repRow) replacementEmpName = repRow.full_name_ar;
   }
 
   const emp = get(`
@@ -135,13 +147,18 @@ function submitRequest(data) {
     INSERT INTO requests (
       request_no, emp_id, request_type, start_date, end_date, days_count,
       amount, destination_entity, reason, status, manager_id, manager_name,
+      permission_hours, permission_minutes, permission_time_out, permission_time_in,
+      replacement_emp_id, replacement_emp_name,
       manager_status, hr_verify_status, hr_director_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق - بانتظار موافقة المدير المباشر', ?, ?, 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق - بانتظار موافقة المدير المباشر', ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
   `;
 
   const result = run(sql, [
     request_no, emp_id, request_type, start_date, end_date,
-    days_count, amount, destination_entity, reason, managerId, managerName
+    days_count, amount, destination_entity, reason, managerId, managerName,
+    Number(permission_hours) || 0, Number(permission_minutes) || 0,
+    permission_time_out || null, permission_time_in || null,
+    replacement_emp_id || null, replacementEmpName
   ]);
   const reqId = result.lastInsertRowid;
 
@@ -152,14 +169,15 @@ function submitRequest(data) {
       const leaveRes = run(`
         INSERT INTO leaves (
           request_no, emp_id, leave_type, start_date, end_date, days_count,
-          reason, status, manager_id, manager_name,
+          reason, status, manager_id, manager_name, replacement_emp_id, replacement_emp_name,
           manager_status, hr_verify_status, hr_director_status, hr_status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'معلق - بانتظار موافقة المدير المباشر', ?, ?, 'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'معلق - بانتظار موافقة المدير المباشر', ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
       `, [
         request_no, emp_id, request_type,
         start_date || new Date().toISOString().split('T')[0],
         end_date || new Date().toISOString().split('T')[0],
-        days_count || 1, reason, managerId, managerName
+        days_count || 1, reason, managerId, managerName,
+        replacement_emp_id || null, replacementEmpName
       ]);
       leaveId = leaveRes.lastInsertRowid;
     } catch (e) {

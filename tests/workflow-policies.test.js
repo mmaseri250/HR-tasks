@@ -99,7 +99,7 @@ console.log('✓ نجح: دورة سير الموافقات المكتملة (ت
 const penaltiesModule = require('../server/modules/penalties');
 const testPenalty = penaltiesModule.issuePenaltyDecision({
   emp_id: testEmp.id,
-  violation_code: 'v1',
+  violation_code: 'TIME-01',
   repetition_level: 'المرة الأولى',
   incident_date: '2026-10-05',
   investigation_details: 'مخالفة تأخر تجريبية للتحقق من إمكانية الإصدار والحذف',

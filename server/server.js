@@ -554,6 +554,30 @@ app.get('/api/audit-logs/export/excel', rbacEngine.requirePermission('audit.view
   }
 });
 
+// Strict Audit Log Protection Guard (Immutability Enforced - No DELETE / No PUT)
+app.delete('/api/audit-logs*', (req, res) => {
+  res.status(403).json({ success: false, error: 'سجل العمليات محمي ومحصن نظامياً - يمنع حذف أو تصفير سجلات التدقيق والرقابة.' });
+});
+
+app.put('/api/audit-logs*', (req, res) => {
+  res.status(403).json({ success: false, error: 'سجل العمليات محمي ومحصن نظامياً - يمنع تعديل سجلات التدقيق والرقابة.' });
+});
+
+app.get('/api/penalties/regulation-pdf', (req, res) => {
+  const candidatePaths = [
+    path.join(__dirname, '..', 'لائحة تنظيم العمل.pdf'),
+    path.join(__dirname, '..', 'لائحة تنظيم العمل.pdf')
+  ];
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="Jawharat_Al-Majd_Accredited_Regulation_229400.pdf"');
+      return res.sendFile(p);
+    }
+  }
+  res.status(404).send('ملف لائحة تنظيم العمل المعتمدة غير موجود.');
+});
+
 /* =========================================================================
    2. DASHBOARD & SETTINGS ROUTES
    ========================================================================= */
@@ -1020,7 +1044,18 @@ app.post('/api/devices/:id/sync', (req, res) => {
 app.get('/api/penalties/regulations', (req, res) => {
   try {
     const regs = penaltiesModule.getAllPenaltyRegulations(req.query.category);
-    res.json({ success: true, count: regs.length, data: regs });
+    res.json({
+      success: true,
+      count: regs.length,
+      accreditation: {
+        company_name: 'شركة جوهرة المجد للتجارة',
+        cr_number: '5850121321',
+        approval_number: '229400',
+        approval_date_hijri: '13-09-1443 هـ',
+        pdf_url: '/api/penalties/regulation-pdf'
+      },
+      data: regs
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

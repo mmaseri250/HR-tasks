@@ -16,11 +16,11 @@ function calculateServiceYears(joinDateStr, targetDate = new Date()) {
 /**
  * Determine annual accrual rate per Saudi Labor Law:
  * - Service <= 5 years: 21 days
- * - Service > 5 years: 30 days
+ * - Service >= 5 years: 30 days
  */
 function getAnnualAccrualRate(joinDateStr) {
   const years = calculateServiceYears(joinDateStr);
-  return years > 5 ? 30 : 21;
+  return years >= 5 ? 30 : 21;
 }
 
 /**

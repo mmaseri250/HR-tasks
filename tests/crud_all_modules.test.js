@@ -200,7 +200,7 @@ function runAllModulesCrudTests() {
     const emp = db.get("SELECT id FROM employees WHERE status = 'نشط' AND emp_code != 'JM-0001' LIMIT 1");
     const penalty = penaltiesModule.issuePenaltyDecision({
       emp_id: emp.id,
-      violation_code: 'v1',
+      violation_code: 'TIME-01',
       incident_date: '2026-10-25',
       investigation_details: 'تأخر عن موعد الحضور الصباحي بمقدار 10 دقائق',
       issued_by: 'عبدالملك سعيد الشريف'

@@ -1557,7 +1557,7 @@ async function loadExecutiveDashboard() {
       res = {
         success: true,
         data: {
-          total_employees: 111,
+          total_employees: 108,
           attendance_rate: 95.4,
           pending_requests: 58,
           payroll_total: 3286750,
@@ -1603,7 +1603,7 @@ async function loadExecutiveDashboard() {
 
     // 1. Update 4 Hero KPI Cards
     const elEmp = document.getElementById('heroStatEmployees');
-    if (elEmp) elEmp.textContent = d.total_employees || 111;
+    if (elEmp) elEmp.textContent = d.total_employees || 108;
 
     const elEmpSub = document.getElementById('heroStatEmployeesSub');
     if (elEmpSub) elEmpSub.textContent = (d.total_employees ? d.total_employees : 108) + ' نشط';
@@ -1827,7 +1827,7 @@ function renderExecutiveDeptChart(deptData) {
   const items = deptData && deptData.length ? deptData : defaultDepts;
   const labels = items.map(d => d.name + ' ' + d.percentage + '% (' + d.count + ')');
   const series = items.map(d => d.count);
-  const total = series.reduce((s, c) => s + c, 0) || 111;
+  const total = series.reduce((s, c) => s + c, 0) || 108;
 
   const options = {
     series: series,
@@ -2176,7 +2176,7 @@ function drawDeptChart() {
 
   const labels = Object.keys(deptCounts);
   const data = Object.values(deptCounts);
-  const total = data.reduce((sum, v) => sum + v, 0) || (state.employees || []).length || 111;
+  const total = data.reduce((sum, v) => sum + v, 0) || (state.employees || []).filter(e => e.status !== "منتهي عقد").length || 108;
 
   const countBadge = document.getElementById('deptChartCountBadge');
   if (countBadge) countBadge.textContent = `${labels.length} إدارة`;
@@ -5842,7 +5842,60 @@ function openModalRequest(category = 'إجازة', specificType = null) {
   if (catSelect) {
     catSelect.value = category;
   }
-  
+
+  // Populate Target Employee Select (For Admin / Manager or Self)
+  const targetEmpSelect = document.getElementById('reqTargetEmp');
+  const targetContainer = document.getElementById('reqTargetEmpContainer');
+  const activeEmps = (state.employees || []).filter(e => e.status !== 'منتهي عقد');
+  const currentUserEmpId = (state.currentUser && state.currentUser.emp_id) ? Number(state.currentUser.emp_id) : (currentEssEmpId ? Number(currentEssEmpId) : null);
+
+  if (targetEmpSelect) {
+    targetEmpSelect.innerHTML = '';
+    activeEmps.forEach(emp => {
+      const opt = document.createElement('option');
+      opt.value = emp.id;
+      opt.textContent = `${emp.emp_code} - ${emp.full_name_ar} (${emp.job_title_ar || 'موظف'})`;
+      if (currentUserEmpId && emp.id === currentUserEmpId) {
+        opt.selected = true;
+      }
+      targetEmpSelect.appendChild(opt);
+    });
+  }
+
+  // Populate Replacement Employee Select
+  const replacementEmpSelect = document.getElementById('reqReplacementEmp');
+  if (replacementEmpSelect) {
+    replacementEmpSelect.innerHTML = '<option value="">-- اختر الموظف البديل خلال فترة الإجازة --</option>';
+    activeEmps.forEach(emp => {
+      if (!currentUserEmpId || emp.id !== currentUserEmpId) {
+        const opt = document.createElement('option');
+        opt.value = emp.id;
+        opt.textContent = `${emp.emp_code} - ${emp.full_name_ar} (${emp.job_title_ar || 'موظف'})`;
+        replacementEmpSelect.appendChild(opt);
+      }
+    });
+  }
+
+  // Set default dates & times
+  const today = new Date().toISOString().split('T')[0];
+  const startInp = document.getElementById('reqStartDate');
+  const endInp = document.getElementById('reqEndDate');
+  if (startInp && !startInp.value) startInp.value = today;
+  if (endInp && !endInp.value) endInp.value = today;
+  calculateReqDays();
+
+  // Set default permission fields
+  const permDateInp = document.getElementById('reqPermDate');
+  if (permDateInp) permDateInp.value = today;
+  const permHoursSelect = document.getElementById('reqPermHours');
+  if (permHoursSelect) permHoursSelect.value = '2';
+  const permMinsSelect = document.getElementById('reqPermMinutes');
+  if (permMinsSelect) permMinsSelect.value = '0';
+  const permOut = document.getElementById('reqPermTimeOut');
+  if (permOut) permOut.value = '10:00';
+  const permIn = document.getElementById('reqPermTimeIn');
+  if (permIn) permIn.value = '12:00';
+
   onRequestCategoryChanged(category);
 
   if (category === 'إجازة' && specificType) {
@@ -5852,14 +5905,6 @@ function openModalRequest(category = 'إجازة', specificType = null) {
       onLeaveTypeChanged(specificType);
     }
   }
-
-  // Set default dates (Today to Today)
-  const today = new Date().toISOString().split('T')[0];
-  const startInp = document.getElementById('reqStartDate');
-  const endInp = document.getElementById('reqEndDate');
-  if (startInp && !startInp.value) startInp.value = today;
-  if (endInp && !endInp.value) endInp.value = today;
-  calculateReqDays();
 
   // Reset file attachment
   clearReqFile();
@@ -5875,6 +5920,7 @@ function openModalRequest(category = 'إجازة', specificType = null) {
 
 function onRequestCategoryChanged(category) {
   const leaveSec = document.getElementById('reqLeaveSection');
+  const permSec = document.getElementById('reqPermissionSection');
   const missionSec = document.getElementById('reqMissionSection');
   const dateFields = document.getElementById('reqDateFields');
   const daysField = document.getElementById('reqDaysField');
@@ -5886,6 +5932,7 @@ function onRequestCategoryChanged(category) {
 
   if (category === 'إجازة') {
     if (leaveSec) leaveSec.classList.remove('hidden');
+    if (permSec) permSec.classList.add('hidden');
     if (missionSec) missionSec.classList.add('hidden');
     if (dateFields) dateFields.classList.remove('hidden');
     if (daysField) daysField.classList.remove('hidden');
@@ -5893,8 +5940,17 @@ function onRequestCategoryChanged(category) {
     
     const leaveType = document.getElementById('reqLeaveTypeSelect')?.value || 'إجازة سنوية';
     onLeaveTypeChanged(leaveType);
+  } else if (category === 'استئذان' || category === 'استئذان ساعي') {
+    if (leaveSec) leaveSec.classList.add('hidden');
+    if (permSec) permSec.classList.remove('hidden');
+    if (missionSec) missionSec.classList.add('hidden');
+    if (dateFields) dateFields.classList.add('hidden'); // Days counter and range hidden for hourly permissions
+    if (daysField) daysField.classList.add('hidden');
+    if (amountField) amountField.classList.add('hidden');
+    if (attachSec) attachSec.classList.add('hidden');
   } else if (category === 'مهمة عمل') {
     if (leaveSec) leaveSec.classList.add('hidden');
+    if (permSec) permSec.classList.add('hidden');
     if (missionSec) missionSec.classList.remove('hidden');
     if (dateFields) dateFields.classList.remove('hidden');
     if (daysField) daysField.classList.remove('hidden');
@@ -5908,6 +5964,7 @@ function onRequestCategoryChanged(category) {
     if (uploadBtnText) uploadBtnText.textContent = 'رفع وثيقة أو تذكرة (PDF / صورة)';
   } else if (category === 'سلفة مالية') {
     if (leaveSec) leaveSec.classList.add('hidden');
+    if (permSec) permSec.classList.add('hidden');
     if (missionSec) missionSec.classList.add('hidden');
     if (dateFields) dateFields.classList.add('hidden');
     if (daysField) daysField.classList.add('hidden');
@@ -5919,13 +5976,6 @@ function onRequestCategoryChanged(category) {
     if (attachTitle) attachTitle.textContent = 'إرفاق ما يثبت الظرف الطارئ (اختياري):';
     if (attachNote) attachNote.textContent = 'إرفاق إثبات الحاجة أو الفواتير الطارئة يسهل الاعتماد السريع من الإدارة المالية.';
     if (uploadBtnText) uploadBtnText.textContent = 'رفع مستند داعم (اختياري)';
-  } else if (category === 'استئذان' || category === 'استئذان ساعي') {
-    if (leaveSec) leaveSec.classList.add('hidden');
-    if (missionSec) missionSec.classList.add('hidden');
-    if (dateFields) dateFields.classList.remove('hidden');
-    if (daysField) daysField.classList.add('hidden');
-    if (amountField) amountField.classList.add('hidden');
-    if (attachSec) attachSec.classList.add('hidden');
   }
 }
 
@@ -6031,11 +6081,41 @@ async function handleRequestFormSubmit(e) {
   const missionTransport = document.getElementById('reqMissionTransport')?.value || '';
   const missionPurpose = document.getElementById('reqMissionPurpose')?.value || '';
 
+  // Permission specific fields
+  const permDate = document.getElementById('reqPermDate')?.value || new Date().toISOString().split('T')[0];
+  const permHours = Number(document.getElementById('reqPermHours')?.value || 2);
+  const permMinutes = Number(document.getElementById('reqPermMinutes')?.value || 0);
+  const permTimeOut = document.getElementById('reqPermTimeOut')?.value || '10:00';
+  const permTimeIn = document.getElementById('reqPermTimeIn')?.value || '12:00';
+
+  // Leave replacement employee fields
+  const repSelect = document.getElementById('reqReplacementEmp');
+  const replacementEmpId = repSelect && repSelect.value ? Number(repSelect.value) : null;
+  const replacementEmpName = (repSelect && repSelect.selectedOptions && repSelect.selectedOptions[0]) 
+    ? repSelect.selectedOptions[0].text.replace(/^[A-Z0-9-]+s*-s*/, '') 
+    : null;
+
   // Validation: Sick leave requires medical report attachment
   if (category === 'إجازة' && (leaveType === 'إجازة مرضية تتطلب إرفاق تقرير' || leaveType.includes('مرضية')) && !currentAttachedFileName) {
     alert('⚠️ تنبيه إلزامي:\nالإجازة المرضية تتطلب إرفاق تقرير طبي رسمي معتمد (منصة صحتي أو إشعار المستشفى) لقبول الطلب.\n\nيرجى الضغط على زر "رفع التقرير الطبي" ثم إعادة إرسال الطلب.');
     return;
   }
+
+  // Validation: Leave requires selecting replacement employee if employees are loaded
+  if (category === 'إجازة' && !replacementEmpId) {
+    if (!confirm('تنبيه: لم تقم باختيار "الموظف البديل المكلف بمهام العمل". يُفضل تحديده لتسريع اعتماد الإجازة. هل ترغب بالاستمرار رغم ذلك؟')) {
+      return;
+    }
+  }
+
+  // Target employee (Admin/Manager can submit for any employee)
+  const targetEmpInp = document.getElementById('reqTargetEmp');
+  const validEmps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
+  let currentEmpId = targetEmpInp && targetEmpInp.value 
+    ? Number(targetEmpInp.value) 
+    : ((state.currentUser && state.currentUser.emp_id) ? Number(state.currentUser.emp_id) : (currentEssEmpId ? Number(currentEssEmpId) : (validEmps[0] ? validEmps[0].id : 28208)));
+
+  const currentEmp = validEmps.find(e => e.id === currentEmpId) || validEmps[0] || {};
 
   // Generate Request ID
   const reqNum = Math.floor(1000 + Math.random() * 9000);
@@ -6045,12 +6125,16 @@ async function handleRequestFormSubmit(e) {
   let displayType = category;
   let displayDetails = reason;
   let displayDuration = `${days} يوم`;
+  let finalStartDate = startDate || today;
+  let finalEndDate = endDate || today;
+  let finalDaysCount = Number(days) || 1;
 
   if (category === 'إجازة') {
     displayType = leaveType;
-    if (currentAttachedFileName) {
-      displayDetails = `${reason} (مرفق تقرير: ${currentAttachedFileName})`;
-    }
+    let detailsArr = [reason];
+    if (replacementEmpName) detailsArr.push(`الموظف البديل: ${replacementEmpName}`);
+    if (currentAttachedFileName) detailsArr.push(`مرفق تقرير: ${currentAttachedFileName}`);
+    displayDetails = detailsArr.join(' | ');
   } else if (category === 'مهمة عمل') {
     displayType = `مهمة عمل (${missionDest || 'داخلية'})`;
     displayDetails = `${missionPurpose || 'أعمال رسمية'} - وسيلة السفر: ${missionTransport}`;
@@ -6063,23 +6147,29 @@ async function handleRequestFormSubmit(e) {
     const months = document.getElementById('reqLoanMonths')?.value || 3;
     displayDetails = `تقسيط على ${months} أشهر - ${reason}`;
   } else if (category === 'استئذان' || category === 'استئذان ساعي') {
-    displayType = 'طلب استئذان';
-    displayDuration = 'تصريح خروج';
+    displayType = 'طلب استئذان ساعي';
+    displayDuration = `${permHours} س ${permMinutes > 0 ? permMinutes + ' د' : ''} (من ${permTimeOut} إلى ${permTimeIn})`;
+    finalStartDate = permDate;
+    finalEndDate = permDate;
+    finalDaysCount = 0;
+    displayDetails = `${reason} (وقت الخروج: ${permTimeOut} - العودة المتوقعة: ${permTimeIn})`;
   }
-
-  const validEmps = (state.employees || []).filter(e => !['JM-0001', 'JM-0002', 'JM-0003'].includes(e.emp_code));
-  const currentEmpId = (state.currentUser && state.currentUser.emp_id) ? Number(state.currentUser.emp_id) : (currentEssEmpId ? Number(currentEssEmpId) : (validEmps[0] ? validEmps[0].id : 28208));
-  const currentEmp = validEmps.find(e => e.id === currentEmpId) || validEmps[0] || {};
 
   const payload = {
     emp_id: currentEmpId,
     request_type: displayType,
-    start_date: startDate || today,
-    end_date: endDate || today,
-    days_count: Number(days) || 1,
+    start_date: finalStartDate,
+    end_date: finalEndDate,
+    days_count: finalDaysCount,
     amount: Number(amount) || 0,
     destination_entity: missionDest || null,
-    reason: displayDetails
+    reason: displayDetails,
+    permission_hours: (category === 'استئذان' || category === 'استئذان ساعي') ? permHours : null,
+    permission_minutes: (category === 'استئذان' || category === 'استئذان ساعي') ? permMinutes : null,
+    permission_time_out: (category === 'استئذان' || category === 'استئذان ساعي') ? permTimeOut : null,
+    permission_time_in: (category === 'استئذان' || category === 'استئذان ساعي') ? permTimeIn : null,
+    replacement_emp_id: category === 'إجازة' ? replacementEmpId : null,
+    replacement_emp_name: category === 'إجازة' ? replacementEmpName : null
   };
 
   const apiRes = await apiFetch('/api/requests', {
@@ -14289,7 +14379,7 @@ async function loadCircularsView() {
     const total = cachedCirculars.length;
     const urgent = cachedCirculars.filter(c => c.is_urgent).length;
     const totalAcks = cachedCirculars.reduce((sum, c) => sum + (c.ack_count || 0), 0);
-    const totalPossible = total * 111; // 111 active operational employees
+    const totalPossible = total * 108; // 111 active operational employees
     const ackRate = totalPossible > 0 ? Math.round((totalAcks / totalPossible) * 100) : 0;
 
     const elTotal = document.getElementById('circStatTotal');

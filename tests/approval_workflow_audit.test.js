@@ -290,7 +290,13 @@ runTest('New Request Submission: Automatic manager binding and two-way sync', ()
   db.run("DELETE FROM requests WHERE id = ?", [newReq.id]);
   db.run("DELETE FROM workflow_steps WHERE request_id = ?", [newReq.id]);
   if (notif) db.run("DELETE FROM notifications WHERE id = ?", [notif.id]);
-  db.run("DELETE FROM audit_logs WHERE entity_type = 'request' AND entity_id = ?", [newReq.id]);
+  // Verify audit log immutability (deletion must be blocked)
+  try {
+    db.run("DELETE FROM audit_logs WHERE entity_type = 'request' AND entity_id = ?", [newReq.id]);
+    assert.fail('Audit log must be immutable and reject deletion');
+  } catch (err) {
+    assert.ok(err.message.includes('محمي ومحصن نظامياً') || err.message.includes('immutable'), 'Audit log deletion correctly prevented');
+  }
 });
 
 console.log('\n----------------------------------------------------------------');

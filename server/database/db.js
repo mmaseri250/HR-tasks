@@ -594,14 +594,36 @@ function initSchema() {
   try { db.exec('ALTER TABLE employees ADD COLUMN termination_reason TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN section_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE leaves ADD COLUMN replacement_emp_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE leaves ADD COLUMN replacement_emp_name TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE leaves ADD COLUMN rejection_reason TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN replacement_emp_id INTEGER;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN replacement_emp_name TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN permission_hours REAL DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN permission_minutes INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN permission_time_out TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE requests ADD COLUMN permission_time_in TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN target_dept_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN target_branch_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN target_section_id INTEGER;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN transfer_reason TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE requests ADD COLUMN rejection_reason TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN emergency_phone TEXT;'); } catch (e) {}
+
+  // Immutability Triggers for Audit Logs
+  try {
+    db.exec(`
+      CREATE TRIGGER IF NOT EXISTS prevent_audit_log_delete
+      BEFORE DELETE ON audit_logs
+      BEGIN
+        SELECT RAISE(FAIL, 'سجل العمليات محمي ومحصن نظامياً - يمنع حذف سجلات التدقيق (Audit Log is immutable)');
+      END;
+      CREATE TRIGGER IF NOT EXISTS prevent_audit_log_update
+      BEFORE UPDATE ON audit_logs
+      BEGIN
+        SELECT RAISE(FAIL, 'سجل العمليات محمي ومحصن نظامياً - يمنع تعديل سجلات التدقيق (Audit Log is immutable)');
+      END;
+    `);
+  } catch (e) {}
 
   // 1. Audit Logs Table (سجل الرقابة والعمليات الشامل)
   db.exec(`

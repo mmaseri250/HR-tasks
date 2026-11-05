@@ -328,8 +328,35 @@ function seedDatabase() {
 
 function seedPenaltyRegulations() {
   const count = get('SELECT count(*) as c FROM penalty_regulations')?.c || 0;
-  if (count >= 50) return;
-  // If regulations table is already seeded or present, preserve it
+  if (count === 48) return;
+
+  const regPath = path.join(__dirname, 'official_accredited_regulations.json');
+  if (fs.existsSync(regPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(regPath, 'utf8'));
+      run('DELETE FROM penalty_regulations');
+      const stmt = db.prepare(`
+        INSERT INTO penalty_regulations (
+          code, category, violation_text, penalty_1st, penalty_2nd, penalty_3rd, penalty_4th, notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (const v of data.violations) {
+        stmt.run(
+          v.code,
+          v.category,
+          v.violation_text,
+          v.penalty_1st,
+          v.penalty_2nd,
+          v.penalty_3rd,
+          v.penalty_4th,
+          `معتمد بالقرار الوزاري رقم ${data.approval_number} وتاريخ ${data.approval_date_hijri}`
+        );
+      }
+      console.log(`✓ Seeded ${data.violations.length} official accredited violations (قرار اعتماد رقم 229400).`);
+    } catch (e) {
+      console.error('Failed to seed official regulations:', e.message);
+    }
+  }
 }
 
 module.exports = {
