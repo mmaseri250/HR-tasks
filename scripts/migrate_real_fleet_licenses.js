@@ -739,4 +739,13 @@ function migrate() {
   console.log('=== Migration Complete ===');
 }
 
-migrate();
+if (require.main === module) {
+  migrate();
+}
+
+module.exports = {
+  migrate,
+  realVehicles,
+  realLicenses
+};
+

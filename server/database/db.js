@@ -844,8 +844,33 @@ function syncEmployeeIqamaExpiries() {
   }
 }
 
+function ensureOfficialFleetAndLicenses() {
+  try {
+    const vCount = db.prepare('SELECT COUNT(*) as c FROM vehicles').get()?.c || 0;
+    const lCount = db.prepare('SELECT COUNT(*) as c FROM company_licenses').get()?.c || 0;
+    if (vCount < 23 || lCount < 17) {
+      console.log(`[DB Init] Detected fleet (${vCount}/23) or licenses (${lCount}/17) requiring migration. Migrating official data...`);
+      const { migrate } = require('../../scripts/migrate_real_fleet_licenses');
+      migrate();
+    }
+  } catch (err) {
+    console.error('[DB Init] Error checking/migrating fleet and licenses:', err.message);
+  }
+}
+
+function ensureOfficialUsersClean() {
+  try {
+    db.prepare("UPDATE users SET full_name = 'مدير النظام' WHERE username = 'admin'").run();
+    db.prepare("DELETE FROM users WHERE username IN ('abdulmalik', 'shama.asiri')").run();
+  } catch (err) {
+    console.error('[DB Init] Error ensuring users clean:', err.message);
+  }
+}
+
 initSchema();
 syncEmployeeIqamaExpiries();
+ensureOfficialFleetAndLicenses();
+ensureOfficialUsersClean();
 
 module.exports = {
   db,

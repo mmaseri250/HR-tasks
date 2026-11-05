@@ -255,34 +255,17 @@ function runEnterpriseMigration() {
     CREATE INDEX IF NOT EXISTS idx_lic_exp ON company_licenses(expiry_date);
   `);
 
-  // Seed default company licenses if empty
+  // Seed official company licenses and vehicle fleet if empty
   const licCount = db.prepare('SELECT COUNT(*) as c FROM company_licenses').get().c;
-  if (licCount === 0) {
-    db.prepare(`
-      INSERT INTO company_licenses (license_type, license_name_ar, license_no, issuing_authority, issue_date, expiry_date, status, notes)
-      VALUES 
-      ('commercial_reg', 'السجل التجاري الرئيسي - شركة جوهرة المجد', '5850024190', 'وزارة التجارة', '2023-01-15', '2027-01-14', 'سارية', 'المركز الرئيسي - أبها'),
-      ('baladiya', 'رخصة الأنشطة البلدية والمقر الرئيسي', '4409120391', 'أمانة منطقة عسير', '2024-03-01', '2027-02-28', 'سارية', 'مبنى الإدارة - سيتي بارك'),
-      ('civil_defense', 'شهادة استيفاء متطلبات السلامة والوقاية', 'CD-ASR-2024-88', 'المديرية العامة للدفاع المدني', '2025-01-10', '2027-01-09', 'سارية', 'نظام إنذار وإطفاء معتمد'),
-      ('chamber', 'اشتراك الغرفة التجارية بأبها', 'CH-774920', 'غرفة أبها', '2024-01-01', '2027-01-01', 'سارية', 'الدرجة الممتازة'),
-      ('saudization_cert', 'شهادة التوطين الرسمية ونطاقات', 'SAUDI-2026-901', 'وزارة الموارد البشرية', '2026-01-01', '2027-01-01', 'سارية', 'النطاق الأخضر المتوسط'),
-      ('zakat_cert', 'شهادة الزكاة والضريبة والجمارك (ZATCA)', 'ZATCA-1029384', 'هيئة الزكاة والضريبة والجمارك', '2025-04-30', '2026-04-30', 'سارية', 'إقرار زكوي ساري')
-    `).run();
-    console.log('✓ Seeded 6 official company licenses.');
-  }
-
-  // Seed default vehicle fleet if empty
   const vCount = db.prepare('SELECT COUNT(*) as c FROM vehicles').get().c;
-  if (vCount === 0) {
-    db.prepare(`
-      INSERT INTO vehicles (plate_number_ar, plate_number_en, make, model, year, color, vin_serial, assigned_emp_id, assigned_emp_name, istimara_expiry, fahas_expiry, insurance_company, insurance_policy_no, insurance_expiry, status, tamm_status, odometer)
-      VALUES
-      ('أ ب ج 1122', 'ABJ 1122', 'تويوتا', 'هايلكس غمارتين', 2023, 'أبيض', 'VIN-TOY-HLX-99812', 9552, 'فارس عبدالرحمن القحطاني', '2027-05-20', '2026-11-15', 'التعاونية للتأمين', 'POL-TAW-8819', '2026-12-31', 'نشط', 'ساري', 45200),
-      ('د هـ و 3344', 'DHW 3344', 'إيسوزو', 'ديماكس بيك أب', 2022, 'فضي', 'VIN-ISZ-DMX-44312', 9553, 'خالد صالح الراعي', '2026-09-10', '2026-10-05', 'بوبا للتأمين', 'POL-BUP-2234', '2026-11-20', 'نشط', 'ساري', 78400),
-      ('ح ط ي 5566', 'HTY 5566', 'هيونداي', 'إلنترا سيدان', 2024, 'أبيض', 'VIN-HYU-ELN-11209', 9554, 'علي حسين بشرى', '2027-08-15', '2027-02-10', 'ميدغلف', 'POL-MED-5512', '2027-04-15', 'نشط', 'ساري', 21300),
-      ('ك ل م 7788', 'KLM 7788', 'تويوتا', 'لاندكروزر برادو', 2023, 'أسود', 'VIN-TOY-PRD-77291', 9551, 'عبدالملك سعيد الشريف', '2027-11-30', '2026-12-01', 'التعاونية للتأمين', 'POL-TAW-9921', '2027-01-15', 'نشط', 'ساري', 38900)
-    `).run();
-    console.log('✓ Seeded 4 official company fleet vehicles.');
+  if (licCount < 17 || vCount < 23) {
+    try {
+      const { migrate } = require('../../scripts/migrate_real_fleet_licenses');
+      migrate();
+      console.log('✓ Successfully migrated 17 official licenses and 23 fleet vehicles.');
+    } catch (mErr) {
+      console.error('Error running fleet/licenses migration in enterprise_migration:', mErr.message);
+    }
   }
 
   // Seed default medical insurance policy if empty
