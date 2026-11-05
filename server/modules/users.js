@@ -29,7 +29,7 @@ function persistUsersToDisk() {
         permissions: perms,
         emp_id: u.emp_id,
         custom_data_scope: u.custom_data_scope,
-        avatar_url: u.avatar_url || 'assets/avatar-admin.png',
+        avatar_url: u.avatar_url || null,
         is_active: u.is_active,
         created_at: u.created_at
       };
@@ -101,7 +101,7 @@ function restoreUsersFromDisk() {
       const email = u.email || null;
       const empId = u.emp_id ? Number(u.emp_id) : null;
       const isActive = u.is_active !== undefined ? Number(u.is_active) : 1;
-      const avatarUrl = u.avatar_url || 'assets/avatar-admin.png';
+      const avatarUrl = u.avatar_url || null;
 
       if (!existing) {
         run(`

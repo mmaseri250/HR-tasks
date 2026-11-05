@@ -95,7 +95,7 @@ console.log(`✓ Cleaned audit_logs (reduced from ${auditCountBefore} to ${audit
 // 12.5. Purge non-admin users per user directive (keep ONLY Main Admin User)
 run("DELETE FROM user_permissions WHERE user_id NOT IN (SELECT id FROM users WHERE username = 'admin')");
 run("DELETE FROM users WHERE username != 'admin'");
-run("UPDATE users SET full_name = 'أ. عبدالعزيز السلمي', avatar_url = 'assets/avatar-admin.png' WHERE username = 'admin'");
+run("UPDATE users SET full_name = 'مدير النظام', avatar_url = NULL WHERE username = 'admin'");
 console.log('✓ Purged all non-admin users. Preserved Main Admin User.');
 
 // 13. Verify Integrity of Real Employees & Users

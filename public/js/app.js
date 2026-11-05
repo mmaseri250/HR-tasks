@@ -1169,7 +1169,7 @@ function applyRolePermissions() {
   }
 
   // Desktop Aside navigation items - strictly driven by RBAC permissions
-  const allTabs = ['dashboard', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'job-descriptions', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
 
   allTabs.forEach(t => {
     const el = document.getElementById(`nav-${t}`);
@@ -1473,6 +1473,9 @@ function switchTab(tabId) {
       case 'recruitment':
         loadRecruitmentView();
         break;
+      case 'job-descriptions':
+        loadJobDescriptionsView();
+        break;
       case 'fleet':
         loadFleetView();
         break;
@@ -1559,8 +1562,8 @@ async function loadExecutiveDashboard() {
         data: {
           total_employees: 108,
           attendance_rate: 95.4,
-          pending_requests: 58,
-          payroll_total: 3286750,
+          pending_requests: 0,
+          payroll_total: 294500,
           requests_movement: [
             { type: 'إجازة', count: 22, color: '#881337' },
             { type: 'إذن خروج', count: 14, color: '#ea580c' },
@@ -1609,14 +1612,14 @@ async function loadExecutiveDashboard() {
     if (elEmpSub) elEmpSub.textContent = (d.total_employees ? d.total_employees : 108) + ' نشط';
 
     const elAtt = document.getElementById('heroStatAttendance');
-    if (elAtt) elAtt.textContent = (d.attendance_rate || 95.4) + '%';
+    if (elAtt) elAtt.textContent = (d.attendance_rate !== undefined ? d.attendance_rate : 100.0) + '%';
 
     const elReq = document.getElementById('heroStatPendingRequests');
-    if (elReq) elReq.textContent = d.pending_requests || 58;
+    if (elReq) elReq.textContent = d.pending_requests !== undefined ? d.pending_requests : 0;
 
     const elPay = document.getElementById('heroStatPayroll');
     if (elPay) {
-      const formattedPayroll = Number(d.payroll_total || 3286750).toLocaleString('en-US');
+      const formattedPayroll = Number(d.payroll_total !== undefined ? d.payroll_total : 294500).toLocaleString('en-US');
       elPay.innerHTML = formattedPayroll + ' <span class="text-xs font-bold text-slate-500">ر.س</span>';
     }
 
@@ -1662,7 +1665,8 @@ async function loadExecutiveDashboard() {
 
     // 5. Update user profile avatar in header if present
     const avatarImgs = document.querySelectorAll('.user-profile-avatar-img');
-    const userAvatar = (state.currentUser && state.currentUser.avatar_url) ? state.currentUser.avatar_url : 'assets/avatar-admin.png';
+    const defaultAvatarSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23700c14'%3E%3Cpath fill-rule='evenodd' d='M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z' clip-rule='evenodd' /%3E%3C/svg%3E";
+    const userAvatar = (state.currentUser && state.currentUser.avatar_url && state.currentUser.avatar_url !== 'assets/avatar-admin.png') ? state.currentUser.avatar_url : defaultAvatarSvg;
     avatarImgs.forEach(img => {
       if (img.getAttribute('src') !== userAvatar) img.src = userAvatar;
     });
@@ -7504,18 +7508,96 @@ function exportEmployees(format) {
   window.open(`/api/export/employees?format=${format}`, '_blank');
 }
 
-function executeImportEmployees() {
-  alert('تم استيراد بيانات الموظفين بنجاح');
-  closeModal('modalImportEmployees');
+async function executeImportEmployees() {
+  const fileInput = document.getElementById('importEmployeesFileInput');
+  const textInput = document.getElementById('importEmployeesText');
+  const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+  const rawText = textInput ? textInput.value.trim() : '';
+
+  if (!file && !rawText) {
+    alert('يرجى اختيار ملف Excel/CSV أو لصق البيانات أولاً');
+    return;
+  }
+
+  try {
+    let res;
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const resp = await fetch('/api/import/employees', {
+        method: 'POST',
+        body: formData
+      });
+      res = await resp.json();
+    } else {
+      res = await apiFetch('/api/import/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_text: rawText })
+      });
+    }
+
+    if (res && res.success) {
+      alert(res.message || 'تم استيراد وتحديث بيانات الموظفين بنجاح وتوثيق العملية في سجل التدقيق');
+      closeModal('modalImportEmployees');
+      if (textInput) textInput.value = '';
+      if (fileInput) fileInput.value = '';
+      if (typeof loadEmployees === 'function') await loadEmployees();
+      if (typeof loadExecutiveDashboard === 'function') await loadExecutiveDashboard();
+    } else {
+      alert('فشل الاستيراد: ' + (res?.error || 'بيانات غير صالحة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء استيراد الموظفين: ' + err.message);
+  }
 }
 
-function executeImportAttendance() {
+async function executeImportAttendance() {
   if (!canEditAttendance()) {
     alert('عذراً، صلاحية استيراد وتعديل سجلات الحضور والانصراف مقيدة ومخصصة لمدير النظام العام فقط.');
     return;
   }
-  alert('تم استيراد سجلات البصمة بنجاح');
-  closeModal('modalImportAttendance');
+  const fileInput = document.getElementById('importAttendanceFileInput');
+  const textInput = document.getElementById('importAttendanceText');
+  const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+  const rawText = textInput ? textInput.value.trim() : '';
+
+  if (!file && !rawText) {
+    alert('يرجى اختيار ملف أو لصق سجلات البصمة أولاً');
+    return;
+  }
+
+  try {
+    let res;
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const resp = await fetch('/api/import/attendance', {
+        method: 'POST',
+        body: formData
+      });
+      res = await resp.json();
+    } else {
+      res = await apiFetch('/api/import/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_text: rawText })
+      });
+    }
+
+    if (res && res.success) {
+      alert(res.message || 'تم استيراد وتحديث سجلات البصمة بنجاح');
+      closeModal('modalImportAttendance');
+      if (textInput) textInput.value = '';
+      if (fileInput) fileInput.value = '';
+      if (typeof loadAttendance === 'function') await loadAttendance();
+      if (typeof loadExecutiveDashboard === 'function') await loadExecutiveDashboard();
+    } else {
+      alert('فشل استيراد البصمة: ' + (res?.error || 'بيانات غير صالحة'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء استيراد البصمة: ' + err.message);
+  }
 }
 
 // Modal Helpers
@@ -15107,3 +15189,354 @@ window.triggerAvatarUpload = triggerAvatarUpload;
 window.toggleUserProfileMenu = toggleUserProfileMenu;
 window.closeUserProfileMenu = closeUserProfileMenu;
 window.handleGlobalSystemSearch = handleGlobalSystemSearch;
+
+
+/* =========================================================================
+   AI JOB DESCRIPTION GENERATOR & REPOSITORY (استوديو الأوصاف الوظيفية الذكية)
+   ========================================================================= */
+
+let activeGeneratedJd = null;
+
+async function loadJobDescriptionsView() {
+  try {
+    const res = await apiFetch('/api/recruitment/job-descriptions');
+    const list = (res && res.success && Array.isArray(res.data)) ? res.data : [];
+
+    const badge = document.getElementById('jdCountBadge');
+    if (badge) badge.textContent = `${list.length} بطاقة مسجلة`;
+
+    const tbody = document.getElementById('jobDescriptionsTableBody');
+    if (!tbody) return;
+
+    if (list.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-8 text-slate-400">
+            <i class="fa-solid fa-folder-open text-3xl mb-2 text-slate-300"></i>
+            <p class="font-bold">لا توجد بطاقات وصف وظيفي محفوظة حتى الآن</p>
+            <p class="text-[11px] text-slate-400">استخدم محرك التوليد الآلي الذكي أعلاه لإنشاء بطاقتك الأولى</p>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = list.map(jd => `
+      <tr class="hover:bg-slate-50/80 transition">
+        <td class="py-3 px-4 font-mono font-bold text-brand">${jd.job_code || '-'}</td>
+        <td class="py-3 px-4 font-bold text-slate-900">${jd.job_title_ar || '-'}</td>
+        <td class="py-3 px-4 text-slate-600">${jd.department_name || '-'}</td>
+        <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">${jd.job_level || 'تخصصي'}</span></td>
+        <td class="py-3 px-4 text-slate-500 font-mono text-[11px]">${(jd.created_at || '').split(' ')[0] || '-'}</td>
+        <td class="py-3 px-4 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button onclick="previewSavedJd(${jd.id})" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px]" title="معاينة وطباعة">
+              <i class="fa-solid fa-print"></i>
+            </button>
+            <a href="/api/recruitment/job-descriptions/${jd.id}/export/docx" download class="px-2.5 py-1 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-900 font-bold text-[11px]" title="تنزيل Word">
+              <i class="fa-solid fa-file-word"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Error loading job descriptions:', err);
+  }
+}
+
+async function triggerAiJobDescriptionGeneration() {
+  const title = (document.getElementById('aiJdTitleInput')?.value || '').trim();
+  const dept = document.getElementById('aiJdDeptSelect')?.value || '';
+  const level = document.getElementById('aiJdLevelSelect')?.value || '';
+  const exp = document.getElementById('aiJdExpInput')?.value || '';
+  const notes = document.getElementById('aiJdNotesInput')?.value || '';
+
+  if (!title) {
+    alert('يرجى كتابة المسمى الوظيفي المطلوب توليده');
+    return;
+  }
+
+  const btn = document.getElementById('btnTriggerAiJd');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التوليد بالذكاء الاصطناعي...';
+  }
+
+  try {
+    const res = await apiFetch('/api/recruitment/generate-job-description', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        job_title: title,
+        department: dept,
+        level: level,
+        experience_years: exp,
+        notes: notes
+      })
+    });
+
+    if (res && res.success && res.data) {
+      activeGeneratedJd = res.data;
+      renderJobDescriptionPreview(res.data);
+    } else {
+      alert('تعذر التوليد: ' + (res?.error || 'خطأ غير معروف'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء الاتصال بمحرك الذكاء الاصطناعي: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-sparkles"></i> <span>توليد الوصف الوظيفي الذكي الآن</span>';
+    }
+  }
+}
+
+function renderJobDescriptionPreview(jd) {
+  const container = document.getElementById('aiJdPreviewContainer');
+  if (!container) return;
+
+  container.classList.remove('hidden');
+
+  const titleEl = document.getElementById('previewJdTitle');
+  if (titleEl) titleEl.textContent = jd.job_title_ar + (jd.job_title_en ? ` (${jd.job_title_en})` : '');
+
+  const metaEl = document.getElementById('previewJdMeta');
+  if (metaEl) metaEl.textContent = `${jd.job_code} | ${jd.department_name} | ${jd.job_level}`;
+
+  const bodyEl = document.getElementById('previewJdBody');
+  if (!bodyEl) return;
+
+  const duties = Array.isArray(jd.main_duties) ? jd.main_duties : [];
+  const auths = Array.isArray(jd.authorities) ? jd.authorities : [];
+  const skills = Array.isArray(jd.skills_and_competencies) ? jd.skills_and_competencies : [];
+  const kpis = Array.isArray(jd.kpis) ? jd.kpis : [];
+
+  bodyEl.innerHTML = `
+    <div class="p-3 bg-amber-50/50 rounded-xl border border-amber-200">
+      <h4 class="font-bold text-amber-900 mb-1">الهدف العام للوظيفة:</h4>
+      <p class="text-slate-700 leading-relaxed">${jd.general_objective}</p>
+    </div>
+
+    <div>
+      <h4 class="font-bold text-slate-900 mb-1.5 flex items-center gap-1.5 text-xs">
+        <i class="fa-solid fa-list-check text-brand"></i> المهام والمسؤوليات الرئيسية:
+      </h4>
+      <ul class="list-disc pr-5 space-y-1 text-slate-700">
+        ${duties.map(d => `<li>${d}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <h4 class="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+          <i class="fa-solid fa-scale-balanced text-indigo-600"></i> نطاق الصلاحيات:
+        </h4>
+        <ul class="list-disc pr-5 space-y-1 text-slate-600">
+          ${auths.map(a => `<li>${a}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <h4 class="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-line text-emerald-600"></i> مؤشرات قياس الأداء (KPIs):
+        </h4>
+        <ul class="list-disc pr-5 space-y-1 text-slate-600">
+          ${kpis.map(k => `<li>${k}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+
+    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+      <h4 class="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+        <i class="fa-solid fa-graduation-cap text-purple-600"></i> المؤهلات والجدارات:
+      </h4>
+      <p class="mb-2"><span class="font-bold">المؤهل:</span> ${jd.qualifications} (${jd.experience_years})</p>
+      <ul class="list-disc pr-5 space-y-1 text-slate-600">
+        ${skills.map(s => `<li>${s}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+
+  container.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function saveActiveJobDescription() {
+  if (!activeGeneratedJd) return;
+  try {
+    const res = await apiFetch('/api/recruitment/job-descriptions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activeGeneratedJd)
+    });
+
+    if (res && res.success) {
+      alert('✓ تم حفظ بطاقة الوصف الوظيفي بنجاح في قاعدة البيانات.');
+      await loadJobDescriptionsView();
+    } else {
+      alert('فشل الحفظ: ' + (res?.error || 'خطأ غير معروف'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء الحفظ: ' + err.message);
+  }
+}
+
+function printActiveJd() {
+  if (!activeGeneratedJd) return;
+  const w = window.open('', '_blank');
+  w.document.write(`
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head><title>بطاقة الوصف الوظيفي - ${activeGeneratedJd.job_title_ar}</title></head>
+    <body onload="window.print()">
+      ${document.getElementById('aiJdPreviewContainer').innerHTML}
+    </body>
+    </html>
+  `);
+  w.document.close();
+}
+
+function exportActiveJdDocx() {
+  if (!activeGeneratedJd || !activeGeneratedJd.id) {
+    alert('يرجى حفظ الوصف الوظيفي أولاً لإنشاء ملف Word رسمي معتمد');
+    return;
+  }
+  window.location.href = `/api/recruitment/job-descriptions/${activeGeneratedJd.id}/export/docx`;
+}
+
+function previewSavedJd(id) {
+  window.open(`/api/recruitment/job-descriptions/${id}/print`, '_blank');
+}
+
+/* =========================================================================
+   SALARY CARD / SLIP MODAL (بطاقة الراتب ومفردات الأجر)
+   ========================================================================= */
+
+let activeSalaryCardEmpId = null;
+
+async function openSalaryCardModal(empId) {
+  activeSalaryCardEmpId = empId;
+  const modal = document.getElementById('modalSalaryCard');
+  const content = document.getElementById('salaryCardModalContent');
+  if (!modal || !content) return;
+
+  openModal('modalSalaryCard');
+  content.innerHTML = '<div class="text-center py-8"><i class="fa-solid fa-spinner fa-spin text-2xl text-brand"></i><p class="font-bold mt-2">جاري استخراج مفردات الراتب والبدلات...</p></div>';
+
+  try {
+    const res = await apiFetch(`/api/payroll/salary-card/${empId}`);
+    if (res && res.success && res.data) {
+      renderSalaryCardModalContent(res.data);
+    } else {
+      content.innerHTML = `<div class="p-4 rounded-xl bg-rose-50 text-rose-800 font-bold border border-rose-200">تعذر تحميل بطاقة الراتب: ${res?.error || 'بيانات غير متوفرة'}</div>`;
+    }
+  } catch (err) {
+    content.innerHTML = `<div class="p-4 rounded-xl bg-rose-50 text-rose-800 font-bold border border-rose-200">خطأ في الاتصال: ${err.message}</div>`;
+  }
+}
+
+function renderSalaryCardModalContent(data) {
+  const content = document.getElementById('salaryCardModalContent');
+  if (!content) return;
+
+  const e = data.employee;
+  const earn = data.earnings;
+  const ded = data.deductions;
+
+  content.innerHTML = `
+    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
+      <div>
+        <h4 class="font-black text-slate-900 text-sm">${e.full_name_ar}</h4>
+        <p class="text-[11px] text-slate-500 font-semibold">${e.job_title_ar || 'غير محدد'} | ${e.department_name || '-'}</p>
+      </div>
+      <div class="text-left font-mono">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand text-amber-300">${e.emp_code}</span>
+        <p class="text-[10px] text-slate-400 mt-0.5">${e.national_id || '-'}</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+      <!-- Earnings -->
+      <div class="border border-emerald-200 rounded-2xl p-3.5 bg-emerald-50/40 space-y-2">
+        <h5 class="font-black text-emerald-900 flex items-center justify-between border-b border-emerald-200/80 pb-1.5">
+          <span>الاستحقاقات والبدلات</span>
+          <i class="fa-solid fa-arrow-trend-up"></i>
+        </h5>
+        <div class="flex justify-between"><span>الراتب الأساسي:</span><span class="font-bold">${earn.basic.toLocaleString('en-US')} ر.س</span></div>
+        <div class="flex justify-between"><span>بدل سكن:</span><span class="font-bold">${earn.housing.toLocaleString('en-US')} ر.س</span></div>
+        <div class="flex justify-between"><span>بدل نقل:</span><span class="font-bold">${earn.transport.toLocaleString('en-US')} ر.س</span></div>
+        <div class="flex justify-between"><span>بدلات أخرى:</span><span class="font-bold">${earn.other.toLocaleString('en-US')} ر.س</span></div>
+        <div class="flex justify-between pt-1.5 border-t border-emerald-200 font-black text-emerald-800">
+          <span>إجمالي الراتب الإجمالي:</span>
+          <span>${earn.gross.toLocaleString('en-US')} ر.س</span>
+        </div>
+      </div>
+
+      <!-- Deductions -->
+      <div class="border border-rose-200 rounded-2xl p-3.5 bg-rose-50/40 space-y-2">
+        <h5 class="font-black text-rose-900 flex items-center justify-between border-b border-rose-200/80 pb-1.5">
+          <span>الاستقطاعات النظامية</span>
+          <i class="fa-solid fa-arrow-trend-down"></i>
+        </h5>
+        <div class="flex justify-between"><span>التأمينات (GOSI 9.75%):</span><span class="font-bold">${ded.gosi.toLocaleString('en-US')} ر.س</span></div>
+        <div class="flex justify-between"><span>أقساط السلف القائمة:</span><span class="font-bold">${ded.loans.toLocaleString('en-US')} ر.س</span></div>
+        <div class="flex justify-between"><span>الجزاءات والغياب:</span><span class="font-bold">${ded.penalties.toLocaleString('en-US')} ر.س</span></div>
+        <div class="flex justify-between pt-1.5 border-t border-rose-200 font-black text-rose-800">
+          <span>إجمالي الاستقطاعات:</span>
+          <span>${ded.total.toLocaleString('en-US')} ر.س</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Net Salary Highlight -->
+    <div class="p-3.5 rounded-2xl bg-[#700c14] text-white flex items-center justify-between shadow">
+      <div>
+        <p class="text-[10px] text-amber-200 font-bold uppercase tracking-wider">صافي الراتب المستحق للصرف</p>
+        <p class="text-base font-black">${data.net_salary.toLocaleString('en-US')} <span class="text-xs font-normal">ريال سعودي</span></p>
+      </div>
+      <div class="text-left text-[11px] text-amber-100 font-mono">
+        <p>${e.bank_name || 'البنك المعتمد'}</p>
+        <p class="text-[10px] opacity-80">${e.iban || '-'}</p>
+      </div>
+    </div>
+  `;
+}
+
+function printCurrentSalaryCard() {
+  if (!activeSalaryCardEmpId) return;
+  window.open(`/api/payroll/salary-card/${activeSalaryCardEmpId}/print`, '_blank');
+}
+
+/* =========================================================================
+   AUTOMATED ATTENDANCE & TARDINESS SCANNER TRIGGER
+   ========================================================================= */
+
+async function triggerAutomatedAttendanceScan() {
+  if (!confirm('هل تريد تشغيل الفحص التلقائي الفوري لبيانات الحضور والانصراف، ورصد حالات الغياب والتأخير وإصدار الإشعارات الرسمية؟')) {
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/attendance/trigger-automated-scan', { method: 'POST' });
+    if (res && res.success) {
+      alert(res.message);
+      if (typeof loadAbsenceTable === 'function') await loadAbsenceTable();
+      if (typeof loadExecutiveDashboard === 'function') await loadExecutiveDashboard();
+    } else {
+      alert('فشل الفحص: ' + (res?.error || 'خطأ غير معروف'));
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء تنفيذ الفحص: ' + err.message);
+  }
+}
+
+// Window Globals
+window.loadJobDescriptionsView = loadJobDescriptionsView;
+window.triggerAiJobDescriptionGeneration = triggerAiJobDescriptionGeneration;
+window.saveActiveJobDescription = saveActiveJobDescription;
+window.printActiveJd = printActiveJd;
+window.exportActiveJdDocx = exportActiveJdDocx;
+window.previewSavedJd = previewSavedJd;
+window.openSalaryCardModal = openSalaryCardModal;
+window.printCurrentSalaryCard = printCurrentSalaryCard;
+window.triggerAutomatedAttendanceScan = triggerAutomatedAttendanceScan;

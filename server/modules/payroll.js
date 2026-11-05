@@ -290,7 +290,199 @@ function generateWpsSifContent(periodId) {
   return [header, ...records].join('\r\n');
 }
 
+
+function getEmployeeSalaryCard(empId) {
+  const settings = get(`SELECT * FROM company_settings WHERE id = 1`) || {};
+  const emp = get(`
+    SELECT e.*, d.name_ar as department_name, b.name_ar as branch_name
+    FROM employees e
+    LEFT JOIN departments d ON e.department_id = d.id
+    LEFT JOIN branches b ON e.branch_id = b.id
+    WHERE e.id = ?
+  `, [empId]);
+  if (!emp) throw new Error('الموظف غير موجود');
+
+  const basic = Number(emp.basic_salary || 0);
+  const housing = Number(emp.housing_allowance || 0);
+  const transport = Number(emp.transport_allowance || 0);
+  const other = Number(emp.other_allowance || 0);
+  const gross = basic + housing + transport + other;
+
+  // GOSI: 9.75% of (basic + housing) capped at 45,000 SAR for Saudis
+  let gosiEmployee = 0;
+  if (emp.is_saudi === 1) {
+    const gosiBase = Math.min(basic + housing, 45000);
+    gosiEmployee = Math.round(gosiBase * 0.0975);
+  }
+
+  // Active Loan Monthly Installment
+  let loanDeduction = 0;
+  try {
+    const loanRow = get(`SELECT SUM(monthly_installment) as total FROM loan_requests WHERE emp_id = ? AND status = 'نشط'`, [empId]);
+    loanDeduction = Number(loanRow?.total || 0);
+  } catch (_) {}
+
+  // Active Penalties / Deductions
+  let penaltyDeduction = 0;
+  try {
+    const penaltyRow = get(`SELECT SUM(deduction_amount) as total FROM penalty_records WHERE emp_id = ? AND deduction_applied = 0`, [empId]);
+    penaltyDeduction = Number(penaltyRow?.total || 0);
+  } catch (_) {}
+
+  const totalDeductions = gosiEmployee + loanDeduction + penaltyDeduction;
+  const netSalary = Math.max(0, gross - totalDeductions);
+
+  return {
+    company: settings,
+    employee: emp,
+    earnings: {
+      basic,
+      housing,
+      transport,
+      other,
+      gross
+    },
+    deductions: {
+      gosi: gosiEmployee,
+      loans: loanDeduction,
+      penalties: penaltyDeduction,
+      total: totalDeductions
+    },
+    net_salary: netSalary
+  };
+}
+
+function renderSalaryCardHtml(sc) {
+  const e = sc.employee;
+  const earn = sc.earnings;
+  const ded = sc.deductions;
+
+  return `
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>بطاقة الراتب ومفردات الأجر - ${e.full_name_ar}</title>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #fff; line-height: 1.5; font-size: 12px; }
+    .header-box { border-bottom: 2px solid #700c14; padding-bottom: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .company-title { font-size: 16px; font-weight: 900; color: #700c14; margin: 0; }
+    .company-sub { font-size: 11px; color: #64748b; font-weight: bold; margin: 2px 0 0 0; }
+    .doc-badge { background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 8px; text-align: left; }
+    .doc-badge p { margin: 0; font-size: 10px; font-weight: bold; color: #475569; }
+    .table-section { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    .table-section th { background: #f1f5f9; color: #0f172a; padding: 8px 10px; text-align: right; border: 1px solid #e2e8f0; font-size: 11px; }
+    .table-section td { padding: 8px 10px; border: 1px solid #e2e8f0; font-size: 11px; }
+    .grid-box { display: flex; gap: 15px; margin-bottom: 15px; }
+    .half-box { flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .box-header { padding: 8px 12px; font-weight: 900; font-size: 11px; }
+    .box-earn { background: #ecfdf5; color: #065f46; border-bottom: 1px solid #a7f3d0; }
+    .box-ded { background: #fff1f2; color: #9f1239; border-bottom: 1px solid #fecdd3; }
+    .net-bar { background: #700c14; color: #fff; padding: 12px 18px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 900; margin-top: 10px; }
+    .footer-box { margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 12px; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div style="text-align: left; padding: 10px 0;" class="no-print">
+    <button onclick="window.print()" style="background: #700c14; color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+      🖨️ طباعة بطاقة الراتب
+    </button>
+  </div>
+
+  <div class="header-box">
+    <div>
+      <h1 class="company-title">شركة جوهرة المجد للتجارة</h1>
+      <p class="company-sub">إدارة الموارد البشرية والرواتب | بطاقة الراتب ومفردات الأجر الرسمية</p>
+    </div>
+    <div class="doc-badge">
+      <p>الرقم الوظيفي: <span style="color:#700c14; font-family: monospace;">${e.emp_code}</span></p>
+      <p>رقم الاعتماد: <span style="color:#0f172a;">229400</span></p>
+      <p>تاريخ الإصدار: <span>${new Date().toISOString().split('T')[0]}</span></p>
+    </div>
+  </div>
+
+  <table class="table-section">
+    <tr>
+      <th style="width: 18%;">اسم الموظف:</th>
+      <td style="font-weight: 900; color: #700c14;">${e.full_name_ar}</td>
+      <th style="width: 18%;">رقم الهوية / الإقامة:</th>
+      <td style="font-family: monospace;">${e.national_id || '-'}</td>
+    </tr>
+    <tr>
+      <th>المسمى الوظيفي:</th>
+      <td>${e.job_title_ar || '-'}</td>
+      <th>الإدارة / القسم:</th>
+      <td>${e.department_name || '-'}</td>
+    </tr>
+    <tr>
+      <th>الجنسية:</th>
+      <td>${e.nationality || (e.is_saudi ? 'سعودي' : 'مقيم')}</td>
+      <th>البنك والآيبان:</th>
+      <td style="font-family: monospace; font-size: 10px;">${e.bank_name || ''} - ${e.iban || '-'}</td>
+    </tr>
+  </table>
+
+  <div class="grid-box">
+    <!-- Earnings -->
+    <div class="half-box">
+      <div class="box-header box-earn">الاستحقاقات والبدلات (Earnings)</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">الراتب الأساسي</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">${earn.basic.toLocaleString('en-US')} ر.س</td></tr>
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">بدل سكن</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">${earn.housing.toLocaleString('en-US')} ر.س</td></tr>
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">بدل نقل</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">${earn.transport.toLocaleString('en-US')} ر.س</td></tr>
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">بدلات أخرى</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">${earn.other.toLocaleString('en-US')} ر.س</td></tr>
+        <tr style="background: #f8fafc;"><td style="padding: 8px 12px; font-weight: 900; color: #065f46;">إجمالي الراتب الإجمالي (Gross)</td><td style="text-align: left; padding: 8px 12px; font-weight: 900; color: #065f46;">${earn.gross.toLocaleString('en-US')} ر.س</td></tr>
+      </table>
+    </div>
+
+    <!-- Deductions -->
+    <div class="half-box">
+      <div class="box-header box-ded">الاستقطاعات النظامية (Deductions)</div>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">التأمينات الاجتماعية (GOSI 9.75%)</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">${ded.gosi.toLocaleString('en-US')} ر.س</td></tr>
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">أقساط السلف القائمة</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">${ded.loans.toLocaleString('en-US')} ر.س</td></tr>
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">حسميات الغياب والجزاءات</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">${ded.penalties.toLocaleString('en-US')} ر.س</td></tr>
+        <tr><td style="padding: 6px 12px; border-bottom: 1px solid #f1f5f9;">استقطاعات أخرى</td><td style="text-align: left; padding: 6px 12px; font-weight: bold; border-bottom: 1px solid #f1f5f9;">0 ر.س</td></tr>
+        <tr style="background: #f8fafc;"><td style="padding: 8px 12px; font-weight: 900; color: #9f1239;">إجمالي الاستقطاعات</td><td style="text-align: left; padding: 8px 12px; font-weight: 900; color: #9f1239;">${ded.total.toLocaleString('en-US')} ر.س</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="net-bar">
+    <span>صافي الراتب المستحق (Net Payable Salary):</span>
+    <span>${sc.net_salary.toLocaleString('en-US')} ر.س</span>
+  </div>
+
+  <div class="footer-box">
+    <div style="text-align: center; width: 30%;">
+      <p style="font-weight: bold; margin: 0;">إعداد المحاسب</p>
+      <div style="height: 35px;"></div>
+      <p style="margin: 0;">التوقيع: ............................</p>
+    </div>
+    <div style="text-align: center; width: 30%;">
+      <p style="font-weight: bold; margin: 0;">المدير المالي</p>
+      <div style="height: 35px;"></div>
+      <p style="margin: 0;">التوقيع: ............................</p>
+    </div>
+    <div style="text-align: center; width: 30%;">
+      <p style="font-weight: bold; margin: 0;">اعتماد الموارد البشرية</p>
+      <div style="height: 35px;"></div>
+      <p style="margin: 0;">الختم الرسمي: ............................</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 module.exports = {
+  getEmployeeSalaryCard,
+  renderSalaryCardHtml,
   calculateMonthlyPayroll,
   getPayrollPeriods,
   getPayrollPeriodDetails,

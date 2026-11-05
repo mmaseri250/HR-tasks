@@ -878,14 +878,7 @@ function purgeLegacyTestArtifacts() {
   }
 }
 
-initSchema();
-syncEmployeeIqamaExpiries();
-ensureOfficialFleetAndLicenses();
-ensureOfficialUsersClean();
-purgeLegacyTestArtifacts();
-
-
-module.exports = {
+const dbOps = {
   db,
   query(sql, params = []) {
     const stmt = db.prepare(sql);
@@ -900,3 +893,11 @@ module.exports = {
     return stmt.run(...params);
   }
 };
+module.exports = dbOps;
+
+initSchema();
+syncEmployeeIqamaExpiries();
+ensureOfficialFleetAndLicenses();
+ensureOfficialUsersClean();
+purgeLegacyTestArtifacts();
+

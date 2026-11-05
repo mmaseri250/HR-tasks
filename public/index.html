@@ -113,9 +113,12 @@
             <span id="currentLangLabel">🇸🇦</span>
             <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
           </button>
-          <div id="headerLangMenu" class="hidden absolute left-0 mt-1.5 w-40 bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 z-50 text-xs space-y-0.5">
+          <div id="headerLangMenu" class="hidden absolute left-0 mt-1.5 w-44 bg-white rounded-2xl shadow-xl border border-slate-200 p-1.5 z-50 text-xs space-y-0.5">
             <button onclick="setLanguage('ar'); closeLangMenu();" class="w-full text-right px-3 py-1.5 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇸🇦 العربية</span></button>
             <button onclick="setLanguage('en'); closeLangMenu();" class="w-full text-right px-3 py-1.5 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇬🇧 English</span></button>
+            <button onclick="setLanguage('bn'); closeLangMenu();" class="w-full text-right px-3 py-1.5 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇧🇩 বাংলা</span></button>
+            <button onclick="setLanguage('ur'); closeLangMenu();" class="w-full text-right px-3 py-1.5 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇵🇰 اردو</span></button>
+            <button onclick="setLanguage('hi'); closeLangMenu();" class="w-full text-right px-3 py-1.5 rounded-xl hover:bg-slate-100 flex items-center justify-between font-bold text-slate-700"><span>🇮🇳 हिन्दी</span></button>
           </div>
         </div>
 
@@ -128,7 +131,7 @@
               <span id="activeUserRoleBadge" class="text-[10px] text-slate-500 font-semibold block leading-tight">المدير العام</span>
             </div>
             <div class="relative group">
-              <img src="assets/avatar-admin.png" alt="الصورة الشخصية" id="headerUserAvatarImg" class="user-profile-avatar-img w-9 h-9 rounded-full object-cover border-2 border-amber-400/80 shadow-xs">
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23700c14'%3E%3Cpath fill-rule='evenodd' d='M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z' clip-rule='evenodd' /%3E%3C/svg%3E" alt="الصورة الشخصية" id="headerUserAvatarImg" class="user-profile-avatar-img w-9 h-9 rounded-full object-cover border-2 border-amber-400/80 shadow-xs bg-slate-50">
               <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white text-[10px]" title="تغيير الصورة">
                 <i class="fa-solid fa-camera"></i>
               </div>
@@ -278,7 +281,19 @@
         <button onclick="switchTab('loans')" id="nav-loans" class="hidden"></button>
         <button onclick="switchTab('terminated')" id="nav-terminated" class="hidden"></button>
         <button onclick="switchTab('attendance-notices')" id="nav-attendance-notices" class="hidden"><span id="badgeNavNotices"></span></button>
-        <button onclick="switchTab('absence')" id="nav-absence" class="hidden"></button>
+        <!-- AI Job Descriptions -->
+        <button onclick="switchTab('job-descriptions')" id="nav-job-descriptions" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-base text-amber-500"></i>
+          <span class="flex-1 text-right">الأوصاف الوظيفية (AI)</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">ذكاء اصطناعي</span>
+        </button>
+
+        <!-- Automated Absence & Tardiness Notices -->
+        <button onclick="switchTab('absence')" id="nav-absence" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-triangle-exclamation w-5 text-center text-base text-rose-600"></i>
+          <span class="flex-1 text-right">إشعارات الغياب والتأخير</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">نظامي</span>
+        </button>
         <button onclick="switchTab('recruitment')" id="nav-recruitment" class="hidden"><span id="badgeNavRecruitment"></span></button>
         <button onclick="switchTab('insurance')" id="nav-insurance" class="hidden"><span id="badgeNavInsurance"></span></button>
         <button onclick="switchTab('branches')" id="nav-branches" class="hidden"></button>
@@ -2040,6 +2055,39 @@
                   <button onclick="switchTab('leaves')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
                     <i class="fa-solid fa-arrow-left"></i>
                     <span>فتح شاشة إدارة الإجازات والأرصدة</span>
+                  </button>
+                </div>
+              </div>
+                          <!-- 15. شهادة تعريف بالراتب (JM-HR-F-015/SCF) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">شهادة رسمية موثقة</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-015/SCF</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-certificate"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">شهادة تعريف بالراتب</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Salary Certificate Form</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">شهادة تعريف رسمية وموجهة للبنوك والجهات الحكومية تتضمن مسمى الوظيفة وتاريخ الالتحاق وتفصيل مفردات الراتب.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('scf')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('scf')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('payroll')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة مسير الرواتب والبطاقة</span>
                   </button>
                 </div>
               </div>
@@ -5298,6 +5346,9 @@
               </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="triggerAutomatedAttendanceScan()" class="bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
+                <i class="fa-solid fa-bolt"></i> فحص الغياب والتأخير التلقائي الآن
+              </button>
               <button onclick="openAddAbsenceModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2">
                 <i class="fa-solid fa-plus"></i> إصدار إشعار غياب جديد
               </button>
@@ -6477,7 +6528,161 @@
         </div>
       </section>
 
-    </main>
+    
+      <!-- =====================================================================
+           VIEW: AI JOB DESCRIPTION GENERATOR (توليد الأوصاف الوظيفية بالذكاء الاصطناعي)
+           ===================================================================== -->
+      <section id="view-job-descriptions" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">توليد الأوصاف الوظيفية بالذكاء الاصطناعي</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
+
+        <div class="card-elevated p-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 text-white flex items-center justify-center text-2xl shadow-md border border-amber-300">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+              <div>
+                <h2 class="text-xl font-black text-slate-900">استوديو توليد الأوصاف الوظيفية بالذكاء الاصطناعي (AI)</h2>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">صياغة بطاقات الوصف الوظيفي المعيارية المتوافقة مع نظام العمل السعودي والمهام التشغيلية لشركة جوهرة المجد</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openNewJobDescriptionModal()" class="px-4 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs flex items-center gap-2 shadow">
+                <i class="fa-solid fa-plus"></i> إنشاء وصف وظيفي جديد
+              </button>
+            </div>
+          </div>
+
+          <!-- AI Generator Form Panel -->
+          <div class="bg-gradient-to-r from-amber-50/60 to-rose-50/40 p-5 rounded-2xl border border-amber-200/80 mt-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-black text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-robot text-amber-600"></i> محرك التوليد الآلي الذكي
+              </h3>
+              <span class="text-[11px] font-bold text-amber-800 bg-amber-100/80 px-3 py-1 rounded-full border border-amber-200">
+                مطابق لنظام العمل ولائحة الشركة 229400
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">المسمى الوظيفي المطلوب: *</label>
+                <input type="text" id="aiJdTitleInput" placeholder="مثال: أخصائي موارد بشرية، محاسب، مشرف صالة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 bg-white font-bold text-slate-800">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">الإدارة / القسم:</label>
+                <select id="aiJdDeptSelect" class="w-full rounded-xl border border-slate-300 py-2 px-3 bg-white font-bold text-slate-800">
+                  <option value="إدارة الموارد البشرية">إدارة الموارد البشرية</option>
+                  <option value="الإدارة المالية">الإدارة المالية</option>
+                  <option value="إدارة العمليات والمبيعات">إدارة العمليات والمبيعات</option>
+                  <option value="إدارة الخدمات المساندة والأسطول">إدارة الخدمات المساندة والأسطول</option>
+                  <option value="إدارة تقنية المعلومات">إدارة تقنية المعلومات</option>
+                  <option value="الإدارة العامة والتنفيذية">الإدارة العامة والتنفيذية</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">المستوى الوظيفي:</label>
+                <select id="aiJdLevelSelect" class="w-full rounded-xl border border-slate-300 py-2 px-3 bg-white font-bold text-slate-800">
+                  <option value="تخصصي أول">تخصصي أول (Senior Specialist)</option>
+                  <option value="تخصصي">تخصصي (Specialist)</option>
+                  <option value="إشرافي">إشرافي (Supervisor)</option>
+                  <option value="تنفيذي / قيادي">تنفيذي / قيادي (Executive/Manager)</option>
+                  <option value="تشغيلي / مساند">تشغيلي / مساند (Operational/Staff)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">سنوات الخبرة المطلوبة:</label>
+                <input type="text" id="aiJdExpInput" value="3 إلى 5 سنوات" placeholder="مثال: 2-4 سنوات" class="w-full rounded-xl border border-slate-300 py-2 px-3 bg-white font-bold text-slate-800">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">تعليمات أو مهارات إضافية (اختياري):</label>
+              <input type="text" id="aiJdNotesInput" placeholder="أدخل أي مهام مخصصة مثل: إتقان منصة قوى، خبرة بسوبرماركت، رخصة قيادة..." class="w-full rounded-xl border border-slate-300 py-2 px-3 bg-white font-medium text-slate-800 text-xs">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+              <button type="button" onclick="triggerAiJobDescriptionGeneration()" id="btnTriggerAiJd" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold text-xs flex items-center gap-2 shadow-md transition">
+                <i class="fa-solid fa-sparkles"></i>
+                <span>توليد الوصف الوظيفي الذكي الآن</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Generated Preview Container (Hidden by default until generated) -->
+          <div id="aiJdPreviewContainer" class="hidden mt-6 border-2 border-amber-300 rounded-3xl p-6 bg-white shadow-lg space-y-5">
+            <div class="flex items-center justify-between border-b pb-4 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-8 rounded-full bg-[#700c14]"></span>
+                <div>
+                  <h3 id="previewJdTitle" class="text-base font-black text-slate-900">معاينة بطاقة الوصف الوظيفي</h3>
+                  <p id="previewJdMeta" class="text-xs text-slate-500 font-bold font-mono">JD-JM-XXXX</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="saveActiveJobDescription()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-floppy-disk"></i> حفظ في قاعدة البيانات
+                </button>
+                <button type="button" onclick="exportActiveJdDocx()" class="px-4 py-2 rounded-xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                </button>
+                <button type="button" onclick="printActiveJd()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center gap-1.5 shadow">
+                  <i class="fa-solid fa-print"></i> طباعة الوصف
+                </button>
+              </div>
+            </div>
+
+            <!-- Preview Body Content -->
+            <div id="previewJdBody" class="space-y-4 text-xs text-slate-700 leading-relaxed font-sans">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+          <!-- Existing Job Descriptions Library -->
+          <div class="mt-8 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-folder-open text-[#700c14]"></i> سجل بطاقات الوصف الوظيفي المحفوظة
+              </h3>
+              <span id="jdCountBadge" class="text-xs font-bold text-slate-500">0 بطاقة مسجلة</span>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+              <table class="w-full text-right text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="py-3 px-4">رمز الوظيفة</th>
+                    <th class="py-3 px-4">المسمى الوظيفي</th>
+                    <th class="py-3 px-4">الإدارة / القسم</th>
+                    <th class="py-3 px-4">المستوى الوظيفي</th>
+                    <th class="py-3 px-4">تاريخ الإنشاء</th>
+                    <th class="py-3 px-4 text-center">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="jobDescriptionsTableBody" class="divide-y divide-slate-100">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+</main>
   </div>
 
   <!-- =========================================================================
@@ -7326,8 +7531,12 @@
           <a href="/api/templates/employees" download class="text-brand font-bold hover:underline"><i class="fa-solid fa-download"></i> تنزيل قالب الموظفين (CSV)</a>
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">ألصق محتوى CSV أو JSON هنا:</label>
-          <textarea id="importEmployeesText" rows="6" placeholder="emp_code,full_name_ar,national_id,email,basic_salary..." class="w-full rounded-xl border border-slate-300 p-2.5 font-mono text-[11px]"></textarea>
+          <label class="block font-bold text-slate-700 mb-1">اختيار ملف Excel أو CSV:</label>
+          <input type="file" id="importEmployeesFileInput" accept=".xlsx, .xls, .csv" class="w-full rounded-xl border border-slate-300 p-2 text-xs bg-slate-50 cursor-pointer">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">أو ألصق محتوى CSV / JSON هنا:</label>
+          <textarea id="importEmployeesText" rows="4" placeholder="emp_code,full_name_ar,national_id,email,basic_salary..." class="w-full rounded-xl border border-slate-300 p-2.5 font-mono text-[11px]"></textarea>
         </div>
       </div>
       <div class="flex justify-end gap-2 pt-3 border-t">
@@ -7348,8 +7557,12 @@
       </div>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">ألصق سجلات البصمة (CSV أو JSON):</label>
-          <textarea id="importAttendanceText" rows="6" placeholder="emp_code,punch_time,punch_type,device_id..." class="w-full rounded-xl border border-slate-300 p-2.5 font-mono text-[11px]"></textarea>
+          <label class="block font-bold text-slate-700 mb-1">اختيار ملف بصمة (Excel/CSV/DAT):</label>
+          <input type="file" id="importAttendanceFileInput" accept=".xlsx, .xls, .csv, .dat, .txt" class="w-full rounded-xl border border-slate-300 p-2 text-xs bg-slate-50 cursor-pointer">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">أو ألصق سجلات البصمة (CSV أو JSON):</label>
+          <textarea id="importAttendanceText" rows="4" placeholder="emp_code,punch_time,punch_type,device_id..." class="w-full rounded-xl border border-slate-300 p-2.5 font-mono text-[11px]"></textarea>
         </div>
       </div>
       <div class="flex justify-end gap-2 pt-3 border-t">
@@ -10102,6 +10315,32 @@
       <div class="flex justify-end pt-3 border-t">
         <button type="button" onclick="closeModal('modalVehicleDocuments')" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer">
           إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       MODAL: EMPLOYEE SALARY CARD / SLIP (بطاقة الراتب ومفردات الأجر الرسمية)
+       ========================================================================= -->
+  <div id="modalSalaryCard" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-id-card-clip text-brand"></i> بطاقة الراتب ومفردات الأجر الرسمية
+        </h3>
+        <button onclick="closeModal('modalSalaryCard')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+      </div>
+
+      <div id="salaryCardModalContent" class="space-y-4 text-xs">
+        <!-- Loaded dynamically via JS -->
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t">
+        <button onclick="closeModal('modalSalaryCard')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs">إغلاق</button>
+        <button id="btnSalaryCardPrint" onclick="printCurrentSalaryCard()" class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold text-xs flex items-center gap-2 shadow">
+          <i class="fa-solid fa-print"></i> طباعة بطاقة الراتب
         </button>
       </div>
     </div>

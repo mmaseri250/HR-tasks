@@ -1367,6 +1367,8 @@ async function generateWordForm(formType, empId, params = {}) {
       doc = buildAdvanceRequestDoc(emp, params);
       filename = `طلب_سلفة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
       break;
+    case 'scf':
+    case 'jm-hr-f-015':
     case 'salary_cert':
       doc = buildSalaryCertDoc(emp, params);
       filename = `تعريف_بالراتب_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
