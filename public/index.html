@@ -7267,18 +7267,42 @@
         <label class="block font-bold text-slate-700">رابط التفعيل المباشر (أرسله للموظف):</label>
         <div class="flex gap-2">
           <input type="text" id="actNoticeLinkInput" readonly class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 font-mono text-[11px] text-slate-800 font-bold select-all">
-          <button type="button" onclick="copyActivationNoticeLink()" class="px-4 py-2 bg-brand hover:bg-brand-dark text-white font-bold rounded-xl flex items-center gap-1.5 shadow transition active:scale-95">
+          <button type="button" onclick="copyActivationNoticeLink()" class="px-4 py-2 bg-brand hover:bg-brand-dark text-white font-bold rounded-xl flex items-center gap-1.5 shadow transition active:scale-95 whitespace-nowrap">
             <i class="fa-solid fa-copy"></i>
-            <span>نسخ</span>
+            <span>نسخ الرابط</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Dispatch Channels (قنوات الإرسال المباشر للموظف) -->
+      <div class="space-y-2 text-xs">
+        <label class="block font-bold text-slate-700">طرق إيصال الرابط للموظف مباشرة بنقرة واحدة:</label>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <!-- WhatsApp -->
+          <button type="button" onclick="shareActivationViaWhatsApp()" class="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95">
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+            <span>إرسال واتساب</span>
+          </button>
+
+          <!-- Email -->
+          <button type="button" onclick="shareActivationViaEmail()" class="px-3 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95">
+            <i class="fa-solid fa-envelope text-sm"></i>
+            <span>إرسال إيميل</span>
+          </button>
+
+          <!-- Copy Full Message -->
+          <button type="button" onclick="copyFullActivationMessage()" class="px-3 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95">
+            <i class="fa-solid fa-paste text-sm"></i>
+            <span>نسخ الرسالة كاملة</span>
           </button>
         </div>
       </div>
 
       <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
-        <p class="font-bold text-slate-800"><i class="fa-brands fa-whatsapp text-emerald-600 text-xs"></i> كيفية تفعيل الحساب:</p>
-        <p>1. انسخ الرابط أعلاه وأرسله للموظف عبر البريد الرسمي أو الواتساب.</p>
-        <p>2. يفتح الموظف الرابط ويقوم بإنشاء كلمة المرور الشخصية الخاصة به.</p>
-        <p>3. يتم تفعيل الحساب فوراً وتلقائياً وتسجيل وقت التفعيل في سجل الرقابة.</p>
+        <p class="font-bold text-slate-800"><i class="fa-solid fa-circle-info text-brand text-xs"></i> خطوات استلام وتفعيل كلمة المرور:</p>
+        <p>1. <strong>يصل الرابط للموظف:</strong> عبر رسالة واتساب، إيميل رسمي، أو رسالة SMS برقم هاتف الموظف المسجل.</p>
+        <p>2. <strong>خطوة الموظف (صلاحية 24س):</strong> يضغط الموظف على الرابط ➔ يُنشئ كلمة المرور الشخصية ويؤكدها.</p>
+        <p>3. <strong>التفعيل التلقائي:</strong> يتحول الحساب فوراً إلى "نشط" ويدخل الموظف للنظام بكلمة مروره الجديدة.</p>
       </div>
 
       <div class="flex justify-end pt-2 border-t">
@@ -7398,6 +7422,13 @@
           <span data-i18n="login_btn">دخول إلى النظام</span>
         </button>
       </form>
+
+      <div class="pt-2 border-t border-slate-100 flex items-center justify-center gap-1 text-[11px] text-slate-500">
+        <span>لديك رابط تفعيل حساب جديد؟</span>
+        <a href="/activate-account.html" class="font-bold text-brand hover:underline flex items-center gap-1">
+          <i class="fa-solid fa-key text-[10px]"></i> بوابة تفعيل الحسابات (24س)
+        </a>
+      </div>
 
     </div>
   </div>

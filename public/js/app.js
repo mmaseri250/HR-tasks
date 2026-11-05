@@ -15659,8 +15659,11 @@ window.triggerAutomatedAttendanceScan = triggerAutomatedAttendanceScan;
    USER ACTIVATION & 24-HOUR TOKEN HELPERS
    ========================================================================= */
 
+let currentActivationNoticeData = null;
+
 function openActivationNoticeModal(data) {
   if (!data) return;
+  currentActivationNoticeData = data;
   const usernameEl = document.getElementById('actNoticeUsername');
   const nameEl = document.getElementById('actNoticeFullName');
   const expEl = document.getElementById('actNoticeExpires');
@@ -15674,6 +15677,60 @@ function openActivationNoticeModal(data) {
   if (inputEl) inputEl.value = link;
 
   openModal('modalUserActivationNotice');
+}
+
+function shareActivationViaWhatsApp() {
+  if (!currentActivationNoticeData) return;
+  const data = currentActivationNoticeData;
+  const link = data.activation_link || `${window.location.origin}/activate-account.html?token=${data.activation_token || ''}`;
+  
+  let phone = '';
+  if (data.emp_id) {
+    const emp = (state.employees || []).find(e => Number(e.id) === Number(data.emp_id));
+    if (emp && emp.phone) phone = emp.phone;
+  }
+  let cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+  if (cleanPhone.startsWith('05')) {
+    cleanPhone = '966' + cleanPhone.substring(1);
+  } else if (cleanPhone.startsWith('5')) {
+    cleanPhone = '966' + cleanPhone;
+  }
+
+  const msg = `السلام عليكم ورحمة الله وبركاته،\nالأخ/الأخت: ${data.full_name}\n\nتم إنشاء حسابكم في نظام إدارة الموارد البشرية لـ *شركة جوهرة المجد*.\n\n👤 *اسم المستخدم:* ${data.username}\n⏳ *مهلة التفعيل:* 24 ساعة فقط من وقت الإرسال.\n\nيرجى فتح الرابط التالي وتعيين كلمة المرور الخاصة بكم لتفعيل الحساب:\n🔗 ${link}\n\nإدارة الموارد البشرية - شركة جوهرة المجد`;
+  
+  const url = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+function shareActivationViaEmail() {
+  if (!currentActivationNoticeData) return;
+  const data = currentActivationNoticeData;
+  const link = data.activation_link || `${window.location.origin}/activate-account.html?token=${data.activation_token || ''}`;
+  
+  let email = data.email || '';
+  if (!email && data.emp_id) {
+    const emp = (state.employees || []).find(e => Number(e.id) === Number(data.emp_id));
+    if (emp && emp.email) email = emp.email;
+  }
+
+  const subject = `دعوة تفعيل حسابك في نظام موارد بشرية شركة جوهرة المجد (${data.username})`;
+  const body = `السلام عليكم ورحمة الله وبركاته،\n\nالأخ/الأخت: ${data.full_name}\n\nتم إنشاء حسابكم الرسمي في نظام الموارد البشرية لشركة جوهرة المجد للتجارة والمقاولات.\n\nاسم المستخدم: ${data.username}\nمدة الصلاحية: 24 ساعة فقط\n\nيرجى الضغط على الرابط التالي لإنشاء كلمة المرور وتفعيل الحساب:\n${link}\n\nمع تحيات إدارة الموارد البشرية - شركة جوهرة المجد`;
+
+  window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function copyFullActivationMessage() {
+  if (!currentActivationNoticeData) return;
+  const data = currentActivationNoticeData;
+  const link = data.activation_link || `${window.location.origin}/activate-account.html?token=${data.activation_token || ''}`;
+
+  const msg = `السلام عليكم ورحمة الله وبركاته،\nالأخ/الأخت: ${data.full_name}\n\nتم إنشاء حسابكم في نظام إدارة الموارد البشرية لـ شركة جوهرة المجد.\n\n👤 اسم المستخدم: ${data.username}\n⏳ مهلة التفعيل: 24 ساعة فقط\n\nيرجى فتح الرابط التالي وتعيين كلمة المرور الخاصة بكم لتفعيل الحساب:\n🔗 ${link}\n\nإدارة الموارد البشرية - شركة جوهرة المجد`;
+
+  navigator.clipboard.writeText(msg).then(() => {
+    alert('✓ تم نسخ نص الدعوة والرسالة الرسمية كاملاً مع الرابط بنجاح.');
+  }).catch(() => {
+    prompt('انسخ نص الرسالة التالي:', msg);
+  });
 }
 
 function copyActivationNoticeLink() {
@@ -15811,6 +15868,9 @@ async function openJobDescriptionForEmployee(empId) {
 // Global Window Exports for Activation & Job Descriptions
 window.openActivationNoticeModal = openActivationNoticeModal;
 window.copyActivationNoticeLink = copyActivationNoticeLink;
+window.shareActivationViaWhatsApp = shareActivationViaWhatsApp;
+window.shareActivationViaEmail = shareActivationViaEmail;
+window.copyFullActivationMessage = copyFullActivationMessage;
 window.copyUserActivationLink = copyUserActivationLink;
 window.resendUserActivation = resendUserActivation;
 window.openNewJobDescriptionModal = openNewJobDescriptionModal;
