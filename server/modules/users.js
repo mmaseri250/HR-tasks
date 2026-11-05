@@ -61,12 +61,6 @@ function reconcileUserEmployeeLinks() {
       let emp = emps.find(e => e.id === u.emp_id);
       if (!emp) {
         emp = emps.find(e => normalizeAr(e.full_name_ar) === normalizeAr(u.full_name) || (u.username && normalizeAr(e.emp_code) === normalizeAr(u.username)));
-        if (!emp && u.username === 'shama.asiri') {
-          emp = emps.find(e => normalizeAr(e.full_name_ar).includes('شامه') || e.emp_code === 'JM-1053');
-        }
-        if (!emp && u.username === 'abdulmalik') {
-          emp = emps.find(e => normalizeAr(e.full_name_ar).includes('عبدالملك') || e.emp_code === 'JM-1000');
-        }
         if (emp) {
           run('UPDATE users SET emp_id = ? WHERE id = ?', [emp.id, u.id]);
           u.emp_id = emp.id;
@@ -341,12 +335,8 @@ function syncUsers(incomingUsers = []) {
   return getAllUsers();
 }
 
-// Ensure persisted users are synchronized upon module load
-try {
-  restoreUsersFromDisk();
-} catch (e) {
-  console.warn('Initial users restore error:', e.message);
-}
+// Persisted users are maintained directly via SQLite SSOT.
+// No auto-injection or restore on module load to prevent resurrected deleted users.
 
 module.exports = {
   login,

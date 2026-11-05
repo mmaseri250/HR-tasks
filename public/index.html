@@ -313,24 +313,51 @@
            ===================================================================== -->
       <section id="view-dashboard" class="space-y-6">
         
-        <!-- 1. Executive Hero Banner (Exact Match to ChatGPT 5 Nov 2026 Reference) -->
-        <div class="relative rounded-3xl overflow-hidden shadow-lg border border-brand/20 bg-gradient-to-l from-[#6e0a24] via-[#851132] to-[#9b173c] text-white">
-          <div class="flex flex-col lg:flex-row items-stretch justify-between relative z-10 min-h-[175px]">
+        <!-- 1. Executive Programmatic Hero Card (Pure CSS/Tailwind - No Static Cropped Images) -->
+        <div class="relative rounded-3xl overflow-hidden shadow-xl border border-amber-500/30 bg-gradient-to-l from-[#4a080d] via-[#6e0c16] to-[#8d141e] text-white p-6 sm:p-8">
+          <div class="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
             
-            <!-- Right side: Executive Text & Badges (in RTL, appears on right) -->
-            <div class="p-6 sm:p-8 flex-1 flex flex-col justify-center space-y-2 max-w-2xl">
-              <div>
+            <!-- Right side: Executive Text, Badges, & Corporate Identity -->
+            <div class="flex-1 space-y-3 max-w-2xl text-right">
+              <div class="flex items-center gap-2 flex-wrap">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#c59a3f]/25 text-[#f5d78e] border border-[#c59a3f]/40 shadow-xs">
-                  <i class="fa-solid fa-crown text-[#ffd700]"></i> لوحة القيادة التنفيذية
+                  <i class="fa-solid fa-crown text-[#ffd700]"></i> لوحة القيادة التنفيذية المعتمدة
+                </span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white/90 border border-white/15">
+                  <i class="fa-solid fa-building text-amber-300"></i> شركة جوهرة المجد للتجارة
+                </span>
+                <span class="text-[11px] font-mono text-amber-200/80 bg-black/20 px-2.5 py-0.5 rounded-lg border border-amber-500/20">
+                  س.ت: 5850024190
                 </span>
               </div>
               <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">نظرة شاملة على الموارد البشرية</h2>
-              <p class="text-white/85 text-xs sm:text-sm font-medium">مؤشرات أداء رئيسية وملخص لحالة القوى العاملة والعمليات التشغيلية</p>
+              <p class="text-white/85 text-xs sm:text-sm font-medium leading-relaxed">
+                مؤشرات أداء رئيسية حية، ومراقبة لحظية لحالة القوى العاملة، الالتزام بالأنظمة، وعمليات الأسطول والتراخيص الحكومية
+              </p>
             </div>
 
-            <!-- Left side: Architectural HQ Building with Jawharat Al-Majd Brand Facade -->
-            <div class="lg:w-1/2 relative min-h-[160px] overflow-hidden flex items-center justify-end">
-              <img src="assets/hero-building.png" alt="جوهرة المجد" class="w-full h-full object-cover object-left" style="mask-image: linear-gradient(to right, black 65%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 65%, transparent 100%);">
+            <!-- Left side: Live Key Operational Metric Badges (100% Programmatic) -->
+            <div class="grid grid-cols-2 gap-3 w-full lg:w-auto flex-shrink-0">
+              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
+                <span class="text-[11px] font-bold text-amber-300 block mb-0.5"><i class="fa-solid fa-users ml-1"></i>الكادر النشط</span>
+                <span class="text-xl font-black font-mono text-white" id="heroStatEmployees">108</span>
+                <span class="text-[9px] text-white/70 block">موظفاً على رأس العمل</span>
+              </div>
+              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
+                <span class="text-[11px] font-bold text-emerald-300 block mb-0.5"><i class="fa-solid fa-calendar-check ml-1"></i>نسبة الحضور</span>
+                <span class="text-xl font-black font-mono text-emerald-400" id="heroStatAttendance">95.4%</span>
+                <span class="text-[9px] text-emerald-200/80 block">متوسط الالتزام اليومي</span>
+              </div>
+              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
+                <span class="text-[11px] font-bold text-teal-300 block mb-0.5"><i class="fa-solid fa-file-shield ml-1"></i>التراخيص والسجلات</span>
+                <span class="text-xl font-black font-mono text-teal-300" id="heroStatLicenses">17</span>
+                <span class="text-[9px] text-teal-200/80 block">وثيقة معتمدة ومطابقة</span>
+              </div>
+              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
+                <span class="text-[11px] font-bold text-blue-300 block mb-0.5"><i class="fa-solid fa-car ml-1"></i>أسطول تم</span>
+                <span class="text-xl font-black font-mono text-blue-300" id="heroStatFleet">23</span>
+                <span class="text-[9px] text-blue-200/80 block">مركبة مفعلة ومربوطة</span>
+              </div>
             </div>
 
           </div>
@@ -548,6 +575,21 @@
            VIEW HR CENTER: CENTRAL HR CONTROL CENTER (مركز لوحة تحكم الموارد البشرية)
            ===================================================================== -->
       <section id="view-hr-center" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">مركز التحكم وإدارات الموارد البشرية</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
 
         <!-- Executive Banner -->
         <div class="brand-gradient text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-brand-gold/30">
@@ -836,6 +878,21 @@
       </section>
 
       <section id="view-employees-db" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">قاعدة بيانات الموظفين الشاملة</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         
         <!-- Enterprise Header Banner -->
         <div class="card-elevated p-6 space-y-5" style="border-top: 4px solid #8B0000;">
@@ -1107,6 +1164,21 @@
            VIEW 2.01: LEAVE MANAGEMENT & APPROVALS (إدارة الإجازات وسير الموافقات)
            ===================================================================== -->
       <section id="view-leaves" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">إدارة الإجازات والأرصدة</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <!-- Header Banner -->
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1327,6 +1399,21 @@
            VIEW 2.02: INDEPENDENT TASKS SYSTEM (نظام المهام والمتابعة)
            ===================================================================== -->
       <section id="view-tasks" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">إدارة المهام والتكليفات</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <!-- Header Banner & Dashboard -->
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -1432,6 +1519,21 @@
            VIEW 2.03: HR OFFICIAL FORMS GENERATOR (نماذج الموارد البشرية الرسمية المعتمدة)
            ===================================================================== -->
       <section id="view-forms" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">النماذج والوثائق الرسمية المعتمدة</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div class="flex items-center gap-3">
@@ -1453,276 +1555,494 @@
             </div>
           </div>
 
-          <!-- The 8 Core Official Company Forms -->
+                    <!-- The 14 Official Accredited Forms Grid (00_All_HR_Forms_Combined_v2.docx) -->
           <div class="mt-6">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-6 rounded-full bg-[#700c14]"></span>
-                <h3 class="text-sm font-black text-slate-900">النماذج الرسمية الثمانية المعتمدة ومسارات الربط البرمجي</h3>
+                <h3 class="text-sm font-black text-slate-900">النماذج الـ 14 الرسمية المعتمدة لشركة جوهرة المجد</h3>
               </div>
               <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                <i class="fa-solid fa-circle-check"></i> متزامنة مع الكليشة الرسمية وثنائية اللغة عربي / إنجليزي
+                <i class="fa-solid fa-circle-check"></i> مطابقة بنسبة 100% لملف النماذج المعتمد
               </span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              
-              <!-- 1. نموذج إشعار عقوبة غياب (الملف رقم 1) -->
-              <div class="border-2 border-rose-100 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-gradient-to-br from-white via-rose-50/20 to-slate-50 relative flex flex-col justify-between">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <!-- 01. إشعار حالة موظف (JM-HR-F-001/ESN) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full">الملف رقم 1 • مادة 1/11</span>
-                    <span class="text-xs font-bold text-slate-400">JM-HR-F-001/ABS</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">مباشرة / تعديل حالة</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-001/ESN</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg">
-                      <i class="fa-solid fa-user-xmark"></i>
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-id-badge"></i>
                     </div>
-                    <h4 class="text-sm font-black text-slate-900">نموذج إشعار عقوبة غياب</h4>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">إشعار حالة موظف</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Employee Status Notification</p>
+                    </div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج القديم للغياب به، استناداً للمادة (1/11) بالفصل 18 مع سحب بيانات الموظف والغياب والخصم تلقائياً.</p>
-                  <div class="text-[11px] font-bold text-rose-950 bg-rose-50/80 p-2 rounded-xl border border-rose-200/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-rose-600 ml-1"></i><strong>المسار:</strong> قسم غياب الموظفين</div>
-                    <div><i class="fa-solid fa-signature text-rose-600 ml-1"></i><strong>الاعتماد:</strong> الموارد وإقرار الموظف</div>
-                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">تسجيل ومطابقة حالة الموظف المعتمدة (التحاق جديد، استئناف بعد إجازة، نقل كفالة، ترقية) بالنظام الآلي المعتمد.</p>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('absence_penalty')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                    <button onclick="downloadWordFormDirect('esn')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
                     </button>
-                    <button onclick="previewOfficialHtmlFormDirect('absence_penalty')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button onclick="previewOfficialHtmlFormDirect('esn')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
                       <i class="fa-solid fa-print"></i> معاينة وطباعة
                     </button>
                   </div>
-                  
+                  <button onclick="switchTab('employees-db')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة قاعدة بيانات الموظفين</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- 2. نموذج إشعار عقوبة عدم اتباع التعليمات (الملف رقم 2) -->
-              <div class="border-2 border-amber-100 rounded-3xl p-5 hover:border-amber-600 hover:shadow-lg transition bg-gradient-to-br from-white via-amber-50/20 to-slate-50 relative flex flex-col justify-between">
+              <!-- 02. طلب سلفة مالية (JM-HR-F-002/ADV) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">الملف رقم 2 • مادة 1/15</span>
-                    <span class="text-xs font-bold text-slate-400">JM-HR-F-002/INS</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">سلفة مالية مستردة</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-002/ADV</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg">
-                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-hand-holding-dollar"></i>
                     </div>
-                    <h4 class="text-sm font-black text-slate-900">إشعار مخالفة الأوامر والتعليمات</h4>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">طلب سلفة مالية</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Employee Advance Request</p>
+                    </div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج القديم، استناداً للمادة (1/15) بالفصل 18 لمخالفات تنظيم العمل مع تعبئة تلقائية فورية للواقعة والجزاء.</p>
-                  <div class="text-[11px] font-bold text-amber-950 bg-amber-50/80 p-2 rounded-xl border border-amber-200/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-amber-600 ml-1"></i><strong>المسار:</strong> مخالفات العمل والتعليمات</div>
-                    <div><i class="fa-solid fa-signature text-amber-600 ml-1"></i><strong>الاعتماد:</strong> الموارد وإقرار الموظف</div>
-                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">طلب سلفة مالية بحد أقصى راتب شهر مع تفويض الاستقطاع وجدول الأقساط النظامي المعتمد.</p>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('instruction_penalty')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                    <button onclick="downloadWordFormDirect('adv')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
                     </button>
-                    <button onclick="previewOfficialHtmlFormDirect('instruction_penalty')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button onclick="previewOfficialHtmlFormDirect('adv')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
                       <i class="fa-solid fa-print"></i> معاينة وطباعة
                     </button>
                   </div>
-                  
+                  <button onclick="switchTab('loans')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة إدارة السلف والقروض</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- 3. نموذج إخلاء طرف موظف (الملف رقم 3) -->
-              <div class="border-2 border-teal-100 rounded-3xl p-5 hover:border-teal-600 hover:shadow-lg transition bg-gradient-to-br from-white via-teal-50/20 to-slate-50 relative flex flex-col justify-between">
+              <!-- 03. نموذج استلام إقامة (JM-HR-F-003/IRA) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full">الملف رقم 3 • نموذج معتمد</span>
-                    <span class="text-xs font-bold text-slate-400">JM-HR-F-005</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-teal-100 text-teal-800 px-2.5 py-0.5 rounded-full">هوية مقيم والالتزام</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-003/IRA</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-lg">
+                    <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-address-card"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">نموذج استلام إقامة</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Iqama Receipt Acknowledgment</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">إقرار استلام أصل بطاقة هوية مقيم (الإقامة) بعد التجديد والتعهد بحملها وفقاً لتعليمات الجوازات.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('ira')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('ira')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('compliance')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة الامتثال وتقرير مقيم</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 04. طلب خروج نهائي (JM-HR-F-004/FER) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full">مغادرة نهائية للمملكة</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-004/FER</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-plane-departure"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">طلب خروج نهائي</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Final Exit Request Form</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">طلب إصدار تأشيرة خروج نهائي بعد استيفاء إخلاء الطرف وتصفية كامل المستحقات والعهد المسجلة.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('fer')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('fer')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('terminated')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة تصفية نهاية الخدمة</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 05. طلب نقل كفالة (JM-HR-F-005/STR) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">نقل خدمات وقوى</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-005/STR</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">طلب نقل كفالة</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Sponsorship Transfer Request</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">طلب وخطاب عدم ممانعة نقل خدمات موظف لصاحب عمل جديد بعد استكمال متطلبات منصة قوى وسداد الرسوم.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('str')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('str')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('compliance')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة الامتثال وتقرير مقيم</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 06. تصفية موظف/ـة (JM-HR-F-006/ECF) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full">إخلاء طرف إداري وشامل</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-006/ECF</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg shadow-xs">
                       <i class="fa-solid fa-clipboard-check"></i>
                     </div>
-                    <h4 class="text-sm font-black text-slate-900">نموذج إخلاء طرف موظف</h4>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">تصفية موظف/ـة</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Employee Clearance Form</p>
+                    </div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج القديم، مع تفعيل اعتمادات الأقسام الـ 5 كاملة (المدير المباشر، IT، الخدمات الإدارية، الإدارة المالية، الموارد البشرية).</p>
-                  <div class="text-[11px] font-bold text-teal-950 bg-teal-50/80 p-2 rounded-xl border border-teal-200/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-teal-600 ml-1"></i><strong>المسار:</strong> المخالصات النهائية</div>
-                    <div><i class="fa-solid fa-signature text-teal-600 ml-1"></i><strong>الاعتماد:</strong> الأقسام الـ 5 + الموارد البشرية</div>
-                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استيفاء براءة الذمة وإخلاء الطرف من الإدارات الخمس (العمليات، الأسطول، IT، المالية، والموارد البشرية).</p>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('clearance')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                    <button onclick="downloadWordFormDirect('ecf')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
                     </button>
-                    <button onclick="previewOfficialHtmlFormDirect('clearance')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button onclick="previewOfficialHtmlFormDirect('ecf')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
                       <i class="fa-solid fa-print"></i> معاينة وطباعة
                     </button>
                   </div>
-                  
+                  <button onclick="switchTab('terminated')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة تصفية نهاية الخدمة</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- 4. نموذج إشعار عدم رغبة في تجديد العقد (الملف رقم 4) -->
-              <div class="border-2 border-orange-100 rounded-3xl p-5 hover:border-orange-600 hover:shadow-lg transition bg-gradient-to-br from-white via-orange-50/20 to-slate-50 relative flex flex-col justify-between">
+              <!-- 07. وثيقة إبراء ذمة واستلام المستحقات (JM-HR-F-007/FFS) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-orange-800 px-2.5 py-0.5 rounded-full">الملف رقم 4 • مادة 55 / 37</span>
-                    <span class="text-xs font-bold text-slate-400">JM-HR-F-004/CNR</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full">مخالصة نهائية باتة</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-007/FFS</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center text-lg">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-file-invoice-dollar"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">وثيقة إبراء ذمة واستلام المستحقات</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Full & Final Settlement Release</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">إبراء ذمة نهائي وشامل وبات، وإقرار باستلام كامل مستحقات نهاية الخدمة وبدل الإجازات والأجور دون أي مطالبة لاحقة.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('ffs')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('ffs')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('terminated')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة تصفية نهاية الخدمة</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 08. إخطار عقوبة – غياب (JM-HR-F-008/NPA) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full">مخالفة زمنية (جدول 1/11)</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-008/NPA</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-user-clock"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">إخطار عقوبة – غياب</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Notice of Penalty – Absence</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">إخطار بخصم جزائي وفق المادة (18) من لائحة تنظيم العمل لشركة جوهرة المجد رقم الاعتماد 229400.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('npa')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('npa')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('penalties')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة الجزاءات واللوائح</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 09. إخطار عقوبة – مخالفة الأوامر (JM-HR-F-009/NPI) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-orange-100 text-orange-800 px-2.5 py-0.5 rounded-full">سلوك العمل (جدول 2/1)</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-009/NPI</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">إخطار عقوبة – مخالفة الأوامر</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Notice of Penalty – Non-Compliance</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">إخطار تحقيق وعقوبة لمخالفة الأوامر والتعليمات الرسمية الصادرة من الإدارة المباشرة أو إدارة الشركة.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('npi')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('npi')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('penalties')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة الجزاءات واللوائح</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 10. إشعار عدم تجديد العقد (JM-HR-F-010/NNR) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-full">إشعار نظامي قبل 60 يوماً</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-010/NNR</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center text-lg shadow-xs">
                       <i class="fa-solid fa-envelope-open-text"></i>
                     </div>
-                    <h4 class="text-sm font-black text-slate-900">إشعار عدم تجديد العقد</h4>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">إشعار عدم تجديد العقد</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Notice of Contract Non-Renewal</p>
+                    </div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">اعتماد النموذج الرسمي لإشعار الموظف قبل 30 يوماً من انتهاء العقد المحدد المدة وفق المادة 55 ومراعاة المادة 37 للوافدين.</p>
-                  <div class="text-[11px] font-bold text-orange-950 bg-orange-50/80 p-2 rounded-xl border border-orange-200/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-orange-600 ml-1"></i><strong>المسار:</strong> العقود وإنهاء المدة</div>
-                    <div><i class="fa-solid fa-signature text-orange-600 ml-1"></i><strong>الاعتماد:</strong> الموارد وإشعار الموظف</div>
-                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">إخطار رسمي بعدم الرغبة في تجديد عقد العمل محدد المدة سنداً للمادتين (55 و 37) من نظام العمل السعودي.</p>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('contract_non_renewal')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                    <button onclick="downloadWordFormDirect('nnr')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
                     </button>
-                    <button onclick="previewOfficialHtmlFormDirect('contract_non_renewal')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button onclick="previewOfficialHtmlFormDirect('nnr')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
                       <i class="fa-solid fa-print"></i> معاينة وطباعة
                     </button>
                   </div>
-                  
+                  <button onclick="switchTab('employees-db')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة قاعدة بيانات الموظفين</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- 5. نموذج إجراء جزائي (الملف رقم 5) -->
-              <div class="border-2 border-purple-100 rounded-3xl p-5 hover:border-purple-600 hover:shadow-lg transition bg-gradient-to-br from-white via-purple-50/20 to-slate-50 relative flex flex-col justify-between">
+              <!-- 11. نموذج إخلاء طرف موظف (JM-HR-F-011/CLR) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">الملف رقم 5 • السجل الانضباطي</span>
-                    <span class="text-xs font-bold text-slate-400">JM-HR-F-002</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-cyan-100 text-cyan-800 px-2.5 py-0.5 rounded-full">تسليم العهد والأصول</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-011/CLR</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-box-archive"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">نموذج إخلاء طرف موظف</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Employee Clearance Form</p>
+                    </div>
+                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">حصر وتسليم العهد العينية والمالية وسيارات الشركة وأجهزة الحاسب وبطاقات التأمين الطبي المعتمدة.</p>
+                </div>
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="downloadWordFormDirect('clr')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
+                    </button>
+                    <button onclick="previewOfficialHtmlFormDirect('clr')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-print"></i> معاينة وطباعة
+                    </button>
+                  </div>
+                  <button onclick="switchTab('terminated')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة تصفية نهاية الخدمة</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 12. نموذج إجراء جزائي (JM-HR-F-012/PPF) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-800 px-2.5 py-0.5 rounded-full">محضر تحقيق ولائحة 229400</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-012/PPF</span>
+                  </div>
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center text-lg shadow-xs">
                       <i class="fa-solid fa-gavel"></i>
                     </div>
-                    <h4 class="text-sm font-black text-slate-900">نموذج وقرار إجراء جزائي</h4>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">نموذج إجراء جزائي</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Penalty Procedure Form</p>
+                    </div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال النموذج العام للجزاءات وتحديثه لتوثيق المخالفات وتكرارها، مع توزيع النسخ لشؤون الموظفين والملف والرواتب.</p>
-                  <div class="text-[11px] font-bold text-purple-950 bg-purple-50/80 p-2 rounded-xl border border-purple-200/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-purple-600 ml-1"></i><strong>المسار:</strong> السجل الانضباطي</div>
-                    <div><i class="fa-solid fa-signature text-purple-600 ml-1"></i><strong>الاعتماد:</strong> مدير الإدارة ومدير الموارد</div>
-                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">محضر المساءلة والتحقيق النظامي الشامل وتطبيق التدرج القانوني للعقوبة وفق المادة (66) من نظام العمل.</p>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('penalty_procedure')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                    <button onclick="downloadWordFormDirect('ppf')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
                     </button>
-                    <button onclick="previewOfficialHtmlFormDirect('penalty_procedure')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button onclick="previewOfficialHtmlFormDirect('ppf')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
                       <i class="fa-solid fa-print"></i> معاينة وطباعة
                     </button>
                   </div>
-                  
+                  <button onclick="switchTab('penalties')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة الجزاءات واللوائح</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- 6. نموذج طلب إنهاء خدمة واستقالة (الملف رقم 6) -->
-              <div class="border-2 border-indigo-100 rounded-3xl p-5 hover:border-indigo-600 hover:shadow-lg transition bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 relative flex flex-col justify-between">
+              <!-- 13. الاستقالة وإنهاء عقد العمل (JM-HR-F-013/RCT) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded-full">الملف رقم 6 • طلبات الموظفين</span>
-                    <span class="text-xs font-bold text-slate-400">JM-HR-F-003</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-stone-100 text-stone-800 px-2.5 py-0.5 rounded-full">إنهاء العلاقة التعاقدية</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-013/RCT</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg">
-                      <i class="fa-solid fa-door-closed"></i>
+                    <div class="w-10 h-10 rounded-xl bg-stone-200 text-stone-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-file-signature"></i>
                     </div>
-                    <h4 class="text-sm font-black text-slate-900">نموذج طلب إنهاء خدمة واستقالة</h4>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">الاستقالة وإنهاء عقد العمل</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Resignation & Termination Form</p>
+                    </div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال نموذج الاستقالة/الإنهاء ليشمل خيارات (استقالة، انتهاء عقد، إنهاء خدمة، عدم اجتياز التجربة) مع تدقيق قوى والتأديب.</p>
-                  <div class="text-[11px] font-bold text-indigo-950 bg-indigo-50/80 p-2 rounded-xl border border-indigo-200/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-indigo-600 ml-1"></i><strong>المسار:</strong> قسم الاستقالات والإنهاء</div>
-                    <div><i class="fa-solid fa-signature text-indigo-600 ml-1"></i><strong>الاعتماد:</strong> المدير المباشر + الموارد</div>
-                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">طلب الاستقالة أو إنهاء العقد بالاتفاق وفق المادة (74) أو المادة (77) من نظام العمل وحساب فترة الإشعار.</p>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('resignation_termination')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                    <button onclick="downloadWordFormDirect('rct')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
                     </button>
-                    <button onclick="previewOfficialHtmlFormDirect('resignation_termination')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button onclick="previewOfficialHtmlFormDirect('rct')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
                       <i class="fa-solid fa-print"></i> معاينة وطباعة
                     </button>
                   </div>
-                  
+                  <button onclick="switchTab('terminated')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة تصفية نهاية الخدمة</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- 7. نموذج طلب إجازة (الملف رقم 7) -->
-              <div class="border-2 border-emerald-100 rounded-3xl p-5 hover:border-emerald-600 hover:shadow-lg transition bg-gradient-to-br from-white via-emerald-50/20 to-slate-50 relative flex flex-col justify-between">
+              <!-- 14. نموذج طلب إجازة (JM-HR-F-014/LRF) -->
+              <div class="border-2 border-slate-200/80 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-white relative flex flex-col justify-between">
                 <div>
                   <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">الملف رقم 7 • إدارة الإجازات</span>
-                    <span class="text-xs font-bold text-slate-400">JM-HR-F-001</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">إجازة اعتيادية / مرضية / طارئة</span>
+                    <span class="text-xs font-mono font-bold text-slate-400">JM-HR-F-014/LRF</span>
                   </div>
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg">
-                      <i class="fa-solid fa-calendar-check"></i>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg shadow-xs">
+                      <i class="fa-solid fa-calendar-days"></i>
                     </div>
-                    <h4 class="text-sm font-black text-slate-900">نموذج طلب إجازة رسمي</h4>
+                    <div>
+                      <h4 class="text-sm font-black text-slate-900 leading-tight">نموذج طلب إجازة</h4>
+                      <p class="text-[10px] text-slate-400 font-medium font-sans">Leave Request Form</p>
+                    </div>
                   </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">استبدال نموذج الإجازات الحالي بالكامل، متصل برصيد الإجازات الفعلي للموظف وسير الموافقات الرباعي المعتمد بالشركة.</p>
-                  <div class="text-[11px] font-bold text-emerald-950 bg-emerald-50/80 p-2 rounded-xl border border-emerald-200/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-emerald-600 ml-1"></i><strong>المسار:</strong> إدارة الإجازات والموافقات</div>
-                    <div><i class="fa-solid fa-signature text-emerald-600 ml-1"></i><strong>الاعتماد:</strong> المدير + تدقيق واعتماد HR</div>
-                  </div>
+                  <p class="text-xs text-slate-600 leading-relaxed mb-3">طلب وتفويض الإجازة السنوية بخصم الرصيد وتكليف البديل وتذاكر السفر وتأشيرة الخروج والعودة.</p>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
+                <div class="space-y-2 pt-3 border-t border-slate-100 mt-2">
                   <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('leave_request')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
+                    <button onclick="downloadWordFormDirect('lrf')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                      <i class="fa-solid fa-file-word"></i> Word (.docx)
                     </button>
-                    <button onclick="previewOfficialHtmlFormDirect('leave_request')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
+                    <button onclick="previewOfficialHtmlFormDirect('lrf')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
                       <i class="fa-solid fa-print"></i> معاينة وطباعة
                     </button>
                   </div>
-                  
+                  <button onclick="switchTab('leaves')" class="w-full bg-slate-50 hover:bg-slate-100 text-brand text-[11px] font-bold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 border border-slate-200">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>فتح شاشة إدارة الإجازات والأرصدة</span>
+                  </button>
                 </div>
               </div>
-
-              <!-- 8. شهادة تعريف بالراتب الموحدة الرسمية (الملف رقم 8) -->
-              <div class="border-2 border-amber-200 rounded-3xl p-5 hover:border-[#700c14] hover:shadow-lg transition bg-gradient-to-br from-white via-amber-50/30 to-slate-50 relative flex flex-col justify-between">
-                <div>
-                  <div class="flex items-center justify-between mb-3">
-                    <span class="text-[10px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full">الملف رقم 8 • شهادة معتمدة</span>
-                    <span class="text-xs font-bold text-amber-800">JM-HR-F-008</span>
-                  </div>
-                  <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#700c14] to-[#8B0000] text-amber-300 flex items-center justify-center text-lg shadow-xs">
-                      <i class="fa-solid fa-award"></i>
-                    </div>
-                    <h4 class="text-sm font-black text-slate-900">شهادة تعريف بالراتب الموحدة</h4>
-                  </div>
-                  <p class="text-xs text-slate-600 leading-relaxed mb-3">الشهادة الرسمية الموحدة لتعريف الراتب باللغتين (عربي/إنجليزي) موجهة للبنوك والجهات الرسمية مع تفصيل البدلات والتأمينات ورمز QR.</p>
-                  <div class="text-[11px] font-bold text-amber-950 bg-amber-100/70 p-2 rounded-xl border border-amber-300/60 mb-4 space-y-1">
-                    <div><i class="fa-solid fa-route text-amber-800 ml-1"></i><strong>المسار:</strong> الخدمة الذاتية وملف الموظف</div>
-                    <div><i class="fa-solid fa-signature text-amber-800 ml-1"></i><strong>الاعتماد:</strong> مدير عام الموارد البشرية</div>
-                  </div>
-                </div>
-                <div class="space-y-2 pt-2 border-t border-slate-100">
-                  <div class="grid grid-cols-2 gap-2">
-                    <button onclick="downloadWordFormDirect('salary_cert')" class="bg-blue-900 hover:bg-blue-800 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-file-word"></i> تصدير Word (.docx)
-                    </button>
-                    <button onclick="previewOfficialHtmlFormDirect('salary_cert')" class="bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs">
-                      <i class="fa-solid fa-print"></i> معاينة وطباعة
-                    </button>
-                  </div>
-                  
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
@@ -1732,6 +2052,21 @@
            VIEW 2.1: ENTERPRISE COMPLIANCE DASHBOARD (مؤشر الامتثال ورخص العمل والإقامات)
            ===================================================================== -->
       <section id="view-compliance" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">الامتثال وتقرير مقيم ورخص العمل</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         
         <!-- Header Banner & Sub-Navigation -->
         <div class="card-elevated p-6 space-y-4">
@@ -2075,6 +2410,21 @@
            VIEW 3: DISCIPLINARY PENALTIES (Requested: القرارات الجزائية)
            ===================================================================== -->
       <section id="view-penalties" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">الجزاءات ولائحة تنظيم العمل المعتمدة</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
@@ -2272,6 +2622,21 @@
            VIEW 4: ATTENDANCE & BIOMETRICS
            ===================================================================== -->
       <section id="view-attendance" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">سجلات الحضور والانصراف الذكية</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         
         <div class="card-elevated p-6 space-y-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
@@ -2371,6 +2736,21 @@
            VIEW 5: PAYROLL & WPS
            ===================================================================== -->
       <section id="view-payroll" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">مسير الرواتب وحماية الأجور (WPS)</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         
         <div class="card-elevated p-6 space-y-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
@@ -2451,6 +2831,21 @@
            VIEW: LOANS & ADVANCES (إدارة واستيراد السلف والأقساط الشهرية)
            ===================================================================== -->
       <section id="view-loans" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">إدارة السلف والقروض المالية</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
@@ -2540,6 +2935,21 @@
            VIEW: END OF SERVICE & EOS CALCULATOR (متوافقة مع نظام العمل السعودي)
            ===================================================================== -->
       <section id="view-terminated" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">حاسبة مكافأة نهاية الخدمة والمخالصات</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
@@ -2901,6 +3311,21 @@
            VIEW: ATS RECRUITMENT & BILINGUAL TEMPLATES (التوظيف وتتبع المتقدمين)
            ===================================================================== -->
       <section id="view-recruitment" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">التوظيف وبوابة استقطاب الكفاءات (ATS)</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
@@ -3535,6 +3960,21 @@
            MODULE 4: FLEET & VEHICLE MANAGEMENT (إدارة الأسطول والسيارات ومنصة تم)
            ========================================================================= -->
       <section id="view-fleet" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">إدارة الأسطول ومنصة تم الحكومية</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         
         <!-- Header & Toolbar -->
         <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-slate-800 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
@@ -4201,6 +4641,21 @@
            (التأمين الطبي والبطاقات الصحية للعمال والتثقيف الصحي)
            ========================================================================= -->
       <section id="view-insurance" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">التأمين الطبي والضمان الصحي (CCHI)</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
 
         <!-- Header & Action Toolbar -->
         <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-rose-950 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
@@ -4705,6 +5160,21 @@
       </section>
 
       <section id="view-attendance-notices" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">إشعارات وسجلات ضبط الدوام</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
@@ -4796,6 +5266,21 @@
            VIEW: DEDICATED ABSENCE NOTICES & COMPANY EMAIL STAGING (إشعار غياب - بريد الشركة)
            ===================================================================== -->
       <section id="view-absence" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">إشعارات الغياب والمساءلات</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
@@ -4918,6 +5403,21 @@
            VIEW 6: EMPLOYEE SELF-SERVICE (ESS)
            ===================================================================== -->
       <section id="view-selfservice" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">بوابة الخدمة الذاتية للموظف (ESS)</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         
         <!-- Top Banner: Employee Profile & Quick Snapshot -->
         <div class="p-6 rounded-3xl bg-gradient-to-r from-[#700c14] via-[#8B0000] to-[#50080e] !bg-[#700c14] text-white shadow-xl relative overflow-hidden border border-amber-500/30">
@@ -5169,6 +5669,21 @@
            VIEW: ADMINISTRATIVE CIRCULARS (التعاميم والقرارات الإدارية الرسمية)
            ===================================================================== -->
       <section id="view-circulars" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">التعاميم والقرارات الإدارية الرسمية</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <!-- Header & Action Toolbar -->
         <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-[#700c14] to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
           <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
@@ -5248,6 +5763,21 @@
            VIEW: COMPANY LICENSES & REGISTRATIONS (السجلات والتراخيص الحكومية)
            ===================================================================== -->
       <section id="view-licenses" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">السجلات التجارية والتراخيص الحكومية</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <!-- Header Banner -->
         <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-teal-950 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
           <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
@@ -5351,6 +5881,21 @@
            VIEW: UNIFIED MULTI-MODULE REPORTS (التقارير المؤسسية الشاملة الموحدة)
            ===================================================================== -->
       <section id="view-reports" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">التقارير المؤسسية الشاملة والمؤشرات</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <!-- Header Banner -->
         <div class="card-elevated p-6 bg-gradient-to-l from-slate-900 via-amber-950 to-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
           <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 relative z-10">
@@ -5479,6 +6024,21 @@
            VIEW 7: ORGANIZATION
            ===================================================================== -->
       <section id="view-organization" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">الهيكل التنظيمي والمدير المباشر</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex items-center gap-2 mb-5 border-b border-slate-100 pb-3">
             <button onclick="switchTab('organization')" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand text-white shadow transition flex items-center gap-2">
@@ -5528,6 +6088,21 @@
            VIEW 7.1: BRANCHES & LOCATIONS (فروع ومواقع شركة جوهرة المجد)
            ===================================================================== -->
       <section id="view-branches" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">فروع ومواقع شركة جوهرة المجد</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6">
           <div class="flex items-center gap-2 mb-5 border-b border-slate-100 pb-3">
             <button onclick="switchTab('organization')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-2">
@@ -5579,6 +6154,21 @@
            VIEW 8: USERS & PERMISSIONS (Requested: نظام الصلاحيات والمستخدمين)
            ===================================================================== -->
       <section id="view-users" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">إدارة المستخدمين والصلاحيات (RBAC)</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6 space-y-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
@@ -5621,6 +6211,21 @@
            VIEW 8.5: AUDIT LOG (سجل الرقابة والعمليات الشاملة للنظام)
            ===================================================================== -->
       <section id="view-audit-log" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">سجل الرقابة وتتبع العمليات غير القابل للتعديل</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6 space-y-6">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-5">
             <div>
@@ -5763,6 +6368,21 @@
            VIEW 9: DATA MANAGEMENT (Import & Export)
            ===================================================================== -->
       <section id="view-data-exchange" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">استيراد وتصدير البيانات السحابية</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6 space-y-6">
           <div class="border-b border-slate-100 pb-4">
             <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
@@ -5822,6 +6442,21 @@
            VIEW 10: SYSTEM DOCUMENTATION
            ===================================================================== -->
       <section id="view-docs" class="space-y-6 hidden">
+        <!-- Navigation Breadcrumb & Back to Home Button -->
+        <div class="flex items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <button onclick="switchTab('dashboard')" class="text-slate-400 hover:text-brand transition flex items-center gap-1">
+              <i class="fa-solid fa-house"></i>
+              <span>الرئيسية</span>
+            </button>
+            <i class="fa-solid fa-chevron-left text-[10px] text-slate-300"></i>
+            <span class="text-brand font-black">دليل النظام والتوثيق المعتمد</span>
+          </div>
+          <button onclick="switchTab('dashboard')" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-brand hover:text-white text-slate-700 text-xs font-bold transition shadow-xs border border-slate-200 group">
+            <i class="fa-solid fa-arrow-right text-brand group-hover:text-white transition"></i>
+            <span>الرجوع للصفحة الرئيسية</span>
+          </button>
+        </div>
         <div class="card-elevated p-6 space-y-4">
           <div class="border-b border-slate-100 pb-4">
             <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">

@@ -298,29 +298,7 @@ function seedDatabase() {
     }
   }
 
-  // 6. Connect Users to Employees
-  const userLinkMap = [
-    { username: 'abdulmalik', name: 'عبدالملك سعيد الشريف' },
-    { username: 'shama.asiri', name: 'شامة علي  محمد عسيري' },
-    { username: 'faris.qahtani', name: 'فارس عبدالرحمن القحطاني' },
-    { username: 'khaled.raee', name: 'خالد احمد محمد راعي' },
-    { username: 'ali.boshra', name: 'علي سعد حسين البشري' },
-    { username: 'ahmed.yeanallah', name: 'احمد عبدالرحمن علي يعن الله' },
-    { username: 'fayrouz.ali', name: 'فيروز علي جان محمد' },
-    { username: 'tamer.gomaa', name: 'تامر جمعه احمد عبدالله' },
-    { username: 'hani.asiri', name: 'هاني علي شامي عسيري' },
-    { username: 'fahmi.baameer', name: 'فهمي سالم عبيد باعمير' },
-    { username: 'fahd.aowari', name: 'فهد إبراهيم جعفر الاعوري' },
-    { username: 'hani.qahtani', name: 'هاني عبدالرحمن صالح القحطاني' }
-  ];
-
-  const updateUserStmt = db.prepare('UPDATE users SET emp_id = ? WHERE username = ?');
-  userLinkMap.forEach(u => {
-    const emp = db.prepare('SELECT id FROM employees WHERE full_name_ar = ? OR full_name_ar LIKE ?').get(u.name, `%${u.name.split(' ')[0]}%${u.name.split(' ')[1]}%`);
-    if (emp) updateUserStmt.run(emp.id, u.username);
-  });
-
-  // 7. Seed 50 Disciplinary Regulations if empty
+  // 6. Seed Official Disciplinary Regulations if empty
   seedPenaltyRegulations();
 
   console.log('--- Official Seed Completed Successfully ---');

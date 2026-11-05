@@ -3,7 +3,25 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('node:path');
 const fs = require('node:fs');
 
-const dbPath = path.join(__dirname, 'hrms.db');
+const dataDir = process.env.DATA_DIR || path.join(__dirname);
+if (process.env.DATA_DIR && !fs.existsSync(process.env.DATA_DIR)) {
+  try { fs.mkdirSync(process.env.DATA_DIR, { recursive: true }); } catch (_) {}
+}
+const dbPath = path.join(dataDir, 'hrms.db');
+
+// If persistent storage is configured (e.g. Render Disk) and db file doesn't exist yet, seed initial template
+if (process.env.DATA_DIR && !fs.existsSync(dbPath)) {
+  const templateDb = path.join(__dirname, 'hrms.db');
+  if (fs.existsSync(templateDb)) {
+    try {
+      fs.copyFileSync(templateDb, dbPath);
+      console.log(`[Database] Initialized persistent database from template to ${dbPath}`);
+    } catch (err) {
+      console.error('[Database] Failed to copy template db:', err.message);
+    }
+  }
+}
+
 const db = new DatabaseSync(dbPath);
 
 // Enable foreign keys and WAL mode for reliability

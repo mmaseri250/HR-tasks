@@ -7476,16 +7476,28 @@ function filterInspectorTable(query) {
 window.openEffectivePermissionsInspector = openEffectivePermissionsInspector;
 window.filterInspectorTable = filterInspectorTable;
 
-async function deleteUserAccount(id) {
+async async function deleteUserAccount(id) {
   if (!canDelete()) {
-    alert('عذراً، صلاحية حذف المستخدمين مقيدة ومخصصة لمدير النظام العام (Super Admin) فقط.');
+    alert('عذراً، حذف المستخدمين يتطلب صلاحيات مدير النظام (Super Admin) حصراً.');
     return;
   }
-  if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
-  await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
-  state.users = state.users.filter(u => u.id !== id);
-  renderUsersTable();
-  alert('تم حذف المستخدم بنجاح');
+  const u = state.users.find(u => Number(u.id) === Number(id));
+  if (u && (u.username === 'admin' || Number(u.id) === 1)) {
+    alert('لا يمكن حذف الحساب الإداري الرئيسي للنظام.');
+    return;
+  }
+  if (!confirm(`هل أنت متأكد من حذف حساب المستخدم [${u ? u.username : id}] نهائياً؟`)) return;
+
+  try {
+    await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+    state.users = state.users.filter(u => Number(u.id) !== Number(id));
+    localStorage.setItem('jm_hrms_users_backup', JSON.stringify(state.users));
+    renderUsersTable();
+    if (typeof showToast === 'function') showToast('تم حذف المستخدم بنجاح وتحديث النظام فوراً', 'success');
+    else alert('تم حذف المستخدم بنجاح');
+  } catch (err) {
+    alert('فشل حذف المستخدم: ' + err.message);
+  }
 }
 
 function exportEmployees(format) {
@@ -9774,36 +9786,7 @@ function downloadWordFormDirect(formType, empId = null) {
 
 function previewOfficialHtmlFormDirect(formType, empId = null) {
   const targetEmpId = getEffectiveFormEmpId(empId);
-  let url = '';
-  switch (formType) {
-    case 'absence_penalty':
-      url = `/api/forms/html/absence-penalty/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    case 'instruction_penalty':
-      url = `/api/forms/html/instruction-penalty/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    case 'clearance':
-      url = `/api/forms/html/clearance/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    case 'contract_non_renewal':
-      url = `/api/forms/html/contract-non-renewal/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    case 'penalty_procedure':
-      url = `/api/forms/html/penalty/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    case 'resignation_termination':
-      url = `/api/forms/html/resignation/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    case 'leave_request':
-      url = `/api/forms/html/leave/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    case 'salary_cert':
-      url = `/api/forms/html/salary-cert/${targetEmpId}?emp_id=${targetEmpId}`;
-      break;
-    default:
-      url = `/api/forms/html/leave/${targetEmpId}?emp_id=${targetEmpId}`;
-  }
-  window.open(url, '_blank');
+  window.open(`/api/forms/preview/${formType}?emp_id=${targetEmpId}`, '_blank');
 }
 
 function downloadRawTemplate(formNum) {

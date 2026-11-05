@@ -2009,7 +2009,755 @@ function renderAttendanceNoticeHtml(identifier, options = {}) {
   `;
 }
 
+
+// ---------------------------------------------------------------------------
+// 1. Employee Status Notification (JM-HR-F-001/ESN)
+// ---------------------------------------------------------------------------
+function renderEmployeeStatusNotificationHtml(identifier, options = {}) {
+  const { emp } = resolveEmployeeAndRecord('status_notification', identifier, options);
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+  const effectiveDate = options.effective_date || currentDate;
+  const statusType = options.status_type || 'مباشرة عمل (التحاق جديد)';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>إشعار حالة موظف - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles('employee_status', emp.id)}
+    </head>
+    <body>
+      ${renderScreenToolbar('employee_status', emp.id)}
+      <div class="doc-page">
+        <div class="doc-top-bar">
+          <div class="meta-right">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-001/ESN</span> |
+            <span><strong>التاريخ:</strong> ${currentDate}م</span>
+          </div>
+          <div class="meta-left">
+            <span>Form Ref: JM-HR-F-001/ESN | Emp#: ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <div class="doc-title-ribbon">
+          <h2>إشعار حالة موظف</h2>
+          <p>EMPLOYEE STATUS NOTIFICATION</p>
+        </div>
+
+        <div class="doc-section-head">1 • بيانات الموظف الأساسية / Employee Information</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 20%;">اسم الموظف:</td>
+            <td class="val" style="width: 30%;"><strong>${emp.full_name_ar}</strong></td>
+            <td class="lbl" style="width: 20%;">الرقم الوظيفي:</td>
+            <td class="val font-mono" style="width: 30%;"><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم الهوية / الإقامة:</td>
+            <td class="val font-mono">${emp.national_id}</td>
+            <td class="lbl">الجنسية:</td>
+            <td class="val">${emp.nationality}</td>
+          </tr>
+          <tr>
+            <td class="lbl">المسمى الوظيفي:</td>
+            <td class="val">${emp.job_title_ar}</td>
+            <td class="lbl">الإدارة / الفرع:</td>
+            <td class="val">${emp.dept_name || 'الإدارة العامة'} / ${emp.branch_name || 'المركز الرئيسي'}</td>
+          </tr>
+          <tr>
+            <td class="lbl">تاريخ الالتحاق:</td>
+            <td class="val font-mono">${emp.join_date || '—'}</td>
+            <td class="lbl">الراتب الأساسي:</td>
+            <td class="val font-mono">${Number(emp.basic_salary || 0).toLocaleString('en-US')} ر.س</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">2 • تفاصيل حالة الموظف / Status Action Details</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 25%;">نوع الإشعار:</td>
+            <td class="val" colspan="3"><strong style="color: #700c14;">${statusType}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">تاريخ السريان:</td>
+            <td class="val font-mono">${effectiveDate}م</td>
+            <td class="lbl">القسم المعني:</td>
+            <td class="val">قسم الموارد البشرية والعمليات</td>
+          </tr>
+          <tr>
+            <td class="lbl">بيان الإجراء والملاحظات:</td>
+            <td class="val" colspan="3">${options.notes || 'تم اعتماد تسجيل ومطابقة حالة الموظف بالنظام الآلي المعتمد للشركة ومزامنتها مع منصة قوى والتأمينات الاجتماعية.'}</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">3 • الاعتمادات والتوقيعات الرسمية / Signatures & Approvals</div>
+        <table class="signatures-table">
+          <tr>
+            <td style="width: 33%;">
+              <div class="sig-title">الموظف المعني</div>
+              <div class="sig-name">${emp.full_name_ar}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 33%;">
+              <div class="sig-title">مدير الموارد البشرية</div>
+              <div class="sig-name">عبدالملك سعيد الشريف</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 34%;">
+              <div class="sig-title">المدير العام (الاعتماد النهائي)</div>
+              <div class="sig-name">${COMPANY.general_manager}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">الختم والتوقيع: ............................</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// 2. Advance Request (JM-HR-F-002/ADV)
+// ---------------------------------------------------------------------------
+function renderAdvanceRequestHtml(identifier, options = {}) {
+  const { emp } = resolveEmployeeAndRecord('advance_request', identifier, options);
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+  const amount = options.amount || options.advance_amount || '3,000';
+  const installments = options.installments || 3;
+  const reason = options.reason || 'سلفة شخصية طارئة وفق اللائحة المعتمدة';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>طلب سلفة مالية - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles('advance_request', emp.id)}
+    </head>
+    <body>
+      ${renderScreenToolbar('advance_request', emp.id)}
+      <div class="doc-page">
+        <div class="doc-top-bar">
+          <div class="meta-right">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-002/ADV</span> |
+            <span><strong>التاريخ:</strong> ${currentDate}م</span>
+          </div>
+          <div class="meta-left">
+            <span>Form Ref: JM-HR-F-002/ADV | Emp#: ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <div class="doc-title-ribbon">
+          <h2>نموذج طلب سلفة مالية</h2>
+          <p>EMPLOYEE SALARY ADVANCE REQUEST</p>
+        </div>
+
+        <div class="doc-section-head">1 • بيانات الموظف / Employee Information</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 20%;">اسم الموظف:</td>
+            <td class="val" style="width: 30%;"><strong>${emp.full_name_ar}</strong></td>
+            <td class="lbl" style="width: 20%;">الرقم الوظيفي:</td>
+            <td class="val font-mono" style="width: 30%;"><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم الهوية / الإقامة:</td>
+            <td class="val font-mono">${emp.national_id}</td>
+            <td class="lbl">الجنسية:</td>
+            <td class="val">${emp.nationality}</td>
+          </tr>
+          <tr>
+            <td class="lbl">المسمى الوظيفي:</td>
+            <td class="val">${emp.job_title_ar}</td>
+            <td class="lbl">الإدارة / الفرع:</td>
+            <td class="val">${emp.dept_name || 'الإدارة العامة'} / ${emp.branch_name || 'المركز الرئيسي'}</td>
+          </tr>
+          <tr>
+            <td class="lbl">إجمالي الراتب الشهري:</td>
+            <td class="val font-mono">${Number(emp.total_salary || emp.basic_salary || 0).toLocaleString('en-US')} ر.س</td>
+            <td class="lbl">تاريخ بداية الخدمة:</td>
+            <td class="val font-mono">${emp.join_date || '—'}</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">2 • تفاصيل السلفة وجدول الاستقطاع / Advance & Repayment Details</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 25%;">مبلغ السلفة المطلوب:</td>
+            <td class="val font-mono" colspan="3"><strong style="color: #700c14; font-size: 15px;">${amount} ريال سعودي</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">عدد أقساط السداد:</td>
+            <td class="val font-mono">${installments} أقساط شهرية</td>
+            <td class="lbl">القسط الشهري المستقطع:</td>
+            <td class="val font-mono">${(Number(String(amount).replace(/[^0-9.]/g, '')) / installments).toFixed(2)} ر.س / شهرياً</td>
+          </tr>
+          <tr>
+            <td class="lbl">سبب طلب السلفة:</td>
+            <td class="val" colspan="3">${reason}</td>
+          </tr>
+        </table>
+
+        <div class="p-3 my-3 bg-amber-50 rounded border border-amber-200 text-xs">
+          <strong>إقرار الموظف:</strong> أقر أنا الموظف الموقع أدناه بصحة البيانات أعلاه، وأوافق وأفوض شركة جوهرة المجد للتجارة باستقطاع القسط الشهري المذكور أعلاه من راتبي الشهري أو من أي مستحقات نظامية لي لدى الشركة حتى سداد كامل المبلغ.
+        </div>
+
+        <div class="doc-section-head">3 • الاعتمادات والتوقيعات الرسمية / Signatures & Approvals</div>
+        <table class="signatures-table">
+          <tr>
+            <td style="width: 25%;">
+              <div class="sig-title">توقيع الموظف المقترض</div>
+              <div class="sig-name">${emp.full_name_ar}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ......................</div>
+            </td>
+            <td style="width: 25%;">
+              <div class="sig-title">مدير الموارد البشرية</div>
+              <div class="sig-name">عبدالملك سعيد الشريف</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ......................</div>
+            </td>
+            <td style="width: 25%;">
+              <div class="sig-title">الإدارة المالية (التدقيق)</div>
+              <div class="sig-name">قسم الرواتب والتدقيق</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ......................</div>
+            </td>
+            <td style="width: 25%;">
+              <div class="sig-title">اعتماد المدير العام</div>
+              <div class="sig-name">${COMPANY.general_manager}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">الختم والتوقيع: ......................</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// 3. Iqama Receipt Acknowledgment (JM-HR-F-003/IRA)
+// ---------------------------------------------------------------------------
+function renderIqamaReceiptAcknowledgmentHtml(identifier, options = {}) {
+  const { emp } = resolveEmployeeAndRecord('iqama_receipt', identifier, options);
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>نموذج استلام إقامة - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles('iqama_receipt', emp.id)}
+    </head>
+    <body>
+      ${renderScreenToolbar('iqama_receipt', emp.id)}
+      <div class="doc-page">
+        <div class="doc-top-bar">
+          <div class="meta-right">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-003/IRA</span> |
+            <span><strong>التاريخ:</strong> ${currentDate}م</span>
+          </div>
+          <div class="meta-left">
+            <span>Form Ref: JM-HR-F-003/IRA | Emp#: ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <div class="doc-title-ribbon">
+          <h2>نموذج استلام إقامة / هوية مقيم</h2>
+          <p>IQAMA / RESIDENT IDENTITY RECEIPT ACKNOWLEDGMENT</p>
+        </div>
+
+        <div class="doc-section-head">1 • بيانات المقيم / Resident Information</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 20%;">اسم المقيم:</td>
+            <td class="val" style="width: 30%;"><strong>${emp.full_name_ar}</strong></td>
+            <td class="lbl" style="width: 20%;">رقم الإقامة:</td>
+            <td class="val font-mono" style="width: 30%;"><strong>${emp.national_id}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">الجنسية:</td>
+            <td class="val">${emp.nationality}</td>
+            <td class="lbl">المهنة في الإقامة:</td>
+            <td class="val">${emp.job_title_ar}</td>
+          </tr>
+          <tr>
+            <td class="lbl">تاريخ انتهاء الإقامة:</td>
+            <td class="val font-mono">${emp.iqama_expiry || '—'}</td>
+            <td class="lbl">رقم الجواز:</td>
+            <td class="val font-mono">${emp.passport_no || '—'}</td>
+          </tr>
+          <tr>
+            <td class="lbl">الفرع ومقر العمل:</td>
+            <td class="val" colspan="3">${emp.branch_name || 'المركز الرئيسي - أبها'}</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">2 • صيغة الإقرار والاستلام / Acknowledgment Declaration</div>
+        <div class="p-4 my-3 bg-slate-50 rounded-xl border border-slate-200 text-xs leading-relaxed text-justify">
+          أقر أنا المقيم الموضح بياناتي أعلاه بأنني قد استلمت أصل بطاقة هوية مقيم (الإقامة) الخاصة بي من قسم الموارد البشرية بشركة جوهرة المجد للتجارة بعد استكمال إجراءات (الإصدار / التجديد النظامي)، وأتعهد بالمحافظة التامة عليها وحملها بصفة مستمرة وفقاً للتعليمات والأنظمة المعمول بها داخل المملكة العربية السعودية، وإبلاغ الشركة فوراً في حال فقدانها أو تلفها.
+        </div>
+
+        <div class="doc-section-head">3 • التوقيعات / Signatures</div>
+        <table class="signatures-table">
+          <tr>
+            <td style="width: 50%;">
+              <div class="sig-title">المستلم (المقيم)</div>
+              <div class="sig-name">${emp.full_name_ar}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التاريخ: ${currentDate}م</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 10px;">التوقيع: ........................................</div>
+            </td>
+            <td style="width: 50%;">
+              <div class="sig-title">مسؤول الموارد البشرية والامتثال</div>
+              <div class="sig-name">عبدالملك سعيد الشريف</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التاريخ: ${currentDate}م</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 10px;">الختم والتوقيع: ........................................</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// 4. Final Exit Request (JM-HR-F-004/FER)
+// ---------------------------------------------------------------------------
+function renderFinalExitRequestHtml(identifier, options = {}) {
+  const { emp } = resolveEmployeeAndRecord('final_exit', identifier, options);
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>طلب تأشيرة خروج نهائي - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles('final_exit', emp.id)}
+    </head>
+    <body>
+      ${renderScreenToolbar('final_exit', emp.id)}
+      <div class="doc-page">
+        <div class="doc-top-bar">
+          <div class="meta-right">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-004/FER</span> |
+            <span><strong>التاريخ:</strong> ${currentDate}م</span>
+          </div>
+          <div class="meta-left">
+            <span>Form Ref: JM-HR-F-004/FER | Emp#: ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <div class="doc-title-ribbon">
+          <h2>نموذج طلب إصدار تأشيرة خروج نهائي</h2>
+          <p>FINAL EXIT VISA ISSUANCE REQUEST</p>
+        </div>
+
+        <div class="doc-section-head">1 • بيانات الموظف والمقيم / Employee Details</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 20%;">اسم الموظف:</td>
+            <td class="val" style="width: 30%;"><strong>${emp.full_name_ar}</strong></td>
+            <td class="lbl" style="width: 20%;">الرقم الوظيفي:</td>
+            <td class="val font-mono" style="width: 30%;"><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم الإقامة:</td>
+            <td class="val font-mono">${emp.national_id}</td>
+            <td class="lbl">الجنسية:</td>
+            <td class="val">${emp.nationality}</td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم الجواز:</td>
+            <td class="val font-mono">${emp.passport_no || '—'}</td>
+            <td class="lbl">تاريخ انتهاء الجواز:</td>
+            <td class="val font-mono">${emp.passport_expiry || '—'}</td>
+          </tr>
+          <tr>
+            <td class="lbl">سبب الخروج النهائي:</td>
+            <td class="val" colspan="3">${options.reason || 'انتهاء العلاقة التعاقدية واستكمال تصفية المستحقات المالية وإخلاء الطرف'}</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">2 • المتطلبات والإجراءات النظامية المكتملة</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 30%;">إخلاء طرف من الإدارة:</td>
+            <td class="val" style="color: #15803d; font-weight: bold;">✓ مكتمل ومعتمد</td>
+            <td class="lbl" style="width: 30%;">تصفية العهد والسيارات:</td>
+            <td class="val" style="color: #15803d; font-weight: bold;">✓ تم الاستلام بالكامل</td>
+          </tr>
+          <tr>
+            <td class="lbl">مخالصة المستحقات المالية:</td>
+            <td class="val" style="color: #15803d; font-weight: bold;">✓ تم إيداع المستحقات</td>
+            <td class="lbl">سريان الإقامة والجواز:</td>
+            <td class="val font-mono" style="color: #15803d; font-weight: bold;">✓ سارية وفق منصة مقيم</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">3 • الاعتمادات والتوجيه بالتنفيذ</div>
+        <table class="signatures-table">
+          <tr>
+            <td style="width: 33%;">
+              <div class="sig-title">الموظف (إقرار بالمغادرة)</div>
+              <div class="sig-name">${emp.full_name_ar}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 33%;">
+              <div class="sig-title">مدير الموارد البشرية</div>
+              <div class="sig-name">عبدالملك سعيد الشريف</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 34%;">
+              <div class="sig-title">موافقة واعتماد المدير العام</div>
+              <div class="sig-name">${COMPANY.general_manager}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">الختم والتوقيع: ............................</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// 5. Sponsorship Transfer Request (JM-HR-F-005/STR)
+// ---------------------------------------------------------------------------
+function renderSponsorshipTransferHtml(identifier, options = {}) {
+  const { emp } = resolveEmployeeAndRecord('sponsorship_transfer', identifier, options);
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+  const newSponsor = options.new_sponsor || 'المنشأة الجديدة المنقول إليها';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>طلب نقل كفالة موظف - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles('sponsorship_transfer', emp.id)}
+    </head>
+    <body>
+      ${renderScreenToolbar('sponsorship_transfer', emp.id)}
+      <div class="doc-page">
+        <div class="doc-top-bar">
+          <div class="meta-right">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-005/STR</span> |
+            <span><strong>التاريخ:</strong> ${currentDate}م</span>
+          </div>
+          <div class="meta-left">
+            <span>Form Ref: JM-HR-F-005/STR | Emp#: ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <div class="doc-title-ribbon">
+          <h2>نموذج طلب نقل كفالة وخدمات موظف</h2>
+          <p>SPONSORSHIP / SERVICE TRANSFER REQUEST FORM</p>
+        </div>
+
+        <div class="doc-section-head">1 • بيانات الموظف الحالي / Current Employee Details</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 20%;">اسم الموظف:</td>
+            <td class="val" style="width: 30%;"><strong>${emp.full_name_ar}</strong></td>
+            <td class="lbl" style="width: 20%;">الرقم الوظيفي:</td>
+            <td class="val font-mono" style="width: 30%;"><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم الإقامة:</td>
+            <td class="val font-mono">${emp.national_id}</td>
+            <td class="lbl">الجنسية:</td>
+            <td class="val">${emp.nationality}</td>
+          </tr>
+          <tr>
+            <td class="lbl">المهنة الحالية:</td>
+            <td class="val">${emp.job_title_ar}</td>
+            <td class="lbl">صاحب العمل الحالي:</td>
+            <td class="val">شركة جوهرة المجد للتجارة (7004872169)</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">2 • تفاصيل جهة النقل والإقرار / Transfer Details & Release</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 25%;">صاحب العمل الجديد:</td>
+            <td class="val" colspan="3"><strong>${newSponsor}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم ملف وزارة الموارد:</td>
+            <td class="val font-mono">${options.mol_file_no || '........................'}</td>
+            <td class="lbl">رقم الطلب عبر قوى:</td>
+            <td class="val font-mono">${options.qiwa_request_no || '........................'}</td>
+          </tr>
+          <tr>
+            <td class="lbl">ملاحظات وشروط النقل:</td>
+            <td class="val" colspan="3">${options.notes || 'تفيد شركة جوهرة المجد للتجارة بعدم ممانعتها من نقل خدمات الموظف أعلاه للجهة الجديدة بعد استكمال سداد الرسوم عبر منصة قوى وإخلاء طرفه نهائياً.'}</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">3 • الاعتمادات والموافقات الرسمية</div>
+        <table class="signatures-table">
+          <tr>
+            <td style="width: 33%;">
+              <div class="sig-title">الموظف طالب النقل</div>
+              <div class="sig-name">${emp.full_name_ar}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 33%;">
+              <div class="sig-title">مدير الموارد البشرية</div>
+              <div class="sig-name">عبدالملك سعيد الشريف</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 34%;">
+              <div class="sig-title">المدير العام (عدم ممانعة)</div>
+              <div class="sig-name">${COMPANY.general_manager}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">الختم والتوقيع: ............................</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// 6. Employee Clearance Form (JM-HR-F-006/ECF)
+// ---------------------------------------------------------------------------
+function renderEmployeeClearanceSettlementHtml(identifier, options = {}) {
+  const { emp } = resolveEmployeeAndRecord('clearance_settlement', identifier, options);
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>تصفية موظف / إخلاء طرف - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles('clearance_settlement', emp.id)}
+    </head>
+    <body>
+      ${renderScreenToolbar('clearance_settlement', emp.id)}
+      <div class="doc-page">
+        <div class="doc-top-bar">
+          <div class="meta-right">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-006/ECF</span> |
+            <span><strong>التاريخ:</strong> ${currentDate}م</span>
+          </div>
+          <div class="meta-left">
+            <span>Form Ref: JM-HR-F-006/ECF | Emp#: ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <div class="doc-title-ribbon">
+          <h2>نموذج تصفية موظف / إخلاء طرف إداري</h2>
+          <p>EMPLOYEE CLEARANCE FORM (ECF)</p>
+        </div>
+
+        <div class="doc-section-head">1 • بيانات الموظف / Employee Information</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 20%;">اسم الموظف:</td>
+            <td class="val" style="width: 30%;"><strong>${emp.full_name_ar}</strong></td>
+            <td class="lbl" style="width: 20%;">الرقم الوظيفي:</td>
+            <td class="val font-mono" style="width: 30%;"><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم الهوية / الإقامة:</td>
+            <td class="val font-mono">${emp.national_id}</td>
+            <td class="lbl">الجنسية:</td>
+            <td class="val">${emp.nationality}</td>
+          </tr>
+          <tr>
+            <td class="lbl">المسمى الوظيفي:</td>
+            <td class="val">${emp.job_title_ar}</td>
+            <td class="lbl">تاريخ نهاية العمل:</td>
+            <td class="val font-mono">${options.last_working_day || currentDate}م</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">2 • استيفاء إخلاء الطرف من كافة الأقسام المعنية</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 25%;">القسم / الإدارة</th>
+              <th style="width: 25%;">حالة العهدة</th>
+              <th style="width: 25%;">اسم المسؤول</th>
+              <th style="width: 25%;">التوقيع والتاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>الإدارة المباشرة (العمليات)</strong></td>
+              <td style="color: #15803d; font-weight: bold;">تم تسليم المهام والملفات</td>
+              <td>علي حسين بشري</td>
+              <td>............................</td>
+            </tr>
+            <tr>
+              <td><strong>إدارة الحركة والأسطول (تم)</strong></td>
+              <td style="color: #15803d; font-weight: bold;">تم استلام السيارة وتفويض تم</td>
+              <td>سعيد الشهراني</td>
+              <td>............................</td>
+            </tr>
+            <tr>
+              <td><strong>قسم تقنية المعلومات والحاسب</strong></td>
+              <td style="color: #15803d; font-weight: bold;">تم تسليم الجهاز وإلغاء البريد</td>
+              <td>مسؤول IT</td>
+              <td>............................</td>
+            </tr>
+            <tr>
+              <td><strong>الإدارة المالية والحسابات</strong></td>
+              <td style="color: #15803d; font-weight: bold;">لا توجد سلف أو ذمم معلقة</td>
+              <td>المدير المالي</td>
+              <td>............................</td>
+            </tr>
+            <tr>
+              <td><strong>إدارة الموارد البشرية</strong></td>
+              <td style="color: #15803d; font-weight: bold;">تم استلام البطاقات والتأمين</td>
+              <td>عبدالملك سعيد الشريف</td>
+              <td>............................</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="doc-section-head">3 • الاعتماد النهائي</div>
+        <table class="signatures-table">
+          <tr>
+            <td style="width: 50%;">
+              <div class="sig-title">توقيع الموظف (إقرار بالإخلاء)</div>
+              <div class="sig-name">${emp.full_name_ar}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 50%;">
+              <div class="sig-title">اعتماد المدير العام</div>
+              <div class="sig-name">${COMPANY.general_manager}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">الختم والتوقيع: ............................</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// ---------------------------------------------------------------------------
+// 7. Full and Final Settlement & Release (JM-HR-F-007/FFS)
+// ---------------------------------------------------------------------------
+function renderFullSettlementReleaseHtml(identifier, options = {}) {
+  const { emp } = resolveEmployeeAndRecord('full_settlement', identifier, options);
+  const currentDate = options.date || new Date().toISOString().split('T')[0];
+  const eosAmount = options.eos_amount || options.total_amount || '18,500';
+
+  return `
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+      <meta charset="UTF-8">
+      <title>وثيقة إبراء ذمة ومخالصة نهائية - ${emp.emp_code} - ${emp.full_name_ar}</title>
+      ${getBaseStyles('full_settlement', emp.id)}
+    </head>
+    <body>
+      ${renderScreenToolbar('full_settlement', emp.id)}
+      <div class="doc-page">
+        <div class="doc-top-bar">
+          <div class="meta-right">
+            <span><strong>رقم النموذج:</strong> JM-HR-F-007/FFS</span> |
+            <span><strong>التاريخ:</strong> ${currentDate}م</span>
+          </div>
+          <div class="meta-left">
+            <span>Form Ref: JM-HR-F-007/FFS | Emp#: ${emp.emp_code}</span>
+          </div>
+        </div>
+
+        <div class="doc-title-ribbon">
+          <h2>وثيقة إبراء ذمة واستلام المستحقات النهائية</h2>
+          <p>FULL AND FINAL SETTLEMENT & GENERAL RELEASE (FFS)</p>
+        </div>
+
+        <div class="doc-section-head">1 • بيانات الموظف / Employee Information</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 20%;">اسم الموظف:</td>
+            <td class="val" style="width: 30%;"><strong>${emp.full_name_ar}</strong></td>
+            <td class="lbl" style="width: 20%;">الرقم الوظيفي:</td>
+            <td class="val font-mono" style="width: 30%;"><strong>${emp.emp_code}</strong></td>
+          </tr>
+          <tr>
+            <td class="lbl">رقم الهوية / الإقامة:</td>
+            <td class="val font-mono">${emp.national_id}</td>
+            <td class="lbl">الجنسية:</td>
+            <td class="val">${emp.nationality}</td>
+          </tr>
+          <tr>
+            <td class="lbl">تاريخ بداية الخدمة:</td>
+            <td class="val font-mono">${emp.join_date || '—'}</td>
+            <td class="lbl">تاريخ انتهاء الخدمة:</td>
+            <td class="val font-mono">${options.last_working_day || currentDate}م</td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">2 • ملخص المستحقات المالية الصافية / Net Financial Settlement</div>
+        <table class="data-table">
+          <tr>
+            <td class="lbl" style="width: 30%;">مكافأة نهاية الخدمة النظامية:</td>
+            <td class="val font-mono">${Number(String(options.eos_benefit || eosAmount).replace(/[^0-9.]/g,'')).toLocaleString('en-US')} ر.س</td>
+            <td class="lbl" style="width: 30%;">بدل رصيد الإجازات المستحق:</td>
+            <td class="val font-mono">${Number(String(options.leave_benefit || 0).replace(/[^0-9.]/g,'')).toLocaleString('en-US')} ر.س</td>
+          </tr>
+          <tr>
+            <td class="lbl">رواتب وأجور متأخرة:</td>
+            <td class="val font-mono">${Number(String(options.salary_benefit || 0).replace(/[^0-9.]/g,'')).toLocaleString('en-US')} ر.س</td>
+            <td class="lbl">حسميات أو سلف متبقية:</td>
+            <td class="val font-mono" style="color: #b91c1c;">(0.00 ر.س)</td>
+          </tr>
+          <tr style="background: #fdf2f2;">
+            <td class="lbl" style="font-size: 14px;"><strong>صافي المستحقات المصروفة:</strong></td>
+            <td class="val font-mono" colspan="3" style="font-size: 16px; color: #700c14;"><strong>${eosAmount} ريال سعودي</strong></td>
+          </tr>
+        </table>
+
+        <div class="doc-section-head">3 • صيغة الإبراء والمخالصة النهائية التامة</div>
+        <div class="p-4 my-3 bg-slate-50 rounded-xl border border-slate-200 text-xs leading-relaxed text-justify">
+          أقر أنا الموظف الموقع أدناه بأنني قد استلمت من شركة جوهرة المجد للتجارة كامل مستحقاتي المالية النظامية والتعاقدية الموضحة أعلاه، بما فيها مكافأة نهاية الخدمة، وبدل الإجازات، والأجور، وكافة الحقوق الناشئة عن عقد عملي وفترة خدمتي بالشركة، وإبراء ذمة الشركة إبراءً شاملاً عاماً باتاً لا رجعة فيه، ولا يحق لي الرجوع على الشركة بأي دعوى أو مطالبة حالية أو مستقبلية أمام أي جهة كانت.
+        </div>
+
+        <div class="doc-section-head">4 • التواقيع والاعتمادات الرسمية</div>
+        <table class="signatures-table">
+          <tr>
+            <td style="width: 33%;">
+              <div class="sig-title">الموظف المقر بما فيه</div>
+              <div class="sig-name">${emp.full_name_ar}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 33%;">
+              <div class="sig-title">الإدارة المالية</div>
+              <div class="sig-name">قسم التدقيق المالي</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">التوقيع: ............................</div>
+            </td>
+            <td style="width: 34%;">
+              <div class="sig-title">اعتماد المدير العام</div>
+              <div class="sig-name">${COMPANY.general_manager}</div>
+              <div style="font-size: 11px; color: #64748b; margin-top: 15px;">الختم والتوقيع: ............................</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 module.exports = {
+  renderEmployeeStatusNotificationHtml,
+  renderAdvanceRequestHtml,
+  renderIqamaReceiptAcknowledgmentHtml,
+  renderFinalExitRequestHtml,
+  renderSponsorshipTransferHtml,
+  renderEmployeeClearanceSettlementHtml,
+  renderFullSettlementReleaseHtml,
+
   COMPANY,
   getEmployeeDetails,
   getDefaultEmployee,

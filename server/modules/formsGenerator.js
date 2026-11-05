@@ -1048,6 +1048,226 @@ function buildResignationTerminationDoc(emp, params = {}) {
 /**
  * Main generator dispatcher
  */
+
+function buildEmployeeStatusDoc(emp, params = {}) {
+  const titleAr = 'إشعار حالة موظف';
+  const titleEn = 'Employee Status Notification (JM-HR-F-001/ESN)';
+
+  const detailsTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: getTableBorders(),
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({
+            width: { size: 30, type: WidthType.PERCENTAGE },
+            shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' },
+            children: [new Paragraph({ children: [new TextRun({ text: 'نوع الإجراء / الحالة:', font: 'Arial', size: 18, bold: true })] })]
+          }),
+          new TableCell({
+            width: { size: 70, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({ children: [new TextRun({ text: params.status_type || 'مباشرة عمل (التحاق جديد)', font: 'Arial', size: 18, bold: true, color: COMPANY_BRAND.primaryColor })] })]
+          })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({
+            width: { size: 30, type: WidthType.PERCENTAGE },
+            shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' },
+            children: [new Paragraph({ children: [new TextRun({ text: 'تاريخ السريان المعتمد:', font: 'Arial', size: 18, bold: true })] })]
+          }),
+          new TableCell({
+            width: { size: 70, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({ children: [new TextRun({ text: params.effective_date || new Date().toISOString().split('T')[0], font: 'Arial', size: 18 })] })]
+          })
+        ]
+      }),
+      new TableRow({
+        children: [
+          new TableCell({
+            width: { size: 30, type: WidthType.PERCENTAGE },
+            shading: { fill: COMPANY_BRAND.lightBg, type: ShadingType.SOLID, color: 'auto' },
+            children: [new Paragraph({ children: [new TextRun({ text: 'بيان وتفاصيل الإجراء:', font: 'Arial', size: 18, bold: true })] })]
+          }),
+          new TableCell({
+            width: { size: 70, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({ children: [new TextRun({ text: params.notes || 'تم اعتماد تسجيل حالة الموظف ومطابقتها بالنظام الآلي المعتمد لشركة جوهرة المجد للتجارة.', font: 'Arial', size: 18 })] })]
+          })
+        ]
+      })
+    ]
+  });
+
+  return new Document({
+    sections: [{
+      properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        createEmployeeInfoTable(emp),
+        new Paragraph({ spacing: { before: 150, after: 100 }, children: [new TextRun({ text: 'تفاصيل حالة الموظف المعتمدة:', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        detailsTable,
+        new Paragraph({ spacing: { before: 150, after: 100 }, children: [new TextRun({ text: 'الاعتمادات والتوقيعات:', font: 'Arial', size: 20, bold: true, color: COMPANY_BRAND.primaryColor })] }),
+        createSignaturesTable([
+          { title: 'الموظف المعني', name: emp.full_name_ar },
+          { title: 'مدير الموارد البشرية', name: 'عبدالملك سعيد الشريف' },
+          { title: 'المدير العام (الاعتماد النهائي)', name: 'أ. عبدالعزيز السلمي' }
+        ])
+      ]
+    }]
+  });
+}
+
+function buildIqamaReceiptDoc(emp, params = {}) {
+  const titleAr = 'نموذج استلام إقامة';
+  const titleEn = 'Iqama Receipt Acknowledgment (JM-HR-F-003/IRA)';
+
+  return new Document({
+    sections: [{
+      properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        createEmployeeInfoTable(emp),
+        new Paragraph({
+          spacing: { before: 200, after: 150 },
+          children: [
+            new TextRun({
+              text: 'إقرار استلام: أقر أنا المقيم الموضح بياناتي أعلاه بأنني قد استلمت أصل بطاقة هوية مقيم (الإقامة) الخاصة بي من قسم الموارد البشرية بشركة جوهرة المجد للتجارة بعد التجديد النظامي، وأتعهد بالمحافظة التامة عليها وحملها بصفة مستمرة وفقاً للأنظمة المعمول بها في المملكة.',
+              font: 'Arial',
+              size: 20
+            })
+          ]
+        }),
+        createSignaturesTable([
+          { title: 'المستلم (المقيم)', name: emp.full_name_ar },
+          { title: 'مسؤول الموارد البشرية', name: 'عبدالملك سعيد الشريف' }
+        ])
+      ]
+    }]
+  });
+}
+
+function buildFinalExitDoc(emp, params = {}) {
+  const titleAr = 'طلب تأشيرة خروج نهائي';
+  const titleEn = 'Final Exit Visa Request (JM-HR-F-004/FER)';
+
+  return new Document({
+    sections: [{
+      properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        createEmployeeInfoTable(emp),
+        new Paragraph({
+          spacing: { before: 200, after: 150 },
+          children: [
+            new TextRun({
+              text: 'تفيد إدارة الموارد البشرية بشركة جوهرة المجد للتجارة بأنه تم استكمال كافة مسوغات إخلاء الطرف، تصفية المستحقات المالية، وتسليم العهد، وتطلب الموافقة على إصدار تأشيرة خروج نهائي للموظف المذكور أعلاه ومغادرته للمملكة.',
+              font: 'Arial',
+              size: 20
+            })
+          ]
+        }),
+        createSignaturesTable([
+          { title: 'الموظف المعني', name: emp.full_name_ar },
+          { title: 'مدير الموارد البشرية', name: 'عبدالملك سعيد الشريف' },
+          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+        ])
+      ]
+    }]
+  });
+}
+
+function buildSponsorshipTransferDoc(emp, params = {}) {
+  const titleAr = 'طلب نقل كفالة موظف';
+  const titleEn = 'Sponsorship Transfer Request (JM-HR-F-005/STR)';
+
+  return new Document({
+    sections: [{
+      properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        createEmployeeInfoTable(emp),
+        new Paragraph({
+          spacing: { before: 200, after: 150 },
+          children: [
+            new TextRun({
+              text: `تفيد شركة جوهرة المجد للتجارة (الرقم الموحد: 7004872169) بعدم ممانعتها من نقل كفالة وخدمات الموظف المذكور أعلاه إلى صاحب العمل الجديد: ${params.new_sponsor || '...........................................'} بعد استكمال كافة الإجراءات النظامية عبر منصة قوى وسداد الرسوم.`,
+              font: 'Arial',
+              size: 20
+            })
+          ]
+        }),
+        createSignaturesTable([
+          { title: 'الموظف طالب النقل', name: emp.full_name_ar },
+          { title: 'مدير الموارد البشرية', name: 'عبدالملك سعيد الشريف' },
+          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+        ])
+      ]
+    }]
+  });
+}
+
+function buildClearanceSettlementDoc(emp, params = {}) {
+  const titleAr = 'نموذج تصفية موظف';
+  const titleEn = 'Employee Clearance Form (JM-HR-F-006/ECF)';
+
+  return new Document({
+    sections: [{
+      properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        createEmployeeInfoTable(emp),
+        new Paragraph({
+          spacing: { before: 200, after: 150 },
+          children: [
+            new TextRun({
+              text: 'يشهد كافة مدراء الأقسام والإدارات المعنية بشركة جوهرة المجد للتجارة باستيفاء الموظف المذكور أعلاه لكافة متطلبات إخلاء الطرف وتسليم جميع العهد والسيارات والأجهزة والملفات، وعدم وجود أي مستحقات معلقة ضده.',
+              font: 'Arial',
+              size: 20
+            })
+          ]
+        }),
+        createSignaturesTable([
+          { title: 'الموظف المعني', name: emp.full_name_ar },
+          { title: 'مدير العمليات', name: 'علي حسين بشري' },
+          { title: 'المدير المالي', name: 'الإدارة المالية' },
+          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+        ])
+      ]
+    }]
+  });
+}
+
+function buildFullSettlementDoc(emp, params = {}) {
+  const titleAr = 'وثيقة إبراء ذمة ومخالصة نهائية';
+  const titleEn = 'Full and Final Settlement & Release (JM-HR-F-007/FFS)';
+
+  return new Document({
+    sections: [{
+      properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
+      children: [
+        ...createHeaderParagraphs(titleAr, titleEn),
+        createEmployeeInfoTable(emp),
+        new Paragraph({
+          spacing: { before: 200, after: 150 },
+          children: [
+            new TextRun({
+              text: `أقر أنا الموظف الموقع أدناه بأنني قد استلمت من شركة جوهرة المجد للتجارة كامل مستحقاتي المالية النظامية والتعاقدية البالغة (${params.amount || '.....................'} ر.س)، وإبراء ذمة الشركة إبراءً شاملاً عاماً باتاً لا رجعة فيه من كافة الحقوق الناشئة عن عقد عملي وفترة خدمتي.`,
+              font: 'Arial',
+              size: 20
+            })
+          ]
+        }),
+        createSignaturesTable([
+          { title: 'الموظف المقر بما فيه', name: emp.full_name_ar },
+          { title: 'الإدارة المالية', name: 'قسم التدقيق' },
+          { title: 'اعتماد المدير العام', name: 'أ. عبدالعزيز السلمي' }
+        ])
+      ]
+    }]
+  });
+}
+
 async function generateWordForm(formType, empId, params = {}) {
   let emp = null;
   const baseSql = `
@@ -1080,6 +1300,37 @@ async function generateWordForm(formType, empId, params = {}) {
   let filename = '';
 
   switch (formType) {
+    case 'employee_status':
+    case 'status_notification':
+    case 'esn':
+      doc = buildEmployeeStatusDoc(emp, params);
+      filename = `إشعار_حالة_موظف_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'iqama_receipt':
+    case 'ira':
+      doc = buildIqamaReceiptDoc(emp, params);
+      filename = `استلام_إقامة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'final_exit':
+    case 'fer':
+      doc = buildFinalExitDoc(emp, params);
+      filename = `خروج_نهائي_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'sponsorship_transfer':
+    case 'str':
+      doc = buildSponsorshipTransferDoc(emp, params);
+      filename = `نقل_كفالة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'clearance_settlement':
+    case 'ecf':
+      doc = buildClearanceSettlementDoc(emp, params);
+      filename = `تصفية_موظف_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
+    case 'full_settlement':
+    case 'ffs':
+      doc = buildFullSettlementDoc(emp, params);
+      filename = `إبراء_ذمة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;
+      break;
     case 'leave_request':
       doc = buildLeaveRequestDoc(emp, params);
       filename = `طلب_إجازة_${emp.emp_code}_${emp.full_name_ar.replace(/\s+/g, '_')}.docx`;

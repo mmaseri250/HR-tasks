@@ -37,21 +37,12 @@ const generalAdminService = require('./modules/generalAdminService');
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
 
-// Initialize Seed Data if unseeded
+// Initialize schema safely without re-seeding or re-injecting demo data
 try {
-  const empCount = get('SELECT COUNT(*) AS total FROM employees')?.total || 0;
-  if (empCount === 0) {
-    seedDatabase();
-  }
+  // Schema creation if tables do not exist
+  initSchema();
 } catch (e) {
-  seedDatabase();
-}
-
-// Ensure user-employee links are reconciled on startup
-try {
-  usersModule.reconcileUserEmployeeLinks();
-} catch (e) {
-  console.warn('Reconciliation error on startup:', e.message);
+  console.warn('[Startup] Schema init:', e.message);
 }
 
 // Ensure organizational hierarchy and manager integrity on startup
@@ -2159,6 +2150,103 @@ app.get('/api/employees/hierarchy', (req, res) => {
 /* =========================================================================
    13. HR WORD FORMS GENERATOR (نماذج Word الرسمية الـ 6)
    ========================================================================= */
+
+
+// Unified 14 Official Forms HTML Preview & Print Route
+app.get('/api/forms/preview/:formType', (req, res) => {
+  try {
+    const { formType } = req.params;
+    let empId = req.query.emp_id || req.query.id;
+    if (!empId) {
+      empId = get('SELECT id FROM employees ORDER BY id ASC LIMIT 1')?.id;
+    }
+    const html = renderOfficialFormHtml(formType, empId, req.query);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send(`<h3>خطأ في تحميل النموذج الرسمي:</h3><p>${err.message}</p>`);
+  }
+});
+
+function renderOfficialFormHtml(formType, empId, queryParams = {}) {
+  switch (formType.toLowerCase()) {
+    case 'esn':
+    case 'status':
+    case 'employee_status':
+    case 'jm-hr-f-001':
+      return officialTemplates.renderEmployeeStatusNotificationHtml(empId, queryParams);
+    case 'adv':
+    case 'advance':
+    case 'loan_advance':
+    case 'jm-hr-f-002':
+      return officialTemplates.renderAdvanceRequestHtml(empId, queryParams);
+    case 'ira':
+    case 'iqama_receipt':
+    case 'jm-hr-f-003':
+      return officialTemplates.renderIqamaReceiptAcknowledgmentHtml(empId, queryParams);
+    case 'fer':
+    case 'final_exit':
+    case 'jm-hr-f-004':
+      return officialTemplates.renderFinalExitRequestHtml(empId, queryParams);
+    case 'str':
+    case 'sponsorship_transfer':
+    case 'jm-hr-f-005':
+      return officialTemplates.renderSponsorshipTransferHtml(empId, queryParams);
+    case 'ecf':
+    case 'clearance_settlement':
+    case 'jm-hr-f-006':
+      return officialTemplates.renderEmployeeClearanceSettlementHtml(empId, queryParams);
+    case 'ffs':
+    case 'full_settlement':
+    case 'settlement':
+    case 'jm-hr-f-007':
+      return officialTemplates.renderFullSettlementReleaseHtml(empId, queryParams);
+    case 'npa':
+    case 'absence_penalty':
+    case 'penalty_absence':
+    case 'jm-hr-f-008':
+      return officialTemplates.renderAbsencePenaltyNoticeHtml(empId, queryParams);
+    case 'npi':
+    case 'instruction_penalty':
+    case 'penalty_instructions':
+    case 'jm-hr-f-009':
+      return officialTemplates.renderInstructionPenaltyNoticeHtml(empId, queryParams);
+    case 'nnr':
+    case 'contract_non_renewal':
+    case 'non_renewal':
+    case 'jm-hr-f-010':
+      return officialTemplates.renderContractNonRenewalHtml(empId, queryParams);
+    case 'clr':
+    case 'clearance':
+    case 'clearance_form':
+    case 'jm-hr-f-011':
+      return officialTemplates.renderClearanceFormHtml(empId, queryParams);
+    case 'ppf':
+    case 'penalty':
+    case 'penalty_procedure':
+    case 'jm-hr-f-012':
+      return officialTemplates.renderPenaltyFormHtml(empId, queryParams);
+    case 'rct':
+    case 'resignation':
+    case 'resignation_termination':
+    case 'termination_request':
+    case 'jm-hr-f-013':
+      return officialTemplates.renderResignationTerminationFormHtml(empId, queryParams);
+    case 'lrf':
+    case 'leave':
+    case 'leave_request':
+    case 'jm-hr-f-014':
+      return officialTemplates.renderLeaveFormHtml(empId, queryParams);
+    case 'salary_cert':
+    case 'salary':
+      return officialTemplates.renderSalaryCertHtml(empId, queryParams);
+    case 'notice':
+    case 'attendance_notice':
+      return officialTemplates.renderAttendanceNoticeHtml(empId, queryParams);
+    default:
+      throw new Error(`نوع النموذج غير معروف: ${formType}`);
+  }
+}
 
 app.get('/api/forms/word/:formType', async (req, res) => {
   try {

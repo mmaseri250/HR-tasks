@@ -583,6 +583,7 @@ html[dir="ltr"] #headerLangMenu {
 .main-layout-container {
   display: flex !important;
   flex-direction: row !important;
+  flex-wrap: nowrap !important;
   align-items: flex-start !important;
   width: 100% !important;
   max-width: none !important;
@@ -597,9 +598,21 @@ html[dir="ltr"] #headerLangMenu {
   display: block !important;
 }
 
+main.flex-1 {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
 @media (min-width: 769px) {
   .sidebar-desktop-container {
     display: block !important;
+  }
+  .main-layout-container {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
   }
 }
 
@@ -609,15 +622,14 @@ html[dir="ltr"] #headerLangMenu {
   }
   .main-layout-container {
     flex-direction: column !important;
+    flex-wrap: wrap !important;
     padding-left: 0.75rem !important;
     padding-right: 0.75rem !important;
   }
-}
-
-main.flex-1 {
-  flex: 1 1 0% !important;
-  min-width: 0 !important;
-  width: auto !important;
+  main.flex-1 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
 }
 
 /* Premium Navigation Item Active Styling */
