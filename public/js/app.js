@@ -3088,7 +3088,7 @@ async function handleEmployeeFormSubmit(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    alert('تم تحديث بيانات الموظف بنجاح');
+    showToastNotification('✓ تم تحديث بيانات الموظف بنجاح', 'success');
   } else {
     payload.id = Date.now();
     payload.status = 'نشط';
@@ -3098,7 +3098,7 @@ async function handleEmployeeFormSubmit(e) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    alert('تم إضافة الموظف الجديد بنجاح');
+    showToastNotification('✓ تم إضافة الموظف الجديد بنجاح', 'success');
   }
 
   closeModal('modalAddEmployee');
@@ -6241,7 +6241,7 @@ async function handleRequestFormSubmit(e) {
   closeModal('modalNewRequest');
 
   // Success Alert
-  alert(`✓ تم تقديم طلبك بنجاح!\nالرقم المرجعي: ${backendData ? backendData.request_no : newReq.request_no}\nالنوع: ${displayType}\nالمدة/المبلغ: ${displayDuration}\n\nالمسار: بانتظار موافقة المدير المباشر أولاً ثم اعتماد الموارد البشرية.`);
+  showRequestSuccessCard({ request_no: backendData ? backendData.request_no : newReq.request_no, type: displayType, duration: displayDuration, workflow: 'بانتظار موافقة المدير المباشر → اعتماد الموارد البشرية' });
 
   // Reset form
   const form = document.getElementById('newRequestForm');
@@ -7234,6 +7234,148 @@ async function syncUsersNow() {
     if (btn) btn.disabled = false;
   }
 }
+
+
+/* =========================================================================
+   BRANDED SUCCESS CARD
+   ========================================================================= */
+function showRequestSuccessCard({ request_no, type, duration, workflow } = {}) {
+  const existing = document.getElementById('requestSuccessCard');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'requestSuccessCard';
+  overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4';
+  overlay.style.cssText = 'background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);direction:rtl;';
+
+  const workflowSteps = workflow || 'بانتظار موافقة المدير المباشر → اعتماد الموارد البشرية';
+  const steps = workflowSteps.split('→').map(s => s.trim());
+
+  const stepsHtml = steps.map((step, i) => `
+    <div class="flex items-center gap-1.5">
+      <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+           style="background:${i === 0 ? '#C89B3C' : '#8B0000'};color:white;">${i + 1}</div>
+      <span class="text-xs font-semibold text-slate-700">${step}</span>
+      ${i < steps.length - 1 ? '<i class="fa-solid fa-chevron-left text-slate-400 text-[10px] mx-1"></i>' : ''}
+    </div>
+  `).join('');
+
+  overlay.innerHTML = `
+    <div id="requestSuccessCardInner"
+         class="relative rounded-3xl shadow-2xl overflow-hidden"
+         style="max-width:460px;width:100%;background:#fff;border:2px solid #C89B3C;animation:slideUpCard 0.4s cubic-bezier(0.16,1,0.3,1) forwards;">
+      <div style="background:linear-gradient(135deg,#8B0000 0%,#6B0000 100%);" class="px-6 py-5 text-white text-center relative">
+        <div class="text-5xl mb-2">✅</div>
+        <h2 class="text-xl font-black tracking-wide">تم تقديم طلبك بنجاح!</h2>
+        <p class="text-xs mt-1 opacity-80">سيتم معالجة طلبك وفق مسار الموافقات المعتمد</p>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#C89B3C,transparent);"></div>
+      </div>
+      <div class="px-6 py-5 space-y-4">
+        <div class="rounded-2xl p-4 flex items-center gap-3" style="background:#FDF8EE;border:1.5px solid #C89B3C;">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#8B0000;">
+            <i class="fa-solid fa-hashtag text-white text-sm"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-500 font-semibold">الرقم المرجعي</p>
+            <p class="text-base font-black" style="color:#8B0000;">${request_no || '—'}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl p-3" style="background:#F8F4FF;border:1px solid #E0D7FF;">
+            <p class="text-xs text-slate-500 font-semibold mb-1">نوع الطلب</p>
+            <p class="text-sm font-bold text-purple-800">${type || '—'}</p>
+          </div>
+          <div class="rounded-xl p-3" style="background:#F0FDF4;border:1px solid #BBF7D0;">
+            <p class="text-xs text-slate-500 font-semibold mb-1">المدة / القيمة</p>
+            <p class="text-sm font-bold text-green-800">${duration || '—'}</p>
+          </div>
+        </div>
+        <div class="rounded-xl p-3" style="background:#F9FAFB;border:1px solid #E5E7EB;">
+          <p class="text-xs text-slate-500 font-semibold mb-2">
+            <i class="fa-solid fa-route text-amber-600 ml-1"></i>مسار الموافقات
+          </p>
+          <div class="flex flex-wrap items-center gap-y-2 gap-x-1">
+            ${stepsHtml}
+          </div>
+        </div>
+        <div class="rounded-full overflow-hidden h-1.5" style="background:#F3F4F6;">
+          <div id="successCardCountdown"
+               style="height:100%;background:linear-gradient(90deg,#8B0000,#C89B3C);width:100%;
+                      transition:width 5s linear;border-radius:999px;"></div>
+        </div>
+        <p class="text-center text-xs text-slate-400">سيتم إغلاق هذه البطاقة تلقائياً خلال 5 ثوانٍ</p>
+      </div>
+      <div class="px-6 pb-5 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#8B0000;">
+            <span class="text-white text-xs font-black">ج</span>
+          </div>
+          <span class="text-xs font-bold text-slate-600">جوهرة المجد للتجارة والمقاولات</span>
+        </div>
+        <button onclick="closeRequestSuccessCard()"
+                class="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
+                style="background:linear-gradient(135deg,#8B0000,#6B0000);">
+          <i class="fa-solid fa-check ml-1 text-xs"></i>حسناً
+        </button>
+      </div>
+    </div>
+  `;
+
+  if (!document.getElementById('successCardStyles')) {
+    const style = document.createElement('style');
+    style.id = 'successCardStyles';
+    style.textContent = `@keyframes slideUpCard{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}`;
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(overlay);
+
+  requestAnimationFrame(() => {
+    const bar = document.getElementById('successCardCountdown');
+    if (bar) { bar.style.width = '100%'; requestAnimationFrame(() => { bar.style.width = '0%'; }); }
+  });
+
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeRequestSuccessCard(); });
+  overlay._autoCloseTimer = setTimeout(() => closeRequestSuccessCard(), 5000);
+}
+
+function closeRequestSuccessCard() {
+  const card = document.getElementById('requestSuccessCard');
+  if (!card) return;
+  if (card._autoCloseTimer) clearTimeout(card._autoCloseTimer);
+  const inner = document.getElementById('requestSuccessCardInner');
+  if (inner) {
+    inner.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    inner.style.opacity = '0';
+    inner.style.transform = 'scale(0.9) translateY(20px)';
+  }
+  setTimeout(() => card.remove(), 320);
+}
+window.closeRequestSuccessCard = closeRequestSuccessCard;
+window.showRequestSuccessCard = showRequestSuccessCard;
+
+function showApprovalToast(message, type = 'success') {
+  const bgColor = type === 'success' ? '#166534' : type === 'warning' ? '#92400e' : '#991b1b';
+  const icon    = type === 'success' ? 'fa-circle-check' : type === 'warning' ? 'fa-triangle-exclamation' : 'fa-xmark-circle';
+  let toast = document.getElementById('approvalToastGlobal');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'approvalToastGlobal';
+    toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:9998;direction:rtl;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);opacity:0;pointer-events:none;';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<div style="background:${bgColor};color:white;padding:14px 24px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.3);display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;min-width:300px;justify-content:center;"><i class="fa-solid ${icon}" style="font-size:16px;"></i><span>${message}</span></div>`;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  toast.style.pointerEvents = 'auto';
+  if (toast._timer) clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-20px)';
+    toast.style.pointerEvents = 'none';
+  }, 3500);
+}
+window.showApprovalToast = showApprovalToast;
 
 function showToastNotification(message, type = 'success') {
   let toast = document.getElementById('globalToastNotification');
@@ -9357,7 +9499,7 @@ async function approveLeave(id, action, role) {
       alert('خطأ: ' + (res?.error || 'فشل في تحديث الطلب'));
     }
   } catch (err) {
-    alert('حدث خطأ أثناء معالجة الطلب: ' + err.message);
+    showApprovalToast('خطأ: ' + err.message, 'error');
   }
 }
 
@@ -11910,16 +12052,16 @@ async function handleLeaveStepAction(leaveId, step, action) {
     });
 
     if (res && res.success) {
-      alert('✓ تم تحديث سير الموافقات بنجاح');
+      showApprovalToast('✓ تم تحديث سير الموافقات بنجاح', 'success');
       await syncDataFromBackend();
       if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
       if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
-      alert('خطأ في الصلاحية: ' + (res?.error || res?.message || 'فشل في تحديث سير الموافقة'));
+      showApprovalToast('خطأ: ' + (res?.error || res?.message || 'فشل في تحديث سير الموافقة'), 'error');
     }
   } catch (err) {
-    alert('حدث خطأ أثناء معالجة مسار الموافقة: ' + err.message);
+    showApprovalToast('حدث خطأ: ' + err.message, 'error');
   }
 }
 
@@ -11935,16 +12077,16 @@ async function handleRevertLeaveAction(leaveId) {
       body: JSON.stringify({ reason, user: state.currentUser })
     });
     if (res && res.success) {
-      alert('✓ تم التراجع عن الإجراء بنجاح.');
+      showApprovalToast('✓ تم التراجع وإعادة الطلب بنجاح', 'warning');
       await syncDataFromBackend();
       if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
       if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
-      alert('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع عن الإجراء'));
+      showApprovalToast('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع'), 'error');
     }
   } catch (err) {
-    alert('حدث خطأ أثناء التراجع: ' + err.message);
+    showApprovalToast('خطأ أثناء التراجع: ' + err.message, 'error');
   }
 }
 
@@ -11971,16 +12113,16 @@ async function handleRequestStepAction(reqId, step, action) {
     });
 
     if (res && res.success) {
-      alert('✓ تم توثيق سير الموافقات بنجاح');
+      showApprovalToast('✓ تم توثيق سير الموافقات بنجاح', 'success');
       await syncDataFromBackend();
       if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
       if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
-      alert('خطأ في الصلاحية: ' + (res?.error || res?.message || 'فشل في توثيق الموافقة'));
+      showApprovalToast('خطأ: ' + (res?.error || res?.message || 'فشل في توثيق الموافقة'), 'error');
     }
   } catch (err) {
-    alert('حدث خطأ أثناء معالجة الطلب: ' + err.message);
+    showApprovalToast('خطأ: ' + err.message, 'error');
   }
 }
 
@@ -11997,16 +12139,16 @@ async function handleRevertRequestAction(reqId) {
     });
 
     if (res && res.success) {
-      alert('✓ تم التراجع عن الإجراء بنجاح وأعيد الطلب إلى مرحلة موافقة المدير المباشر.');
+      showApprovalToast('✓ تم التراجع وإعادة الطلب إلى مرحلة المدير المباشر', 'warning');
       await syncDataFromBackend();
       if (typeof loadLeavesView === 'function') await loadLeavesView();
       if (state.currentTab === 'selfservice') loadSelfService();
       if (typeof updateApprovalBadges === 'function') updateApprovalBadges();
     } else {
-      alert('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع عن الإجراء'));
+      showApprovalToast('خطأ: ' + (res?.error || res?.message || 'تعذر التراجع'), 'error');
     }
   } catch (err) {
-    alert('حدث خطأ أثناء التراجع: ' + err.message);
+    showApprovalToast('خطأ أثناء التراجع: ' + err.message, 'error');
   }
 }
 
@@ -15431,7 +15573,7 @@ async function saveActiveJobDescription() {
     });
 
     if (res && res.success) {
-      alert('✓ تم حفظ بطاقة الوصف الوظيفي بنجاح في قاعدة البيانات.');
+      showToastNotification('✓ تم حفظ بطاقة الوصف الوظيفي بنجاح', 'success');
       await loadJobDescriptionsView();
     } else {
       alert('فشل الحفظ: ' + (res?.error || 'خطأ غير معروف'));
@@ -15727,7 +15869,7 @@ function copyFullActivationMessage() {
   const msg = `السلام عليكم ورحمة الله وبركاته،\nالأخ/الأخت: ${data.full_name}\n\nتم إنشاء حسابكم في نظام إدارة الموارد البشرية لـ شركة جوهرة المجد.\n\n👤 اسم المستخدم: ${data.username}\n⏳ مهلة التفعيل: 24 ساعة فقط\n\nيرجى فتح الرابط التالي وتعيين كلمة المرور الخاصة بكم لتفعيل الحساب:\n🔗 ${link}\n\nإدارة الموارد البشرية - شركة جوهرة المجد`;
 
   navigator.clipboard.writeText(msg).then(() => {
-    alert('✓ تم نسخ نص الدعوة والرسالة الرسمية كاملاً مع الرابط بنجاح.');
+    showToastNotification('✓ تم نسخ نص الدعوة كاملاً بنجاح', 'success');
   }).catch(() => {
     prompt('انسخ نص الرسالة التالي:', msg);
   });
@@ -15738,7 +15880,7 @@ function copyActivationNoticeLink() {
   if (!inputEl || !inputEl.value) return;
   inputEl.select();
   navigator.clipboard.writeText(inputEl.value).then(() => {
-    alert('✓ تم نسخ رابط التفعيل (الصالح لـ 24 ساعة) بنجاح إلى الحافظة.');
+    showToastNotification('✓ تم نسخ رابط التفعيل بنجاح', 'success');
   }).catch(() => {
     prompt('انسخ الرابط التالي:', inputEl.value);
   });
