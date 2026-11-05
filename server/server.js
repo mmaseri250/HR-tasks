@@ -66,6 +66,7 @@ try {
   // Ensure department heads report independently (manager_id = NULL)
   run("UPDATE employees SET manager_id = NULL, direct_manager_name = NULL WHERE emp_code IN ('JM-0001', 'JM-0108')");
   run("UPDATE employees SET direct_manager_name = 'تامر جمعه احمد عبدالله' WHERE direct_manager_name = 'تامر جمعة احمد عبدالله'");
+  run("UPDATE employees SET status = 'نشط' WHERE status NOT IN ('نشط', 'منتهي الخدمة')");
 } catch (e) {
   console.error('Hierarchy sync error:', e.message);
 }
