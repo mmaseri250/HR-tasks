@@ -3678,27 +3678,8 @@ app.put('/api/notifications/:id/read', (req, res) => {
   }
 });
 
-app.get('/api/audit-logs', (req, res) => {
-  try {
-    const { entity_type, entity_id, limit = 100 } = req.query;
-    let sql = `SELECT * FROM audit_logs WHERE 1=1`;
-    const params = [];
-    if (entity_type) {
-      sql += ` AND entity_type = ?`;
-      params.push(entity_type);
-    }
-    if (entity_id) {
-      sql += ` AND entity_id = ?`;
-      params.push(entity_id);
-    }
-    sql += ` ORDER BY created_at DESC, id DESC LIMIT ?`;
-    params.push(Number(limit) || 100);
-    const logs = query(sql, params);
-    res.json({ success: true, count: logs.length, data: logs });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// NOTE: /api/audit-logs is defined above (line ~551) with RBAC protection via auditModule.getAuditLogs().
+// This duplicate was removed to prevent route shadowing and security bypass.
 
 /* =========================================================================
    OFFICIAL HTML FORMS PRINT & PREVIEW

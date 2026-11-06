@@ -9152,6 +9152,9 @@ async function loadLeaveBalancesTable() {
     }
 
     leaveState.balances = res.data;
+    // Update tab label with actual live count from API
+    const _tabCountEl = document.getElementById('leaveBalancesTabCount');
+    if (_tabCountEl) _tabCountEl.textContent = res.data.length;
     renderLeaveBalancesTable();
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="11" class="text-center p-6 text-rose-500 font-bold">فشل في تحميل أرصدة الإجازات: ${err.message}</td></tr>`;
