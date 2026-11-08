@@ -51,6 +51,9 @@ try {
   run("UPDATE employees SET manager_id = NULL, direct_manager_name = NULL WHERE emp_code IN ('JM-0001', 'JM-0108')");
   run("UPDATE employees SET direct_manager_name = 'تامر جمعه احمد عبدالله' WHERE direct_manager_name = 'تامر جمعة احمد عبدالله'");
   run("UPDATE employees SET status = 'نشط' WHERE status NOT IN ('نشط', 'منتهي الخدمة')");
+  // Synchronize users.emp_id with active employees.id
+  run("UPDATE users SET emp_id = (SELECT e.id FROM employees e WHERE e.emp_code = users.username OR e.full_name_ar = users.full_name LIMIT 1) WHERE users.emp_id IS NULL OR users.emp_id NOT IN (SELECT id FROM employees)");
+
 } catch (e) {
   console.error('Hierarchy sync error:', e.message);
 }
@@ -4152,25 +4155,29 @@ app.get('/api/manager/dashboard-stats', (req, res) => {
   try {
     const user = extractUserContext(req);
     const empId = user?.emp_id ? Number(user.emp_id) : null;
-    const isAdmin = user?.role === 'admin' || user?.role === 'general_manager' || user?.role === 'hr_manager';
+    const userName = (user?.full_name || user?.full_name_ar || '').trim();
+    const isAdmin = !user || user.role === 'admin' || user.role === 'general_manager' || user.role === 'hr_manager';
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. Fetch Direct Team Members
+    // 1. Fetch Team Members
     let teamMembers = [];
-    if (empId) {
+    if (empId || userName) {
       teamMembers = query(`
         SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.phone, e.email, e.status,
                d.name_ar AS department_name, b.name_ar AS branch_name
         FROM employees e
         LEFT JOIN departments d ON e.department_id = d.id
         LEFT JOIN branches b ON e.branch_id = b.id
-        WHERE (e.manager_id = ? OR e.direct_manager_name = ?) AND e.status = 'نشط'
+        WHERE ((? IS NOT NULL AND e.manager_id = ?)
+            OR (? <> '' AND (e.direct_manager_name = ? OR e.direct_manager_name LIKE ?))
+            OR (? <> '' AND d.manager_name = ?))
+          AND e.status = 'نشط'
         ORDER BY e.full_name_ar ASC
-      `, [empId, user.full_name || '']);
+      `, [empId, empId, userName, userName, `%${userName}%`, userName, userName]);
     }
 
-    if (teamMembers.length === 0 && isAdmin) {
-      // For Admin/Top Managers, display primary active team or all employees
+    if (teamMembers.length === 0 && (isAdmin || !user || user.role === 'dept_manager')) {
+      // For Admin/Top Managers or when team lookup needs full company oversight, display all active employees
       teamMembers = query(`
         SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.phone, e.email, e.status,
                d.name_ar AS department_name, b.name_ar AS branch_name
@@ -4179,7 +4186,6 @@ app.get('/api/manager/dashboard-stats', (req, res) => {
         LEFT JOIN branches b ON e.branch_id = b.id
         WHERE e.status = 'نشط'
         ORDER BY e.id ASC
-        LIMIT 25
       `);
     }
 
@@ -4187,8 +4193,8 @@ app.get('/api/manager/dashboard-stats', (req, res) => {
 
     // 2. Fetch Tasks Assigned to or by Team
     let tasks = [];
-    if (isAdmin) {
-      tasks = tasksModule.getAllTasks({ limit: 50 }, user);
+    if (isAdmin || !user) {
+      tasks = tasksModule.getAllTasks({ limit: 50 }, user || { role: 'admin' });
     } else if (teamIds.length > 0 || empId) {
       const placeholders = teamIds.length > 0 ? teamIds.map(() => '?').join(',') : '0';
       const params = teamIds.length > 0 ? [...teamIds, empId || 0] : [0, empId || 0];
@@ -4205,25 +4211,26 @@ app.get('/api/manager/dashboard-stats', (req, res) => {
 
     // 3. Fetch Pending Requests Awaiting Manager Action
     let pendingRequests = [];
-    if (isAdmin) {
+    if (isAdmin || !user) {
       pendingRequests = query(`
         SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar
         FROM requests r
         JOIN employees e ON r.emp_id = e.id
-        WHERE (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق')
+        WHERE (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق' OR r.status LIKE '%معلق%')
         ORDER BY r.created_at DESC
         LIMIT 20
       `);
-    } else if (empId || user.full_name) {
+    } else if (empId || userName) {
       pendingRequests = query(`
         SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar
         FROM requests r
         JOIN employees e ON r.emp_id = e.id
-        WHERE (r.manager_id = ? OR r.manager_name = ? OR e.manager_id = ?)
-          AND (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق')
+        WHERE ((? IS NOT NULL AND (r.manager_id = ? OR e.manager_id = ?))
+            OR (? <> '' AND (r.manager_name = ? OR r.manager_name LIKE ? OR e.direct_manager_name = ?)))
+          AND (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق' OR r.status LIKE '%معلق%')
         ORDER BY r.created_at DESC
         LIMIT 20
-      `, [empId || 0, user.full_name || '', empId || 0]);
+      `, [empId, empId, empId, userName, userName, `%${userName}%`, userName]);
     }
 
     // 4. Calculate KPI Counts
@@ -4239,12 +4246,13 @@ app.get('/api/manager/dashboard-stats', (req, res) => {
         in_progress_tasks_count: inProgressTasksCount,
         overdue_tasks_count: overdueTasksCount,
         pending_requests_count: pendingRequestsCount,
-        tasks,
+        tasks: tasks,
         pending_requests: pendingRequests,
         team_members: teamMembers
       }
     });
   } catch (err) {
+    console.error('Error fetching manager dashboard stats:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

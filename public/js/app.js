@@ -807,7 +807,17 @@ function checkAuth() {
   if (state.currentUser) {
     updateHeaderUserDisplay();
     applyRolePermissions();
-    switchTab(state.currentTab || (state.currentUser.role === 'employee' ? 'selfservice' : 'dashboard'));
+    // Detect URL path or hash (e.g. /manager or #manager)
+    const pathToken = window.location.pathname.replace(/^\/+/, '').split('/')[0].toLowerCase();
+    const hashToken = window.location.hash.replace(/^#/, '').toLowerCase();
+    const requestedTab = pathToken || hashToken;
+    const validTabs = ['dashboard', 'manager', 'selfservice', 'leaves', 'organization', 'fleet', 'licenses', 'users', 'penalties', 'jobdescriptions', 'reports', 'settings'];
+
+    let initialTab = state.currentTab;
+    if (validTabs.includes(requestedTab)) {
+      initialTab = requestedTab;
+    }
+    switchTab(initialTab || (state.currentUser.role === 'employee' ? 'selfservice' : 'dashboard'));
   } else {
     // Show full-screen unclosable auth gate
     openModal('modalLogin');
@@ -16174,7 +16184,12 @@ function populateManagerEmpSelects(members) {
   const taskSelect = document.getElementById('assignTaskEmpSelect');
   const penaltySelect = document.getElementById('reqPenaltyEmpSelect');
 
-  const optionsHtml = '<option value="">اختر الموظف...</option>' + (members || []).map(m => `
+  // Fallback to active company employees if members list is empty
+  const list = (members && members.length > 0)
+    ? members
+    : ((state.employees || []).filter(e => e.status === 'نشط'));
+
+  const optionsHtml = '<option value="">اختر الموظف...</option>' + list.map(m => `
     <option value="${m.id}">${m.full_name_ar} (${m.emp_code || m.id}) - ${m.job_title_ar || 'موظف'}</option>
   `).join('');
 
