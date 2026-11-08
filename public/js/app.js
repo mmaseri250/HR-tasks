@@ -1102,6 +1102,7 @@ window.canDelete = canDelete;
 
 const TAB_PERMISSION_MAP = {
   'dashboard': ['dashboard.view', 'dashboard'],
+  'manager': ['manager.view', 'manager', 'tasks.view', 'tasks', 'all'],
   'hr-center': ['hr_center.view', 'hr_center', 'employees.view', 'employees'],
   'employees-db': ['employees.view', 'employees'],
   'leaves': ['leaves.view', 'leaves', 'requests.view', 'requests'],
@@ -1188,7 +1189,7 @@ function applyRolePermissions() {
   });
 
   // Desktop Aside navigation items - strictly driven by RBAC permissions
-  const allTabs = ['dashboard', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'job-descriptions', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'manager', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'job-descriptions', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
 
   allTabs.forEach(t => {
     const el = document.getElementById(`nav-${t}`);
@@ -1432,7 +1433,7 @@ function switchTab(tabId) {
 
   state.currentTab = tabId;
 
-  const allTabs = ['dashboard', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
+  const allTabs = ['dashboard', 'manager', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
   allTabs.forEach(t => {
     const navBtn = document.getElementById(`nav-${t}`);
     const viewSec = document.getElementById(`view-${t}`);
@@ -1463,6 +1464,9 @@ function switchTab(tabId) {
     switch (tabId) {
       case 'dashboard':
         loadDashboard();
+        break;
+      case 'manager':
+        loadManagerDashboard();
         break;
       case 'employees-db':
         populateEmployeeFilterDropdowns();
@@ -16086,3 +16090,462 @@ window.copyUserActivationLink = copyUserActivationLink;
 window.resendUserActivation = resendUserActivation;
 window.openNewJobDescriptionModal = openNewJobDescriptionModal;
 window.openJobDescriptionForEmployee = openJobDescriptionForEmployee;
+
+
+/* =========================================================================
+   14. MANAGER PORTAL CONTROLLER (صفحة المدير)
+   ========================================================================= */
+
+const managerState = {
+  data: null,
+  tasks: [],
+  filteredTasks: [],
+  pendingRequests: [],
+  teamMembers: [],
+  statusFilter: 'all',
+  searchTerm: ''
+};
+
+async function loadManagerDashboard() {
+  const tableBody = document.getElementById('managerTasksTableBody');
+  const reqContainer = document.getElementById('managerPendingRequestsContainer');
+  const teamContainer = document.getElementById('managerTeamListContainer');
+
+  if (tableBody) {
+    tableBody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري تحميل بيانات لوحة المدير...</td></tr>';
+  }
+
+  try {
+    const res = await apiFetch('/api/manager/dashboard-stats');
+    if (!res || !res.success || !res.data) {
+      if (tableBody) tableBody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">تعذر تحميل بيانات لوحة المدير</td></tr>';
+      return;
+    }
+
+    const d = res.data;
+    managerState.data = d;
+    managerState.tasks = d.tasks || [];
+    managerState.pendingRequests = d.pending_requests || [];
+    managerState.teamMembers = d.team_members || [];
+
+    // 1. Update 4 KPI Cards
+    const elTeam = document.getElementById('managerStatTeam');
+    if (elTeam) elTeam.textContent = d.team_count !== undefined ? d.team_count : 0;
+
+    const elProg = document.getElementById('managerStatInProgress');
+    if (elProg) elProg.textContent = d.in_progress_tasks_count !== undefined ? d.in_progress_tasks_count : 0;
+
+    const elOver = document.getElementById('managerStatOverdue');
+    if (elOver) elOver.textContent = d.overdue_tasks_count !== undefined ? d.overdue_tasks_count : 0;
+
+    const elPend = document.getElementById('managerStatPending');
+    if (elPend) elPend.textContent = d.pending_requests_count !== undefined ? d.pending_requests_count : 0;
+
+    // Update Sidebar Badge if exists
+    const badge = document.getElementById('badgeNavManager');
+    if (badge) {
+      if (d.pending_requests_count > 0) {
+        badge.textContent = d.pending_requests_count;
+        badge.classList.remove('hidden');
+      } else {
+        badge.textContent = '0';
+        badge.classList.add('hidden');
+      }
+    }
+
+    // 2. Populate Modal Select Dropdowns with Team Members
+    populateManagerEmpSelects(managerState.teamMembers);
+
+    // 3. Render Sections
+    renderManagerTasksTable();
+    renderManagerPendingRequests();
+    renderManagerTeamList();
+
+  } catch (err) {
+    console.error('Error loading manager dashboard:', err);
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-500 font-bold">خطأ في جلب بيانات المدير: ${err.message}</td></tr>`;
+    }
+  }
+}
+window.loadManagerDashboard = loadManagerDashboard;
+
+function populateManagerEmpSelects(members) {
+  const taskSelect = document.getElementById('assignTaskEmpSelect');
+  const penaltySelect = document.getElementById('reqPenaltyEmpSelect');
+
+  const optionsHtml = '<option value="">اختر الموظف...</option>' + (members || []).map(m => `
+    <option value="${m.id}">${m.full_name_ar} (${m.emp_code || m.id}) - ${m.job_title_ar || 'موظف'}</option>
+  `).join('');
+
+  if (taskSelect) taskSelect.innerHTML = optionsHtml;
+  if (penaltySelect) penaltySelect.innerHTML = optionsHtml;
+}
+
+function filterManagerTasks() {
+  const filterSelect = document.getElementById('managerTaskStatusFilter');
+  managerState.statusFilter = filterSelect ? filterSelect.value : 'all';
+  renderManagerTasksTable();
+}
+window.filterManagerTasks = filterManagerTasks;
+
+function handleManagerGlobalSearch() {
+  const searchInput = document.getElementById('managerGlobalSearch');
+  managerState.searchTerm = searchInput ? (searchInput.value || '').trim().toLowerCase() : '';
+  renderManagerTasksTable();
+  renderManagerPendingRequests();
+  renderManagerTeamList();
+}
+window.handleManagerGlobalSearch = handleManagerGlobalSearch;
+
+function renderManagerTasksTable() {
+  const tbody = document.getElementById('managerTasksTableBody');
+  if (!tbody) return;
+
+  let list = managerState.tasks || [];
+  const statusFilter = managerState.statusFilter;
+  const term = managerState.searchTerm;
+
+  // Filter by status
+  if (statusFilter && statusFilter !== 'all') {
+    list = list.filter(t => t.status === statusFilter);
+  }
+
+  // Filter by search term
+  if (term) {
+    list = list.filter(t => {
+      const titleMatch = (t.title || '').toLowerCase().includes(term);
+      const nameMatch = (t.assigned_to_name || '').toLowerCase().includes(term);
+      const codeMatch = (t.emp_code || '').toLowerCase().includes(term);
+      return titleMatch || nameMatch || codeMatch;
+    });
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="p-8 text-center text-slate-400 font-bold">
+          <i class="fa-solid fa-list-check text-3xl mb-2 text-slate-300 block"></i>
+          لا توجد مهام مسندة حالياً
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = list.map(t => {
+    let statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">جديدة</span>';
+    if (t.status === 'قيد التنفيذ') {
+      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">قيد التنفيذ</span>';
+    } else if (t.status === 'مكتملة') {
+      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">مكتملة</span>';
+    } else if (t.status === 'متأخرة') {
+      statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">متأخرة</span>';
+    }
+
+    let priorityBadge = '';
+    if (t.priority === 'عاجلة') {
+      priorityBadge = '<span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 mr-1.5">عاجلة</span>';
+    } else if (t.priority === 'منخفضة') {
+      priorityBadge = '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 mr-1.5">منخفضة</span>';
+    } else {
+      priorityBadge = '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 mr-1.5">متوسطة</span>';
+    }
+
+    return `
+      <tr class="hover:bg-slate-50/70 transition border-b border-slate-100">
+        <td class="py-3 px-3">
+          <div class="flex items-center gap-1.5">
+            ${priorityBadge}
+            <span class="font-bold text-slate-800">${t.title || 'مهمة بدون عنوان'}</span>
+          </div>
+          ${t.description ? `<p class="text-[10px] text-slate-400 mt-0.5 truncate max-w-xs">${t.description}</p>` : ''}
+        </td>
+        <td class="py-3 px-3">
+          <span class="font-semibold text-slate-700">${t.assigned_to_name || 'موظف'}</span>
+          <span class="text-[10px] text-slate-400 block font-mono">${t.emp_code || ''}</span>
+        </td>
+        <td class="py-3 px-3 font-mono text-slate-600 font-bold text-[11px]">
+          ${t.due_date || '—'}
+        </td>
+        <td class="py-3 px-3">
+          ${statusBadge}
+        </td>
+        <td class="py-3 px-3 text-center">
+          <div class="flex items-center justify-center gap-1">
+            ${t.status !== 'مكتملة' ? `
+              <button onclick="quickCompleteTask(${t.id})" title="اعتماد اكتمال المهمة" class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition text-xs">
+                <i class="fa-solid fa-check"></i>
+              </button>
+            ` : ''}
+            <button onclick="quickDeleteTask(${t.id})" title="حذف المهمة" class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition text-xs">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderManagerPendingRequests() {
+  const container = document.getElementById('managerPendingRequestsContainer');
+  if (!container) return;
+
+  let list = managerState.pendingRequests || [];
+  const term = managerState.searchTerm;
+
+  if (term) {
+    list = list.filter(r => {
+      const nameMatch = (r.full_name_ar || '').toLowerCase().includes(term);
+      const typeMatch = (r.request_type || '').toLowerCase().includes(term);
+      const noMatch = (r.request_no || '').toLowerCase().includes(term);
+      return nameMatch || typeMatch || noMatch;
+    });
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="p-6 text-center text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        <i class="fa-solid fa-check-double text-2xl mb-1 text-slate-300 block"></i>
+        لا توجد طلبات بانتظار اعتمادك.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(r => `
+    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 hover:bg-white hover:shadow-xs transition space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-black text-slate-800">${r.full_name_ar || 'موظف'}</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">${r.request_type || 'طلب'}</span>
+      </div>
+      <div class="text-[11px] text-slate-500 font-semibold flex items-center justify-between">
+        <span>المرجع: <strong class="font-mono text-slate-700">${r.request_no || '—'}</strong></span>
+        <span>${r.days_count ? r.days_count + ' يوم' : (r.amount ? r.amount + ' ر.س' : '')}</span>
+      </div>
+      ${r.reason ? `<p class="text-[10px] text-slate-500 italic bg-white p-1.5 rounded-lg border border-slate-100">${r.reason}</p>` : ''}
+      <div class="pt-1 flex items-center justify-end gap-1.5">
+        <button onclick="handleManagerRequestAction(${r.id}, 'reject')" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition">
+          رفض
+        </button>
+        <button onclick="handleManagerRequestAction(${r.id}, 'approve')" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition flex items-center gap-1">
+          <i class="fa-solid fa-check text-[9px]"></i> موافقة
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderManagerTeamList() {
+  const container = document.getElementById('managerTeamListContainer');
+  if (!container) return;
+
+  let list = managerState.teamMembers || [];
+  const term = managerState.searchTerm;
+
+  if (term) {
+    list = list.filter(m => {
+      const nameMatch = (m.full_name_ar || '').toLowerCase().includes(term);
+      const jobMatch = (m.job_title_ar || '').toLowerCase().includes(term);
+      const codeMatch = (m.emp_code || '').toLowerCase().includes(term);
+      return nameMatch || jobMatch || codeMatch;
+    });
+  }
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="p-6 text-center text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        لا توجد نتائج
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(m => `
+    <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-100 transition">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#700c14] to-[#4a080d] text-amber-300 font-black text-xs flex items-center justify-center flex-shrink-0 shadow-xs">
+          ${(m.full_name_ar || 'م')[0]}
+        </div>
+        <div>
+          <p class="text-xs font-bold text-slate-800 leading-tight">${m.full_name_ar}</p>
+          <p class="text-[10px] text-slate-500">${m.job_title_ar || 'موظف'} • <span class="font-mono text-slate-400">${m.emp_code || ''}</span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        ${m.phone ? `
+          <a href="https://wa.me/966${m.phone.replace(/^0+/, '')}" target="_blank" title="محادثة واتساب" class="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs transition">
+            <i class="fa-brands fa-whatsapp"></i>
+          </a>
+        ` : ''}
+        <button onclick="quickAssignToMember(${m.id}, '${m.full_name_ar}')" title="إسناد مهمة للموظف" class="w-7 h-7 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 flex items-center justify-center text-xs transition">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAssignTaskModal() {
+  const modal = document.getElementById('modalAssignTask');
+  if (!modal) return;
+  const dueDateInput = document.getElementById('assignTaskDueDate');
+  if (dueDateInput && !dueDateInput.value) {
+    const d = new Date();
+    d.setDate(d.getDate() + 3);
+    dueDateInput.value = d.toISOString().split('T')[0];
+  }
+  openModal('modalAssignTask');
+}
+window.openAssignTaskModal = openAssignTaskModal;
+
+function quickAssignToMember(empId, empName) {
+  openAssignTaskModal();
+  const select = document.getElementById('assignTaskEmpSelect');
+  if (select) select.value = String(empId);
+}
+window.quickAssignToMember = quickAssignToMember;
+
+async function handleAssignTaskSubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const title = document.getElementById('assignTaskTitle')?.value;
+  const assigned_to = document.getElementById('assignTaskEmpSelect')?.value;
+  const priority = document.getElementById('assignTaskPriority')?.value || 'متوسطة';
+  const due_date = document.getElementById('assignTaskDueDate')?.value;
+  const description = document.getElementById('assignTaskDescription')?.value || '';
+
+  if (!title || !assigned_to || !due_date) {
+    showToast('يرجى استكمال الحقول الإلزامية للمهمة', 'warning');
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/manager/assign-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, assigned_to, due_date, priority, description })
+    });
+
+    if (res && res.success) {
+      showToast(res.message || 'تم إسناد المهمة بنجاح', 'success');
+      closeModal('modalAssignTask');
+      document.getElementById('assignTaskTitle').value = '';
+      document.getElementById('assignTaskDescription').value = '';
+      await loadManagerDashboard();
+    } else {
+      showToast('خطأ: ' + (res?.error || 'فشل إسناد المهمة'), 'error');
+    }
+  } catch (err) {
+    showToast('حدث خطأ: ' + err.message, 'error');
+  }
+}
+window.handleAssignTaskSubmit = handleAssignTaskSubmit;
+
+function openRequestPenaltyModal() {
+  const modal = document.getElementById('modalRequestPenalty');
+  if (!modal) return;
+  const dateInput = document.getElementById('reqPenaltyDate');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  openModal('modalRequestPenalty');
+}
+window.openRequestPenaltyModal = openRequestPenaltyModal;
+
+async function handleRequestPenaltySubmit(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const emp_id = document.getElementById('reqPenaltyEmpSelect')?.value;
+  const violation_type = document.getElementById('reqPenaltyType')?.value;
+  const incident_date = document.getElementById('reqPenaltyDate')?.value;
+  const reason = document.getElementById('reqPenaltyReason')?.value;
+
+  if (!emp_id || !violation_type || !incident_date || !reason) {
+    showToast('يرجى استكمال كافة بيانات طلب القرار الجزائي', 'warning');
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/api/manager/request-penalty', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emp_id, violation_type, incident_date, reason })
+    });
+
+    if (res && res.success) {
+      showToast(res.message || 'تم رفع طلب الجزاء بنجاح للموارد البشرية', 'success');
+      closeModal('modalRequestPenalty');
+      document.getElementById('reqPenaltyReason').value = '';
+    } else {
+      showToast('خطأ: ' + (res?.error || 'فشل إرسال الطلب'), 'error');
+    }
+  } catch (err) {
+    showToast('حدث خطأ: ' + err.message, 'error');
+  }
+}
+window.handleRequestPenaltySubmit = handleRequestPenaltySubmit;
+
+async function handleManagerRequestAction(reqId, action) {
+  const actionText = action === 'approve' ? 'موافقة' : 'رفض';
+  let comment = '';
+  if (action === 'reject') {
+    comment = prompt('يرجى إدخال سبب الرفض:');
+    if (comment === null) return;
+    if (!comment.trim()) {
+      showToast('سبب الرفض إلزامي لتوثيقه نظاماً', 'warning');
+      return;
+    }
+  }
+
+  try {
+    const res = await apiFetch(`/api/manager/requests/${reqId}/action`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, comment })
+    });
+
+    if (res && res.success) {
+      showToast(res.message || `تمت عملية ال${actionText} بنجاح`, 'success');
+      await loadManagerDashboard();
+    } else {
+      showToast('خطأ: ' + (res?.error || 'فشل تنفيذ الإجراء'), 'error');
+    }
+  } catch (err) {
+    showToast('حدث خطأ: ' + err.message, 'error');
+  }
+}
+window.handleManagerRequestAction = handleManagerRequestAction;
+
+async function quickCompleteTask(taskId) {
+  try {
+    const res = await apiFetch(`/api/tasks/${taskId}/progress`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ progress_percent: 100, comment: 'تم إكمال المهمة وتأكيد الإنجاز بنجاح' })
+    });
+
+    if (res && res.success) {
+      showToast('تم اعتماد اكتمال المهمة بنجاح 100%', 'success');
+      await loadManagerDashboard();
+    } else {
+      showToast('خطأ: ' + (res?.error || 'فشل تحديث المهمة'), 'error');
+    }
+  } catch (err) {
+    showToast('حدث خطأ: ' + err.message, 'error');
+  }
+}
+window.quickCompleteTask = quickCompleteTask;
+
+async function quickDeleteTask(taskId) {
+  if (!confirm('هل أنت متأكد من حذف هذه المهمة نهائياً؟')) return;
+  try {
+    const res = await apiFetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+    if (res && res.success) {
+      showToast('تم حذف المهمة بنجاح', 'success');
+      await loadManagerDashboard();
+    } else {
+      showToast('خطأ: ' + (res?.error || 'فشل حذف المهمة'), 'error');
+    }
+  } catch (err) {
+    showToast('حدث خطأ: ' + err.message, 'error');
+  }
+}
+window.quickDeleteTask = quickDeleteTask;

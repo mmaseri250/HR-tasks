@@ -224,6 +224,20 @@
           <span data-i18n="nav_selfservice">بوابة الخدمة الذاتية (ESS)</span>
         </button>
 
+        <!-- 3.1 Approvals (سير الموافقات) -->
+        <button onclick="switchTab('leaves')" id="nav-leaves-main" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
+          <i class="fa-solid fa-clipboard-check w-5 text-center text-base text-emerald-600"></i>
+          <span class="flex-1 text-right">الموافقات</span>
+          <span id="badgeNavLeavesMain" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">0</span>
+        </button>
+
+        <!-- 3.2 Manager Portal (صفحة المدير) -->
+        <button onclick="switchTab('manager')" id="nav-manager" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:text-brand bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30">
+          <i class="fa-solid fa-user-tie w-5 text-center text-base text-amber-700"></i>
+          <span class="flex-1 text-right font-black">صفحة المدير</span>
+          <span id="badgeNavManager" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-amber-900 border border-amber-400">0</span>
+        </button>
+
         <!-- 4. Administrative Circulars -->
         <button onclick="switchTab('circulars')" id="nav-circulars" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
           <i class="fa-solid fa-bullhorn w-5 text-center text-base text-rose-700"></i>
@@ -6706,6 +6720,380 @@
           </div>
         </div>
       </section>
+
+
+      <!-- =====================================================================
+           MANAGER PORTAL & DASHBOARD (صفحة المدير)
+           ===================================================================== -->
+      <section id="view-manager" class="space-y-6 hidden">
+        <!-- Top Title & Action Banner -->
+        <div class="card-elevated p-6 bg-gradient-to-l from-white via-white to-amber-50/40 border border-slate-200/90 rounded-3xl shadow-sm">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#700c14] to-[#4a080d] text-amber-300 flex items-center justify-center text-2xl shadow-md border border-amber-400/30 flex-shrink-0">
+                <i class="fa-solid fa-user-tie"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h1 class="text-2xl font-black text-slate-900 tracking-tight">لوحة المدير</h1>
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">منظومة القيادة والإشراف</span>
+                </div>
+                <p class="text-xs text-slate-500 font-semibold mt-1">مرحباً بك في نظام الموارد البشرية — متابعة الفريق والمهام والاعتمادات اللحظية</p>
+              </div>
+            </div>
+
+            <!-- Action Buttons on the Left -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
+              <button onclick="openAssignTaskModal()" class="bg-[#700c14] hover:bg-[#580910] text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                <i class="fa-solid fa-plus text-amber-300"></i>
+                <span>إسناد مهمة جديدة</span>
+              </button>
+              <button onclick="openRequestPenaltyModal()" class="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
+                <i class="fa-solid fa-scale-balanced text-amber-600"></i>
+                <span>طلب إصدار قرار جزائي</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 KPI Metrics Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <!-- KPI 1: Team Members -->
+          <div class="card-elevated p-4 rounded-2xl border border-slate-200/80 bg-white shadow-xs hover:border-purple-200 transition">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-500">أعضاء الفريق</span>
+              <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-users"></i>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span id="managerStatTeam" class="text-2xl font-black font-mono text-slate-800">0</span>
+              <span class="text-[10px] font-bold text-slate-400">موظفاً مباشراً</span>
+            </div>
+          </div>
+
+          <!-- KPI 2: In-Progress Tasks -->
+          <div class="card-elevated p-4 rounded-2xl border border-slate-200/80 bg-white shadow-xs hover:border-amber-200 transition">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-500">مهام قيد التنفيذ</span>
+              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span id="managerStatInProgress" class="text-2xl font-black font-mono text-amber-600">0</span>
+              <span class="text-[10px] font-bold text-slate-400">مهمة نشطة</span>
+            </div>
+          </div>
+
+          <!-- KPI 3: Overdue Tasks -->
+          <div class="card-elevated p-4 rounded-2xl border border-slate-200/80 bg-white shadow-xs hover:border-rose-200 transition">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-500">مهام متأخرة</span>
+              <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span id="managerStatOverdue" class="text-2xl font-black font-mono text-rose-600">0</span>
+              <span class="text-[10px] font-bold text-slate-400">تتطلب المتابعة</span>
+            </div>
+          </div>
+
+          <!-- KPI 4: Pending Approvals -->
+          <div class="card-elevated p-4 rounded-2xl border border-slate-200/80 bg-white shadow-xs hover:border-emerald-200 transition">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-500">طلبات بانتظار الإجراء</span>
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm">
+                <i class="fa-regular fa-file-lines"></i>
+              </div>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span id="managerStatPending" class="text-2xl font-black font-mono text-emerald-600">0</span>
+              <span class="text-[10px] font-bold text-slate-400">بانتظار موافقتك</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Search Bar in Manager Portal -->
+        <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center text-sm flex-shrink-0">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <input type="text"
+                 id="managerGlobalSearch"
+                 oninput="handleManagerGlobalSearch()"
+                 placeholder="البحث في الفريق والمهام والطلبات..."
+                 class="w-full text-xs font-bold text-slate-800 placeholder-slate-400 bg-transparent border-none outline-none">
+          <button onclick="loadManagerDashboard()" class="text-slate-400 hover:text-brand px-2 py-1 text-xs font-bold transition flex items-center gap-1">
+            <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+            <span class="hidden sm:inline">تحديث</span>
+          </button>
+        </div>
+
+        <!-- Main Two-Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <!-- Right Column (Wide - 8 Cols): My Team Tasks -->
+          <div class="lg:col-span-8 space-y-6">
+            <div class="card-elevated p-5 rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+              <div class="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100 flex-wrap">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-sm">
+                    <i class="fa-regular fa-square-check"></i>
+                  </div>
+                  <h3 class="text-base font-black text-slate-900">مهام فريقي</h3>
+                </div>
+                <!-- Status Filter Dropdown -->
+                <div class="flex items-center gap-2">
+                  <select id="managerTaskStatusFilter"
+                          onchange="filterManagerTasks()"
+                          class="text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 outline-none focus:border-brand cursor-pointer">
+                    <option value="all">الكل</option>
+                    <option value="قيد التنفيذ">قيد التنفيذ</option>
+                    <option value="جديدة">جديدة</option>
+                    <option value="مكتملة">مكتملة</option>
+                    <option value="متأخرة">متأخرة</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Tasks Table Container -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                  <thead>
+                    <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200/80">
+                      <th class="py-3 px-3">عنوان المهمة</th>
+                      <th class="py-3 px-3">إسناد إلى</th>
+                      <th class="py-3 px-3">تاريخ الاستحقاق</th>
+                      <th class="py-3 px-3">الحالة</th>
+                      <th class="py-3 px-3 text-center">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody id="managerTasksTableBody" class="divide-y divide-slate-100">
+                    <tr>
+                      <td colspan="5" class="p-8 text-center text-slate-400 font-bold">
+                        <i class="fa-solid fa-list-check text-3xl mb-2 text-slate-300 block"></i>
+                        لا توجد مهام مسندة حالياً
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Left Column (4 Cols): Pending Approvals & My Team -->
+          <div class="lg:col-span-4 space-y-6">
+            <!-- Box 1: Requests Awaiting Manager Action -->
+            <div class="card-elevated p-5 rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+              <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                  </div>
+                  <h4 class="text-xs font-black text-slate-900">طلبات بانتظار الإجراء</h4>
+                </div>
+                <button onclick="switchTab('leaves')" class="text-[11px] font-bold text-brand hover:underline">
+                  عرض الكل
+                </button>
+              </div>
+
+              <!-- Requests List Container -->
+              <div id="managerPendingRequestsContainer" class="space-y-2.5">
+                <div class="p-6 text-center text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <i class="fa-solid fa-check-double text-2xl mb-1 text-slate-300 block"></i>
+                  لا توجد طلبات بانتظار اعتمادك.
+                </div>
+              </div>
+            </div>
+
+            <!-- Box 2: My Team Members List -->
+            <div class="card-elevated p-5 rounded-3xl border border-slate-200/80 bg-white shadow-sm">
+              <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-users"></i>
+                  </div>
+                  <h4 class="text-xs font-black text-slate-900">فريقي</h4>
+                </div>
+                <button onclick="switchTab('organization')" class="text-[11px] font-bold text-brand hover:underline">
+                  عرض الكل
+                </button>
+              </div>
+
+              <!-- Team List Container -->
+              <div id="managerTeamListContainer" class="space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                <div class="p-6 text-center text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  لا توجد نتائج
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           MODAL 1: ASSIGN NEW TASK (إسناد مهمة جديدة)
+           ===================================================================== -->
+      <div id="modalAssignTask" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border-2 border-amber-500/40 animate-scale-in">
+          <div class="bg-gradient-to-r from-[#700c14] to-[#4a080d] px-6 py-4 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-sm border border-amber-400/30">
+                <i class="fa-solid fa-list-check"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-black">إسناد مهمة جديدة</h3>
+                <p class="text-[10px] text-amber-200/80 font-semibold">تحديد المسؤوليات وتاريخ الاستحقاق لفريق العمل</p>
+              </div>
+            </div>
+            <button onclick="closeModal('modalAssignTask')" class="text-white/70 hover:text-white text-base cursor-pointer">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <form onsubmit="handleAssignTaskSubmit(event)" class="p-6 space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">عنوان المهمة <span class="text-rose-500">*</span></label>
+              <input type="text"
+                     id="assignTaskTitle"
+                     required
+                     placeholder="مثال: مراجعة عروض أسعار موردي المواد"
+                     class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">إسناد إلى <span class="text-rose-500">*</span></label>
+                <select id="assignTaskEmpSelect"
+                        required
+                        class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white cursor-pointer">
+                  <option value="">اختر الموظف...</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">الأولوية</label>
+                <select id="assignTaskPriority"
+                        class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white cursor-pointer">
+                  <option value="متوسطة" selected>متوسطة</option>
+                  <option value="عادية">عادية</option>
+                  <option value="عاجلة">عاجلة</option>
+                  <option value="منخفضة">منخفضة</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ الاستحقاق <span class="text-rose-500">*</span></label>
+              <input type="date"
+                     id="assignTaskDueDate"
+                     required
+                     class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">تفاصيل وملاحظات المهمة</label>
+              <textarea id="assignTaskDescription"
+                        rows="3"
+                        placeholder="أدخل إرشادات أو متطلبات إنجاز المهمة..."
+                        class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white"></textarea>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button type="button"
+                      onclick="closeModal('modalAssignTask')"
+                      class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                إلغاء
+              </button>
+              <button type="submit"
+                      class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#700c14] hover:bg-[#580910] transition shadow-md flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+                <span>إسناد المهمة</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- =====================================================================
+           MODAL 2: REQUEST PENALTY (طلب إصدار قرار جزائي)
+           ===================================================================== -->
+      <div id="modalRequestPenalty" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border-2 border-rose-500/30 animate-scale-in">
+          <div class="bg-gradient-to-r from-rose-800 to-rose-950 px-6 py-4 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center text-sm">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-black">طلب إصدار قرار جزائي للموظف</h3>
+                <p class="text-[10px] text-rose-200 font-semibold">إحالة مخالفة وظيفية لإدارة الموارد البشرية للبت النظامي</p>
+              </div>
+            </div>
+            <button onclick="closeModal('modalRequestPenalty')" class="text-white/70 hover:text-white text-base cursor-pointer">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <form onsubmit="handleRequestPenaltySubmit(event)" class="p-6 space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">الموظف المعني <span class="text-rose-500">*</span></label>
+              <select id="reqPenaltyEmpSelect"
+                      required
+                      class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white cursor-pointer">
+                <option value="">اختر الموظف...</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">نوع المخالفة <span class="text-rose-500">*</span></label>
+                <select id="reqPenaltyType"
+                        required
+                        class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white cursor-pointer">
+                  <option value="تأخير عن الدوام دون إذن">تأخير عن الدوام دون إذن</option>
+                  <option value="غياب دون عذر مشروع">غياب دون عذر مشروع</option>
+                  <option value="مخالفة تعليمات العمل وإهمال الواجبات">مخالفة تعليمات العمل وإهمال الواجبات</option>
+                  <option value="إتلاف أو سوء استخدام العهدة">إتلاف أو سوء استخدام العهدة</option>
+                  <option value="مخالفة سلوكية أو عدم انضباط">مخالفة سلوكية أو عدم انضباط</option>
+                  <option value="مخالفة أخرى">مخالفة أخرى</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">تاريخ الواقعة <span class="text-rose-500">*</span></label>
+                <input type="date"
+                       id="reqPenaltyDate"
+                       required
+                       class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">التفاصيل والأسباب الموجبة للجزاء <span class="text-rose-500">*</span></label>
+              <textarea id="reqPenaltyReason"
+                        rows="3"
+                        required
+                        placeholder="اشرح الواقعة بالتفصيل ومبررات إحالتها للائحة الجزاءات..."
+                        class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:border-brand outline-none bg-slate-50 focus:bg-white"></textarea>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button type="button"
+                      onclick="closeModal('modalRequestPenalty')"
+                      class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                إلغاء
+              </button>
+              <button type="submit"
+                      class="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-700 hover:bg-rose-800 transition shadow-md flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+                <span>إرسال الطلب للموارد البشرية</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
 
 </main>
   </div>

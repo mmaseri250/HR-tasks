@@ -4143,6 +4143,211 @@ app.get('/api/general/reports/export/csv', (req, res) => {
   }
 });
 
+
+/* =========================================================================
+   MODULE 13: MANAGER PORTAL & DASHBOARD (صفحة المدير)
+   ========================================================================= */
+
+app.get('/api/manager/dashboard-stats', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    const empId = user?.emp_id ? Number(user.emp_id) : null;
+    const isAdmin = user?.role === 'admin' || user?.role === 'general_manager' || user?.role === 'hr_manager';
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. Fetch Direct Team Members
+    let teamMembers = [];
+    if (empId) {
+      teamMembers = query(`
+        SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.phone, e.email, e.status,
+               d.name_ar AS department_name, b.name_ar AS branch_name
+        FROM employees e
+        LEFT JOIN departments d ON e.department_id = d.id
+        LEFT JOIN branches b ON e.branch_id = b.id
+        WHERE (e.manager_id = ? OR e.direct_manager_name = ?) AND e.status = 'نشط'
+        ORDER BY e.full_name_ar ASC
+      `, [empId, user.full_name || '']);
+    }
+
+    if (teamMembers.length === 0 && isAdmin) {
+      // For Admin/Top Managers, display primary active team or all employees
+      teamMembers = query(`
+        SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.phone, e.email, e.status,
+               d.name_ar AS department_name, b.name_ar AS branch_name
+        FROM employees e
+        LEFT JOIN departments d ON e.department_id = d.id
+        LEFT JOIN branches b ON e.branch_id = b.id
+        WHERE e.status = 'نشط'
+        ORDER BY e.id ASC
+        LIMIT 25
+      `);
+    }
+
+    const teamIds = teamMembers.map(m => m.id);
+
+    // 2. Fetch Tasks Assigned to or by Team
+    let tasks = [];
+    if (isAdmin) {
+      tasks = tasksModule.getAllTasks({ limit: 50 }, user);
+    } else if (teamIds.length > 0 || empId) {
+      const placeholders = teamIds.length > 0 ? teamIds.map(() => '?').join(',') : '0';
+      const params = teamIds.length > 0 ? [...teamIds, empId || 0] : [0, empId || 0];
+      tasks = query(`
+        SELECT t.*,
+               e.emp_code, e.full_name_ar AS assigned_to_name, e.job_title_ar AS assigned_to_job
+        FROM tasks t
+        JOIN employees e ON t.assigned_to = e.id
+        WHERE t.assigned_to IN (${placeholders}) OR t.assigned_by = ?
+        ORDER BY t.created_at DESC
+        LIMIT 50
+      `, params);
+    }
+
+    // 3. Fetch Pending Requests Awaiting Manager Action
+    let pendingRequests = [];
+    if (isAdmin) {
+      pendingRequests = query(`
+        SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar
+        FROM requests r
+        JOIN employees e ON r.emp_id = e.id
+        WHERE (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق')
+        ORDER BY r.created_at DESC
+        LIMIT 20
+      `);
+    } else if (empId || user.full_name) {
+      pendingRequests = query(`
+        SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar
+        FROM requests r
+        JOIN employees e ON r.emp_id = e.id
+        WHERE (r.manager_id = ? OR r.manager_name = ? OR e.manager_id = ?)
+          AND (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق')
+        ORDER BY r.created_at DESC
+        LIMIT 20
+      `, [empId || 0, user.full_name || '', empId || 0]);
+    }
+
+    // 4. Calculate KPI Counts
+    const inProgressTasksCount = tasks.filter(t => t.status === 'قيد التنفيذ' || t.status === 'جديدة' || t.status === 'بانتظار الاعتماد').length;
+    const overdueTasksCount = tasks.filter(t => t.status === 'متأخرة' || (t.status !== 'مكتملة' && t.due_date && t.due_date < today)).length;
+    const pendingRequestsCount = pendingRequests.length;
+    const teamCount = teamMembers.length;
+
+    res.json({
+      success: true,
+      data: {
+        team_count: teamCount,
+        in_progress_tasks_count: inProgressTasksCount,
+        overdue_tasks_count: overdueTasksCount,
+        pending_requests_count: pendingRequestsCount,
+        tasks,
+        pending_requests: pendingRequests,
+        team_members: teamMembers
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/manager/assign-task', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    const { title, assigned_to, due_date, priority = 'متوسطة', description = '' } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, error: 'عنوان المهمة مطلوب' });
+    }
+    if (!assigned_to) {
+      return res.status(400).json({ success: false, error: 'يجب اختيار الموظف المسندة إليه المهمة' });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const task = tasksModule.createTask({
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      assigned_to: Number(assigned_to),
+      assigned_by: user?.emp_id ? Number(user.emp_id) : (user?.id ? Number(user.id) : null),
+      assigned_by_name: user?.full_name || 'المدير المباشر',
+      start_date: req.body?.start_date || todayStr,
+      due_date: due_date || todayStr,
+      priority
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'تم إسناد المهمة بنجاح إلى الموظف',
+      data: task
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/manager/request-penalty', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    const { emp_id, violation_type, incident_date, reason } = req.body;
+
+    if (!emp_id) return res.status(400).json({ success: false, error: 'يجب اختيار الموظف' });
+    if (!violation_type) return res.status(400).json({ success: false, error: 'يجب تحديد نوع المخالفة' });
+    if (!reason || !reason.trim()) return res.status(400).json({ success: false, error: 'يرجى كتابة تفاصيل المخالفة والأسباب' });
+
+    const targetEmp = get('SELECT id, emp_code, full_name_ar FROM employees WHERE id = ?', [emp_id]);
+    if (!targetEmp) return res.status(404).json({ success: false, error: 'الموظف غير موجود' });
+
+    // Document in audit logs for HR review
+    run(`
+      INSERT INTO audit_logs (entity_type, entity_id, action, performed_by_id, performed_by_name, performed_by_role, stage, comment, created_at)
+      VALUES ('PENALTY_REQUEST', ?, 'REFERRAL', ?, ?, ?, 'إحالة من المدير المباشر', ?, datetime('now'))
+    `, [
+      targetEmp.id,
+      user?.id || null,
+      user?.full_name || 'المدير المباشر',
+      user?.role || 'manager',
+      `طلب قرار جزائي للموظف [${targetEmp.full_name_ar}]: المخالفة: ${violation_type} - الواقعة: ${incident_date || 'غير محدد'} - التفاصيل: ${reason.trim()}`
+    ]);
+
+    // Send in-system notification to HR users
+    try {
+      const hrUsers = query("SELECT id FROM users WHERE role IN ('admin', 'hr_manager', 'hr_specialist')");
+      for (const hr of hrUsers) {
+        run(`
+          INSERT INTO notifications (user_id, title, message, type, is_read, created_at)
+          VALUES (?, 'طلب قرار جزائي جديد', ?, 'warning', 0, datetime('now'))
+        `, [hr.id, `قام ${user?.full_name || 'المدير'} برفع طلب إصدار قرار جزائي ضد الموظف [${targetEmp.full_name_ar}] لنوع: ${violation_type}`]);
+      }
+    } catch (_) {}
+
+    res.json({
+      success: true,
+      message: `تم رفع طلب القرار الجزائي بنجاح ضد الموظف [${targetEmp.full_name_ar}] إلى إدارة الموارد البشرية`
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/manager/requests/:id/action', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    const { action, comment = '' } = req.body;
+    const reqId = req.params.id;
+
+    if (!action || (action !== 'approve' && action !== 'reject')) {
+      return res.status(400).json({ success: false, error: 'إجراء الاعتماد غير صالح (يجب أن يكون approve أو reject)' });
+    }
+
+    const updated = requestsModule.processRequestStep(reqId, 'manager', action, comment, user);
+    res.json({
+      success: true,
+      message: action === 'approve' ? 'تمت موافقة المدير المباشر على الطلب بنجاح وإحالته لقسم الموارد البشرية' : 'تم رفض الطلب وتوثيق السبب',
+      data: updated
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 // Fallback to SPA
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
