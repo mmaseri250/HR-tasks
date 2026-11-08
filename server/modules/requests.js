@@ -152,8 +152,26 @@ function submitRequest(data, userContext = null) {
   }
 
   const year = new Date().getFullYear();
-  const countRow = get('SELECT COUNT(*) AS total FROM requests');
-  const seq = String((countRow.total || 0) + 1).padStart(4, '0');
+  let maxSeq = 0;
+  try {
+    const existingReqs = query(`SELECT request_no FROM requests WHERE request_no LIKE ?`, [`REQ-${year}-%`]) || [];
+    for (const r of existingReqs) {
+      if (r && r.request_no) {
+        const parts = r.request_no.split('-');
+        const num = parseInt(parts[2], 10);
+        if (!isNaN(num) && num > maxSeq) maxSeq = num;
+      }
+    }
+    const existingLeaves = query(`SELECT request_no FROM leaves WHERE request_no LIKE ?`, [`REQ-${year}-%`]) || [];
+    for (const l of existingLeaves) {
+      if (l && l.request_no) {
+        const parts = l.request_no.split('-');
+        const num = parseInt(parts[2], 10);
+        if (!isNaN(num) && num > maxSeq) maxSeq = num;
+      }
+    }
+  } catch (e) {}
+  const seq = String(maxSeq + 1).padStart(4, '0');
   const request_no = `REQ-${year}-${seq}`;
 
   const sql = `
