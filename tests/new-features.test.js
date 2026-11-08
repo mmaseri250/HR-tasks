@@ -13,7 +13,7 @@ console.log('--- تشغيل اختبارات الميزات الجديدة (ال
 
 // 1. Attendance Notices Test (Zero Emails, In-System Only)
 console.log('\n[1/5] اختبار نظام إشعارات وإنذارات الدوام (تأخير، غياب، انقطاع م80)...');
-const sampleEmp = db.get('SELECT id, emp_code, full_name_ar FROM employees LIMIT 1');
+const sampleEmp = db.get("SELECT id, emp_code, full_name_ar FROM employees WHERE manager_id IS NOT NULL AND status = 'نشط' LIMIT 1");
 assert(sampleEmp, 'يجب وجود موظف للاختبار');
 
 const notice = noticesModule.createNotice({

@@ -616,7 +616,7 @@ app.get('/api/settings', (req, res) => {
 });
 
 
-app.get('/api/dashboard/executive-stats', (req, res) => {
+app.get('/api/dashboard/executive-stats', rbacEngine.requirePermission('dashboard.view'), (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
 
@@ -626,21 +626,65 @@ app.get('/api/dashboard/executive-stats', (req, res) => {
     const totalExpats = get("SELECT COUNT(*) as c FROM employees WHERE status = 'نشط' AND is_saudi = 0")?.c || 0;
     const totalTerminated = get("SELECT COUNT(*) as c FROM employees WHERE status != 'نشط'")?.c || 0;
 
-    // 2. Attendance Rate
-    const attToday = attendanceModule.getAttendanceStats(today);
-    let attRate = 100.0;
-    if (attToday && attToday.totalEmployees > 0 && attToday.presentCount !== undefined) {
-      attRate = Number(((attToday.presentCount / attToday.totalEmployees) * 100).toFixed(1));
+    // 2. Official Vehicles and Licenses - 100% Real from Database (Never mock)
+    const totalVehicles = get("SELECT COUNT(*) as c FROM vehicles")?.c || 0;
+    const totalLicenses = get("SELECT COUNT(*) as c FROM company_licenses")?.c || 0;
+
+    // 3. Attendance Rate & Trend: Zero-mock policy
+    // If no biometric devices are active and no punch logs exist, do NOT fabricate attendance
+    const activeDevices = get("SELECT COUNT(*) as c FROM biometric_devices WHERE is_active = 1")?.c || 0;
+    const punchLogsToday = get("SELECT COUNT(*) as c FROM attendance_logs WHERE date(punch_time) = date('now')")?.c || 0;
+    
+    let attRate = null;
+    let attendanceStatus = "غير متاح — لم يتم ربط مصدر الحضور";
+    let monthlyAttendance = [];
+
+    if (activeDevices > 0 || punchLogsToday > 0) {
+      const attToday = attendanceModule.getAttendanceStats(today);
+      if (attToday && attToday.totalEmployees > 0 && attToday.presentCount !== undefined) {
+        attRate = Number(((attToday.presentCount / attToday.totalEmployees) * 100).toFixed(1));
+        attendanceStatus = `${attRate}% متوسط الالتزام اليومي`;
+      }
+      // Only include monthly trend if real historical punch data exists
+      const trendRows = query(`
+        SELECT strftime('%m', date) as m, 
+               ROUND(AVG(CASE WHEN status IN ('حاضر', 'متأخر') THEN 100.0 ELSE 0.0 END), 1) as rate
+        FROM attendance_daily_summary
+        WHERE date >= date('now', '-5 months')
+        GROUP BY strftime('%m', date)
+        ORDER BY date ASC
+      `);
+      const arMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+      if (trendRows && trendRows.length > 0) {
+        monthlyAttendance = trendRows.map(r => ({
+          month: arMonths[parseInt(r.m, 10) - 1] || r.m,
+          rate: Number(r.rate) || 0
+        }));
+      }
     }
 
-    // 3. Pending Requests - Real count from database
+    // 4. Current Period in Saudi Arabia Timezone (Asia/Riyadh)
+    const nowRiyadh = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
+    const currentYear = nowRiyadh.getFullYear();
+    const currentMonthNum = nowRiyadh.getMonth() + 1;
+    const daysInCurrentMonth = new Date(currentYear, currentMonthNum, 0).getDate();
+    const arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const currentMonthName = arabicMonths[nowRiyadh.getMonth()];
+    const pad = (n) => String(n).padStart(2, '0');
+    const periodRange = `من 01 ${currentMonthName} ${currentYear} إلى ${pad(daysInCurrentMonth)} ${currentMonthName} ${currentYear}`;
+    const periodDatesIso = {
+      from: `${currentYear}-${pad(currentMonthNum)}-01`,
+      to: `${currentYear}-${pad(currentMonthNum)}-${pad(daysInCurrentMonth)}`
+    };
+
+    // 5. Pending Requests - Real count from database
     const pendingReqsCount = get("SELECT COUNT(*) as c FROM requests WHERE status LIKE '%معلق%' OR status = 'جديد'")?.c || 0;
 
-    // 4. Real Payroll Total (Gross actual from active employees)
+    // 6. Real Payroll Total (Gross actual from active employees)
     const grossSalaryRow = get("SELECT SUM(basic_salary + COALESCE(housing_allowance, 0) + COALESCE(transport_allowance, 0) + COALESCE(other_allowance, 0)) as total FROM employees WHERE status = 'نشط'");
     const payrollTotal = grossSalaryRow?.total ? Math.round(grossSalaryRow.total) : 0;
 
-    // 5. Requests Movement by Type - Direct from Database
+    // 7. Requests Movement by Type - Direct from Database
     const reqLeaves = get("SELECT COUNT(*) as c FROM requests WHERE request_type LIKE '%إجازة%'")?.c || 0;
     const reqPerms = get("SELECT COUNT(*) as c FROM requests WHERE request_type LIKE '%إذن%' OR request_type LIKE '%خروج%'")?.c || 0;
     const reqLoans = get("SELECT COUNT(*) as c FROM requests WHERE request_type LIKE '%سلفة%' OR request_type LIKE '%قرض%'")?.c || 0;
@@ -655,16 +699,7 @@ app.get('/api/dashboard/executive-stats', (req, res) => {
       { type: 'طلبات أخرى', count: reqOthers, color: '#64748b' }
     ];
 
-    // 6. Monthly Attendance Trend
-    const monthlyAttendance = [
-      { month: 'يناير', rate: 97.5 },
-      { month: 'فبراير', rate: 98.2 },
-      { month: 'مارس', rate: 99.0 },
-      { month: 'أبريل', rate: 98.6 },
-      { month: 'مايو', rate: attRate || 100.0 }
-    ];
-
-    // 7. Departments Distribution - Direct from Database
+    // 8. Departments Distribution - Direct from Database
     const rawDepts = query(`
       SELECT d.name_ar, COUNT(e.id) as count
       FROM departments d
@@ -679,7 +714,7 @@ app.get('/api/dashboard/executive-stats', (req, res) => {
       percentage: totalInDepts > 0 ? Math.round(((d.count || 0) / totalInDepts) * 100) : 0
     }));
 
-    // 8. Action Items (Required Actions) - Direct from Database
+    // 9. Action Items (Required Actions) - Direct from Database
     const pendingLeavesCount = get("SELECT COUNT(*) as c FROM leaves WHERE status = 'معلق'")?.c || 0;
     const contractsExpiringCount = get(`
       SELECT COUNT(*) as c FROM employees
@@ -738,7 +773,7 @@ app.get('/api/dashboard/executive-stats', (req, res) => {
       });
     }
 
-    // 9. Alerts - Direct from Database
+    // 10. Alerts - Direct from Database
     const alerts = [];
     if (iqamaExpiringCount > 0) {
       alerts.push({
@@ -775,7 +810,13 @@ app.get('/api/dashboard/executive-stats', (req, res) => {
         total_saudis: totalSaudis,
         total_expats: totalExpats,
         total_terminated: totalTerminated,
+        total_vehicles: totalVehicles,
+        total_licenses: totalLicenses,
         attendance_rate: attRate,
+        attendance_status: attendanceStatus,
+        period_label: `هذا الشهر (${currentMonthName} ${currentYear})`,
+        period_range: periodRange,
+        period_dates: periodDatesIso,
         pending_requests: pendingReqsCount,
         payroll_total: payrollTotal,
         payroll_actual_gross: payrollTotal,
@@ -791,7 +832,7 @@ app.get('/api/dashboard/executive-stats', (req, res) => {
   }
 });
 
-app.get('/api/dashboard/stats', cacheService.routeCache(25), (req, res) => {
+app.get('/api/dashboard/stats', cacheService.routeCache(25), rbacEngine.requirePermission('dashboard.view'), (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     attendanceAutomationService.ensureRosterDataForDate(today);

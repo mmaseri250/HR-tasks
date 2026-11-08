@@ -319,7 +319,28 @@ class AttendanceAutomationService {
    */
   getAttendanceDashboardKPIs(dateStr = null) {
     const today = dateStr || new Date().toISOString().split('T')[0];
-    const totalEmployees = get("SELECT COUNT(*) as c FROM employees WHERE status = 'نشط'")?.c || 111;
+    const totalEmployees = get("SELECT COUNT(*) as c FROM employees WHERE status = 'نشط'")?.c || 0;
+
+    const activeDevices = get("SELECT COUNT(*) as c FROM biometric_devices WHERE is_active = 1")?.c || 0;
+    const punchLogsCount = get("SELECT COUNT(*) as c FROM attendance_logs WHERE date(punch_time) = ?", [today])?.c || 0;
+
+    // Zero-mock policy: When no biometric hardware or punch logs exist, do not fabricate numbers
+    if (activeDevices === 0 && punchLogsCount === 0) {
+      return {
+        today,
+        totalEmployees,
+        presentToday: 0,
+        lateToday: 0,
+        absentToday: 0,
+        onLeaveToday: 0,
+        totalDelaysMinutes: 0,
+        punctualityRate: null,
+        dailyAttendanceRate: null,
+        autoPenaltiesThisMonth: 0,
+        isBiometricConnected: false,
+        statusMessage: 'غير متاح — لم يتم ربط مصدر الحضور'
+      };
+    }
 
     const summaryToday = query(`
       SELECT status, COUNT(*) as count, SUM(delay_minutes) as total_delays
@@ -348,8 +369,8 @@ class AttendanceAutomationService {
       WHERE incident_date LIKE ? AND status LIKE '%آلي%'
     `, [`${monthPrefix}%`])?.count || 0;
 
-    const punctualityRate = presentToday > 0 ? Math.round(((presentToday - lateToday) / presentToday) * 100) : 100;
-    const dailyAttendanceRate = totalEmployees > 0 ? Math.round(((presentToday + onLeaveToday) / totalEmployees) * 1000) / 10 : 100;
+    const punctualityRate = presentToday > 0 ? Math.round(((presentToday - lateToday) / presentToday) * 100) : null;
+    const dailyAttendanceRate = totalEmployees > 0 ? Math.round(((presentToday + onLeaveToday) / totalEmployees) * 1000) / 10 : null;
 
     return {
       today,
@@ -361,7 +382,9 @@ class AttendanceAutomationService {
       totalDelaysMinutes,
       punctualityRate,
       dailyAttendanceRate,
-      autoPenaltiesThisMonth: autoPenaltiesCount
+      autoPenaltiesThisMonth: autoPenaltiesCount,
+      isBiometricConnected: true,
+      statusMessage: 'نشط ومربوط'
     };
   }
 
@@ -371,6 +394,14 @@ class AttendanceAutomationService {
    */
   ensureRosterDataForDate(dateStr = null) {
     const targetDate = dateStr || new Date().toISOString().split('T')[0];
+
+    // Zero-mock policy: Do NOT seed synthetic attendance if no biometric device or punches exist
+    const activeDevices = get("SELECT COUNT(*) as c FROM biometric_devices WHERE is_active = 1")?.c || 0;
+    const punchLogsCount = get("SELECT COUNT(*) as c FROM attendance_logs WHERE date(punch_time) = ?", [targetDate])?.c || 0;
+    if (activeDevices === 0 && punchLogsCount === 0) {
+      return { seeded: false, count: 0, date: targetDate, reason: 'لم يتم ربط أجهزة البصمة البيومترية' };
+    }
+
     const employees = query("SELECT id, emp_code, full_name_ar, shift_type FROM employees WHERE status = 'نشط' ORDER BY id ASC");
     const existing = query("SELECT emp_id FROM attendance_daily_summary WHERE date = ?", [targetDate]);
     const existingEmpIds = new Set(existing.map(r => r.emp_id));

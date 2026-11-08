@@ -364,11 +364,14 @@ function authenticateAndScope(req, res, next) {
   }
 
   if (!user && (headerRole || req.body?.role)) {
+    // Security enforcement: Deny untrusted role escalation. If user ID is not found in database, never grant admin or manager role
+    const requestedRole = headerRole || req.body?.role || 'employee';
+    const safeRole = (requestedRole === 'admin' || requestedRole === 'general_manager' || requestedRole === 'hr_manager') ? 'employee' : requestedRole;
     user = {
       id: userId ? Number(userId) : null,
       username: req.body?.username || '',
       full_name: req.headers['x-user-name'] ? decodeURIComponent(req.headers['x-user-name']) : (req.body?.name || 'مستخدم'),
-      role: headerRole || req.body?.role || 'employee',
+      role: safeRole,
       emp_id: headerEmpId ? Number(headerEmpId) : (req.body?.emp_id ? Number(req.body.emp_id) : null),
       custom_data_scope: null
     };

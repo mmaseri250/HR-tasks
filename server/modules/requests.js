@@ -174,6 +174,8 @@ function submitRequest(data, userContext = null) {
   const seq = String(maxSeq + 1).padStart(4, '0');
   const request_no = `REQ-${year}-${seq}`;
 
+  const initialStatus = managerId ? 'معلق - بانتظار موافقة المدير المباشر' : 'معلق - بانتظار تعيين المدير المباشر';
+
   const sql = `
     INSERT INTO requests (
       request_no, emp_id, request_type, start_date, end_date, days_count,
@@ -181,12 +183,12 @@ function submitRequest(data, userContext = null) {
       permission_hours, permission_minutes, permission_time_out, permission_time_in,
       replacement_emp_id, replacement_emp_name,
       manager_status, hr_verify_status, hr_director_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق - بانتظار موافقة المدير المباشر', ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
   `;
 
   const result = run(sql, [
     request_no, emp_id, request_type, start_date, end_date,
-    days_count, amount, destination_entity, reason, managerId, managerName,
+    days_count, amount, destination_entity, reason, initialStatus, managerId, managerName,
     Number(permission_hours) || 0, Number(permission_minutes) || 0,
     permission_time_out || null, permission_time_in || null,
     replacement_emp_id || null, replacementEmpName
@@ -202,12 +204,12 @@ function submitRequest(data, userContext = null) {
           request_no, emp_id, leave_type, start_date, end_date, days_count,
           reason, status, manager_id, manager_name, replacement_emp_id, replacement_emp_name,
           manager_status, hr_verify_status, hr_director_status, hr_status, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'معلق - بانتظار موافقة المدير المباشر', ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'معلق', 'معلق', 'معلق', 'معلق', datetime('now'), datetime('now'))
       `, [
         request_no, emp_id, request_type,
         start_date || new Date().toISOString().split('T')[0],
         end_date || new Date().toISOString().split('T')[0],
-        days_count || 1, reason, managerId, managerName,
+        days_count || 1, reason, initialStatus, managerId, managerName,
         replacement_emp_id || null, replacementEmpName
       ]);
       leaveId = leaveRes.lastInsertRowid;
@@ -218,10 +220,11 @@ function submitRequest(data, userContext = null) {
 
   // 2. Initialize 3 Workflow Pipeline Steps (سير العمل المعتمد)
   try {
+    const step1Status = managerId ? 'معلق' : 'متوقف - لم يتم تعيين مدير مباشر';
     run(`
       INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
-      VALUES (?, ?, 1, 'موافقة المدير المباشر', 'direct_manager', ?, ?, 'معلق', datetime('now'), datetime('now'))
-    `, [reqId, leaveId, managerId, managerName]);
+      VALUES (?, ?, 1, 'موافقة المدير المباشر', 'direct_manager', ?, ?, ?, datetime('now'), datetime('now'))
+    `, [reqId, leaveId, managerId, managerName, step1Status]);
 
     run(`
       INSERT INTO workflow_steps (request_id, leave_id, step_order, step_name, role_required, assigned_to_emp_id, assigned_to_name, status, created_at, updated_at)
@@ -607,6 +610,11 @@ function processRequestStep(id, step, action, comment = '', userContext = null) 
       throw new Error('غير مصرح: هذه الخطوة مخصصة لتدقيق وتحقق قسم الموارد البشرية أو مدير النظام.');
     }
 
+    // Stage-gate enforcement: cannot skip manager approval
+    if (userRole !== 'admin' && req.manager_status !== 'معتمد' && !req.status.includes('بانتظار تحقق قسم الموارد')) {
+      throw new Error('غير مصرح: لا يمكن تدقيق أو نقل الطلب قبل اعتماد المدير المباشر أولاً.');
+    }
+
     const newStatus = action === 'approve' || action === 'verify'
       ? 'معلق - بانتظار اعتماد مدير الموارد البشرية'
       : 'مرفوض من قسم الموارد البشرية';
@@ -618,6 +626,11 @@ function processRequestStep(id, step, action, comment = '', userContext = null) 
     const isDirector = userRole === 'admin' || userRole === 'hr_manager' || userRole === 'general_manager';
     if (!isDirector) {
       throw new Error('غير مصرح: هذه الخطوة مخصصة لاعتماد مدير الموارد البشرية أو مدير النظام.');
+    }
+
+    // Stage-gate enforcement: cannot skip HR verification
+    if (userRole !== 'admin' && req.hr_verify_status !== 'معتمد' && !req.status.includes('بانتظار اعتماد مدير الموارد')) {
+      throw new Error('غير مصرح: لا يمكن الاعتماد النهائي قبل تدقيق وتحقق قسم الموارد البشرية أولاً.');
     }
 
     const newStatus = action === 'approve'

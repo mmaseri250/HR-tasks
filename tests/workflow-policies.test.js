@@ -59,7 +59,8 @@ const testEmp = employeesModule.createEmployee({
   job_title_ar: 'منسق إداري',
   basic_salary: 7000,
   housing_allowance: 1750,
-  transport_allowance: 700
+  transport_allowance: 700,
+  manager_id: employeesModule.getAllEmployees()[0].id
 });
 
 const testReq = requestsModule.submitRequest({

@@ -62,7 +62,8 @@ function runEmployeeAndRequestTests() {
     other_allowance: 500,
     bank_name: 'مصرف الراجحي',
     iban: 'SA448000020160801002001',
-    annual_leave_balance: 30
+    annual_leave_balance: 30,
+    manager_id: initialEmployees[0].id
   };
 
   const created = employeesModule.createEmployee(newEmpData);

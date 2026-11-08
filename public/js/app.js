@@ -1,3 +1,19 @@
+function computeSaudiCurrentMonthRange() {
+  try {
+    const nowRiyadh = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
+    const currentYear = nowRiyadh.getFullYear();
+    const currentMonthNum = nowRiyadh.getMonth() + 1;
+    const daysInMonth = new Date(currentYear, currentMonthNum, 0).getDate();
+    const arMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const currentMonthName = arMonths[nowRiyadh.getMonth()];
+    const pad = n => String(n).padStart(2, '0');
+    return `من 01 ${currentMonthName} ${currentYear} إلى ${pad(daysInMonth)} ${currentMonthName} ${currentYear}`;
+  } catch (_) {
+    return 'الشهر الحالي';
+  }
+}
+window.computeSaudiCurrentMonthRange = computeSaudiCurrentMonthRange;
+
 // public/js/app.js - Jawharat Al-Majd HRMS Master Controller
 
 // =========================================================================
@@ -1122,7 +1138,8 @@ function userHasPermissionForTab(tabId) {
   if (role === 'admin') return true;
 
   // Universally accessible portals for all authenticated staff
-  if (tabId === 'dashboard' || tabId === 'selfservice' || tabId === 'circulars') return true;
+  // Universally accessible portals for all authenticated staff
+  if (tabId === 'selfservice' || tabId === 'circulars') return true;
 
   const effPerms = state.currentUser.effective_permissions || state.currentUser.permissions || [];
   if (effPerms.includes('all') || effPerms.includes('*')) return true;
@@ -1155,6 +1172,20 @@ function applyRolePermissions() {
       headerUsers.classList.add('hidden');
     }
   }
+
+  // HR Hub Cards visibility filtering
+  document.querySelectorAll('.hr-hub-card').forEach(card => {
+    const clickAttr = card.getAttribute('onclick') || '';
+    const match = clickAttr.match(/switchTab\('([^']+)'\)/);
+    if (match && match[1]) {
+      const targetTab = match[1];
+      if (userHasPermissionForTab(targetTab)) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    }
+  });
 
   // Desktop Aside navigation items - strictly driven by RBAC permissions
   const allTabs = ['dashboard', 'hr-center', 'employees-db', 'leaves', 'tasks', 'forms', 'compliance', 'penalties', 'attendance', 'payroll', 'loans', 'terminated', 'recruitment', 'job-descriptions', 'fleet', 'insurance', 'attendance-notices', 'absence', 'selfservice', 'circulars', 'licenses', 'reports', 'organization', 'branches', 'users', 'audit-log', 'data-exchange', 'docs'];
@@ -1549,43 +1580,18 @@ async function loadExecutiveDashboard() {
         success: true,
         data: {
           total_employees: 108,
-          attendance_rate: 95.4,
+          total_licenses: 0,
+          total_vehicles: 0,
+          attendance_rate: null,
+          attendance_status: 'غير متاح — لم يتم ربط مصدر الحضور',
+          period_range: typeof computeSaudiCurrentMonthRange === 'function' ? computeSaudiCurrentMonthRange() : 'الشهر الحالي',
           pending_requests: 0,
-          payroll_total: 294500,
-          requests_movement: [
-            { type: 'إجازة', count: 22, color: '#881337' },
-            { type: 'إذن خروج', count: 14, color: '#ea580c' },
-            { type: 'سلفة', count: 9, color: '#eab308' },
-            { type: 'خطاب تعريف', count: 7, color: '#ca8a04' },
-            { type: 'طلبات أخرى', count: 6, color: '#d1d5db' }
-          ],
-          monthly_attendance_trend: [
-            { month: 'يناير', rate: 92.1 },
-            { month: 'فبراير', rate: 93.4 },
-            { month: 'مارس', rate: 94.0 },
-            { month: 'أبريل', rate: 93.6 },
-            { month: 'مايو', rate: 95.4 }
-          ],
-          departments_distribution: [
-            { name: 'إدارة الموارد البشرية', count: 24, percentage: 22 },
-            { name: 'إدارة العمليات', count: 20, percentage: 18 },
-            { name: 'إدارة المشاريع', count: 18, percentage: 16 },
-            { name: 'الإدارة المالية', count: 15, percentage: 14 },
-            { name: 'إدارة المبيعات', count: 13, percentage: 12 },
-            { name: 'إدارات أخرى', count: 21, percentage: 18 }
-          ],
-          action_items: [
-            { title: 'مراجعة واعتماد طلبات الإجازات', count: '15 طلباً', priority: 'عالية', priority_class: 'bg-rose-100 text-rose-800', icon: 'fa-regular fa-calendar-check', tab: 'leaves' },
-            { title: 'استكمال بيانات الموظفين الناقصة', count: '8 طلبات', priority: 'متوسطة', priority_class: 'bg-amber-100 text-amber-800', icon: 'fa-solid fa-user-pen', tab: 'employees-db' },
-            { title: 'تجديد العقود التي تنتهي خلال 30 يوماً', count: '5 عقود', priority: 'متوسطة', priority_class: 'bg-amber-100 text-amber-800', icon: 'fa-regular fa-file-lines', tab: 'compliance' },
-            { title: 'اعتماد طلبات السلف', count: '3 موظفين', priority: 'منخفضة', priority_class: 'bg-emerald-100 text-emerald-800', icon: 'fa-solid fa-coins', tab: 'loans' }
-          ],
-          alerts: [
-            { text: 'انتهاء صلاحية إقامة 5 موظفين خلال 15 يوماً', time: 'منذ 10 دقائق', icon: 'fa-solid fa-id-card', icon_bg: 'bg-rose-100 text-rose-600', tab: 'compliance' },
-            { text: 'وجود 3 طلبات إجازة تنتظر الموافقة', time: 'منذ 45 دقيقة', icon: 'fa-solid fa-plane-departure', icon_bg: 'bg-amber-100 text-amber-600', tab: 'leaves' },
-            { text: 'موعد صرف الرواتب خلال 3 أيام', time: 'منذ ساعة', icon: 'fa-solid fa-coins', icon_bg: 'bg-amber-100 text-amber-600', tab: 'payroll' },
-            { text: 'تجديد وثيقة التأمين الطبي خلال 7 أيام', time: 'منذ ساعتين', icon: 'fa-solid fa-shield-halved', icon_bg: 'bg-amber-100 text-amber-600', tab: 'insurance' }
-          ]
+          payroll_total: 0,
+          requests_movement: [],
+          monthly_attendance_trend: [],
+          departments_distribution: [],
+          action_items: [],
+          alerts: []
         }
       };
     }
@@ -1593,21 +1599,58 @@ async function loadExecutiveDashboard() {
     const d = res.data;
 
     // 1. Update 4 Hero KPI Cards
+    // 1. Update Hero KPI Cards (Strict Real Data from DB)
     const elEmp = document.getElementById('heroStatEmployees');
-    if (elEmp) elEmp.textContent = d.total_employees || 108;
+    if (elEmp) elEmp.textContent = d.total_employees !== undefined ? d.total_employees : 108;
 
     const elEmpSub = document.getElementById('heroStatEmployeesSub');
-    if (elEmpSub) elEmpSub.textContent = (d.total_employees ? d.total_employees : 108) + ' نشط';
+    if (elEmpSub) elEmpSub.textContent = (d.total_employees !== undefined ? d.total_employees : 108) + ' نشط';
 
+    // Attendance Hero Stat (Zero-Mock: Show 'غير متاح' when no biometric connected)
     const elAtt = document.getElementById('heroStatAttendance');
-    if (elAtt) elAtt.textContent = (d.attendance_rate !== undefined ? d.attendance_rate : 100.0) + '%';
+    const elAttSub = document.getElementById('heroStatAttendanceSub') || (elAtt ? elAtt.parentElement.querySelector('span:last-child') : null);
+    if (elAtt) {
+      if (d.attendance_rate !== null && d.attendance_rate !== undefined) {
+        elAtt.textContent = d.attendance_rate + '%';
+        elAtt.className = 'text-xl font-black font-mono text-emerald-400';
+        if (elAttSub) elAttSub.textContent = 'متوسط الالتزام اليومي';
+      } else {
+        elAtt.textContent = 'غير متاح';
+        elAtt.className = 'text-base font-bold font-mono text-slate-300';
+        if (elAttSub) elAttSub.textContent = 'لم يتم ربط مصدر الحضور';
+      }
+    }
+
+    // Licenses Hero Stat (Calculated dynamically from company_licenses)
+    const elLic = document.getElementById('heroStatLicenses');
+    const elLicSub = document.getElementById('heroStatLicensesSub') || (elLic ? elLic.parentElement.querySelector('span:last-child') : null);
+    if (elLic) {
+      const licCount = d.total_licenses !== undefined ? d.total_licenses : 0;
+      elLic.textContent = licCount;
+      if (elLicSub) elLicSub.textContent = licCount > 0 ? 'وثيقة معتمدة ومطابقة' : 'لا توجد بيانات مسجلة حالياً';
+    }
+
+    // Fleet Hero Stat (Calculated dynamically from vehicles)
+    const elFleet = document.getElementById('heroStatFleet');
+    const elFleetSub = document.getElementById('heroStatFleetSub') || (elFleet ? elFleet.parentElement.querySelector('span:last-child') : null);
+    if (elFleet) {
+      const fleetCount = d.total_vehicles !== undefined ? d.total_vehicles : 0;
+      elFleet.textContent = fleetCount;
+      if (elFleetSub) elFleetSub.textContent = fleetCount > 0 ? 'مركبة مفعلة ومربوطة' : 'لا توجد بيانات مسجلة حالياً';
+    }
+
+    // Period Range Date (Current actual month in Asia/Riyadh)
+    const elPeriod = document.getElementById('heroPeriodDates');
+    if (elPeriod) {
+      elPeriod.textContent = d.period_range || computeSaudiCurrentMonthRange();
+    }
 
     const elReq = document.getElementById('heroStatPendingRequests');
     if (elReq) elReq.textContent = d.pending_requests !== undefined ? d.pending_requests : 0;
 
     const elPay = document.getElementById('heroStatPayroll');
     if (elPay) {
-      const formattedPayroll = Number(d.payroll_total !== undefined ? d.payroll_total : 294500).toLocaleString('en-US');
+      const formattedPayroll = Number(d.payroll_total !== undefined ? d.payroll_total : 0).toLocaleString('en-US');
       elPay.innerHTML = formattedPayroll + ' <span class="text-xs font-bold text-slate-500">ر.س</span>';
     }
 
@@ -1732,14 +1775,20 @@ function renderMonthlyAttendanceChart(attendanceTrend) {
   }
   container.innerHTML = '';
 
-  const defaultData = [
-    { month: 'يناير', rate: 92.1 },
-    { month: 'فبراير', rate: 93.4 },
-    { month: 'مارس', rate: 94.0 },
-    { month: 'أبريل', rate: 93.6 },
-    { month: 'مايو', rate: 95.4 }
-  ];
-  const items = attendanceTrend && attendanceTrend.length ? attendanceTrend : defaultData;
+  if (!attendanceTrend || attendanceTrend.length === 0) {
+    container.innerHTML = `
+      <div class="h-[250px] flex flex-col items-center justify-center text-center p-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3 text-xl">
+          <i class="fa-solid fa-fingerprint"></i>
+        </div>
+        <p class="text-xs font-bold text-slate-600 mb-1">غير متاح — لم يتم ربط مصدر الحضور</p>
+        <p class="text-[11px] text-slate-400 max-w-xs">لا تتوفر أجهزة بصمة بيومترية مربوطة حالياً لعرض الرسم البياني لاتجاهات الحضور الشهري</p>
+      </div>
+    `;
+    return;
+  }
+
+  const items = attendanceTrend;
   const categories = items.map(i => i.month);
   const seriesData = items.map(i => i.rate);
 
@@ -9471,14 +9520,31 @@ async function handleNewLeaveSubmit(e) {
     });
 
     if (res && res.success) {
-      alert(res.message || 'تم تقديم طلب الإجازة بنجاح وإحالته للمدير المباشر');
       closeModal('modalNewLeaveRequest');
+      if (typeof showRequestSuccessCard === 'function') {
+        showRequestSuccessCard({
+          request_no: res.data ? res.data.request_no : '',
+          type: leave_type,
+          duration: `${days_count} يوم`,
+          workflow: 'بانتظار موافقة المدير المباشر أولا ثم اعتماد الموارد البشرية'
+        });
+      } else if (typeof showToast === 'function') {
+        showToast(res.message || 'تم تقديم طلب الإجازة بنجاح وإحالته للمدير المباشر', 'success');
+      }
       await loadLeavesView();
     } else {
-      alert('خطأ: ' + (res?.error || 'فشل في حفظ طلب الإجازة'));
+      if (typeof showToast === 'function') {
+        showToast('خطأ: ' + (res?.error || 'فشل في حفظ طلب الإجازة'), 'error');
+      } else {
+        alert('خطأ: ' + (res?.error || 'فشل في حفظ طلب الإجازة'));
+      }
     }
   } catch (err) {
-    alert('حدث خطأ أثناء تقديم الطلب: ' + err.message);
+    if (typeof showToast === 'function') {
+      showToast('حدث خطأ أثناء تقديم الطلب: ' + err.message, 'error');
+    } else {
+      alert('حدث خطأ أثناء تقديم الطلب: ' + err.message);
+    }
   }
 }
 

@@ -867,6 +867,17 @@ function ensureOfficialFleetAndLicenses() {
       console.log(`[Purge] Cleaned ${mockLic} mock licenses from persistent database.`);
     }
     db.prepare("DELETE FROM medical_insurance_policies WHERE policy_no = 'POL-MED-JM-2026'").run();
+
+    // If no active biometric devices and no punch logs exist, purge all synthetic attendance daily summary rows
+    const devCount = db.prepare("SELECT COUNT(*) as c FROM biometric_devices WHERE is_active = 1").get()?.c || 0;
+    const logCount = db.prepare("SELECT COUNT(*) as c FROM attendance_logs").get()?.c || 0;
+    if (devCount === 0 && logCount === 0) {
+      const attRows = db.prepare("SELECT COUNT(*) as c FROM attendance_daily_summary").get()?.c || 0;
+      if (attRows > 0) {
+        db.prepare("DELETE FROM attendance_daily_summary").run();
+        console.log(`[Purge] Cleaned ${attRows} synthetic attendance summary rows because no biometric device is connected.`);
+      }
+    }
   } catch (err) {
     console.error('[Purge] Error cleaning mock fleet/licenses from persistent DB:', err.message);
   }
@@ -883,9 +894,9 @@ function ensureOfficialUsersClean() {
 
 function purgeLegacyTestArtifacts() {
   try {
-    db.prepare("DELETE FROM requests WHERE request_no = 'REQ-2026-0001' OR request_no LIKE 'REQ-TEST%'").run();
-    db.prepare("DELETE FROM leaves WHERE request_no = 'REQ-2026-0001' OR request_no LIKE 'REQ-TEST%'").run();
-    db.prepare("DELETE FROM absence_notices WHERE notice_no LIKE 'ABS-2026-%'").run();
+    db.prepare("DELETE FROM requests WHERE request_no LIKE 'REQ-TEST%'").run();
+    db.prepare("DELETE FROM leaves WHERE request_no LIKE 'REQ-TEST%'").run();
+    db.prepare("DELETE FROM absence_notices WHERE notice_no LIKE 'ABS-TEST%'").run();
     db.prepare("DELETE FROM notifications WHERE user_id IS NULL OR title LIKE '%اختبار%'").run();
   } catch (err) {
     console.error('[DB Init] Error purging test artifacts:', err.message);
