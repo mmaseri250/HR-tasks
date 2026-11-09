@@ -12,7 +12,10 @@ scripts/restore_hani.js
 backups/
 logs/*.log
 *.xlsx
+!employees-2026-11-08_(1).xlsx
 *.docx
+!server/templates/official_word_forms/*.docx
+!النماذج والمستندات.docx
 *.pdf
 !public/docs/policies/*.pdf
 *.zip

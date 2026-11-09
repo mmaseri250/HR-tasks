@@ -1596,7 +1596,7 @@
             <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-6 rounded-full bg-[#700c14]"></span>
-                <h3 class="text-sm font-black text-slate-900">النماذج الـ 14 الرسمية المعتمدة لشركة جوهرة المجد</h3>
+                <h3 class="text-sm font-black text-slate-900">النماذج الـ 15 الرسمية المعتمدة لشركة جوهرة المجد</h3>
               </div>
               <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
                 <i class="fa-solid fa-circle-check"></i> مطابقة بنسبة 100% لملف النماذج المعتمد
@@ -6278,7 +6278,7 @@
               <button onclick="syncUsersNow()" id="btnSyncUsersView" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5 active:scale-95" title="مزامنة وحفظ المستخدمين في قاعدة البيانات والملف الدائم">
                 <i id="syncUsersViewIcon" class="fa-solid fa-cloud-arrow-up"></i> مزامنة وحفظ المستخدمين
               </button>
-              <button onclick="openAddUserModal()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 active:scale-95">
+              <button onclick="openCreateUserFromEmpModal()" class="bg-brand hover:bg-brand-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 active:scale-95" id="btnOpenAddUser">
                 <i class="fa-solid fa-user-plus"></i> إضافة مستخدم جديد
               </button>
             </div>
@@ -7410,6 +7410,173 @@
   </div>
 
   <!-- 4. Modal Add User & Permissions (إضافة يوزرات الموظفين وتحديد الصلاحيات) -->
+  
+  <!-- =========================================================================
+       MODAL: CREATE USER FROM EMPLOYEE WITH 8-HOUR TEMPORARY PASSWORD
+       ========================================================================= -->
+  <div id="modalCreateUserFromEmp" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
+        <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-brand"></i> إضافة مستخدم جديد وتوليد كلمة مرور مؤقتة (8 ساعات)
+        </h3>
+        <button onclick="closeModal('modalCreateUserFromEmp')" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">اختر الموظف من قائمة الكادر المعتمد (108 موظفين):</label>
+          <select id="createUserSelectEmp" onchange="onSelectEmployeeForUserChange(this.value)" class="w-full rounded-xl border border-slate-300 p-2.5 bg-white text-xs font-bold focus:ring-2 focus:ring-brand outline-none">
+            <option value="">-- جارٍ تحميل قائمة الموظفين المؤهلين --</option>
+          </select>
+        </div>
+
+        <!-- Selected Employee Preview Card -->
+        <div id="createUserEmpPreview" class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 hidden">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <span class="text-slate-400 block text-[10px]">الاسم الكامل:</span>
+              <span id="previewEmpName" class="font-bold text-slate-800 text-sm">-</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">الرقم الوظيفي:</span>
+              <span id="previewEmpCode" class="font-mono font-bold text-brand text-sm">-</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">الإدارة / الفرع:</span>
+              <span id="previewEmpDept" class="font-bold text-slate-700">-</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">المسمى الوظيفي:</span>
+              <span id="previewEmpJob" class="font-bold text-slate-700">-</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">المدير المباشر:</span>
+              <span id="previewEmpManager" class="font-bold text-slate-700">-</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px]">فئة الصلاحية المعتمدة:</span>
+              <span id="previewEmpTier" class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-amber-100 text-amber-900 border border-amber-300 inline-block">-</span>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">اسم المستخدم (تلقائي):</label>
+              <input type="text" id="createUserUsername" readonly class="w-full rounded-xl border border-slate-200 bg-slate-100 p-2 font-mono font-bold text-brand text-xs">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">كلمة المرور المؤقتة (توليد آمن):</label>
+              <div class="flex items-center gap-1.5">
+                <input type="text" id="createUserTempPass" readonly class="w-full rounded-xl border border-amber-200 bg-amber-50 p-2 font-mono font-bold text-amber-900 text-xs">
+                <button type="button" onclick="regenerateLocalTempPassPreview()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700" title="توليد كلمة مرور أخرى">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 font-medium flex items-start gap-2">
+            <i class="fa-solid fa-clock text-amber-600 mt-0.5"></i>
+            <div>
+              <span>مدة الصلاحية: <strong>8 ساعات بالضبط (480 دقيقة)</strong>. يُلزم المستخدم بتغييرها فور الدخول لأول مرة.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeModal('modalCreateUserFromEmp')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold">إلغاء</button>
+          <button type="button" id="btnSubmitCreateUser" onclick="submitCreateUserFromEmployee()" disabled class="px-5 py-2 rounded-xl bg-brand hover:bg-brand-dark disabled:opacity-50 text-white font-bold flex items-center gap-2 shadow transition active:scale-95">
+            <i class="fa-solid fa-user-check"></i> تأكيد إنشاء الحساب
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: USER CREDENTIALS SUCCESS & CLIPBOARD COPY
+       ========================================================================= -->
+  <div id="modalUserCredentialsSuccess" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl flex flex-col">
+      <div class="text-center space-y-2">
+        <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-2xl shadow-inner">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h3 class="text-base font-black text-slate-800">تم إنشاء الحساب بنجاح</h3>
+        <p class="text-xs text-slate-500">تم إصدار كلمة مرور مؤقتة صالحة لمدة 8 ساعات (480 دقيقة)</p>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs font-bold">
+        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">الموظف:</span>
+          <span id="credSuccessEmpName" class="text-slate-800">-</span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">اسم المستخدم:</span>
+          <span id="credSuccessUsername" class="font-mono text-brand text-sm">-</span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">كلمة المرور المؤقتة:</span>
+          <span id="credSuccessTempPass" class="font-mono text-amber-700 text-sm bg-amber-50 px-2 py-0.5 rounded border border-amber-200">-</span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-slate-200/60">
+          <span class="text-slate-500">تنتهي في (بتوقيت السعودية):</span>
+          <span id="credSuccessExpires" class="text-rose-700">-</span>
+        </div>
+        <div class="flex justify-between items-center py-1">
+          <span class="text-slate-500">الصلاحية الممنوحة:</span>
+          <span id="credSuccessTier" class="text-slate-800">-</span>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-2">
+        <button type="button" onclick="copyCreatedCredentials()" class="w-full py-2.5 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center justify-center gap-2 shadow-xs transition active:scale-95">
+          <i class="fa-solid fa-copy"></i> نسخ بيانات الدخول لمشاركتها مع الموظف
+        </button>
+        <button type="button" onclick="closeModal('modalUserCredentialsSuccess')" class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: MANDATORY PASSWORD CHANGE ON FIRST LOGIN (8-HOUR ENFORCEMENT)
+       ========================================================================= -->
+  <div id="modalMandatoryChangePassword" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl flex flex-col">
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 mx-auto flex items-center justify-center text-xl shadow-xs">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h3 class="text-base font-black text-slate-800">تعيين كلمة المرور الدائمة</h3>
+        <p class="text-xs text-slate-500">تم تسجيل دخولك بكلمة مرور مؤقتة. لحماية حسابك وبيانات المنشأة، يُلزم تعيين كلمة مرور دائمة جديدة قبل المتابعة.</p>
+      </div>
+
+      <form id="formMandatoryChangePassword" onsubmit="submitMandatoryPasswordChange(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">كلمة المرور المؤقتة الحالية:</label>
+          <input type="password" id="mandatoryCurrentPass" required class="w-full rounded-xl border border-slate-300 p-2.5 focus:ring-2 focus:ring-brand outline-none font-mono">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">كلمة المرور الدائمة الجديدة (8 خانات على الأقل):</label>
+          <input type="password" id="mandatoryNewPass" required minlength="8" class="w-full rounded-xl border border-slate-300 p-2.5 focus:ring-2 focus:ring-brand outline-none font-mono">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">تأكيد كلمة المرور الجديدة:</label>
+          <input type="password" id="mandatoryConfirmPass" required minlength="8" class="w-full rounded-xl border border-slate-300 p-2.5 focus:ring-2 focus:ring-brand outline-none font-mono">
+        </div>
+
+        <div id="mandatoryPassError" class="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-bold text-[11px] hidden"></div>
+
+        <button type="submit" id="btnSubmitMandatoryPass" class="w-full py-2.5 mt-2 rounded-xl bg-brand hover:bg-brand-dark text-white font-bold flex items-center justify-center gap-2 shadow-xs transition active:scale-95">
+          <i class="fa-solid fa-lock"></i> حفظ وتفعيل كلمة المرور الدائمة
+        </button>
+      </form>
+    </div>
+  </div>
+
   <div id="modalAddUser" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay hidden">
     <div class="bg-white rounded-3xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto flex flex-col">
       <div class="flex justify-between items-center border-b pb-3 flex-shrink-0">

@@ -345,8 +345,11 @@ function executeMasterUpdate() {
   run("UPDATE departments SET manager_name = 'عبدالملك سعيد الشريف' WHERE name_ar LIKE '%الإدارة الرئيسية%' OR name_ar LIKE '%الموارد البشرية%' OR name_ar LIKE '%المستودع%' OR name_ar LIKE '%الصيانة%'");
   run("UPDATE departments SET manager_emp_id = (SELECT id FROM employees WHERE full_name_ar = departments.manager_name LIMIT 1)");
 
-  // 5. Sync Users table to exactly 109 accounts
-  // First, ensure admin exists
+  // 5. User Account Sanitization & Protection (Phase 1 Requirement)
+  // Ensure ONLY the independent system administrator ('admin') exists upon startup.
+  // Non-admin accounts are NOT auto-created upon startup; they are provisioned on-demand by admin.
+  
+  // Ensure admin user exists with full permissions
   const adminUser = get("SELECT id FROM users WHERE username = 'admin'");
   if (!adminUser) {
     run(`
@@ -357,48 +360,17 @@ function executeMasterUpdate() {
     run("UPDATE users SET role = 'admin', permissions = '[\"all\"]', is_active = 1, status = 'نشط' WHERE id = ?", [adminUser.id]);
   }
 
-  // Sync all 108 employees into users table
-  for (const emp of allActive) {
-    const balInfo = balanceData[emp.emp_code] || { perms: 'employee' };
-    const role = balInfo.perms; // 'employee', 'dept_manager', 'hr_manager', 'hr_specialist'
-    const defaultPass = role === 'dept_manager' ? 'Mgr123' : (role.startsWith('hr_') ? 'Hr123' : 'Emp123');
-
-    let perms = ['requests.create', 'leaves.create', 'profile.view', 'circulars.view', 'policies.view'];
-    if (role === 'dept_manager') {
-      perms = ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'];
-    } else if (role === 'hr_manager') {
-      perms = ['all'];
-    } else if (role === 'hr_specialist') {
-      perms = ['employees.view', 'leaves.verify', 'requests.verify', 'reports', 'hub.view'];
-    }
-
-    const permsStr = JSON.stringify(perms);
-    const email = emp.email && emp.email.includes('@') ? emp.email : `${emp.emp_code.toLowerCase()}@jalmajd.com`;
-
-    const userRow = get('SELECT id FROM users WHERE emp_id = ? OR username = ?', [emp.id, emp.emp_code]);
-    if (userRow) {
-      run(`
-        UPDATE users SET
-          username = ?, full_name = ?, email = ?, role = ?, permissions = ?,
-          emp_id = ?, is_active = 1, status = 'نشط'
-        WHERE id = ?
-      `, [emp.emp_code, emp.full_name_ar, email, role, permsStr, emp.id, userRow.id]);
-    } else {
-      run(`
-        INSERT INTO users (
-          username, password, full_name, email, role, permissions,
-          emp_id, is_active, status, activated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'نشط', CURRENT_TIMESTAMP)
-      `, [emp.emp_code, defaultPass, emp.full_name_ar, email, role, permsStr, emp.id]);
-    }
-  }
+  // Purge all non-admin users to enforce: Exactly 1 active user (admin) after reset
+  run("DELETE FROM user_permissions WHERE user_id != (SELECT id FROM users WHERE username = 'admin')");
+  run("DELETE FROM users WHERE username != 'admin'");
+  console.log('✓ Purged non-admin users. Exactly 1 user (admin) is active.');
 
   console.log('=== VERIFYING FINAL STATS ===');
   const totalEmployees = get("SELECT COUNT(*) as c FROM employees WHERE status = 'نشط'").c;
   const totalUsers = get("SELECT COUNT(*) as c FROM users").c;
 
   console.log(`Total Active Employees: ${totalEmployees} (Target: 108)`);
-  console.log(`Total Users: ${totalUsers} (Target: 109)`);
+  console.log(`Total Users: ${totalUsers} (Target: 1 - Admin only)`);
 
   const roleStats = query("SELECT role, COUNT(*) as c FROM users GROUP BY role ORDER BY c DESC");
   console.table(roleStats);
@@ -415,8 +387,39 @@ function executeMasterUpdate() {
   console.table(mgrStats);
 }
 
+// Certified Roles and Permissions Definitions according to employees-2026-11-08_(1).xlsx
+const CERTIFIED_ROLES_PERMISSIONS = {
+  // Extended HR (3)
+  'JM-0001': { role: 'hr_manager', permissions: ['all'], tier: 'الموارد البشرية الموسعة' },
+  'JM-0043': { role: 'hr_specialist', permissions: ['employees.view', 'leaves.verify', 'requests.verify', 'reports', 'hub.view'], tier: 'الموارد البشرية الموسعة' },
+  'JM-0072': { role: 'hr_specialist', permissions: ['employees.view', 'leaves.verify', 'requests.verify', 'reports', 'hub.view'], tier: 'الموارد البشرية الموسعة' },
+
+  // Supervisory Line Managers (7)
+  'JM-0070': { role: 'dept_manager', permissions: ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'], tier: 'المدراء المباشرون والموافقات' },
+  'JM-0100': { role: 'dept_manager', permissions: ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'], tier: 'المدراء المباشرون والموافقات' },
+  'JM-0082': { role: 'dept_manager', permissions: ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'], tier: 'المدراء المباشرون والموافقات' },
+  'JM-0108': { role: 'dept_manager', permissions: ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'], tier: 'المدراء المباشرون والموافقات' },
+  'JM-0096': { role: 'dept_manager', permissions: ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'], tier: 'المدراء المباشرون والموافقات' },
+  'JM-0028': { role: 'dept_manager', permissions: ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'], tier: 'المدراء المباشرون والموافقات' },
+  'JM-0018': { role: 'dept_manager', permissions: ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'], tier: 'المدراء المباشرون والموافقات' },
+
+  // Fahmi Baameer (Strictly ESS, Circulars, Policies, 0 subordinates)
+  'JM-0004': { role: 'employee', permissions: ['requests.create', 'leaves.create', 'profile.view', 'circulars.view', 'policies.view'], tier: 'الخدمة الذاتية والتعاميم والسياسات' }
+};
+
+function getCertifiedPermissionsForEmp(empCode) {
+  if (CERTIFIED_ROLES_PERMISSIONS[empCode]) {
+    return CERTIFIED_ROLES_PERMISSIONS[empCode];
+  }
+  return {
+    role: 'employee',
+    permissions: ['requests.create', 'leaves.create', 'profile.view', 'circulars.view', 'policies.view'],
+    tier: 'الخدمة الذاتية والتعاميم والسياسات'
+  };
+}
+
 if (require.main === module) {
   executeMasterUpdate();
 }
 
-module.exports = { executeMasterUpdate };
+module.exports = { executeMasterUpdate, getCertifiedPermissionsForEmp, CERTIFIED_ROLES_PERMISSIONS };

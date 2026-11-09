@@ -558,6 +558,11 @@ function initSchema() {
   try { db.exec('ALTER TABLE users ADD COLUMN activation_token_expires_at TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE users ADD COLUMN activated_at TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE users ADD COLUMN last_login_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN is_temporary_password INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN temp_password_issued_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN temp_password_expires_at TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE users ADD COLUMN password_hash_algo TEXT DEFAULT "sha256";'); } catch (e) {}
   try { db.exec("UPDATE users SET status = 'نشط', activated_at = CURRENT_TIMESTAMP WHERE username = 'admin' AND (activated_at IS NULL OR status IS NULL);"); } catch (e) {}
 
   try { db.exec('ALTER TABLE requests ADD COLUMN manager_id INTEGER;'); } catch (e) {}

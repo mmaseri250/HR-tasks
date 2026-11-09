@@ -942,6 +942,10 @@ async function handleLoginSubmit(e) {
     updateHeaderUserDisplay();
     applyRolePermissions();
 
+    if (state.currentUser && (state.currentUser.must_change_password === true || state.currentUser.must_change_password === 1)) {
+      openModal('modalMandatoryChangePassword');
+    }
+
     if (state.currentUser.role === 'employee') {
       switchTab('selfservice');
     } else {
@@ -7496,6 +7500,15 @@ function renderUsersTable() {
   const tbody = document.getElementById('usersTableBody');
   if (!tbody) return;
 
+  const btnAdd = document.getElementById('btnOpenAddUser');
+  if (btnAdd) {
+    if (state.currentUser && state.currentUser.role === 'admin') {
+      btnAdd.classList.remove('hidden');
+    } else {
+      btnAdd.classList.add('hidden');
+    }
+  }
+
   tbody.innerHTML = '';
   state.users.forEach(u => {
     const perms = Array.isArray(u.permissions) ? u.permissions : [];
@@ -7544,15 +7557,17 @@ function renderUsersTable() {
       permsBadges = '<span class="text-[9px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-black">كافة صلاحيات النظام</span>';
     }
 
-    // Dynamic Live Activation Status Badging
-    const isPending = (u.status === 'معلق - بانتظار تعيين كلمة المرور') || (!u.activated_at && u.activation_token && u.username !== 'admin');
-    const isExpired = u.status === 'منتهي صلاحية التفعيل' || (u.activation_token_expires_at && new Date(u.activation_token_expires_at) < new Date() && !u.activated_at && u.username !== 'admin');
-    
-    let statusBadge = '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> نشط</span>';
-    if (isExpired) {
-      statusBadge = '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200"><i class="fa-solid fa-triangle-exclamation"></i> منتهي الصلاحية</span>';
-    } else if (isPending) {
-      statusBadge = '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200"><i class="fa-solid fa-clock"></i> بانتظار التفعيل (24س)</span>';
+    // Dynamic Live 8-Hour Temporary Password Status Badging
+    const now = new Date();
+    const isTempPass = (u.is_temporary_password === 1 || u.is_temporary_password === true);
+    const isTempExpired = isTempPass && u.temp_password_expires_at && (new Date(u.temp_password_expires_at) < now);
+
+    let statusBadge = '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> نشط (دائمة)</span>';
+    if (isTempExpired) {
+      statusBadge = '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200" title="انتهت صلاحية الـ 8 ساعات"><i class="fa-solid fa-clock"></i> منتهية الصلاحية (8س)</span>';
+    } else if (isTempPass) {
+      const expText = u.temp_password_expires_saudi ? ('تنتهي: ' + u.temp_password_expires_saudi) : 'صالحة لـ 8س';
+      statusBadge = '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200" title="' + expText + '"><i class="fa-solid fa-clock"></i> مؤقتة (8س)</span>';
     } else if (u.is_active === 0) {
       statusBadge = '<span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">معطل</span>';
     }
@@ -7580,6 +7595,11 @@ function renderUsersTable() {
             <button onclick="openEffectivePermissionsInspector(${u.id})" class="text-purple-600 hover:text-purple-800 font-bold text-xs px-2 py-1 rounded bg-purple-50 hover:bg-purple-100 transition shadow-xs" title="كاشف الصلاحيات الفعلية">
               <i class="fa-solid fa-shield-halved"></i> كاشف الصلاحيات
             </button>
+            ${(u.username !== 'admin' && state.currentUser && state.currentUser.role === 'admin') ? `
+              <button onclick="regenerateUserTempPassword(${u.id})" class="text-amber-800 hover:text-amber-900 font-bold text-xs px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 transition shadow-xs flex items-center gap-1" title="إعادة إصدار كلمة مرور مؤقتة لمدة 8 ساعات">
+                <i class="fa-solid fa-key"></i> تجديد مؤقت 8س
+              </button>
+            ` : ''}
             <button onclick="editUserAccount(${u.id})" class="text-blue-600 hover:text-blue-800 font-bold text-xs px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 transition shadow-xs" title="تعديل الصلاحيات والحساب">
               <i class="fa-solid fa-user-pen"></i> تعديل
             </button>
@@ -16685,3 +16705,333 @@ async function quickDeleteTask(taskId) {
   }
 }
 window.quickDeleteTask = quickDeleteTask;
+
+
+/* =========================================================================
+   8-HOUR TEMPORARY PASSWORDS & USER PROVISIONING CONSOLE (PHASE 2 & 3)
+   ========================================================================= */
+
+let availableEmployeesCache = [];
+window.lastCreatedCredentials = null;
+
+async function openCreateUserFromEmpModal() {
+  if (!state.currentUser || state.currentUser.role !== 'admin') {
+    if (typeof showToast === 'function') showToast('غير مصرح: إضافة مستخدم جديد حصري لمدير النظام (admin)', 'error');
+    else alert('غير مصرح: إضافة مستخدم جديد حصري لمدير النظام (admin)');
+    return;
+  }
+
+  const select = document.getElementById('createUserSelectEmp');
+  const preview = document.getElementById('createUserEmpPreview');
+  const btnSubmit = document.getElementById('btnSubmitCreateUser');
+
+  if (preview) preview.classList.add('hidden');
+  if (btnSubmit) btnSubmit.disabled = true;
+
+  if (select) {
+    select.innerHTML = '<option value="">-- جارٍ تحميل قائمة الموظفين المعتمدين... --</option>';
+  }
+
+  openModal('modalCreateUserFromEmp');
+
+  try {
+    const res = await apiFetch('/api/users/available-employees');
+    if (res && res.success && Array.isArray(res.data)) {
+      availableEmployeesCache = res.data;
+      if (select) {
+        if (availableEmployeesCache.length === 0) {
+          select.innerHTML = '<option value="">كافة الموظفين المعتمدين (108) لديهم حسابات نشطة بالفعل</option>';
+        } else {
+          let opts = '<option value="">-- اختر موظفاً لإصدار الحساب وتوليد كلمة المرور المؤقتة --</option>';
+          availableEmployeesCache.forEach(emp => {
+            opts += `<option value="${emp.id}">[${emp.emp_code}] ${emp.full_name_ar} — ${emp.job_title_ar || 'موظف'} (${emp.department_name || 'الشركة'})</option>`;
+          });
+          select.innerHTML = opts;
+        }
+      }
+    } else {
+      if (select) select.innerHTML = '<option value="">تعذر تحميل قائمة الموظفين</option>';
+    }
+  } catch (err) {
+    console.error('Error fetching available employees:', err);
+    if (select) select.innerHTML = `<option value="">خطأ في الجلب: ${err.message}</option>`;
+  }
+}
+window.openCreateUserFromEmpModal = openCreateUserFromEmpModal;
+
+function onSelectEmployeeForUserChange(empId) {
+  const preview = document.getElementById('createUserEmpPreview');
+  const btnSubmit = document.getElementById('btnSubmitCreateUser');
+  if (!empId) {
+    if (preview) preview.classList.add('hidden');
+    if (btnSubmit) btnSubmit.disabled = true;
+    return;
+  }
+
+  const emp = availableEmployeesCache.find(e => String(e.id) === String(empId));
+  if (!emp) return;
+
+  const pName = document.getElementById('previewEmpName');
+  const pCode = document.getElementById('previewEmpCode');
+  const pDept = document.getElementById('previewEmpDept');
+  const pJob = document.getElementById('previewEmpJob');
+  const pMgr = document.getElementById('previewEmpManager');
+  const pTier = document.getElementById('previewEmpTier');
+  const uInp = document.getElementById('createUserUsername');
+  const passInp = document.getElementById('createUserTempPass');
+
+  if (pName) pName.textContent = emp.full_name_ar || '-';
+  if (pCode) pCode.textContent = emp.emp_code || '-';
+  if (pDept) pDept.textContent = emp.department_name || 'الإدارة العامة';
+  if (pJob) pJob.textContent = emp.job_title_ar || 'موظف';
+  if (pMgr) pMgr.textContent = emp.direct_manager_name || 'مدير النظام';
+  if (pTier) {
+    pTier.textContent = emp.certified_tier || 'الخدمة الذاتية والتعاميم والسياسات';
+    if (emp.certified_tier === 'الموارد البشرية الموسعة') {
+      pTier.className = 'px-2 py-0.5 rounded-full font-bold text-[10px] bg-purple-100 text-purple-900 border border-purple-300 inline-block';
+    } else if (emp.certified_tier === 'المدراء المباشرون والموافقات') {
+      pTier.className = 'px-2 py-0.5 rounded-full font-bold text-[10px] bg-blue-100 text-blue-900 border border-blue-300 inline-block';
+    } else {
+      pTier.className = 'px-2 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-700 border border-slate-300 inline-block';
+    }
+  }
+
+  if (uInp) uInp.value = emp.emp_code;
+  if (passInp) passInp.value = generateClientTempPassword();
+
+  if (preview) preview.classList.remove('hidden');
+  if (btnSubmit) btnSubmit.disabled = false;
+}
+window.onSelectEmployeeForUserChange = onSelectEmployeeForUserChange;
+
+function generateClientTempPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
+  let pass = 'Jm#';
+  for (let i = 0; i < 7; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass;
+}
+
+function regenerateLocalTempPassPreview() {
+  const passInp = document.getElementById('createUserTempPass');
+  if (passInp) passInp.value = generateClientTempPassword();
+}
+window.regenerateLocalTempPassPreview = regenerateLocalTempPassPreview;
+
+async function submitCreateUserFromEmployee() {
+  const select = document.getElementById('createUserSelectEmp');
+  const empId = select ? select.value : null;
+  if (!empId) return;
+
+  const emp = availableEmployeesCache.find(e => String(e.id) === String(empId));
+  if (!emp) return;
+
+  const btnSubmit = document.getElementById('btnSubmitCreateUser');
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري إنشاء الحساب...';
+  }
+
+  try {
+    const res = await apiFetch('/api/users/create-from-employee', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emp_id: emp.id, emp_code: emp.emp_code })
+    });
+
+    if (res && res.success && res.credentials) {
+      closeModal('modalCreateUserFromEmp');
+      window.lastCreatedCredentials = res.credentials;
+
+      // Populate Success Modal
+      const sName = document.getElementById('credSuccessEmpName');
+      const sUser = document.getElementById('credSuccessUsername');
+      const sPass = document.getElementById('credSuccessTempPass');
+      const sExp = document.getElementById('credSuccessExpires');
+      const sTier = document.getElementById('credSuccessTier');
+
+      if (sName) sName.textContent = res.credentials.full_name;
+      if (sUser) sUser.textContent = res.credentials.username;
+      if (sPass) sPass.textContent = res.credentials.temp_password;
+      if (sExp) sExp.textContent = res.credentials.expires_at_saudi + ' (صالحة لمدة 8 ساعات)';
+      if (sTier) sTier.textContent = res.credentials.tier;
+
+      openModal('modalUserCredentialsSuccess');
+
+      // Refresh users list
+      await refreshUsersList();
+      if (typeof showToast === 'function') showToast('تم إنشاء حساب المستخدم بكلمة مرور مؤقتة لمدة 8 ساعات بنجاح', 'success');
+    } else {
+      alert('خطأ: ' + (res?.error || 'تعذر إنشاء الحساب'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  } finally {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = '<i class="fa-solid fa-user-check"></i> تأكيد إنشاء الحساب';
+    }
+  }
+}
+window.submitCreateUserFromEmployee = submitCreateUserFromEmployee;
+
+function copyCreatedCredentials() {
+  const creds = window.lastCreatedCredentials;
+  if (!creds) {
+    alert('لا توجد بيانات متاحة للنسخ');
+    return;
+  }
+
+  const text = `بيانات الدخول المؤقتة — نظام الموارد البشرية لشركة جوهرة المجد للتجارة:
+الموظف: ${creds.full_name}
+اسم المستخدم: ${creds.username}
+كلمة المرور المؤقتة: ${creds.temp_password}
+تاريخ ووقت انتهاء الصلاحية: ${creds.expires_at_saudi} (خلال 8 ساعات من وقت الإصدار)
+مستوى الصلاحية: ${creds.tier}
+رابط النظام: https://jawharat-hrms.onrender.com/
+ملاحظة هامة: يجب تسجيل الدخول وتغيير كلمة المرور المؤقتة فوراً قبل استخدام أي شاشة في النظام.`;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (typeof showToast === 'function') showToast('تم نسخ بيانات الدخول إلى الحافظة بنجاح!', 'success');
+      else alert('تم نسخ بيانات الدخول إلى الحافظة بنجاح!');
+    }).catch(() => {
+      prompt('يرجى نسخ بيانات الدخول يدوياً:', text);
+    });
+  } else {
+    prompt('يرجى نسخ بيانات الدخول يدوياً:', text);
+  }
+}
+window.copyCreatedCredentials = copyCreatedCredentials;
+
+async function regenerateUserTempPassword(userId) {
+  if (!state.currentUser || state.currentUser.role !== 'admin') {
+    alert('غير مصرح. إعادة تعيين كلمة المرور المؤقتة متاح لمدير النظام فقط');
+    return;
+  }
+
+  if (!confirm('هل أنت متأكد من رغبتك في إعادة إصدار كلمة مرور مؤقتة جديدة صالحة لمدة 8 ساعات لهذا المستخدم؟')) {
+    return;
+  }
+
+  try {
+    const res = await apiFetch(`/api/users/${userId}/regenerate-temp-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (res && res.success && res.credentials) {
+      window.lastCreatedCredentials = res.credentials;
+
+      const sName = document.getElementById('credSuccessEmpName');
+      const sUser = document.getElementById('credSuccessUsername');
+      const sPass = document.getElementById('credSuccessTempPass');
+      const sExp = document.getElementById('credSuccessExpires');
+      const sTier = document.getElementById('credSuccessTier');
+
+      if (sName) sName.textContent = res.credentials.full_name || res.credentials.username;
+      if (sUser) sUser.textContent = res.credentials.username;
+      if (sPass) sPass.textContent = res.credentials.temp_password;
+      if (sExp) sExp.textContent = res.credentials.expires_at_saudi + ' (صالحة لمدة 8 ساعات)';
+      if (sTier) sTier.textContent = 'كلمة مرور مؤقتة متجددة';
+
+      openModal('modalUserCredentialsSuccess');
+      await refreshUsersList();
+      if (typeof showToast === 'function') showToast('تم إعادة إصدار كلمة المرور المؤقتة لمدة 8 ساعات بنجاح', 'success');
+    } else {
+      alert('خطأ: ' + (res?.error || 'تعذر إعادة تعيين كلمة المرور'));
+    }
+  } catch (err) {
+    alert('حدث خطأ: ' + err.message);
+  }
+}
+window.regenerateUserTempPassword = regenerateUserTempPassword;
+
+async function refreshUsersList() {
+  try {
+    const res = await apiFetch('/api/users');
+    if (res && res.success && Array.isArray(res.data)) {
+      state.users = res.data;
+      renderUsersTable();
+    }
+  } catch (err) {
+    console.error('Error refreshing users list:', err);
+  }
+}
+window.refreshUsersList = refreshUsersList;
+
+async function submitMandatoryPasswordChange(event) {
+  if (event) event.preventDefault();
+  const curPass = document.getElementById('mandatoryCurrentPass').value;
+  const newPass = document.getElementById('mandatoryNewPass').value;
+  const confirmPass = document.getElementById('mandatoryConfirmPass').value;
+  const errBox = document.getElementById('mandatoryPassError');
+  const btn = document.getElementById('btnSubmitMandatoryPass');
+
+  if (errBox) errBox.classList.add('hidden');
+
+  if (!curPass || !newPass || !confirmPass) {
+    if (errBox) {
+      errBox.textContent = 'جميع الحقول مطلوبة';
+      errBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (newPass !== confirmPass) {
+    if (errBox) {
+      errBox.textContent = 'كلمة المرور الجديدة غير متطابقة مع تأكيد كلمة المرور';
+      errBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (newPass.length < 8) {
+    if (errBox) {
+      errBox.textContent = 'يجب أن لا تقل كلمة المرور الجديدة عن 8 خانات';
+      errBox.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ كلمة المرور...';
+  }
+
+  try {
+    const res = await apiFetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_password: curPass, new_password: newPass })
+    });
+
+    if (res && res.success) {
+      closeModal('modalMandatoryChangePassword');
+      if (state.currentUser) {
+        state.currentUser.must_change_password = false;
+        state.currentUser.is_temporary_password = false;
+        localStorage.setItem('jm_hrms_user', JSON.stringify(state.currentUser));
+      }
+      if (typeof showToast === 'function') showToast('تم تعيين كلمة المرور الدائمة بنجاح! حسابك مفعّل بالكامل الآن.', 'success');
+      else alert('تم تعيين كلمة المرور الدائمة بنجاح! حسابك مفعّل بالكامل الآن.');
+    } else {
+      if (errBox) {
+        errBox.textContent = res?.error || 'تعذر تغيير كلمة المرور';
+        errBox.classList.remove('hidden');
+      }
+    }
+  } catch (err) {
+    if (errBox) {
+      errBox.textContent = err.message;
+      errBox.classList.remove('hidden');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-lock"></i> حفظ وتفعيل كلمة المرور الدائمة';
+    }
+  }
+}
+window.submitMandatoryPasswordChange = submitMandatoryPasswordChange;

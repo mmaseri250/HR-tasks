@@ -1,5 +1,5 @@
 // server/modules/users.js - User Management, Authentication & Persistent Synchronization
-// Jawharat Al-Majd HRMS - Strict RBAC, 24-Hour Activation & Password Setup
+// Jawharat Al-Majd HRMS - Strict RBAC, 8-Hour Temporary Passwords & Certified Tiers
 
 const { query, get, run } = require('../database/db');
 const fs = require('fs');
@@ -8,6 +8,84 @@ const crypto = require('crypto');
 const rbacEngine = require('./rbacEngine');
 
 const PERSISTED_USERS_FILE = path.join(__dirname, '../database/persisted_users.json');
+
+/**
+ * Hash password using PBKDF2 with SHA-512 and unique salt
+ */
+function hashPassword(password) {
+  if (!password) return '';
+  const salt = crypto.randomBytes(16).toString('hex');
+  const iterations = 100000;
+  const hash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
+  return `pbkdf2$sha512$${iterations}$${salt}$${hash}`;
+}
+
+/**
+ * Verify password against stored hash or legacy fallback
+ */
+function verifyPassword(password, storedPassword) {
+  if (!storedPassword || !password) return false;
+  if (typeof storedPassword === 'string' && storedPassword.startsWith('pbkdf2$sha512$')) {
+    const parts = storedPassword.split('$');
+    if (parts.length === 5) {
+      const iterations = parseInt(parts[2], 10);
+      const salt = parts[3];
+      const expectedHash = parts[4];
+      const hash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
+      try {
+        return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(expectedHash, 'hex'));
+      } catch (e) {
+        return false;
+      }
+    }
+  }
+  // Plaintext or legacy fallback (e.g. initial 'Jj123')
+  return storedPassword === password;
+}
+
+/**
+ * Generate a cryptographically secure random temporary password (10 characters)
+ */
+function generateSecureTempPassword() {
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const special = '!@#$%&*';
+  const all = upper + lower + digits + special;
+
+  // Guarantee: Jm# + 1 digit + 1 upper + 5 random chars = exactly 10 characters
+  let pass = 'Jm#' + digits.charAt(crypto.randomInt(0, digits.length)) + upper.charAt(crypto.randomInt(0, upper.length));
+  for (let i = 0; i < 5; i++) {
+    pass += all.charAt(crypto.randomInt(0, all.length));
+  }
+  return pass;
+}
+
+/**
+ * Calculate 8-hour expiry times in UTC ISO and Saudi Arabia Local Time (+03:00)
+ */
+function get8HourExpiryDates() {
+  const now = new Date();
+  const expiresAtUtc = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+  const expiresIso = expiresAtUtc.toISOString();
+
+  const saudiFormatter = new Intl.DateTimeFormat('ar-SA', {
+    timeZone: 'Asia/Riyadh',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+  const saudiTimeStr = saudiFormatter.format(expiresAtUtc);
+
+  return {
+    issued_at_utc: now.toISOString(),
+    expires_at_utc: expiresIso,
+    expires_at_saudi: saudiTimeStr
+  };
+}
 
 /**
  * Persists all current database users to a permanent JSON file backup
@@ -34,10 +112,12 @@ function persistUsersToDisk() {
         custom_data_scope: u.custom_data_scope,
         avatar_url: u.avatar_url || null,
         is_active: u.is_active,
-        status: u.status || (u.is_active === 1 ? 'نشط' : 'معلق - بانتظار تعيين كلمة المرور'),
-        activation_token: u.activation_token || null,
-        activation_token_expires_at: u.activation_token_expires_at || null,
-        activated_at: u.activated_at || null,
+        status: u.status || 'نشط',
+        is_temporary_password: u.is_temporary_password || 0,
+        temp_password_issued_at: u.temp_password_issued_at || null,
+        temp_password_expires_at: u.temp_password_expires_at || null,
+        must_change_password: u.must_change_password || 0,
+        password_hash_algo: u.password_hash_algo || 'pbkdf2',
         created_at: u.created_at
       };
     });
@@ -89,7 +169,6 @@ function reconcileUserEmployeeLinks() {
 function restoreUsersFromDisk() {
   try {
     if (!fs.existsSync(PERSISTED_USERS_FILE)) {
-      persistUsersToDisk();
       return;
     }
 
@@ -101,34 +180,46 @@ function restoreUsersFromDisk() {
       if (!u.username) continue;
       const existing = get('SELECT id, password FROM users WHERE username = ?', [u.username.trim()]);
       const permsStr = typeof u.permissions === 'string' ? u.permissions : JSON.stringify(u.permissions || []);
-      const pass = u.password || 'Jj123';
+      const pass = u.password || hashPassword('Jj123');
       const role = u.role || 'employee';
       const fullName = u.full_name || u.username;
       const email = u.email || null;
       const empId = u.emp_id ? Number(u.emp_id) : null;
       const isActive = u.is_active !== undefined ? Number(u.is_active) : 1;
-      const status = u.status || (isActive === 1 ? 'نشط' : 'معلق - بانتظار تعيين كلمة المرور');
-      const activationToken = u.activation_token || null;
-      const activationExpiresAt = u.activation_token_expires_at || null;
-      const activatedAt = u.activated_at || null;
+      const status = u.status || 'نشط';
+      const isTempPass = u.is_temporary_password !== undefined ? Number(u.is_temporary_password) : 0;
+      const tempIssuedAt = u.temp_password_issued_at || null;
+      const tempExpiresAt = u.temp_password_expires_at || null;
+      const mustChangePass = u.must_change_password !== undefined ? Number(u.must_change_password) : 0;
+      const hashAlgo = u.password_hash_algo || 'pbkdf2';
       const avatarUrl = u.avatar_url || null;
 
       if (!existing) {
         const ins = run(`
-          INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active, status, activation_token, activation_token_expires_at, activated_at, avatar_url)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [u.username.trim(), pass, fullName, email, role, permsStr, empId, isActive, status, activationToken, activationExpiresAt, activatedAt, avatarUrl]);
+          INSERT INTO users (
+            username, password, full_name, email, role, permissions, emp_id,
+            is_active, status, is_temporary_password, temp_password_issued_at,
+            temp_password_expires_at, must_change_password, password_hash_algo, avatar_url
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+          u.username.trim(), pass, fullName, email, role, permsStr, empId,
+          isActive, status, isTempPass, tempIssuedAt, tempExpiresAt, mustChangePass, hashAlgo, avatarUrl
+        ]);
         syncUserPermissionsTable(ins.lastInsertRowid, u.permissions);
       } else {
-        const finalPass = (u.password && u.password.trim() !== '') ? u.password.trim() : existing.password;
         run(`
           UPDATE users SET
             password = ?, full_name = ?, email = ?,
             role = ?, permissions = ?, emp_id = ?, is_active = ?,
             status = COALESCE(status, ?),
-            avatar_url = COALESCE(?, avatar_url)
+            is_temporary_password = ?, temp_password_issued_at = ?,
+            temp_password_expires_at = ?, must_change_password = ?,
+            password_hash_algo = ?, avatar_url = COALESCE(?, avatar_url)
           WHERE id = ?
-        `, [finalPass, fullName, email, role, permsStr, empId, isActive, status, avatarUrl, existing.id]);
+        `, [
+          pass, fullName, email, role, permsStr, empId, isActive, status,
+          isTempPass, tempIssuedAt, tempExpiresAt, mustChangePass, hashAlgo, avatarUrl, existing.id
+        ]);
         syncUserPermissionsTable(existing.id, u.permissions);
       }
     }
@@ -136,15 +227,6 @@ function restoreUsersFromDisk() {
   } catch (err) {
     console.error('Error restoring users from disk:', err.message);
   }
-}
-
-function generateActivationToken() {
-  return crypto.randomBytes(32).toString('hex');
-}
-
-function getActivationExpiryDate() {
-  // Strict 24 hours duration from creation time
-  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 }
 
 /**
@@ -204,7 +286,7 @@ function syncUserPermissionsTable(userId, permsArray) {
 }
 
 /**
- * Authentication login with 24-hour activation check
+ * Authentication login with 8-hour temporary password check
  */
 function login(username, password) {
   if (!username || !password) {
@@ -216,31 +298,23 @@ function login(username, password) {
     throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
   }
 
-  // 1. Mandatory Activation & 24-Hour Expiration Check (Exempt only initial Super Admin)
-  if (user.username !== 'admin') {
-    const isPending = user.status === 'معلق - بانتظار تعيين كلمة المرور' || (!user.activated_at && user.activation_token);
-
-    if (isPending) {
-      if (user.activation_token_expires_at && new Date(user.activation_token_expires_at) < new Date()) {
-        run("UPDATE users SET status = 'منتهي صلاحية التفعيل', is_active = 0 WHERE id = ?", [user.id]);
-        persistUsersToDisk();
-        throw new Error('انتهت مهلة الـ 24 ساعة المحددة لتفعيل الحساب وتعيين كلمة المرور. يرجى مراجعة إدارة النظام لإعادة إرسال رابط التفعيل.');
-      }
-      throw new Error('هذا الحساب معلق بانتظار التفعيل. شرط إلزامي: يجب الدخول عبر رابط الدعوة وتعيين كلمة المرور أولاً (صلاحية الرابط 24 ساعة من تاريخ الإنشاء).');
-    }
-
-    if (user.status === 'منتهي صلاحية التفعيل') {
-      throw new Error('انتهت مهلة الـ 24 ساعة لتفعيل الحساب. يرجى مراجعة إدارة النظام لإعادة إصدار رابط تفعيل جديد.');
-    }
-
-    if (user.is_active === 0 || user.status === 'معطل') {
-      throw new Error('تم تعطيل هذا الحساب من قِبل إدارة النظام، يرجى التواصل مع الإدارة.');
-    }
+  // 1. Password Verification
+  if (!verifyPassword(password, user.password)) {
+    throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
   }
 
-  // 2. Password Check
-  if (user.password !== password) {
-    throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
+  // 2. Active Status Check
+  if (user.is_active === 0 || user.status === 'معطل') {
+    throw new Error('تم تعطيل هذا الحساب من قِبل إدارة النظام، يرجى التواصل مع الإدارة.');
+  }
+
+  // 3. Temporary Password 8-Hour Expiration Check (Phase 3 Requirement)
+  if (user.is_temporary_password === 1 && user.temp_password_expires_at) {
+    const now = new Date();
+    const expiry = new Date(user.temp_password_expires_at);
+    if (now > expiry) {
+      throw new Error('انتهت صلاحية كلمة المرور المؤقتة، يرجى التواصل مع مدير النظام.');
+    }
   }
 
   // Record login timestamp
@@ -274,6 +348,10 @@ function login(username, password) {
     userSafe.permissions = ['all'];
   }
 
+  userSafe.must_change_password = Boolean(user.must_change_password);
+  userSafe.is_temporary_password = Boolean(user.is_temporary_password);
+  userSafe.temp_password_expires_at = user.temp_password_expires_at;
+
   const empDetails = user.emp_id ? get(`
     SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.department_id, e.annual_leave_balance,
            d.name_ar AS department_name
@@ -296,19 +374,29 @@ function login(username, password) {
 }
 
 /**
- * Fetch all users with live activation status and expiration flags
+ * Fetch all users with live status and temporary password flags
  */
 function getAllUsers() {
   const users = query(`
     SELECT id, username, full_name, email, role, permissions, emp_id,
            custom_data_scope, avatar_url, is_active, status,
-           activation_token, activation_token_expires_at, activated_at,
+           is_temporary_password, temp_password_issued_at, temp_password_expires_at,
+           must_change_password, password_hash_algo,
            last_login_at, created_at
     FROM users
     ORDER BY id ASC
   `);
 
   const now = new Date();
+  const saudiFormatter = new Intl.DateTimeFormat('ar-SA', {
+    timeZone: 'Asia/Riyadh',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 
   return users.map(u => {
     try {
@@ -319,27 +407,20 @@ function getAllUsers() {
     u.effective_permissions = rbacEngine.getUserEffectivePermissions(u.id);
     u.data_scope = rbacEngine.getDataScope(u);
 
-    // Compute live activation status
-    const isPending = (u.status === 'معلق - بانتظار تعيين كلمة المرور') || (!u.activated_at && u.activation_token && u.username !== 'admin');
-    const isExpired = u.activation_token_expires_at ? (new Date(u.activation_token_expires_at) < now) : false;
-
-    if (isPending && isExpired) {
-      u.status = 'منتهي صلاحية التفعيل';
-      u.is_expired = true;
-    } else if (isPending) {
-      u.status = 'معلق - بانتظار تعيين كلمة المرور';
-      u.is_pending_activation = true;
-      u.is_expired = false;
-    } else if (u.is_active === 1) {
-      u.status = 'نشط';
+    // Compute live temporary password status
+    if (u.is_temporary_password === 1 && u.temp_password_expires_at) {
+      const expDate = new Date(u.temp_password_expires_at);
+      u.is_temp_expired = expDate < now;
+      try {
+        u.temp_password_expires_saudi = saudiFormatter.format(expDate);
+      } catch (e) {
+        u.temp_password_expires_saudi = u.temp_password_expires_at;
+      }
+      u.temp_status = u.is_temp_expired ? 'منتهية الصلاحية' : 'مؤقتة صالحة';
     } else {
-      u.status = 'معطل';
-    }
-
-    if (u.activation_token && !u.activated_at) {
-      u.activation_link = `/activate-account.html?token=${u.activation_token}`;
-    } else {
-      u.activation_link = null;
+      u.is_temp_expired = false;
+      u.temp_status = 'دائمة';
+      u.temp_password_expires_saudi = null;
     }
 
     return u;
@@ -347,215 +428,230 @@ function getAllUsers() {
 }
 
 /**
- * Create a new user with mandatory 24-hour activation link
+ * Get available employees eligible for user creation (those who do not have an active user account)
  */
-function createUser(data) {
-  const {
-    username,
-    full_name,
-    email = null,
-    role = 'employee',
-    permissions = [],
-    emp_id = null,
-    custom_data_scope = null,
-    password = null
-  } = data;
+function getAvailableEmployeesForUserCreation() {
+  const { getCertifiedPermissionsForEmp } = require('../database/applyMasterUpdate');
+  const emps = query(`
+    SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.direct_manager_name,
+           e.national_id, e.phone, e.email, d.name_ar AS department_name
+    FROM employees e
+    LEFT JOIN departments d ON e.department_id = d.id
+    WHERE e.status = 'نشط'
+      AND e.id NOT IN (SELECT emp_id FROM users WHERE emp_id IS NOT NULL)
+      AND e.emp_code NOT IN (SELECT username FROM users)
+    ORDER BY e.emp_code ASC
+  `);
 
-  if (!username || !full_name) {
-    throw new Error('اسم المستخدم والاسم الكامل حقول مطلوبة');
+  return emps.map(emp => {
+    const cert = getCertifiedPermissionsForEmp(emp.emp_code);
+    return {
+      ...emp,
+      certified_role: cert.role,
+      certified_permissions: cert.permissions,
+      certified_tier: cert.tier
+    };
+  });
+}
+
+/**
+ * Create a new user from an employee record with an 8-hour temporary password
+ */
+function createUserFromEmployee({ emp_id, emp_code }, adminUser) {
+  if (!adminUser || adminUser.role !== 'admin') {
+    throw new Error('غير مصرح. إجراء إضافة مستخدم حصري لمدير النظام admin');
   }
 
-  const existing = get('SELECT id FROM users WHERE username = ?', [username.trim()]);
-  if (existing) {
-    throw new Error('اسم المستخدم مستخدم بالفعل، يرجى اختيار اسم مستخدم آخر');
+  let emp = null;
+  if (emp_id) {
+    emp = get("SELECT * FROM employees WHERE id = ? AND status = 'نشط'", [emp_id]);
+  } else if (emp_code) {
+    emp = get("SELECT * FROM employees WHERE emp_code = ? AND status = 'نشط'", [emp_code.trim()]);
   }
+  if (!emp) throw new Error('الموظف غير موجود أو غير نشط');
 
-  const permsStr = typeof permissions === 'string' ? permissions : JSON.stringify(permissions);
+  const existingByEmpId = get('SELECT id FROM users WHERE emp_id = ?', [emp.id]);
+  if (existingByEmpId) throw new Error(`الموظف (${emp.full_name_ar}) لديه حساب مسجل مسبقاً`);
 
-  // Mandatory Rule: New user is inactive and pending password setup (24-hour window)
-  const isSuperAdmin = (role === 'admin' && username.trim() === 'admin');
-  const token = isSuperAdmin ? null : generateActivationToken();
-  const expiresAt = isSuperAdmin ? null : getActivationExpiryDate();
-  const status = isSuperAdmin ? 'نشط' : 'معلق - بانتظار تعيين كلمة المرور';
-  const isActive = isSuperAdmin ? 1 : 0;
-  const activatedAt = isSuperAdmin ? new Date().toISOString() : null;
-  const tempPassword = (password && password.trim()) ? password.trim() : ('PENDING_' + crypto.randomBytes(8).toString('hex'));
+  const existingByUsername = get('SELECT id FROM users WHERE username = ?', [emp.emp_code]);
+  if (existingByUsername) throw new Error(`اسم المستخدم (${emp.emp_code}) مسجل بالفعل`);
 
-  const result = run(`
+  const { getCertifiedPermissionsForEmp } = require('../database/applyMasterUpdate');
+  const cert = getCertifiedPermissionsForEmp(emp.emp_code);
+
+  const rawTempPass = generateSecureTempPassword();
+  const hashedPassword = hashPassword(rawTempPass);
+  const { issued_at_utc, expires_at_utc, expires_at_saudi } = get8HourExpiryDates();
+  const permsStr = JSON.stringify(cert.permissions);
+
+  const res = run(`
     INSERT INTO users (
       username, password, full_name, email, role, permissions,
-      emp_id, custom_data_scope, is_active, status,
-      activation_token, activation_token_expires_at, activated_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      emp_id, is_active, status,
+      is_temporary_password, temp_password_issued_at, temp_password_expires_at,
+      must_change_password, password_hash_algo
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'نشط', 1, ?, ?, 1, 'pbkdf2')
   `, [
-    username.trim(),
-    tempPassword,
-    full_name.trim(),
-    email ? email.trim() : null,
-    role,
+    emp.emp_code,
+    hashedPassword,
+    emp.full_name_ar,
+    emp.email || `${emp.emp_code.toLowerCase()}@jalmajd.com`,
+    cert.role,
     permsStr,
-    emp_id ? Number(emp_id) : null,
-    custom_data_scope || null,
-    isActive,
-    status,
-    token,
-    expiresAt,
-    activatedAt
+    emp.id,
+    issued_at_utc,
+    expires_at_utc
   ]);
 
-  const newId = result.lastInsertRowid;
+  const newUserId = res.lastInsertRowid;
+  syncUserPermissionsTable(newUserId, cert.permissions);
 
-  // Sync to granular user_permissions table
-  syncUserPermissionsTable(newId, permissions);
-
-  const newUser = get(`
-    SELECT id, username, full_name, email, role, permissions, emp_id,
-           is_active, status, activation_token, activation_token_expires_at,
-           activated_at, created_at
-    FROM users WHERE id = ?
-  `, [newId]);
-
+  // Log in audit_logs
   try {
-    newUser.permissions = JSON.parse(newUser.permissions || '[]');
-  } catch (e) {
-    newUser.permissions = [];
-  }
-
-  newUser.activation_link = token ? `/activate-account.html?token=${token}` : null;
-  newUser.expires_at = expiresAt;
+    run(`
+      INSERT INTO audit_logs (user_id, action, target_type, target_id, details, created_at)
+      VALUES (?, 'CREATE_USER_TEMP_PASS', 'users', ?, ?, CURRENT_TIMESTAMP)
+    `, [
+      adminUser.id,
+      newUserId,
+      `إنشاء حساب جديد للموظف ${emp.full_name_ar} (${emp.emp_code}) بكلمة مرور مؤقتة لمدة 8 ساعات تنتهي في ${expires_at_saudi}`
+    ]);
+  } catch (e) {}
 
   persistUsersToDisk();
 
-  return newUser;
+  return {
+    success: true,
+    user: {
+      id: newUserId,
+      username: emp.emp_code,
+      full_name: emp.full_name_ar,
+      role: cert.role,
+      tier: cert.tier,
+      emp_id: emp.id,
+      is_temporary_password: 1,
+      temp_password_expires_at: expires_at_utc,
+      temp_password_expires_saudi: expires_at_saudi,
+      must_change_password: 1
+    },
+    credentials: {
+      username: emp.emp_code,
+      temp_password: rawTempPass,
+      expires_at_utc: expires_at_utc,
+      expires_at_saudi: expires_at_saudi,
+      role: cert.role,
+      tier: cert.tier,
+      full_name: emp.full_name_ar
+    }
+  };
 }
 
 /**
- * Re-send activation link with a fresh 24-hour window
+ * Regenerate an 8-hour temporary password for a user (Admin only)
  */
-function resendActivation(userId) {
+function regenerateTempPassword(userId, adminUser) {
+  if (!adminUser || adminUser.role !== 'admin') {
+    throw new Error('غير مصرح. إعادة تعيين كلمة المرور المؤقتة حصري لمدير النظام admin');
+  }
+
   const user = get('SELECT * FROM users WHERE id = ?', [userId]);
   if (!user) throw new Error('المستخدم غير موجود');
-  if (user.username === 'admin') throw new Error('لا يمكن إعادة تعيين رابط تفعيل لحساب مدير النظام الرئيسي');
+  if (user.username === 'admin') throw new Error('لا يمكن إصدار كلمة مرور مؤقتة لحساب المدير العام المستقل');
 
-  const token = generateActivationToken();
-  const expiresAt = getActivationExpiryDate();
+  const rawTempPass = generateSecureTempPassword();
+  const hashedPassword = hashPassword(rawTempPass);
+  const { issued_at_utc, expires_at_utc, expires_at_saudi } = get8HourExpiryDates();
 
-  run(`
-    UPDATE users SET
-      activation_token = ?,
-      activation_token_expires_at = ?,
-      status = 'معلق - بانتظار تعيين كلمة المرور',
-      is_active = 0,
-      activated_at = NULL
-    WHERE id = ?
-  `, [token, expiresAt, userId]);
-
-  persistUsersToDisk();
-
-  return {
-    success: true,
-    message: 'تم توليد رابط تفعيل جديد بصلاحية 24 ساعة تبدأ من الآن.',
-    activation_token: token,
-    activation_link: `/activate-account.html?token=${token}`,
-    expires_at: expiresAt,
-    user: {
-      id: user.id,
-      username: user.username,
-      full_name: user.full_name,
-      email: user.email
-    }
-  };
-}
-
-/**
- * Verify token validity when opening activation link
- */
-function verifyActivationToken(token) {
-  if (!token) throw new Error('رمز التفعيل مطلوب');
-
-  const user = get(`
-    SELECT id, username, full_name, email, role,
-           activation_token_expires_at, activated_at, status
-    FROM users
-    WHERE activation_token = ?
-  `, [token.trim()]);
-
-  if (!user) {
-    throw new Error('رابط التفعيل غير صالح أو تم استخدامه مسبقاً وتفعيل الحساب');
-  }
-
-  const isExpired = user.activation_token_expires_at && (new Date(user.activation_token_expires_at) < new Date());
-
-  if (isExpired) {
-    run("UPDATE users SET status = 'منتهي صلاحية التفعيل' WHERE id = ?", [user.id]);
-    persistUsersToDisk();
-    return {
-      success: false,
-      is_expired: true,
-      error: 'انتهت مهلة الـ 24 ساعة المحددة لتفعيل هذا الحساب. يرجى التواصل مع إدارة النظام لإعادة إصدار رابط تفعيل جديد.',
-      user: {
-        id: user.id,
-        username: user.username,
-        full_name: user.full_name
-      }
-    };
-  }
-
-  return {
-    success: true,
-    is_expired: false,
-    user: {
-      id: user.id,
-      username: user.username,
-      full_name: user.full_name,
-      email: user.email,
-      role: user.role,
-      expires_at: user.activation_token_expires_at
-    }
-  };
-}
-
-/**
- * Activate user account and set permanent password within the 24-hour limit
- */
-function activateAccount(token, password) {
-  if (!token) throw new Error('رمز التفعيل مطلوب');
-  if (!password || password.trim().length < 6) {
-    throw new Error('كلمة المرور يجب أن لا تقل عن 6 أحرف أو أرقام');
-  }
-
-  const user = get('SELECT * FROM users WHERE activation_token = ?', [token.trim()]);
-  if (!user) {
-    throw new Error('رابط التفعيل غير صالح أو تم استخدامه مسبقاً');
-  }
-
-  // Strict 24-hour check
-  if (user.activation_token_expires_at && (new Date(user.activation_token_expires_at) < new Date())) {
-    run("UPDATE users SET status = 'منتهي صلاحية التفعيل', is_active = 0 WHERE id = ?", [user.id]);
-    persistUsersToDisk();
-    throw new Error('انتهت مهلة الـ 24 ساعة المحددة لتفعيل الحساب. يرجى التواصل مع إدارة النظام لإعادة إرسال رابط تفعيل جديد.');
-  }
-
-  const now = new Date().toISOString();
   run(`
     UPDATE users SET
       password = ?,
-      status = 'نشط',
+      is_temporary_password = 1,
+      temp_password_issued_at = ?,
+      temp_password_expires_at = ?,
+      must_change_password = 1,
+      password_hash_algo = 'pbkdf2',
       is_active = 1,
-      activated_at = ?,
-      activation_token = NULL,
-      activation_token_expires_at = NULL
+      status = 'نشط'
     WHERE id = ?
-  `, [password.trim(), now, user.id]);
+  `, [hashedPassword, issued_at_utc, expires_at_utc, userId]);
+
+  try {
+    run(`
+      INSERT INTO audit_logs (user_id, action, target_type, target_id, details, created_at)
+      VALUES (?, 'REGENERATE_TEMP_PASS', 'users', ?, ?, CURRENT_TIMESTAMP)
+    `, [
+      adminUser.id,
+      userId,
+      `إعادة إصدار كلمة مرور مؤقتة للمستخدم ${user.username} لمدة 8 ساعات تنتهي في ${expires_at_saudi}`
+    ]);
+  } catch (e) {}
 
   persistUsersToDisk();
 
   return {
     success: true,
-    message: 'تم تفعيل حسابك وتعيين كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول للنظام.',
-    username: user.username,
-    full_name: user.full_name
+    message: 'تم إعادة إصدار كلمة المرور المؤقتة بنجاح لمدة 8 ساعات تبدأ من الآن.',
+    credentials: {
+      user_id: user.id,
+      username: user.username,
+      full_name: user.full_name,
+      temp_password: rawTempPass,
+      expires_at_utc: expires_at_utc,
+      expires_at_saudi: expires_at_saudi
+    }
+  };
+}
+
+/**
+ * Mandatory Password Change (for both first-login temporary passwords and user profile changes)
+ */
+function changePassword(userId, currentPassword, newPassword) {
+  const user = get('SELECT * FROM users WHERE id = ?', [userId]);
+  if (!user) throw new Error('المستخدم غير موجود');
+
+  // Verify current password
+  if (!verifyPassword(currentPassword, user.password)) {
+    throw new Error('كلمة المرور الحالية غير صحيحة');
+  }
+
+  // If user has a temporary password, check if it already expired
+  if (user.is_temporary_password === 1 && user.temp_password_expires_at) {
+    if (new Date() > new Date(user.temp_password_expires_at)) {
+      throw new Error('انتهت صلاحية كلمة المرور المؤقتة، يرجى التواصل مع مدير النظام.');
+    }
+  }
+
+  // Validate new password: minimum 8 characters
+  if (!newPassword || newPassword.trim().length < 8) {
+    throw new Error('كلمة المرور الجديدة يجب أن لا تقل عن 8 خانات وتحتوي على أرقام وحروف');
+  }
+
+  const hashedPassword = hashPassword(newPassword.trim());
+
+  run(`
+    UPDATE users SET
+      password = ?,
+      is_temporary_password = 0,
+      temp_password_expires_at = NULL,
+      must_change_password = 0,
+      password_hash_algo = 'pbkdf2',
+      status = 'نشط',
+      is_active = 1
+    WHERE id = ?
+  `, [hashedPassword, userId]);
+
+  try {
+    run(`
+      INSERT INTO audit_logs (user_id, action, target_type, target_id, details, created_at)
+      VALUES (?, 'CHANGE_PASSWORD', 'users', ?, 'قام المستخدم بتغيير كلمة المرور وتعيين كلمة مرور دائمة', CURRENT_TIMESTAMP)
+    `, [userId, userId]);
+  } catch (e) {}
+
+  persistUsersToDisk();
+
+  return {
+    success: true,
+    message: 'تم تغيير كلمة المرور وتعيين كلمة المرور الدائمة بنجاح!'
   };
 }
 
@@ -569,7 +665,7 @@ function updateUser(id, data) {
   const fullName = data.full_name ? data.full_name.trim() : existing.full_name;
   const email = data.email !== undefined ? data.email : existing.email;
   const role = data.role || existing.role;
-  const password = (data.password && data.password.trim() !== '') ? data.password.trim() : existing.password;
+  const password = (data.password && data.password.trim() !== '') ? hashPassword(data.password.trim()) : existing.password;
   const empId = data.emp_id !== undefined ? (data.emp_id ? Number(data.emp_id) : null) : existing.emp_id;
   const isActive = data.is_active !== undefined ? Number(data.is_active) : existing.is_active;
   const status = data.status || (isActive === 1 ? 'نشط' : existing.status);
@@ -589,21 +685,9 @@ function updateUser(id, data) {
     WHERE id = ?
   `, [username, password, fullName, email, role, permsStr, empId, customDataScope, isActive, status, id]);
 
-  const updated = get(`
-    SELECT id, username, full_name, email, role, permissions, emp_id,
-           is_active, status, activation_token, activation_token_expires_at, activated_at, created_at
-    FROM users WHERE id = ?
-  `, [id]);
-
-  try {
-    updated.permissions = JSON.parse(updated.permissions || '[]');
-  } catch (e) {
-    updated.permissions = [];
-  }
-
   persistUsersToDisk();
 
-  return updated;
+  return get('SELECT * FROM users WHERE id = ?', [id]);
 }
 
 function deleteUser(id) {
@@ -622,55 +706,19 @@ function deleteUser(id) {
   return result;
 }
 
-function syncUsers(clientUsers) {
-  if (!Array.isArray(clientUsers) || clientUsers.length === 0) {
-    return getAllUsers();
-  }
-
-  for (const u of clientUsers) {
-    if (!u.username) continue;
-    const existing = get('SELECT id, password FROM users WHERE username = ?', [u.username.trim()]);
-    const permsStr = typeof u.permissions === 'string' ? u.permissions : JSON.stringify(u.permissions || []);
-    const pass = u.password || 'Jj123';
-    const role = u.role || 'employee';
-    const fullName = u.full_name || u.username;
-    const email = u.email || null;
-    const empId = u.emp_id ? Number(u.emp_id) : null;
-    const isActive = u.is_active !== undefined ? Number(u.is_active) : 1;
-    const status = u.status || (isActive === 1 ? 'نشط' : 'معلق - بانتظار تعيين كلمة المرور');
-
-    if (!existing) {
-      const ins = run(`
-        INSERT INTO users (username, password, full_name, email, role, permissions, emp_id, is_active, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [u.username.trim(), pass, fullName, email, role, permsStr, empId, isActive, status]);
-      syncUserPermissionsTable(ins.lastInsertRowid, u.permissions);
-    } else {
-      const finalPass = (u.password && u.password.trim() !== '') ? u.password.trim() : existing.password;
-      run(`
-        UPDATE users SET
-          password = ?, full_name = ?, email = ?,
-          role = ?, permissions = ?, emp_id = ?, is_active = ?, status = ?
-        WHERE id = ?
-      `, [finalPass, fullName, email, role, permsStr, empId, isActive, status, existing.id]);
-      syncUserPermissionsTable(existing.id, u.permissions);
-    }
-  }
-
-  persistUsersToDisk();
-  return getAllUsers();
-}
-
 module.exports = {
   login,
   getAllUsers,
-  createUser,
+  createUserFromEmployee,
+  regenerateTempPassword,
+  changePassword,
+  getAvailableEmployeesForUserCreation,
+  hashPassword,
+  verifyPassword,
+  generateSecureTempPassword,
+  get8HourExpiryDates,
   updateUser,
   deleteUser,
-  syncUsers,
-  resendActivation,
-  verifyActivationToken,
-  activateAccount,
   persistUsersToDisk,
   restoreUsersFromDisk,
   reconcileUserEmployeeLinks,

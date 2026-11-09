@@ -329,6 +329,87 @@ app.post('/api/auth/activate', (req, res) => {
   }
 });
 
+
+app.post('/api/auth/change-password', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    if (!user || !user.id) {
+      return res.status(401).json({ success: false, error: 'يجب تسجيل الدخول لتغيير كلمة المرور' });
+    }
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ success: false, error: 'كلمة المرور الحالية وكلمة المرور الجديدة مطلوبتان' });
+    }
+    const result = usersModule.changePassword(user.id, current_password, new_password);
+    auditModule.logAuditEvent(req, {
+      action: 'CHANGE_PASSWORD',
+      entity_type: 'user',
+      entity_id: user.id,
+      performed_by_id: user.id,
+      performed_by_name: user.full_name || user.username,
+      comment: 'تم تغيير كلمة المرور بنجاح وتعيين كلمة مرور دائمة'
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/users/available-employees', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'غير مصرح. عرض الموظفين المتاحين مخصص لمدير النظام فقط' });
+    }
+    const emps = usersModule.getAvailableEmployeesForUserCreation();
+    res.json({ success: true, data: emps, count: emps.length });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/users/create-from-employee', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'غير مصرح. إضافة مستخدم بكلمة مرور مؤقتة متاح فقط لمدير النظام' });
+    }
+    const result = usersModule.createUserFromEmployee(req.body, user);
+    auditModule.logAuditEvent(req, {
+      action: 'CREATE_USER_TEMP_PASSWORD',
+      entity_type: 'user',
+      entity_id: result.user.id,
+      performed_by_id: user.id,
+      performed_by_name: user.full_name || user.username,
+      comment: 'إنشاء حساب مستخدم بكلمة مرور مؤقتة صالحة لمدة 8 ساعات للموظف ' + result.credentials.full_name + ' (' + result.credentials.username + ')'
+    });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/users/:id/regenerate-temp-password', (req, res) => {
+  try {
+    const user = extractUserContext(req);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'غير مصرح. إعادة تعيين كلمة المرور المؤقتة متاح فقط لمدير النظام' });
+    }
+    const result = usersModule.regenerateTempPassword(req.params.id, user);
+    auditModule.logAuditEvent(req, {
+      action: 'REGENERATE_TEMP_PASSWORD',
+      entity_type: 'user',
+      entity_id: req.params.id,
+      performed_by_id: user.id,
+      performed_by_name: user.full_name || user.username,
+      comment: 'إعادة إصدار كلمة مرور مؤقتة لمدة 8 ساعات للمستخدم ' + result.credentials.username
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 app.post('/api/users/:id/resend-activation', rbacEngine.requirePermission('users.edit'), (req, res) => {
   try {
     const result = usersModule.resendActivation(req.params.id);
