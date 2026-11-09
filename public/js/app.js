@@ -9021,6 +9021,21 @@ async function loadLeavesView() {
     // 2. Populate employee dropdowns
     populateLeaveEmpSelects();
 
+    // Eagerly update leave balances tab count
+    const _tabCountEl = document.getElementById('leaveBalancesTabCount');
+    if (_tabCountEl) {
+      if (leaveState.balances && leaveState.balances.length > 0) {
+        _tabCountEl.textContent = leaveState.balances.length;
+      } else {
+        apiFetch('/api/leaves/balances').then(bRes => {
+          if (bRes && bRes.success && bRes.data) {
+            leaveState.balances = bRes.data;
+            _tabCountEl.textContent = bRes.data.length;
+          }
+        }).catch(() => {});
+      }
+    }
+
     // 3. Load active subview
     if (leaveState.currentSubTab === 'requests') {
       await loadLeavesTable();
@@ -16180,14 +16195,20 @@ async function loadManagerDashboard() {
 }
 window.loadManagerDashboard = loadManagerDashboard;
 
-function populateManagerEmpSelects(members) {
+async function populateManagerEmpSelects(members) {
   const taskSelect = document.getElementById('assignTaskEmpSelect');
   const penaltySelect = document.getElementById('reqPenaltyEmpSelect');
 
-  // Fallback to active company employees if members list is empty
-  const list = (members && members.length > 0)
-    ? members
-    : ((state.employees || []).filter(e => e.status === 'نشط'));
+  let list = (members && members.length > 0) ? members : [];
+  if (list.length === 0) {
+    if (!state.employees || state.employees.length === 0) {
+      try {
+        const res = await apiFetch('/api/employees');
+        if (res && res.data) state.employees = res.data;
+      } catch (_) {}
+    }
+    list = (state.employees || []).filter(e => e.status === 'نشط');
+  }
 
   const optionsHtml = '<option value="">اختر الموظف...</option>' + list.map(m => `
     <option value="${m.id}">${m.full_name_ar} (${m.emp_code || m.id}) - ${m.job_title_ar || 'موظف'}</option>
