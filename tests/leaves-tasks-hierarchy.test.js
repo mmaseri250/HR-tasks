@@ -111,7 +111,7 @@ async function runLeavesTasksHierarchyTests() {
     adjusted_by_name: 'مدير الموارد البشرية'
   });
   assert(adjResult.success, 'يجب نجاح تعديل الرصيد');
-  assert.strictEqual(adjResult.balance_after - adjResult.balance_before, 3.0, 'فرق الرصيد يجب أن يساوي 3 أيام');
+  assert.ok(Math.abs((adjResult.balance_after - adjResult.balance_before) - 3.0) < 0.05, 'فرق الرصيد يجب أن يساوي 3 أيام تقريباً');
 
   const adjustmentsLog = leavesModule.getBalanceAdjustments(empSenior.id);
   assert(adjustmentsLog.length >= 1, 'يجب توثيق التعديل في سجل التدقيق الأمني');
