@@ -54,6 +54,53 @@ try {
   // Synchronize users.emp_id with active employees.id
   run("UPDATE users SET emp_id = (SELECT e.id FROM employees e WHERE e.emp_code = users.username OR e.full_name_ar = users.full_name LIMIT 1) WHERE users.emp_id IS NULL OR users.emp_id NOT IN (SELECT id FROM employees)");
 
+  // Ensure official company licenses, Tamm vehicles, and circulars are synchronized
+  const licCount = get("SELECT COUNT(*) as c FROM company_licenses")?.c || 0;
+  const vehCount = get("SELECT COUNT(*) as c FROM vehicles")?.c || 0;
+  const circCount = get("SELECT COUNT(*) as c FROM administrative_circulars")?.c || 0;
+
+  if (licCount === 0 || vehCount === 0 || circCount === 0) {
+    const assetsDataPath = path.join(__dirname, 'database', 'company_assets_data.json');
+    if (fs.existsSync(assetsDataPath)) {
+      const assetsData = JSON.parse(fs.readFileSync(assetsDataPath, 'utf8'));
+      if (licCount === 0 && assetsData.licenses?.length > 0) {
+        assetsData.licenses.forEach(l => {
+          run(`
+            INSERT INTO company_licenses (
+              license_type, license_name_ar, license_no, issuing_authority,
+              issue_date, expiry_date, alert_days_before, status, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [l.license_type, l.license_name_ar, l.license_no, l.issuing_authority, l.issue_date, l.expiry_date, l.alert_days_before, l.status, l.notes]);
+        });
+        console.log(`[Assets Sync] Seeded ${assetsData.licenses.length} official company licenses.`);
+      }
+      if (vehCount === 0 && assetsData.vehicles?.length > 0) {
+        assetsData.vehicles.forEach(v => {
+          run(`
+            INSERT INTO vehicles (
+              plate_number_ar, plate_number_en, make, model, year, color,
+              vin_serial, vehicle_type, istimara_expiry, fahas_expiry,
+              insurance_company, insurance_policy_no, insurance_expiry,
+              status, tamm_status, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [v.plate_number_ar, v.plate_number_en, v.make, v.model, v.year, v.color, v.vin_serial, v.vehicle_type, v.istimara_expiry, v.fahas_expiry, v.insurance_company, v.insurance_policy_no, v.insurance_expiry, v.status, v.tamm_status, v.notes]);
+        });
+        console.log(`[Assets Sync] Seeded ${assetsData.vehicles.length} official Tamm vehicles.`);
+      }
+      if (circCount === 0 && assetsData.circulars?.length > 0) {
+        assetsData.circulars.forEach(c => {
+          run(`
+            INSERT INTO administrative_circulars (
+              circular_no, title, content, category, target_audience,
+              issued_by, issued_at, is_urgent, acknowledgement_required, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [c.circular_no, c.title, c.content, c.category, c.target_audience, c.issued_by, c.issued_at, c.is_urgent, c.acknowledgement_required, c.status]);
+        });
+        console.log(`[Assets Sync] Seeded ${assetsData.circulars.length} official circulars.`);
+      }
+    }
+  }
+
 } catch (e) {
   console.error('Hierarchy sync error:', e.message);
 }

@@ -14,6 +14,7 @@ logs/*.log
 *.xlsx
 *.docx
 *.pdf
+!public/docs/policies/*.pdf
 *.zip
 *.webp
 
