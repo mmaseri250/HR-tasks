@@ -1618,8 +1618,10 @@ async function loadExecutiveDashboard() {
 
     // 1. Update 4 Hero KPI Cards
     // 1. Update Hero KPI Cards (Strict Real Data from DB)
-    const elEmp = document.getElementById('heroStatEmployees');
+    const elEmp = document.getElementById('cardStatEmployees') || document.getElementById('heroStatEmployees');
     if (elEmp) elEmp.textContent = d.total_employees !== undefined ? d.total_employees : 108;
+    const elEmpOld = document.getElementById('heroStatEmployees');
+    if (elEmpOld && elEmpOld !== elEmp) elEmpOld.textContent = d.total_employees !== undefined ? d.total_employees : 108;
 
     const elEmpSub = document.getElementById('heroStatEmployeesSub');
     if (elEmpSub) elEmpSub.textContent = (d.total_employees !== undefined ? d.total_employees : 108) + ' نشط';

@@ -179,122 +179,144 @@
   <div class="main-layout-container w-full max-w-none px-4 sm:px-8 lg:px-10 py-3 sm:py-6 flex-1 flex flex-row gap-4 md:gap-6 items-start">
 
     <!-- =========================================================================
-         SIDEBAR NAVIGATION (Desktop - Executive Redesign)
+         SIDEBAR NAVIGATION (Desktop - Luxury Royal Maroon Redesign - Image 4)
          ========================================================================= -->
     <aside class="sidebar-desktop-container flex-shrink-0">
-      <div class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-sm sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto space-y-1.5 scrollbar-thin">
+      <div class="sidebar-luxury-container rounded-3xl p-4 shadow-2xl sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto space-y-1.5 border border-amber-900/40 text-white scrollbar-thin">
         
-        <!-- Executive Sidebar Header Badge -->
-        <div class="flex items-center justify-between px-3 py-2.5 mb-2 bg-gradient-to-r from-brand/10 via-amber-500/10 to-transparent rounded-xl border border-brand/15 shadow-xs">
-          <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-brand text-amber-300 flex items-center justify-center text-xs shadow-xs">
-              <i class="fa-solid fa-gauge-high"></i>
+        <!-- Company Branding Header (Image 4 exact) -->
+        <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+          <button type="button" class="text-white/80 hover:text-white p-1 transition" title="القائمة">
+            <i class="fa-solid fa-bars text-base"></i>
+          </button>
+          <div class="flex items-center gap-2.5">
+            <div class="text-right">
+              <span class="text-xs font-black text-white block leading-tight">جوهرة المجد</span>
+              <span class="text-[10px] font-bold text-amber-200/90 block leading-tight">للتجارة</span>
             </div>
-            <div>
-              <span class="text-xs font-black text-slate-800 block leading-tight">لوحة التحكم</span>
-              <span class="text-[9px] font-bold text-brand leading-tight">نظام الموارد البشرية</span>
+            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1 shadow-sm flex-shrink-0">
+              <img src="assets/logo.png" alt="جوهرة المجد" class="w-full h-full object-contain">
             </div>
           </div>
-          <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-pulse"></span> نشط
-          </span>
         </div>
 
-        <div class="px-3 py-1 text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i class="fa-solid fa-layer-group text-brand text-[10px]"></i>
+        <div class="sidebar-section-header px-2 py-1 text-xs font-bold text-[#f7d070] flex items-center justify-between">
           <span>الوحدات الأساسية</span>
+          <i class="fa-solid fa-layer-group text-[#f7d070] text-xs"></i>
         </div>
 
         <!-- 1. Dashboard -->
-        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand nav-item-active">
-          <i class="fa-solid fa-chart-pie w-5 text-center text-base"></i>
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-black nav-item-active">
+          <i class="fa-solid fa-table-cells-large w-5 text-center text-sm"></i>
           <span data-i18n="nav_dashboard">لوحة المؤشرات</span>
         </button>
 
-        <!-- 2. Central HR Control Center (NEW UNIFIED HUB) -->
-        <button onclick="switchTab('hr-center')" id="nav-hr-center" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-brand hover:text-brand-dark bg-brand/5 hover:bg-brand/10 border border-brand/20 shadow-xs">
-          <i class="fa-solid fa-cubes w-5 text-center text-base text-brand"></i>
-          <span class="flex-1 text-right font-black">لوحة تحكم الموارد البشرية</span>
-          <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-brand text-amber-300">14 قسماً</span>
+        <!-- 2. Central HR Control Center -->
+        <button onclick="switchTab('hr-center')" id="nav-hr-center" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-table-cells w-5 text-center text-sm"></i>
+          <span class="flex-1 text-right">لوحة تحكم الموارد البشرية</span>
         </button>
 
         <!-- 3. Self-Service (ESS) -->
-        <button onclick="switchTab('selfservice')" id="nav-selfservice" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-user-shield w-5 text-center text-base text-indigo-600"></i>
+        <button onclick="switchTab('selfservice')" id="nav-selfservice" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-regular fa-user w-5 text-center text-sm"></i>
           <span data-i18n="nav_selfservice">بوابة الخدمة الذاتية (ESS)</span>
         </button>
 
-        <!-- 3.1 Approvals (سير الموافقات) -->
-        <button onclick="switchTab('leaves')" id="nav-leaves-main" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-clipboard-check w-5 text-center text-base text-emerald-600"></i>
+        <!-- 3.1 Approvals -->
+        <button onclick="switchTab('leaves')" id="nav-leaves-main" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-regular fa-clipboard-check w-5 text-center text-sm"></i>
           <span class="flex-1 text-right">الموافقات</span>
           <span id="badgeNavLeavesMain" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">0</span>
         </button>
 
-        <!-- 3.2 Manager Portal (صفحة المدير) -->
-        <button onclick="switchTab('manager')" id="nav-manager" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:text-brand bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30">
-          <i class="fa-solid fa-user-tie w-5 text-center text-base text-amber-700"></i>
+        <!-- 3.2 Manager Portal -->
+        <button onclick="switchTab('manager')" id="nav-manager" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-user-tie w-5 text-center text-sm"></i>
           <span class="flex-1 text-right font-black">صفحة المدير</span>
           <span id="badgeNavManager" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-200 text-amber-900 border border-amber-400">0</span>
         </button>
 
         <!-- 4. Administrative Circulars -->
-        <button onclick="switchTab('circulars')" id="nav-circulars" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-bullhorn w-5 text-center text-base text-rose-700"></i>
+        <button onclick="switchTab('circulars')" id="nav-circulars" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-bullhorn w-5 text-center text-sm"></i>
           <span class="flex-1 text-right" data-i18n="nav_circulars">التعاميم والقرارات الإدارية</span>
-          <span id="badgeNavCirculars" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-900 border border-rose-300">تعاميم</span>
+          <span id="badgeNavCirculars" class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white/90">تعاميم</span>
         </button>
 
         <!-- 5. Fleet Management -->
-        <button onclick="switchTab('fleet')" id="nav-fleet" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-car-side w-5 text-center text-base text-blue-600"></i>
+        <button onclick="switchTab('fleet')" id="nav-fleet" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-car w-5 text-center text-sm"></i>
           <span class="flex-1 text-right" data-i18n="nav_fleet">إدارة الأسطول ومنصة تم</span>
-          <span id="badgeNavFleet" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-900 border border-blue-300">تم</span>
+          <span id="badgeNavFleet" class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white/90">تم</span>
         </button>
 
         <!-- 6. Company Licenses -->
-        <button onclick="switchTab('licenses')" id="nav-licenses" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-file-shield w-5 text-center text-base text-teal-700"></i>
+        <button onclick="switchTab('licenses')" id="nav-licenses" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-regular fa-file-lines w-5 text-center text-sm"></i>
           <span class="flex-1 text-right" data-i18n="nav_licenses">السجلات والتراخيص الحكومية</span>
-          <span id="badgeNavLicenses" class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-teal-100 text-teal-900 border border-teal-300">تراخيص</span>
+          <span id="badgeNavLicenses" class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white/90">تراخيص</span>
         </button>
 
         <!-- 7. Comprehensive Reports -->
-        <button onclick="switchTab('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-chart-column w-5 text-center text-base text-amber-600"></i>
+        <button onclick="switchTab('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-chart-column w-5 text-center text-sm"></i>
           <span class="flex-1 text-right" data-i18n="nav_reports">التقارير المؤسسية الشاملة</span>
-          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">شامل</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/10 text-white/90">شامل</span>
         </button>
 
         <!-- 7.1 Official Forms (15 Certified Forms) -->
-        <button onclick="switchTab('forms')" id="nav-forms" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-file-signature w-5 text-center text-base text-purple-700"></i>
+        <button onclick="switchTab('forms')" id="nav-forms" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-file-signature w-5 text-center text-sm"></i>
           <span class="flex-1 text-right">النماذج والمستندات الرسمية</span>
-          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-900 border border-purple-300">15 نموذجاً</span>
+          <span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-400/20 text-amber-200">15 نموذجاً</span>
         </button>
 
-        <div class="pt-3 border-t border-slate-100 px-3 py-1 text-[11px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i class="fa-solid fa-shield-halved text-brand text-[10px]"></i>
+        <div class="sidebar-section-header px-2 py-1 text-xs font-bold text-[#f7d070] flex items-center justify-between pt-2.5 border-t border-white/10 mt-2">
           <span>الإدارة والتحكم</span>
+          <i class="fa-solid fa-shield-halved text-[#f7d070] text-xs"></i>
         </div>
 
         <!-- 8. Organization & Structure -->
-        <button onclick="switchTab('organization')" id="nav-organization" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-sitemap w-5 text-center text-base text-brand"></i>
+        <button onclick="switchTab('organization')" id="nav-organization" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-sitemap w-5 text-center text-sm"></i>
           <span data-i18n="nav_org">الهيكل التنظيمي والفروع</span>
         </button>
 
         <!-- 9. Users & Permissions -->
-        <button onclick="switchTab('users')" id="nav-users" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-users-gear w-5 text-center text-base text-purple-600"></i>
+        <button onclick="switchTab('users')" id="nav-users" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-users-gear w-5 text-center text-sm"></i>
           <span data-i18n="nav_users">المستخدمون والصلاحيات</span>
+        </button>
+
+        <!-- AI Job Descriptions -->
+        <button onclick="switchTab('job-descriptions')" id="nav-job-descriptions" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-sm"></i>
+          <span class="flex-1 text-right">الأوصاف الوظيفية (AI)</span>
+        </button>
+
+        <!-- Automated Absence & Tardiness Notices -->
+        <button onclick="switchTab('absence')" id="nav-absence" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-triangle-exclamation w-5 text-center text-sm"></i>
+          <span class="flex-1 text-right">إشعارات الغياب والتأخير</span>
+        </button>
+
+        <!-- Data Exchange (Import & Export) -->
+        <button onclick="switchTab('data-exchange')" id="nav-data-exchange" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-arrow-down-up-across-line w-5 text-center text-sm"></i>
+          <span class="flex-1 text-right">الاستيراد والتصدير</span>
+        </button>
+
+        <!-- Audit Log -->
+        <button onclick="switchTab('audit-log')" id="nav-audit-log" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold">
+          <i class="fa-solid fa-clock-rotate-left w-5 text-center text-sm"></i>
+          <span class="flex-1 text-right">سجل التدقيق</span>
         </button>
 
         <!-- Preserved Hidden Elements for Compatibility -->
         <button onclick="switchTab('employees-db')" id="nav-employees-db" class="hidden"></button>
         <button onclick="switchTab('leaves')" id="nav-leaves" class="hidden"><span id="badgeNavLeaves"></span></button>
         <button onclick="switchTab('tasks')" id="nav-tasks" class="hidden"><span id="badgeNavTasks"></span></button>
-        
         <button onclick="switchTab('compliance')" id="nav-compliance" class="hidden"><span id="badgeNavCompliance"></span></button>
         <button onclick="switchTab('penalties')" id="nav-penalties" class="hidden"></button>
         <button onclick="switchTab('attendance')" id="nav-attendance" class="hidden"></button>
@@ -302,37 +324,22 @@
         <button onclick="switchTab('loans')" id="nav-loans" class="hidden"></button>
         <button onclick="switchTab('terminated')" id="nav-terminated" class="hidden"></button>
         <button onclick="switchTab('attendance-notices')" id="nav-attendance-notices" class="hidden"><span id="badgeNavNotices"></span></button>
-        <!-- AI Job Descriptions -->
-        <button onclick="switchTab('job-descriptions')" id="nav-job-descriptions" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-base text-amber-500"></i>
-          <span class="flex-1 text-right">الأوصاف الوظيفية (AI)</span>
-          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">ذكاء اصطناعي</span>
-        </button>
-
-        <!-- Automated Absence & Tardiness Notices -->
-        <button onclick="switchTab('absence')" id="nav-absence" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-slate-600 hover:text-brand">
-          <i class="fa-solid fa-triangle-exclamation w-5 text-center text-base text-rose-600"></i>
-          <span class="flex-1 text-right">إشعارات الغياب والتأخير</span>
-          <span class="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">نظامي</span>
-        </button>
         <button onclick="switchTab('recruitment')" id="nav-recruitment" class="hidden"><span id="badgeNavRecruitment"></span></button>
         <button onclick="switchTab('insurance')" id="nav-insurance" class="hidden"><span id="badgeNavInsurance"></span></button>
         <button onclick="switchTab('branches')" id="nav-branches" class="hidden"></button>
-        <button onclick="switchTab('audit-log')" id="nav-audit-log" class="hidden"></button>
-        <button onclick="switchTab('data-exchange')" id="nav-data-exchange" class="hidden"></button>
         <button onclick="switchTab('docs')" id="nav-docs" class="hidden"></button>
 
         <!-- Desktop Sidebar Logout & Trust Badge -->
-        <div class="pt-3 border-t border-slate-100 mt-2 space-y-2">
-          <button onclick="promptLogout()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer border border-rose-200">
+        <div class="pt-2 border-t border-white/10 mt-2 space-y-2">
+          <button onclick="promptLogout()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-rose-200 hover:text-white hover:bg-white/10 rounded-xl transition cursor-pointer border border-rose-400/30">
             <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
             <span data-i18n="logout">تسجيل الخروج</span>
           </button>
-          <div class="px-2.5 py-2 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
-            <p class="text-[10px] font-black text-slate-700 flex items-center justify-center gap-1">
-              <i class="fa-solid fa-shield-halved text-brand"></i> شركة جوهرة المجد
+          <div class="px-2.5 py-2 bg-black/20 rounded-xl border border-white/5 text-center">
+            <p class="text-[10px] font-black text-amber-200 flex items-center justify-center gap-1">
+              <i class="fa-solid fa-shield-halved text-amber-400"></i> شركة جوهرة المجد
             </p>
-            <p class="text-[9px] text-slate-500 font-mono mt-0.5">HRMS Enterprise v2.4 🔒</p>
+            <p class="text-[9px] text-white/60 font-mono mt-0.5">HRMS Enterprise 🔒</p>
           </div>
         </div>
 
@@ -349,54 +356,35 @@
            ===================================================================== -->
       <section id="view-dashboard" class="space-y-6">
         
-        <!-- 1. Executive Programmatic Hero Card (Pure CSS/Tailwind - No Static Cropped Images) -->
-        <div class="relative rounded-3xl overflow-hidden shadow-xl border border-amber-500/30 bg-gradient-to-l from-[#4a080d] via-[#6e0c16] to-[#8d141e] text-white p-6 sm:p-8">
-          <div class="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
-            
-            <!-- Right side: Executive Text, Badges, & Corporate Identity -->
-            <div class="flex-1 space-y-3 max-w-2xl text-right">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#c59a3f]/25 text-[#f5d78e] border border-[#c59a3f]/40 shadow-xs">
-                  <i class="fa-solid fa-crown text-[#ffd700]"></i> لوحة القيادة التنفيذية المعتمدة
-                </span>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white/90 border border-white/15">
-                  <i class="fa-solid fa-building text-amber-300"></i> شركة جوهرة المجد للتجارة
-                </span>
-                <span class="text-[11px] font-mono text-amber-200/80 bg-black/20 px-2.5 py-0.5 rounded-lg border border-amber-500/20">
-                  س.ت: 5850024190
-                </span>
-              </div>
-              <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">نظرة شاملة على الموارد البشرية</h2>
-              <p class="text-white/85 text-xs sm:text-sm font-medium leading-relaxed">
-                مؤشرات أداء رئيسية حية، ومراقبة لحظية لحالة القوى العاملة، الالتزام بالأنظمة، وعمليات الأسطول والتراخيص الحكومية
-              </p>
-            </div>
-
-            <!-- Left side: Live Key Operational Metric Badges (100% Programmatic) -->
-            <div class="grid grid-cols-2 gap-3 w-full lg:w-auto flex-shrink-0">
-              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
-                <span class="text-[11px] font-bold text-amber-300 block mb-0.5"><i class="fa-solid fa-users ml-1"></i>الكادر النشط</span>
-                <span class="text-xl font-black font-mono text-white" id="heroStatEmployees">108</span>
-                <span class="text-[9px] text-white/70 block">موظفاً على رأس العمل</span>
-              </div>
-              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
-                <span class="text-[11px] font-bold text-emerald-300 block mb-0.5"><i class="fa-solid fa-calendar-check ml-1"></i>نسبة الحضور</span>
-                <span class="text-base font-bold font-mono text-slate-300" id="heroStatAttendanceBanner">غير متاح</span>
-                <span class="text-[9px] text-white/70 block" id="heroStatAttendanceBannerSub">لم يتم ربط مصدر الحضور</span>
-              </div>
-              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
-                <span class="text-[11px] font-bold text-teal-300 block mb-0.5"><i class="fa-solid fa-file-shield ml-1"></i>التراخيص والسجلات</span>
-                <span class="text-xl font-black font-mono text-teal-300" id="heroStatLicenses">0</span>
-                <span class="text-[9px] text-teal-200/80 block" id="heroStatLicensesSub">لا توجد بيانات مسجلة حالياً</span>
-              </div>
-              <div class="bg-black/25 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 text-center min-w-[130px] hover:bg-black/35 transition shadow-inner">
-                <span class="text-[11px] font-bold text-blue-300 block mb-0.5"><i class="fa-solid fa-car ml-1"></i>أسطول تم</span>
-                <span class="text-xl font-black font-mono text-blue-300" id="heroStatFleet">0</span>
-                <span class="text-[9px] text-blue-200/80 block" id="heroStatFleetSub">لا توجد بيانات مسجلة حالياً</span>
-              </div>
-            </div>
-
+        <!-- 1. Executive Hero Card (Image 5 exact - Building Facade with Golden Swoop & Royal Maroon Gradient) -->
+        <div class="relative rounded-3xl overflow-hidden shadow-xl border border-amber-500/30 bg-gradient-to-l from-[#4a080d] via-[#65000b] to-[#7d0d17] text-white min-h-[175px] flex flex-col md:flex-row items-stretch">
+          
+          <!-- Left side: Building Image with Curved Gold Accent -->
+          <div class="relative w-full md:w-5/12 lg:w-4/12 overflow-hidden flex-shrink-0 min-h-[150px] md:min-h-full">
+            <img src="assets/hero-building.png" alt="شركة جوهرة المجد" class="w-full h-full object-cover object-left">
+            <div class="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/20 to-transparent pointer-events-none hidden md:block"></div>
           </div>
+
+          <!-- Right side: Executive Text, Badges, & Corporate Identity -->
+          <div class="flex-1 p-6 sm:p-8 flex flex-col justify-center text-right z-10 space-y-2.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#b8860b]/30 text-[#f5d78e] border border-[#d4af37]/40 shadow-xs">
+                <i class="fa-solid fa-crown text-[#ffd700]"></i> لوحة القيادة التنفيذية
+              </span>
+            </div>
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">نظرة شاملة على الموارد البشرية</h2>
+            <p class="text-white/85 text-xs sm:text-sm font-medium leading-relaxed max-w-2xl">
+              مؤشرات أداء رئيسية وملخص لحالة القوى العاملة والعمليات التشغيلية
+            </p>
+          </div>
+
+          <!-- Hidden Compatibility Elements for JS References -->
+          <span id="heroStatAttendanceBanner" class="hidden">غير متاح</span>
+          <span id="heroStatAttendanceBannerSub" class="hidden">لم يتم ربط مصدر الحضور</span>
+          <span id="heroStatLicenses" class="hidden">0</span>
+          <span id="heroStatLicensesSub" class="hidden">لا توجد بيانات</span>
+          <span id="heroStatFleet" class="hidden">0</span>
+          <span id="heroStatFleetSub" class="hidden">لا توجد بيانات</span>
         </div>
 
         <!-- Filter Bar: Current Period & Real-Time Sync Indicator -->
@@ -420,7 +408,7 @@
           </div>
         </div>
 
-        <!-- 2. KPI Summary Cards Grid (4 Cards Exactly as Reference Image) -->
+        <!-- 2. KPI Summary Cards Grid (4 Cards Exactly as Image 5) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <!-- Card 1 (Right): إجمالي الموظفين -->
@@ -428,9 +416,9 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-xs font-bold text-slate-500">إجمالي الموظفين</p>
-                <h3 id="heroStatEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">108</h3>
+                <h3 id="cardStatEmployees" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">108</h3>
               </div>
-              <div class="w-11 h-11 rounded-2xl bg-[#700b24] text-white flex items-center justify-center text-lg shadow-sm">
+              <div class="w-12 h-12 rounded-2xl bg-[#6b0b17] text-white flex items-center justify-center text-xl shadow-xs flex-shrink-0">
                 <i class="fa-solid fa-users"></i>
               </div>
             </div>
@@ -447,9 +435,9 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-xs font-bold text-slate-500">نسبة الحضور</p>
-                <h3 id="heroStatAttendance" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">غير متاح</h3>
+                <h3 id="heroStatAttendance" class="text-2xl font-black text-slate-400 mt-2 font-mono tracking-tight">غير متاح</h3>
               </div>
-              <div class="w-11 h-11 rounded-2xl bg-[#d97706] text-white flex items-center justify-center text-lg shadow-sm">
+              <div class="w-12 h-12 rounded-2xl bg-[#c59a3f] text-white flex items-center justify-center text-xl shadow-xs flex-shrink-0">
                 <i class="fa-regular fa-calendar-check"></i>
               </div>
             </div>
@@ -466,9 +454,9 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-xs font-bold text-slate-500">طلبات معلقة</p>
-                <h3 id="heroStatPendingRequests" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">58</h3>
+                <h3 id="heroStatPendingRequests" class="text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">0</h3>
               </div>
-              <div class="w-11 h-11 rounded-2xl bg-[#d97706] text-white flex items-center justify-center text-lg shadow-sm">
+              <div class="w-12 h-12 rounded-2xl bg-[#d97706] text-white flex items-center justify-center text-xl shadow-xs flex-shrink-0">
                 <i class="fa-regular fa-file-lines"></i>
               </div>
             </div>
@@ -476,7 +464,7 @@
               <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
                 <i class="fa-solid fa-circle-exclamation text-[10px] text-amber-500"></i> تحتاج إلى إجراء
               </span>
-              <button onclick="switchTab('requests')" class="text-[10px] text-slate-400 hover:text-brand font-bold">عرض الطلبات</button>
+              <button onclick="switchTab('leaves')" class="text-[10px] text-slate-400 hover:text-brand font-bold">عرض الطلبات</button>
             </div>
           </div>
 
@@ -485,10 +473,10 @@
             <div class="flex items-start justify-between">
               <div>
                 <p class="text-xs font-bold text-slate-500">مسير الرواتب</p>
-                <h3 id="heroStatPayroll" class="text-2xl sm:text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">3,286,750 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
+                <h3 id="heroStatPayroll" class="text-2xl sm:text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight">0 <span class="text-xs font-bold text-slate-500">ر.س</span></h3>
               </div>
-              <div class="w-11 h-11 rounded-2xl bg-[#700b24] text-white flex items-center justify-center text-lg shadow-sm">
-                <i class="fa-solid fa-coins"></i>
+              <div class="w-12 h-12 rounded-2xl bg-[#6b0b17] text-white flex items-center justify-center text-xl shadow-xs flex-shrink-0">
+                <i class="fa-solid fa-coins text-amber-300"></i>
               </div>
             </div>
             <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
