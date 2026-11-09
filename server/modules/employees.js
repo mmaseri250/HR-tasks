@@ -125,7 +125,7 @@ function createEmployee(data) {
 
   const openingBal = data.opening_leave_balance !== undefined ? Number(data.opening_leave_balance) : (data.annual_leave_balance !== undefined ? Number(data.annual_leave_balance) : 0);
   const monthlyRate = data.monthly_accrual_rate !== undefined ? Number(data.monthly_accrual_rate) : 1.75;
-  const accrualStart = data.accrual_start_date || '2026-11-05';
+  const accrualStart = data.accrual_start_date || '2026-11-07';
 
   const result = run(sql, [
     data.emp_code,

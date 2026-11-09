@@ -25,12 +25,13 @@ function getAnnualAccrualRate(joinDateStr) {
 
 /**
  * Get or initialize leave balance for an employee, calculating daily accrual automatically
- * based on Certified Opening Balance as of 2026-11-05 and post-baseline daily accrual
+ * based on Certified Opening Balance as of 2026-11-06 and post-baseline daily accrual starting 2026-11-07
  */
 function getEmployeeLeaveBalance(empId) {
   const emp = get(`
     SELECT e.id, e.emp_code, e.full_name_ar, e.join_date, e.annual_leave_balance,
            e.opening_leave_balance, e.accrual_start_date, e.monthly_accrual_rate,
+           e.status, e.termination_date,
            d.name_ar AS department_name, b.name_ar AS branch_name
     FROM employees e
     LEFT JOIN departments d ON e.department_id = d.id
@@ -42,13 +43,15 @@ function getEmployeeLeaveBalance(empId) {
     throw new Error('الموظف غير موجود');
   }
 
+  const isTerminated = emp.status === 'منتهي الخدمة' || emp.status === 'مستقيل' || !!emp.termination_date;
+
   const openingBal = typeof emp.opening_leave_balance === 'number' ? emp.opening_leave_balance : 0;
-  const accrualStartStr = emp.accrual_start_date || '2026-11-05';
+  const accrualStartStr = emp.accrual_start_date || '2026-11-07';
   const accrualStartDate = new Date(accrualStartStr);
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
 
-  const serviceYears = calculateServiceYears(emp.join_date, now);
+  const serviceYears = calculateServiceYears(emp.join_date, isTerminated && emp.termination_date ? new Date(emp.termination_date) : now);
   // Monthly rate per Saudi Labor Law (Article 109): 2.5 (>= 5 yrs) or 1.75 (< 5 yrs)
   let monthlyRate = serviceYears >= 5 ? 2.5 : 1.75;
   if (emp.monthly_accrual_rate && typeof emp.monthly_accrual_rate === 'number') {
@@ -58,12 +61,12 @@ function getEmployeeLeaveBalance(empId) {
   const annualEntitlement = Math.round(monthlyRate * 12); // 21 or 30 days
   const dailyRate = monthlyRate / 30.0;
 
-  // Accrual days since certified baseline date (2026-11-05)
+  // Accrual days since certified baseline date (2026-11-07) - Strictly zero for terminated employees
   let daysElapsed = 0;
-  if (now.getTime() > accrualStartDate.getTime()) {
+  if (!isTerminated && now.getTime() > accrualStartDate.getTime()) {
     daysElapsed = Math.floor((now.getTime() - accrualStartDate.getTime()) / (1000 * 60 * 60 * 24));
   }
-  const accruedSinceStart = Math.max(0, daysElapsed * dailyRate);
+  const accruedSinceStart = isTerminated ? 0 : Math.max(0, daysElapsed * dailyRate);
 
   // Manual adjustments from leave_balance_adjustments
   const adjRow = get(`SELECT COALESCE(SUM(adjustment_days), 0) AS total_adj FROM leave_balance_adjustments WHERE emp_id = ?`, [empId]);

@@ -1621,18 +1621,42 @@ async function loadExecutiveDashboard() {
     if (elEmpSub) elEmpSub.textContent = (d.total_employees !== undefined ? d.total_employees : 108) + ' نشط';
 
     // Attendance Hero Stat (Zero-Mock: Show 'غير متاح' when no biometric connected)
+    const elAttBanner = document.getElementById('heroStatAttendanceBanner');
+    const elAttBannerSub = document.getElementById('heroStatAttendanceBannerSub');
     const elAtt = document.getElementById('heroStatAttendance');
-    const elAttSub = document.getElementById('heroStatAttendanceSub') || (elAtt ? elAtt.parentElement.querySelector('span:last-child') : null);
-    if (elAtt) {
-      if (d.attendance_rate !== null && d.attendance_rate !== undefined) {
-        elAtt.textContent = d.attendance_rate + '%';
-        elAtt.className = 'text-xl font-black font-mono text-emerald-400';
-        if (elAttSub) elAttSub.textContent = 'متوسط الالتزام اليومي';
-      } else {
-        elAtt.textContent = 'غير متاح';
-        elAtt.className = 'text-base font-bold font-mono text-slate-300';
-        if (elAttSub) elAttSub.textContent = 'لم يتم ربط مصدر الحضور';
+    const elAttSub = document.getElementById('heroStatAttendanceSub');
+    const elAttBadge = document.getElementById('heroStatAttendanceBadge');
+
+    if (d.attendance_rate !== null && d.attendance_rate !== undefined) {
+      if (elAttBanner) {
+        elAttBanner.textContent = d.attendance_rate + '%';
+        elAttBanner.className = 'text-xl font-black font-mono text-emerald-400';
       }
+      if (elAttBannerSub) elAttBannerSub.textContent = 'متوسط الالتزام اليومي';
+      if (elAtt) {
+        elAtt.textContent = d.attendance_rate + '%';
+        elAtt.className = 'text-3xl font-black text-slate-800 mt-2 font-mono tracking-tight';
+      }
+      if (elAttBadge) {
+        elAttBadge.innerHTML = '<i class="fa-solid fa-arrow-trend-up text-[10px]"></i> نشط';
+        elAttBadge.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200';
+      }
+      if (elAttSub) elAttSub.textContent = 'بصمة ذكية';
+    } else {
+      if (elAttBanner) {
+        elAttBanner.textContent = 'غير متاح';
+        elAttBanner.className = 'text-base font-bold font-mono text-slate-300';
+      }
+      if (elAttBannerSub) elAttBannerSub.textContent = 'لم يتم ربط مصدر الحضور';
+      if (elAtt) {
+        elAtt.textContent = 'غير متاح';
+        elAtt.className = 'text-2xl font-black text-slate-400 mt-2 font-mono tracking-tight';
+      }
+      if (elAttBadge) {
+        elAttBadge.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-[10px]"></i> لم يتم ربط نظام البصمة';
+        elAttBadge.className = 'inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200';
+      }
+      if (elAttSub) elAttSub.textContent = 'غير متاح';
     }
 
     // Licenses Hero Stat (Calculated dynamically from company_licenses)
@@ -16118,7 +16142,7 @@ window.openJobDescriptionForEmployee = openJobDescriptionForEmployee;
 
 
 /* =========================================================================
-   14. MANAGER PORTAL CONTROLLER (صفحة المدير)
+   14. MANAGER PORTAL CONTROLLER (صفحة المدير والرقابة الإدارية الشاملة)
    ========================================================================= */
 
 const managerState = {
@@ -16127,21 +16151,34 @@ const managerState = {
   filteredTasks: [],
   pendingRequests: [],
   teamMembers: [],
+  availableManagers: [],
+  availableBranches: [],
+  selectedManagerId: 'all',
+  selectedBranchId: 'all',
   statusFilter: 'all',
-  searchTerm: ''
+  searchTerm: '',
+  isExecutive: false
 };
 
-async function loadManagerDashboard() {
+async function loadManagerDashboard(mgrId, branchId) {
+  if (mgrId !== undefined) managerState.selectedManagerId = mgrId;
+  if (branchId !== undefined) managerState.selectedBranchId = branchId;
+
   const tableBody = document.getElementById('managerTasksTableBody');
   const reqContainer = document.getElementById('managerPendingRequestsContainer');
   const teamContainer = document.getElementById('managerTeamListContainer');
+  const filterBar = document.getElementById('managerExecutiveFilterBar');
 
   if (tableBody) {
     tableBody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> جاري تحميل بيانات لوحة المدير...</td></tr>';
   }
 
   try {
-    const res = await apiFetch('/api/manager/dashboard-stats');
+    const qParams = new URLSearchParams();
+    if (managerState.selectedManagerId) qParams.append('manager_id', managerState.selectedManagerId);
+    if (managerState.selectedBranchId) qParams.append('branch_id', managerState.selectedBranchId);
+
+    const res = await apiFetch(`/api/manager/dashboard-stats?${qParams.toString()}`);
     if (!res || !res.success || !res.data) {
       if (tableBody) tableBody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">تعذر تحميل بيانات لوحة المدير</td></tr>';
       return;
@@ -16152,8 +16189,21 @@ async function loadManagerDashboard() {
     managerState.tasks = d.tasks || [];
     managerState.pendingRequests = d.pending_requests || [];
     managerState.teamMembers = d.team_members || [];
+    managerState.isExecutive = d.is_executive === true;
+    managerState.availableManagers = d.available_managers || [];
+    managerState.availableBranches = d.available_branches || [];
 
-    // 1. Update 4 KPI Cards
+    // 1. Executive Filter Bar Visibility & Population
+    if (filterBar) {
+      if (managerState.isExecutive) {
+        filterBar.classList.remove('hidden');
+        populateExecutiveFilters();
+      } else {
+        filterBar.classList.add('hidden');
+      }
+    }
+
+    // 2. Update 4 KPI Cards
     const elTeam = document.getElementById('managerStatTeam');
     if (elTeam) elTeam.textContent = d.team_count !== undefined ? d.team_count : 0;
 
@@ -16178,10 +16228,10 @@ async function loadManagerDashboard() {
       }
     }
 
-    // 2. Populate Modal Select Dropdowns with Team Members
+    // 3. Populate Modal Select Dropdowns with Team Members
     populateManagerEmpSelects(managerState.teamMembers);
 
-    // 3. Render Sections
+    // 4. Render Sections
     renderManagerTasksTable();
     renderManagerPendingRequests();
     renderManagerTeamList();
@@ -16195,19 +16245,69 @@ async function loadManagerDashboard() {
 }
 window.loadManagerDashboard = loadManagerDashboard;
 
+function populateExecutiveFilters() {
+  const mgrSelect = document.getElementById('managerSelectExecutiveManager');
+  const branchSelect = document.getElementById('managerSelectExecutiveBranch');
+
+  if (mgrSelect && managerState.availableManagers && managerState.availableManagers.length > 0) {
+    const currentVal = managerState.selectedManagerId || 'all';
+    let optionsHtml = '<option value="all">كافة الشركة — الرقابة الإدارية الشاملة (108 موظفين)</option>';
+    managerState.availableManagers.forEach(m => {
+      const selected = String(m.id) === String(currentVal) ? 'selected' : '';
+      optionsHtml += `<option value="${m.id}" ${selected}>${m.full_name_ar} (${m.subordinates_count} موظفاً — ${m.branch_name || m.job_title_ar || 'مدير'})</option>`;
+    });
+    mgrSelect.innerHTML = optionsHtml;
+  }
+
+  if (branchSelect && managerState.availableBranches && managerState.availableBranches.length > 0) {
+    const currentVal = managerState.selectedBranchId || 'all';
+    let optionsHtml = '<option value="all">جميع الفروع</option>';
+    managerState.availableBranches.forEach(b => {
+      const selected = String(b.id) === String(currentVal) ? 'selected' : '';
+      optionsHtml += `<option value="${b.id}" ${selected}>${b.name_ar}</option>`;
+    });
+    branchSelect.innerHTML = optionsHtml;
+  }
+}
+
+function onExecutiveManagerChange() {
+  const mgrSelect = document.getElementById('managerSelectExecutiveManager');
+  const val = mgrSelect ? mgrSelect.value : 'all';
+  managerState.selectedManagerId = val;
+  loadManagerDashboard(val, managerState.selectedBranchId);
+}
+window.onExecutiveManagerChange = onExecutiveManagerChange;
+
+function onExecutiveBranchChange() {
+  const branchSelect = document.getElementById('managerSelectExecutiveBranch');
+  const val = branchSelect ? branchSelect.value : 'all';
+  managerState.selectedBranchId = val;
+  loadManagerDashboard(managerState.selectedManagerId, val);
+}
+window.onExecutiveBranchChange = onExecutiveBranchChange;
+
+function resetExecutiveFilters() {
+  managerState.selectedManagerId = 'all';
+  managerState.selectedBranchId = 'all';
+  loadManagerDashboard('all', 'all');
+}
+window.resetExecutiveFilters = resetExecutiveFilters;
+
 async function populateManagerEmpSelects(members) {
   const taskSelect = document.getElementById('assignTaskEmpSelect');
   const penaltySelect = document.getElementById('reqPenaltyEmpSelect');
 
   let list = (members && members.length > 0) ? members : [];
-  if (list.length === 0) {
+  if (list.length === 0 || managerState.isExecutive) {
     if (!state.employees || state.employees.length === 0) {
       try {
         const res = await apiFetch('/api/employees');
         if (res && res.data) state.employees = res.data;
       } catch (_) {}
     }
-    list = (state.employees || []).filter(e => e.status === 'نشط');
+    if (list.length === 0) {
+      list = (state.employees || []).filter(e => e.status === 'نشط');
+    }
   }
 
   const optionsHtml = '<option value="">اختر الموظف...</option>' + list.map(m => `

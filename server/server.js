@@ -38,31 +38,33 @@ const generalAdminService = require('./modules/generalAdminService');
 // Start attendance background violation scanner
 attendanceAutomationService.startBackgroundScanner();
 
-// Ensure organizational hierarchy and manager integrity on startup
+// Ensure organizational hierarchy, 109 RBAC accounts, and manager integrity on startup
 try {
-  // Purge any lingering obsolete board members if present by full name
-  run("DELETE FROM employees WHERE full_name_ar IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
-  run("DELETE FROM users WHERE username IN ('abdulrahman.qahtani', 'saeed.qahtani', 'salih.qahtani', 'admin.qahtani') OR full_name IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
-  run("DELETE FROM absence_notices WHERE emp_name IN ('عبدالرحمن صالح القحطاني', 'سعيد محمد القحطاني', 'صالح سعيد القحطاني')");
-  run("UPDATE branches SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
-  run("UPDATE departments SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE manager_name LIKE '%صالح سعيد%' OR name_ar LIKE '%الإدارة العامة%'");
+  const { executeMasterUpdate } = require('./database/applyMasterUpdate');
+  executeMasterUpdate();
+} catch (err) {
+  console.error('[Startup] Master update initialization error:', err);
+}
 
-  // Ensure department heads report independently (manager_id = NULL)
-  run("UPDATE employees SET manager_id = NULL, direct_manager_name = NULL WHERE emp_code IN ('JM-0001', 'JM-0108')");
-  run("UPDATE employees SET direct_manager_name = 'تامر جمعه احمد عبدالله' WHERE direct_manager_name = 'تامر جمعة احمد عبدالله'");
-  run("UPDATE employees SET status = 'نشط' WHERE status NOT IN ('نشط', 'منتهي الخدمة')");
-  // Synchronize users.emp_id with active employees.id
-  run("UPDATE users SET emp_id = (SELECT e.id FROM employees e WHERE e.emp_code = users.username OR e.full_name_ar = users.full_name LIMIT 1) WHERE users.emp_id IS NULL OR users.emp_id NOT IN (SELECT id FROM employees)");
+  // Ensure one-time certified assets initialization (Strictly executed ONCE, never re-seeds upon table deletion)
+try {
+  run(`
+    CREATE TABLE IF NOT EXISTS system_migrations (
+      migration_name TEXT PRIMARY KEY,
+      applied_at TEXT
+    )
+  `);
 
-  // Ensure official company licenses, Tamm vehicles, and circulars are synchronized
-  const licCount = get("SELECT COUNT(*) as c FROM company_licenses")?.c || 0;
-  const vehCount = get("SELECT COUNT(*) as c FROM vehicles")?.c || 0;
-  const circCount = get("SELECT COUNT(*) as c FROM administrative_circulars")?.c || 0;
+  const initialAssetsSeeded = get("SELECT applied_at FROM system_migrations WHERE migration_name = 'initial_company_assets_seed'");
 
-  if (licCount === 0 || vehCount === 0 || circCount === 0) {
+  if (!initialAssetsSeeded) {
     const assetsDataPath = path.join(__dirname, 'database', 'company_assets_data.json');
     if (fs.existsSync(assetsDataPath)) {
       const assetsData = JSON.parse(fs.readFileSync(assetsDataPath, 'utf8'));
+      const licCount = get("SELECT COUNT(*) as c FROM company_licenses")?.c || 0;
+      const vehCount = get("SELECT COUNT(*) as c FROM vehicles")?.c || 0;
+      const circCount = get("SELECT COUNT(*) as c FROM administrative_circulars")?.c || 0;
+
       if (licCount === 0 && assetsData.licenses?.length > 0) {
         assetsData.licenses.forEach(l => {
           run(`
@@ -72,7 +74,7 @@ try {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `, [l.license_type, l.license_name_ar, l.license_no, l.issuing_authority, l.issue_date, l.expiry_date, l.alert_days_before, l.status, l.notes]);
         });
-        console.log(`[Assets Sync] Seeded ${assetsData.licenses.length} official company licenses.`);
+        console.log(`[Assets Init] One-time seeded ${assetsData.licenses.length} official company licenses.`);
       }
       if (vehCount === 0 && assetsData.vehicles?.length > 0) {
         assetsData.vehicles.forEach(v => {
@@ -85,7 +87,7 @@ try {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `, [v.plate_number_ar, v.plate_number_en, v.make, v.model, v.year, v.color, v.vin_serial, v.vehicle_type, v.istimara_expiry, v.fahas_expiry, v.insurance_company, v.insurance_policy_no, v.insurance_expiry, v.status, v.tamm_status, v.notes]);
         });
-        console.log(`[Assets Sync] Seeded ${assetsData.vehicles.length} official Tamm vehicles.`);
+        console.log(`[Assets Init] One-time seeded ${assetsData.vehicles.length} official Tamm vehicles.`);
       }
       if (circCount === 0 && assetsData.circulars?.length > 0) {
         assetsData.circulars.forEach(c => {
@@ -96,9 +98,10 @@ try {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `, [c.circular_no, c.title, c.content, c.category, c.target_audience, c.issued_by, c.issued_at, c.is_urgent, c.acknowledgement_required, c.status]);
         });
-        console.log(`[Assets Sync] Seeded ${assetsData.circulars.length} official circulars.`);
+        console.log(`[Assets Init] One-time seeded ${assetsData.circulars.length} official circulars.`);
       }
     }
+    run("INSERT OR REPLACE INTO system_migrations (migration_name, applied_at) VALUES ('initial_company_assets_seed', datetime('now'))");
   }
 
 } catch (e) {
@@ -4195,56 +4198,102 @@ app.get('/api/general/reports/export/csv', (req, res) => {
 
 
 /* =========================================================================
-   MODULE 13: MANAGER PORTAL & DASHBOARD (صفحة المدير)
+   MODULE 13: MANAGER PORTAL & DASHBOARD (صفحة المدير والرقابة الإدارية الشاملة)
    ========================================================================= */
 
 app.get('/api/manager/dashboard-stats', (req, res) => {
   try {
     const user = extractUserContext(req);
-    const empId = user?.emp_id ? Number(user.emp_id) : null;
-    const userName = (user?.full_name || user?.full_name_ar || '').trim();
-    const isAdmin = !user || user.role === 'admin' || user.role === 'general_manager' || user.role === 'hr_manager';
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. Fetch Team Members
-    let teamMembers = [];
-    if (empId || userName) {
-      teamMembers = query(`
-        SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.phone, e.email, e.status,
-               d.name_ar AS department_name, b.name_ar AS branch_name
-        FROM employees e
-        LEFT JOIN departments d ON e.department_id = d.id
-        LEFT JOIN branches b ON e.branch_id = b.id
-        WHERE ((? IS NOT NULL AND e.manager_id = ?)
-            OR (? <> '' AND (e.direct_manager_name = ? OR e.direct_manager_name LIKE ?))
-            OR (? <> '' AND d.manager_name = ?))
-          AND e.status = 'نشط'
-        ORDER BY e.full_name_ar ASC
-      `, [empId, empId, userName, userName, `%${userName}%`, userName, userName]);
+    // Determine executive role vs line manager
+    const isExecutive = !user || user.role === 'admin' || user.role === 'general_manager' || (user.role === 'hr_manager' && (!user.permissions || user.permissions.includes('all') || user.permissions.includes('dashboard.view')));
+    const isDeptManager = user && user.role === 'dept_manager';
+
+    // Resolve user's employee ID
+    let userEmpId = user?.emp_id ? Number(user.emp_id) : null;
+    if (!userEmpId && user?.username && user.username !== 'admin') {
+      const row = get('SELECT id FROM employees WHERE emp_code = ?', [user.username]);
+      if (row) userEmpId = row.id;
     }
 
-    if (teamMembers.length === 0 && (isAdmin || !user || user.role === 'dept_manager')) {
-      // For Admin/Top Managers or when team lookup needs full company oversight, display all active employees
+    // List of all approved line managers with subordinate counts (for executive selector)
+    const availableManagers = query(`
+      SELECT m.id, m.emp_code, m.full_name_ar, m.job_title_ar, b.name_ar AS branch_name, COUNT(e.id) AS subordinates_count
+      FROM employees e
+      JOIN employees m ON e.manager_id = m.id
+      LEFT JOIN branches b ON m.branch_id = b.id
+      WHERE e.status = 'نشط'
+      GROUP BY m.id
+      ORDER BY subordinates_count DESC
+    `);
+
+    const availableBranches = query(`
+      SELECT id, name_ar, code FROM branches ORDER BY is_main DESC, id ASC
+    `);
+
+    let targetManagerId = req.query.manager_id || 'all';
+    let targetBranchId = req.query.branch_id || 'all';
+
+    // IDOR Protection: Line managers can ONLY view their own team
+    if (isDeptManager && !isExecutive) {
+      if (targetManagerId !== 'all' && Number(targetManagerId) !== userEmpId) {
+        return res.status(403).json({
+          success: false,
+          error: 'غير مصرح: لا يحق لك الاطلاع على فريق عمل مدير آخر (IDOR Blocked)',
+          code: 'FORBIDDEN_IDOR'
+        });
+      }
+      targetManagerId = userEmpId ? String(userEmpId) : 'none';
+    }
+
+    // 1. Fetch Team Members based on scope
+    let teamMembers = [];
+    if (targetManagerId !== 'all' && targetManagerId !== 'none') {
+      const selectedMgr = Number(targetManagerId);
+      let branchSql = '';
+      const params = [selectedMgr];
+      if (targetBranchId && targetBranchId !== 'all') {
+        branchSql = ' AND e.branch_id = ?';
+        params.push(Number(targetBranchId));
+      }
       teamMembers = query(`
         SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.phone, e.email, e.status,
-               d.name_ar AS department_name, b.name_ar AS branch_name
+               d.name_ar AS department_name, b.name_ar AS branch_name, e.manager_id, e.direct_manager_name,
+               e.annual_leave_balance
         FROM employees e
         LEFT JOIN departments d ON e.department_id = d.id
         LEFT JOIN branches b ON e.branch_id = b.id
-        WHERE e.status = 'نشط'
+        WHERE e.manager_id = ? AND e.status = 'نشط'${branchSql}
+        ORDER BY e.full_name_ar ASC
+      `, params);
+    } else if (targetManagerId === 'all' && isExecutive) {
+      let branchSql = '';
+      const params = [];
+      if (targetBranchId && targetBranchId !== 'all') {
+        branchSql = ' AND e.branch_id = ?';
+        params.push(Number(targetBranchId));
+      }
+      teamMembers = query(`
+        SELECT e.id, e.emp_code, e.full_name_ar, e.job_title_ar, e.phone, e.email, e.status,
+               d.name_ar AS department_name, b.name_ar AS branch_name, e.manager_id, e.direct_manager_name,
+               e.annual_leave_balance
+        FROM employees e
+        LEFT JOIN departments d ON e.department_id = d.id
+        LEFT JOIN branches b ON e.branch_id = b.id
+        WHERE e.status = 'نشط'${branchSql}
         ORDER BY e.id ASC
-      `);
+      `, params);
     }
 
     const teamIds = teamMembers.map(m => m.id);
 
-    // 2. Fetch Tasks Assigned to or by Team
+    // 2. Fetch Tasks in Scope
     let tasks = [];
-    if (isAdmin || !user) {
-      tasks = tasksModule.getAllTasks({ limit: 50 }, user || { role: 'admin' });
-    } else if (teamIds.length > 0 || empId) {
+    if (targetManagerId !== 'all' && targetManagerId !== 'none') {
+      const selectedMgr = Number(targetManagerId);
       const placeholders = teamIds.length > 0 ? teamIds.map(() => '?').join(',') : '0';
-      const params = teamIds.length > 0 ? [...teamIds, empId || 0] : [0, empId || 0];
+      const taskParams = teamIds.length > 0 ? [...teamIds, selectedMgr] : [0, selectedMgr];
       tasks = query(`
         SELECT t.*,
                e.emp_code, e.full_name_ar AS assigned_to_name, e.job_title_ar AS assigned_to_job
@@ -4252,39 +4301,59 @@ app.get('/api/manager/dashboard-stats', (req, res) => {
         JOIN employees e ON t.assigned_to = e.id
         WHERE t.assigned_to IN (${placeholders}) OR t.assigned_by = ?
         ORDER BY t.created_at DESC
-        LIMIT 50
-      `, params);
+        LIMIT 100
+      `, taskParams);
+    } else if (targetManagerId === 'all' && isExecutive) {
+      tasks = tasksModule.getAllTasks({ limit: 100 }, user || { role: 'admin' });
     }
 
-    // 3. Fetch Pending Requests Awaiting Manager Action
+    // 3. Fetch Pending Requests in Scope
     let pendingRequests = [];
-    if (isAdmin || !user) {
+    if (targetManagerId !== 'all' && targetManagerId !== 'none') {
+      const selectedMgr = Number(targetManagerId);
       pendingRequests = query(`
-        SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar
+        SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar, e.manager_id, e.direct_manager_name
         FROM requests r
         JOIN employees e ON r.emp_id = e.id
-        WHERE (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق' OR r.status LIKE '%معلق%')
+        WHERE e.manager_id = ?
+          AND (r.manager_status = 'معلق' OR r.status LIKE '%بانتظار موافقة المدير%')
         ORDER BY r.created_at DESC
-        LIMIT 20
+        LIMIT 50
+      `, [selectedMgr]);
+    } else if (targetManagerId === 'all' && isExecutive) {
+      pendingRequests = query(`
+        SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar, e.manager_id, e.direct_manager_name
+        FROM requests r
+        JOIN employees e ON r.emp_id = e.id
+        WHERE (r.manager_status = 'معلق' OR r.status LIKE '%بانتظار موافقة المدير%' OR r.status LIKE '%معلق%')
+        ORDER BY r.created_at DESC
+        LIMIT 50
       `);
-    } else if (empId || userName) {
-      pendingRequests = query(`
-        SELECT r.*, e.emp_code, e.full_name_ar, e.job_title_ar
-        FROM requests r
-        JOIN employees e ON r.emp_id = e.id
-        WHERE ((? IS NOT NULL AND (r.manager_id = ? OR e.manager_id = ?))
-            OR (? <> '' AND (r.manager_name = ? OR r.manager_name LIKE ? OR e.direct_manager_name = ?)))
-          AND (r.status LIKE '%بانتظار موافقة المدير%' OR r.manager_status = 'معلق' OR r.status LIKE '%معلق%')
-        ORDER BY r.created_at DESC
-        LIMIT 20
-      `, [empId, empId, empId, userName, userName, `%${userName}%`, userName]);
     }
 
-    // 4. Calculate KPI Counts
+    // 4. Calculate Verified KPI Metrics from DB
     const inProgressTasksCount = tasks.filter(t => t.status === 'قيد التنفيذ' || t.status === 'جديدة' || t.status === 'بانتظار الاعتماد').length;
     const overdueTasksCount = tasks.filter(t => t.status === 'متأخرة' || (t.status !== 'مكتملة' && t.due_date && t.due_date < today)).length;
+    const completedTasksCount = tasks.filter(t => t.status === 'مكتملة').length;
     const pendingRequestsCount = pendingRequests.length;
     const teamCount = teamMembers.length;
+
+    let approvedRequestsCount = 0;
+    if (targetManagerId !== 'all' && targetManagerId !== 'none') {
+      const row = get(`
+        SELECT COUNT(r.id) as c
+        FROM requests r
+        JOIN employees e ON r.emp_id = e.id
+        WHERE e.manager_id = ? AND (r.manager_status = 'معتمد' OR r.status = 'معتمد نهائياً')
+      `, [Number(targetManagerId)]);
+      approvedRequestsCount = row ? row.c : 0;
+    } else {
+      const row = get("SELECT COUNT(id) as c FROM requests WHERE status = 'معتمد نهائياً' OR manager_status = 'معتمد'");
+      approvedRequestsCount = row ? row.c : 0;
+    }
+
+    const totalTasks = tasks.length;
+    const completionRate = totalTasks > 0 ? Math.round((completedTasksCount / totalTasks) * 100) : 100;
 
     res.json({
       success: true,
@@ -4293,9 +4362,17 @@ app.get('/api/manager/dashboard-stats', (req, res) => {
         in_progress_tasks_count: inProgressTasksCount,
         overdue_tasks_count: overdueTasksCount,
         pending_requests_count: pendingRequestsCount,
+        approved_requests_count: approvedRequestsCount,
+        completed_tasks_count: completedTasksCount,
+        completion_rate: completionRate,
+        is_executive: isExecutive,
+        selected_manager_id: targetManagerId,
+        selected_branch_id: targetBranchId,
+        available_managers: isExecutive ? availableManagers : [],
+        available_branches: isExecutive ? availableBranches : [],
+        team_members: teamMembers,
         tasks: tasks,
-        pending_requests: pendingRequests,
-        team_members: teamMembers
+        pending_requests: pendingRequests
       }
     });
   } catch (err) {
@@ -4316,13 +4393,39 @@ app.post('/api/manager/assign-task', (req, res) => {
       return res.status(400).json({ success: false, error: 'يجب اختيار الموظف المسندة إليه المهمة' });
     }
 
+    const isExecutive = !user || user.role === 'admin' || user.role === 'general_manager' || user.role === 'hr_manager';
+    const isDeptManager = user && user.role === 'dept_manager';
+
+    let userEmpId = user?.emp_id ? Number(user.emp_id) : null;
+    if (!userEmpId && user?.username && user.username !== 'admin') {
+      const row = get('SELECT id FROM employees WHERE emp_code = ?', [user.username]);
+      if (row) userEmpId = row.id;
+    }
+
+    // Line manager validation: Target employee MUST be their direct subordinate
+    if (isDeptManager && !isExecutive) {
+      const isSubordinate = get('SELECT id FROM employees WHERE id = ? AND manager_id = ? AND status = ?', [Number(assigned_to), userEmpId, 'نشط']);
+      if (!isSubordinate) {
+        return res.status(403).json({
+          success: false,
+          error: 'غير مصرح: لا يمكنك إسناد مهام لموظف خارج نطاق فريقك المباشر (IDOR Blocked)',
+          code: 'FORBIDDEN_IDOR'
+        });
+      }
+    } else if (!isExecutive && !isDeptManager) {
+      return res.status(403).json({
+        success: false,
+        error: 'غير مصرح لموظفي الخدمة الذاتية بإسناد المهام'
+      });
+    }
+
     const todayStr = new Date().toISOString().split('T')[0];
     const task = tasksModule.createTask({
       title: title.trim(),
       description: description ? description.trim() : '',
       assigned_to: Number(assigned_to),
-      assigned_by: user?.emp_id ? Number(user.emp_id) : (user?.id ? Number(user.id) : null),
-      assigned_by_name: user?.full_name || 'المدير المباشر',
+      assigned_by: userEmpId || (user?.id ? Number(user.id) : null),
+      assigned_by_name: user?.full_name || (isExecutive ? 'مدير النظام' : 'المدير المباشر'),
       start_date: req.body?.start_date || todayStr,
       due_date: due_date || todayStr,
       priority
@@ -4390,6 +4493,30 @@ app.put('/api/manager/requests/:id/action', (req, res) => {
 
     if (!action || (action !== 'approve' && action !== 'reject')) {
       return res.status(400).json({ success: false, error: 'إجراء الاعتماد غير صالح (يجب أن يكون approve أو reject)' });
+    }
+
+    const isExecutive = !user || user.role === 'admin' || user.role === 'general_manager';
+    const isDeptManager = user && user.role === 'dept_manager';
+
+    let userEmpId = user?.emp_id ? Number(user.emp_id) : null;
+    if (!userEmpId && user?.username && user.username !== 'admin') {
+      const row = get('SELECT id FROM employees WHERE emp_code = ?', [user.username]);
+      if (row) userEmpId = row.id;
+    }
+
+    const reqItem = get('SELECT r.*, e.manager_id, e.direct_manager_name FROM requests r JOIN employees e ON r.emp_id = e.id WHERE r.id = ?', [reqId]);
+    if (!reqItem) {
+      return res.status(404).json({ success: false, error: 'الطلب غير موجود' });
+    }
+
+    if (isDeptManager && !isExecutive) {
+      if (Number(reqItem.manager_id) !== Number(userEmpId)) {
+        return res.status(403).json({
+          success: false,
+          error: `غير مصرح: اعتماد هذه الخطوة مقتصر على المدير المباشر للموظف (${reqItem.direct_manager_name || 'المدير المباشر'}).`,
+          code: 'FORBIDDEN_IDOR'
+        });
+      }
     }
 
     const updated = requestsModule.processRequestStep(reqId, 'manager', action, comment, user);

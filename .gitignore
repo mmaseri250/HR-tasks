@@ -18,3 +18,5 @@ logs/*.log
 *.zip
 *.webp
 
+
+server/database/persisted_users.json

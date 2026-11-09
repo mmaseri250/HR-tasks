@@ -1,4 +1,9 @@
-الرقم الوظيفي,الاسم الرباعي,رقم الهوية / الإقامة,الجنسية,الإدارة,القسم,المسمى الوظيفي,رقم الجوال,البريد الإلكتروني,تاريخ المباشرة,الراتب الأساسي,بدل السكن,بدل المواصلات,بدلات أخرى,إجمالي الراتب,رقم الآيبان,تاريخ انتهاء الإقامة,المدير المباشر,الاحتساب الشهري للاجازات,الجنس
+// server/database/applyMasterUpdate.js
+const { db, query, get, run } = require('./db');
+const fs = require('fs');
+const path = require('path');
+
+const csvData = `الرقم الوظيفي,الاسم الرباعي,رقم الهوية / الإقامة,الجنسية,الإدارة,القسم,المسمى الوظيفي,رقم الجوال,البريد الإلكتروني,تاريخ المباشرة,الراتب الأساسي,بدل السكن,بدل المواصلات,بدلات أخرى,إجمالي الراتب,رقم الآيبان,تاريخ انتهاء الإقامة,المدير المباشر,الاحتساب الشهري للاجازات,الجنس
 JM-0001,عبدالملك سعيد الشريف,1101490207,السعودية,الإدارة الرئيسية,الموارد البشرية,مدير إدارة الموارد البشرية,59020621,3m.jo33@gmail.com,2016-01-01,8000,1000,1000,0,10000,SA9880209460279222121018,لا ينطبق,مدير النظام,2.5,male
 JM-0002,بريم بهادور بلال بهادور,2256690906,نيبال,إدارة الفروع — حي الموظفين,الصالات ومنافذ البيع,عامل تعبئة رفوف,0580164615,balalprem44@gmail.com,2008-07-29,1600,0,0,500,2100,SA6210000043053896000100,2026-09-13,علي سعد حسين البشري,2.5,male
 JM-0003,بادام بهادور كاسو بهادور,2256496775,نيبال,إدارة الفروع — حي الموظفين,المخبز,بائع مخبر,0557303891,pdam7417@gmail.com,2008-07-29,1600,0,0,300,1900,SA9310000030263387000102,2026-09-13,علي سعد حسين البشري,2.5,male
@@ -12,15 +17,15 @@ JM-0010,عرفان رضا عيشه علي,2306987377,الهند,الإدارة �
 JM-0011,جهامان سينغ رانا,2300752090,نيبال,إدارة الفروع — حي الموظفين,الصناديق والخزنة,موظف صندوق محاسبه,0573204398,jhaman058@gmail.com,2011-09-03,1300,0,0,600,1900,SA2310000030263376000107,2026-08-10,علي سعد حسين البشري,2.5,male
 JM-0012,علي رياض محمد,2315919775,باكستان,إدارة الفروع — حي الموظفين,الصالات ومنافذ البيع,مدخل بيانات,0501394983,ar7546090@gmail.com,2011-11-27,1500,0,0,500,2000,SA5410000043053930000102,2026-10-29,علي سعد حسين البشري,2.5,male
 JM-0013,محمد أمين عبدالصادق,2315918215,مصر,إدارة الفروع — سيتي بارك,المخبز,بائع قسم مخبز + الاجبان,0507965802,ma3586482@gmail.com,2011-11-27,2100,0,0,400,2500,SA3310000030263380000110,2026-10-29,خالد احمد محمد راعي,2.5,male
-JM-0014,شهيد منظور,2314527587,باكستان,إدارة المقاولات,المقاولات,عامل انشاءات,0507258267,hajishahid556@gmail.com,2011-12-05,1500,0,0,400,1900,SA7610000043053847000104,2026-09-08,فارس عبدالرحمن القحطاني,2.5,male
+JM-0014,شهيد منظور,2314527587,باكستان,الإدارة الهندسية والمقاولات,المقاولات,عامل انشاءات,0507258267,hajishahid556@gmail.com,2011-12-05,1500,0,0,400,1900,SA7610000043053847000104,2026-09-08,فارس عبدالرحمن القحطاني,2.5,male
 JM-0015,حسن محمود بدر,2283589519,مصر,إدارة الفروع — حي الموظفين,المخبز,معلم معجنات وبتزا,0592024470,abobadeer196@gmail.com,2012-02-21,3100,0,0,500,3600,SA3410000030263340000105,2026-07-26,علي سعد حسين البشري,2.5,male
 JM-0016,يعقوب باشا شيخ حسين,2304330885,الهند,إدارة الفروع — حي الموظفين,الصناديق والخزنة,امين خزنة,0553442190,ahmedzain@gmail.com,2012-04-28,2100,0,0,0,2100,SA5310000030263568000106,2026-08-11,علي سعد حسين البشري,2.5,male
 JM-0017,محمد شكيل,2328836750,الهند,الإدارة الرئيسية,تقنية المعلومات,فني شبكات تقنية معلومات,0503674387,moh.shakeel76@gmail.com,2012-10-06,4800,0,0,0,4800,SA8210000043053886000107,2026-09-25,عبدالملك سعيد الشريف,2.5,male
 JM-0018,فهد إبراهيم جعفر الاعوري,1012508964,السعودية,إدارة الفروع — الحبيل,مشرفي الصالات,مشرف صالة,0551662297,aassdq28@gmail.com,2013-08-11,4000,0,0,1400,5400,SA7110000030263362000106,لا ينطبق,عبدالملك سعيد الشريف,2.5,male
 JM-0019,محمد شعبان حسن زوين,2241107396,مصر,الإدارة الرئيسية,المالية,محاسب,0506894796,ms.zwin85@gmail.com,2013-12-21,3400,0,0,1100,4500,SA5210000043053924000106,2026-09-21,هاني عبدالرحمن صالح القحطاني,2.5,male
-JM-0020,عبدالرحمن خان شيرواني,2364517926,باكستان,إدارة المقاولات,المقاولات,عامل تعبئة وتغليف,0582040082,abdulrehmanmani223@gmail.com,2014-04-09,2200,0,0,0,2200,SA1710000043053800000107,2026-09-18,فارس عبدالرحمن القحطاني,2.5,male
+JM-0020,عبدالرحمن خان شيرواني,2364517926,باكستان,الإدارة الهندسية والمقاولات,المقاولات,عامل تعبئة وتغليف,0582040082,abdulrehmanmani223@gmail.com,2014-04-09,2200,0,0,0,2200,SA1710000043053800000107,2026-09-18,فارس عبدالرحمن القحطاني,2.5,male
 JM-0021,اعمار شاهزاد خان,2366421713,باكستان,إدارة المستودع الرئيسي,المستودعات,عامل معماري,0592842630,amir2071985@gmail.com,2014-05-10,1100,400,0,400,1900,SA5810000043053816000101,2026-10-02,عبدالملك سعيد الشريف,2.5,male
-JM-0022,شمسر آلام دوست محمد,2367493612,الهند,إدارة الصيانة والورشة,الورشة والصيانة,حداد أبواب معدنية,0506022631,shamsheralamshamsher744@gmail.com,2014-06-03,1100,0,0,0,1100,473,2027-01-29,عبدالملك سعيد الشريف,2.5,male
+JM-0022,شمسر آلام دوست محمد,2367493612,الهند,الإدارة الهندسية والمقاولات,الورشة والصيانة,حداد أبواب معدنية,0506022631,shamsheralamshamsher744@gmail.com,2014-06-03,1100,0,0,0,1100,473,2027-01-29,فارس عبدالرحمن القحطاني,2.5,male
 JM-0023,هاشم حسين أحمد العطاس,2367492895,اليمن,إدارة الفروع — حي الموظفين,الصالات ومنافذ البيع,مشرف صالة,0536189691,hashm053618@gmail.com,2014-06-10,1600,0,0,500,2100,SA7010000043053894000107,2026-08-20,علي سعد حسين البشري,2.5,male
 JM-0024,يام بهادور جاها,2378089417,نيبال,إدارة المستودع الرئيسي,النقل,سائق,0598491866,gahanirmal4@gmail.com,2014-12-12,1100,0,0,700,1800,SA5010000043053857000108,2026-08-26,عبدالملك سعيد الشريف,2.5,male
 JM-0025,ياسر صديق محمد صديق,2391840614,باكستان,إدارة المستودع الرئيسي,المستودعات,عامل,0581805021,yasirabha@gmail.com,2015-07-11,1300,0,0,600,1900,SA2810000043053771000110,2026-10-02,عبدالملك سعيد الشريف,2.5,male
@@ -42,7 +47,7 @@ JM-0040,جونيد شادان محمد,2467545568,الهند,إدارة الفر
 JM-0041,محمد رونى ميا محمد,2467149239,بنغلادش,إدارة الفروع — سيتي بارك,الصالات ومنافذ البيع,عامل تعبئة رفوف,0570025712,mdrohyshakder79@gmail.com,2019-04-25,1500,0,0,200,1700,SA1010000045700000068702,2026-09-15,خالد احمد محمد راعي,2.5,male
 JM-0042,محمد على عبده على,2377526534,مصر,إدارة الفروع — سيتي بارك,المخبز,شيف شرقي,0534265376,lym785984@gmail.com,2019-05-20,1300,500,0,600,2400,SA9710000030263291000100,2027-01-22,خالد احمد محمد راعي,2.5,male
 JM-0043,سميه سالم يحيى الفيفي,1072664301,السعودية,الإدارة الرئيسية,الموارد البشرية,موظفة موارد بشرية,0537930567,somayah.salem@jalmajd.com,2019-11-12,4000,0,0,500,4500,SA3710000011100017521604,لا ينطبق,عبدالملك سعيد الشريف,2.5,female
-JM-0044,راسل مياه نوبي,2471923587,بنغلادش,إدارة الفروع — سيتي بارك,الخدمات والدعم الإداري,عامل نظافة,0578160816,rasal9717@gmail.com,2020-01-01,1500,0,0,300,1800,SA3010000011100051333602,2026-08-13,فهمي سالم عبيد باعمير,2.5,male
+JM-0044,راسل مياه نوبي,2471923587,بنغلادش,إدارة الفروع — سيتي بارك,الخدمات والدعم الإداري,عامل نظافة,0578160816,rasal9717@gmail.com,2020-01-01,1500,0,0,300,1800,SA3010000011100051333602,2026-08-13,عبدالملك سعيد الشريف,2.5,male
 JM-0045,جهرل حق عباس,2481928717,الهند,إدارة الفروع — حي الموظفين,الصالات ومنافذ البيع,عامل تعبئة رفوف,0551575469,hoquesk868@gmail.com,2020-03-07,1500,0,0,300,1800,SA2010000011100051323403,2026-11-30,علي سعد حسين البشري,2.5,male
 JM-0046,بيجيد شيتول مياه,2492235524,بنغلادش,الإدارة الرئيسية,الخدمات والدعم الإداري,عامل خدمات,0552831646,bayezidbayezid999@gmail.com,2020-10-27,1500,0,0,200,1700,SA1510000046000000524400,2026-08-19,عبدالملك سعيد الشريف,2.5,male
 JM-0047,نور اسلام شيخ,2413158649,الهند,إدارة الفروع — سيتي بارك,الصالات ومنافذ البيع,عامل تعبئة رفوف,0578417163,n82794747@gmail.com,2021-04-17,1800,0,0,0,1800,SA7210000046800000685809,2026-08-19,خالد احمد محمد راعي,2.5,male
@@ -58,7 +63,7 @@ JM-0056,عبدالواحد عبدالواحد محمود مصطفى,2431370739,�
 JM-0057,نوره حسين مقبول القحطاني,1052910237,السعودية,الإدارة الرئيسية,الموارد البشرية,مصممة جيرافيك,0550787712,nooragahtani00909@gmail.com,2022-06-08,4000,0,0,0,4000,SA3310000048000001082405,لا ينطبق,عبدالملك سعيد الشريف,1.75,female
 JM-0058,مانجيت كومار,2518764192,نيبال,إدارة الفروع — حي الموظفين,المخبز,معلم صامولي,0578061364,manjitkumarsada2000@gmail.com,2022-07-31,1500,0,0,0,1500,SA7510000019700000583902,2026-09-28,علي سعد حسين البشري,1.75,male
 JM-0059,انيت- -كومار,2522358940,نيبال,إدارة الفروع — سيتي بارك,المخبز,مساعد شيف شرقي,0572591881,manbahadur0254@gmail.com,2022-07-31,1600,0,0,0,1600,SA4010000042100000835709,2026-09-28,خالد احمد محمد راعي,1.75,male
-JM-0060,هيم شانكار- كومار,2520369931,نيبال,إدارة الفروع — سيتي بارك,الخدمات والدعم الإداري,عامل نظافة,0572673746,hemakumar852850@gmail.com,2022-07-31,1700,0,0,0,1700,SA7710000087800000967103,2026-09-28,فهمي سالم عبيد باعمير,1.75,male
+JM-0060,هيم شانكار- كومار,2520369931,نيبال,إدارة الفروع — سيتي بارك,الخدمات والدعم الإداري,عامل نظافة,0572673746,hemakumar852850@gmail.com,2022-07-31,1700,0,0,0,1700,SA7710000087800000967103,2026-09-28,عبدالملك سعيد الشريف,1.75,male
 JM-0061,طه عبده سيف خالد,2521704086,اليمن,إدارة الفروع — حي الموظفين,المخبز,بائع مخبز,0532363546,715taha715taha715@gmail.com,2022-08-11,1800,0,0,0,1800,SA1510000018900000288008,2026-10-17,علي سعد حسين البشري,1.75,male
 JM-0062,اشيش ماندال,2518762824,نيبال,إدارة الفروع — سيتي بارك,محطة المرح الترفيهي,مشغل العاب,0573250991,aashismandal51@gmail.com,2022-08-15,1600,0,0,0,1600,SA8010000018900000287905,2026-09-28,هاني علي شامي عسيري,1.75,male
 JM-0063,عصام جابر النجيلي عبده,2532227648,مصر,إدارة الفروع — سيتي بارك,الأجبان,صانع اجبان,0550843692,essamgaber44abdo@gmail.com,2022-10-31,2000,0,0,0,2000,SA9710000011100314929605,2027-01-07,خالد احمد محمد راعي,1.75,male
@@ -73,15 +78,15 @@ JM-0071,علاء السيد مصطفى حسن,2497963237,مصر,إدارة ال�
 JM-0072,شامة علي محمد عسيري,1112576044,السعودية,الإدارة الرئيسية,الموارد البشرية,موظفة موارد بشرية,0501607172,shamaalimohd@gmail.com,2023-05-03,4000,0,0,0,4000,SA9810000011100363028007,لا ينطبق,عبدالملك سعيد الشريف,1.75,female
 JM-0073,لوك بهادور رانا,2325243489,نيبال,إدارة الفروع — سيتي بارك,المخبز,خباز صامولي,0598024219,hyy93882@gmail.com,2023-06-06,1500,0,0,300,1800,SA7510000048151370000107,2026-07-08,خالد احمد محمد راعي,1.75,male
 JM-0074,مؤمن جابر عطيت الله,2553883683,مصر,إدارة الفروع — سيتي بارك,المخبز,مساعد شيف غربي,0597287018,nomen0777@gmail.com,2023-07-24,2800,0,0,0,2800,SA2410000046000000651405,2026-09-08,خالد احمد محمد راعي,1.75,male
-JM-0075,شافي الله عبد الخالق,2523936157,باكستان,إدارة المقاولات,المقاولات,عامل بناء,0566746821,shafeeu770@gmail.com,2023-08-07,1800,0,0,0,1800,SA0710000011100393450203,2026-11-25,فارس عبدالرحمن القحطاني,1.75,male
+JM-0075,شافي الله عبد الخالق,2523936157,باكستان,الإدارة الهندسية والمقاولات,المقاولات,عامل بناء,0566746821,shafeeu770@gmail.com,2023-08-07,1800,0,0,0,1800,SA0710000011100393450203,2026-11-25,فارس عبدالرحمن القحطاني,1.75,male
 JM-0076,السيد ابراهيم السيد مسعود,2552866333,مصر,إدارة الفروع — حي الموظفين,الصالات ومنافذ البيع,مشرف صالة,0535818031,alsydkshksh@gmail.com,2023-08-17,2500,0,0,200,2700,SA1710000011100402271106,2027-01-27,علي سعد حسين البشري,1.75,male
 JM-0077,تيك بهادور كامي,2325244479,نيبال,إدارة الفروع — سيتي بارك,الخضار والفواكه,عامل خضار وفواكه,0573026156,ttak11224@gmail.com,2023-09-18,1400,0,0,400,1800,SA7710000043053893000105,2026-07-15,خالد احمد محمد راعي,1.75,male
 JM-0078,خيريه إسماعيل محمد عبدالله خنفور,1135619938,السعودية,إدارة الفروع — سيتي بارك,الصناديق والخزنة,موظف صندوق محاسبه,0509598959,kko.4.5.k@gmail.com,2023-10-01,4000,0,0,0,4000,SA0610000046000000645909,لا ينطبق,هاني علي شامي عسيري,1.75,female
 JM-0079,لينا عيد ناصر قبطي,1104736580,السعودية,إدارة الفروع — حي الموظفين,الصناديق والخزنة,موظف صندوق محاسبه,0503268995,l.alhmdan19@gmail.com,2023-10-05,4000,0,0,0,4000,SA2810000011100411634609,لا ينطبق,علي سعد حسين البشري,1.75,female
 JM-0080,منال سعيد حسن الاصلعي,1057909903,السعودية,إدارة الفروع — سيتي بارك,الصناديق والخزنة,موظف صندوق محاسبه,0533522244,haiati.sft123@gmail.com,2023-10-15,4000,0,0,0,4000,SA7310000042192780000201,لا ينطبق,خالد احمد محمد راعي,1.75,female
-JM-0081,عزت محمد سعد عزه,2562504122,مصر,الإدارة الهندسية,الهندسية,مهندس مدني,0546467607,ezzatmohammad77@gmail.com,2023-12-16,5000,0,0,0,5000,SA3010000046000000664004,2026-11-30,فارس عبدالرحمن القحطاني,1.75,male
+JM-0081,عزت محمد سعد عزه,2562504122,مصر,الإدارة الهندسية والمقاولات,الهندسية,مهندس مدني,0546467607,ezzatmohammad77@gmail.com,2023-12-16,5000,0,0,0,5000,SA3010000046000000664004,2026-11-30,فارس عبدالرحمن القحطاني,1.75,male
 JM-0082,هاني علي شامي عسيري,1106795105,السعودية,إدارة الفروع — سيتي بارك,مشرفي الصالات,مشرف صالة,0549492179,hany819000@gmail.com,2023-12-26,4000,0,0,200,4200,SA9510000042100000421208,لا ينطبق,عبدالملك سعيد الشريف,1.75,male
-JM-0083,مير اوسين,2547958955,بنغلادش,إدارة الفروع — سيتي بارك,الخدمات والدعم الإداري,عامل نظافة,0560546651,mirhosen328@gmail.com,2024-01-31,1700,0,0,0,1700,SA0410000011100445291907,2026-11-17,فهمي سالم عبيد باعمير,1.75,male
+JM-0083,مير اوسين,2547958955,بنغلادش,إدارة الفروع — سيتي بارك,الخدمات والدعم الإداري,عامل نظافة,0560546651,mirhosen328@gmail.com,2024-01-31,1700,0,0,0,1700,SA0410000011100445291907,2026-11-17,عبدالملك سعيد الشريف,1.75,male
 JM-0084,عهود سعيد محمد,1074201359,السعودية,الإدارة الرئيسية,الموارد البشرية,كاتب موارد بشرية,0582052993,ohood750750@gmail.com,2024-02-21,4000,0,0,0,4000,SA8310000011100441157509,لا ينطبق,عبدالملك سعيد الشريف,1.75,female
 JM-0085,تامر جمعه احمد عبدالله,2573815988,مصر,إدارة الفروع — سيتي بارك,المخبز,خباز,0548735969,tamerfaresqw@gmail.com,2024-05-06,4000,0,0,0,4000,SA7110000046000000694209,2026-10-21,عبدالملك سعيد الشريف,1.75,male
 JM-0086,باسم محسن السيد فرج,2573815962,مصر,إدارة الفروع — سيتي بارك,المخبز,شيف غربي,0549690347,basbosabasm@gmail.com,2024-05-06,3000,0,0,0,3000,SA4410000046000000694307,2026-10-21,خالد احمد محمد راعي,1.75,male
@@ -104,6 +109,314 @@ JM-0102,محمد صالح مهدي الدكاني,2634165951,مصر,الإدار
 JM-0103,محمد ناصر محمد آل مريع,1096901374,السعودية,إدارة الفروع — حي الموظفين,الصناديق والخزنة,موظف صندوق محاسبه,0507412569,moraya999@icloud.com,2026-05-12,3000,1000,0,0,4000,SA9210000019700000683603,لا ينطبق,علي سعد حسين البشري,1.75,male
 JM-0104,ندى يحيى جابر سفياني,1106453341,السعودية,إدارة الفروع — حي الموظفين,الصناديق والخزنة,موظف صندوق محاسبه,0533147646,s85721641@gmail.com,2026-08-24,3000,1000,0,0,4000,SA9010000011100205980107,لا ينطبق,علي سعد حسين البشري,1.75,female
 JM-0105,عبير سعيد علي الأحمري,1118810322,السعودية,إدارة الفروع — سيتي بارك,محطة المرح الترفيهي,مشغلة العاب,0505944858,r02ee@hotmail.com,2026-08-26,3000,1000,0,0,4000,SA2310000043500000455802,لا ينطبق,هاني علي شامي عسيري,1.75,female
-JM-0106,عهد سعيد بن محمد الشريف,1125340842,السعودية,الإدارة الرئيسية,الموارد البشرية,مساعد إداري,473,,2026-10-07,3000,1000,,0.01,4000.01,473,لا ينطبق,عبدالملك سعيد الشريف,1.75,female
-JM-0107,غدي سعيد بن محمد الشريف,1128985080,السعودية,الإدارة الرئيسية,الموارد البشرية,مساعد إداري,473,,2026-10-07,3000,1000,,0.01,4000.01,473,لا ينطبق,عبدالملك سعيد الشريف,1.75,female
-JM-0108,فارس عبدالرحمن القحطاني,,السعودية,الإدارة الهندسية,الهندسية,مدير الإدارة الهندسية,,,,,,,,,,لا ينطبق,عبدالملك سعيد الشريف,,
+JM-0106,عهد سعيد بن محمد الشريف,1125340842,السعودية,الإدارة الرئيسية,الموارد البشرية,مساعد إداري,473,31,2026-10-07,3000,1000,31,0.01,4000.01,473,لا ينطبق,عبدالملك سعيد الشريف,1.75,female
+JM-0107,غدي سعيد بن محمد الشريف,1128985080,السعودية,الإدارة الرئيسية,الموارد البشرية,مساعد إداري,473,31,2026-10-07,3000,1000,31,0.01,4000.01,473,لا ينطبق,عبدالملك سعيد الشريف,1.75,female
+JM-0108,فارس عبدالرحمن القحطاني,1065432198,السعودية,الإدارة الهندسية والمقاولات,الهندسية,مدير الإدارة الهندسية,0555555555,faris@jalmajd.com,2017-01-01,9000,1000,1000,0,11000,SA0000000000000000000000,لا ينطبق,عبدالملك سعيد الشريف,2.5,male`;
+
+// Permissions & Leave Balances CSV chunk
+const balanceData = {
+  'JM-0001': { open: 40, perms: 'hr_manager' },
+  'JM-0002': { open: 62.5, perms: 'employee' },
+  'JM-0003': { open: 92.5, perms: 'employee' },
+  'JM-0004': { open: 92.5, perms: 'employee' }, // Fahmi Baameer strictly ESS!
+  'JM-0005': { open: 92.5, perms: 'employee' },
+  'JM-0006': { open: 62.5, perms: 'employee' },
+  'JM-0007': { open: 32.5, perms: 'employee' },
+  'JM-0008': { open: 19.5, perms: 'employee' },
+  'JM-0009': { open: 2.5, perms: 'employee' },
+  'JM-0010': { open: 62.5, perms: 'employee' },
+  'JM-0011': { open: 32.5, perms: 'employee' },
+  'JM-0012': { open: 2.5, perms: 'employee' },
+  'JM-0013': { open: 2.5, perms: 'employee' },
+  'JM-0014': { open: 2.5, perms: 'employee' },
+  'JM-0015': { open: 32.5, perms: 'employee' },
+  'JM-0016': { open: 2.5, perms: 'employee' },
+  'JM-0017': { open: 62.5, perms: 'employee' },
+  'JM-0018': { open: 176.5, perms: 'dept_manager' }, // Fahd Aowari
+  'JM-0019': { open: 2.5, perms: 'employee' },
+  'JM-0020': { open: 2.5, perms: 'employee' },
+  'JM-0021': { open: 2.5, perms: 'employee' },
+  'JM-0022': { open: 2.5, perms: 'employee' },
+  'JM-0023': { open: 62.5, perms: 'employee' },
+  'JM-0024': { open: 122.5, perms: 'employee' },
+  'JM-0025': { open: 2.5, perms: 'employee' },
+  'JM-0026': { open: 32.5, perms: 'employee' },
+  'JM-0027': { open: 32.5, perms: 'employee' },
+  'JM-0028': { open: 174.5, perms: 'dept_manager' }, // Hani Qahtani
+  'JM-0029': { open: 62.5, perms: 'employee' },
+  'JM-0030': { open: 32.5, perms: 'employee' },
+  'JM-0031': { open: 62.5, perms: 'employee' },
+  'JM-0032': { open: 62.5, perms: 'employee' },
+  'JM-0033': { open: 2.5, perms: 'employee' },
+  'JM-0034': { open: 32.5, perms: 'employee' },
+  'JM-0035': { open: 92.5, perms: 'employee' },
+  'JM-0036': { open: 32.5, perms: 'employee' },
+  'JM-0037': { open: 2.5, perms: 'employee' },
+  'JM-0038': { open: 62.5, perms: 'employee' },
+  'JM-0039': { open: 23.5, perms: 'employee' },
+  'JM-0040': { open: 32.5, perms: 'employee' },
+  'JM-0041': { open: 32.5, perms: 'employee' },
+  'JM-0042': { open: 2.5, perms: 'employee' },
+  'JM-0043': { open: 97.5, perms: 'hr_specialist' }, // Somayah Al-Faifi (Extended HR)
+  'JM-0044': { open: 62.5, perms: 'employee' },
+  'JM-0045': { open: 32.5, perms: 'employee' },
+  'JM-0046': { open: 32.5, perms: 'employee' },
+  'JM-0047': { open: 44.5, perms: 'employee' },
+  'JM-0048': { open: 2.5, perms: 'employee' },
+  'JM-0049': { open: 44.5, perms: 'employee' },
+  'JM-0050': { open: 2.5, perms: 'employee' },
+  'JM-0051': { open: 21.75, perms: 'employee' },
+  'JM-0052': { open: 43.75, perms: 'employee' },
+  'JM-0053': { open: 1.75, perms: 'employee' },
+  'JM-0054': { open: 85.75, perms: 'employee' },
+  'JM-0055': { open: 85.75, perms: 'employee' },
+  'JM-0056': { open: 1.75, perms: 'employee' },
+  'JM-0057': { open: 85.75, perms: 'employee' },
+  'JM-0058': { open: 22.75, perms: 'employee' },
+  'JM-0059': { open: 22.75, perms: 'employee' },
+  'JM-0060': { open: 85.75, perms: 'employee' },
+  'JM-0061': { open: 1.75, perms: 'employee' },
+  'JM-0062': { open: 85.75, perms: 'employee' },
+  'JM-0063': { open: 1.75, perms: 'employee' },
+  'JM-0064': { open: 22.75, perms: 'employee' },
+  'JM-0065': { open: 1.75, perms: 'employee' },
+  'JM-0066': { open: 1.75, perms: 'employee' },
+  'JM-0067': { open: 43.75, perms: 'employee' },
+  'JM-0068': { open: 1.75, perms: 'employee' },
+  'JM-0069': { open: 22.75, perms: 'employee' },
+  'JM-0070': { open: 4.75, perms: 'dept_manager' }, // Khaled Raee
+  'JM-0071': { open: 1.75, perms: 'employee' },
+  'JM-0072': { open: 21.75, perms: 'hr_specialist' }, // Shama Asiri (Extended HR)
+  'JM-0073': { open: 22.75, perms: 'employee' },
+  'JM-0074': { open: 22.75, perms: 'employee' },
+  'JM-0075': { open: 1.75, perms: 'employee' },
+  'JM-0076': { open: 1.75, perms: 'employee' },
+  'JM-0077': { open: 22.75, perms: 'employee' },
+  'JM-0078': { open: 18.75, perms: 'employee' },
+  'JM-0079': { open: 28.75, perms: 'employee' },
+  'JM-0080': { open: 23.75, perms: 'employee' },
+  'JM-0081': { open: 1.75, perms: 'employee' },
+  'JM-0082': { open: 16.75, perms: 'dept_manager' }, // Hani Asiri
+  'JM-0083': { open: 43.75, perms: 'employee' },
+  'JM-0084': { open: 43.75, perms: 'employee' },
+  'JM-0085': { open: 1.75, perms: 'employee' },
+  'JM-0086': { open: 22.75, perms: 'employee' },
+  'JM-0087': { open: 22.75, perms: 'employee' },
+  'JM-0088': { open: 1.75, perms: 'employee' },
+  'JM-0089': { open: 1.75, perms: 'employee' },
+  'JM-0090': { open: 19.75, perms: 'employee' },
+  'JM-0091': { open: 22.75, perms: 'employee' },
+  'JM-0092': { open: 1.75, perms: 'employee' },
+  'JM-0093': { open: 1.75, perms: 'employee' },
+  'JM-0094': { open: 2.75, perms: 'employee' },
+  'JM-0095': { open: 8.75, perms: 'employee' },
+  'JM-0096': { open: 13.75, perms: 'dept_manager' }, // Ahmed Yeanallah
+  'JM-0097': { open: 1.75, perms: 'employee' },
+  'JM-0098': { open: 22.75, perms: 'employee' },
+  'JM-0099': { open: 22.75, perms: 'employee' },
+  'JM-0100': { open: 22.75, perms: 'dept_manager' }, // Ali Al-Bishri
+  'JM-0101': { open: 1.75, perms: 'employee' },
+  'JM-0102': { open: 1.75, perms: 'employee' },
+  'JM-0103': { open: 1.75, perms: 'employee' },
+  'JM-0104': { open: 1.75, perms: 'employee' },
+  'JM-0105': { open: 1.75, perms: 'employee' },
+  'JM-0106': { open: 1.69, perms: 'employee' },
+  'JM-0107': { open: 1.69, perms: 'employee' },
+  'JM-0108': { open: 0, perms: 'dept_manager' } // Faris Al-Qahtani
+};
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',');
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(',');
+    if (parts.length >= 18) {
+      const obj = {};
+      headers.forEach((h, idx) => {
+        obj[h.trim()] = (parts[idx] || '').trim();
+      });
+      rows.push(obj);
+    }
+  }
+  return rows;
+}
+
+function executeMasterUpdate() {
+  console.log('=== APPLYING MASTER ORGANIZATIONAL HIERARCHY & ROLES ===');
+  const rows = parseCSV(csvData);
+  console.log(`Parsed ${rows.length} employee rows from certified data.`);
+
+  // 1. Purge obsolete users
+  run(`
+    DELETE FROM users 
+    WHERE username IN ('salih.qahtani', 'SH1053', 'SO1001', '1110902515', 'abdulrahman.qahtani', 'saeed.qahtani', 'admin.qahtani')
+       OR full_name LIKE '%صالح سعيد%'
+       OR full_name LIKE '%عبدالرحمن صالح%'
+       OR full_name LIKE '%سعيد محمد%'
+  `);
+  console.log('Purged obsolete users from users table.');
+
+  // 2. First pass: Ensure all 108 employees exist in employees table
+  for (const r of rows) {
+    const code = r['الرقم الوظيفي'];
+    const name = r['الاسم الرباعي'];
+    const jobTitle = r['المسمى الوظيفي'];
+    const nationalId = r['رقم الهوية / الإقامة'];
+    const nationality = r['الجنسية'];
+    const phone = r['رقم الجوال'];
+    const email = r['البريد الإلكتروني'];
+    const hireDate = r['تاريخ المباشرة'] !== '31' ? r['تاريخ المباشرة'] : '2016-01-01';
+    const basic = Number(r['الراتب الأساسي']) || 3000;
+    const housing = Number(r['بدل السكن']) || 0;
+    const transport = Number(r['بدل المواصلات']) || 0;
+    const other = Number(r['بدلات أخرى']) || 0;
+    const totalSalary = basic + housing + transport + other;
+    const iban = r['رقم الآيبان'] !== '473' && r['رقم الآيبان'] !== '31' ? r['رقم الآيبان'] : '';
+    const gender = r['الجنس'] || 'male';
+    const directMgr = r['المدير المباشر'];
+
+    const balInfo = balanceData[code] || { open: 0, perms: 'employee' };
+
+    const existing = get('SELECT id FROM employees WHERE emp_code = ?', [code]);
+    if (existing) {
+      run(`
+        UPDATE employees SET
+          full_name_ar = ?, national_id = ?, nationality = ?, job_title_ar = ?,
+          phone = ?, email = ?, join_date = ?, basic_salary = ?, housing_allowance = ?,
+          transport_allowance = ?, other_allowance = ?, iban = ?,
+          direct_manager_name = ?, opening_leave_balance = ?, annual_leave_balance = ?,
+          status = 'نشط'
+        WHERE id = ?
+      `, [name, nationalId, nationality, jobTitle, phone, email, hireDate, basic, housing, transport, other, iban, directMgr, balInfo.open, balInfo.open, existing.id]);
+    } else {
+      run(`
+        INSERT INTO employees (
+          emp_code, full_name_ar, full_name_en, job_title_en, national_id, nationality, job_title_ar,
+          phone, email, join_date, basic_salary, housing_allowance,
+          transport_allowance, other_allowance, iban,
+          direct_manager_name, opening_leave_balance, annual_leave_balance,
+          status, is_saudi, gender
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'نشط', ?, ?)
+      `, [code, name, name, jobTitle, nationalId, nationality, jobTitle, phone, email, hireDate, basic, housing, transport, other, iban, directMgr, balInfo.open, balInfo.open, nationality === 'سعودي' ? 1 : 0, gender]);
+    }
+  }
+
+  // 3. Second pass: Link manager_id properly based on exact direct_manager_name
+  const allActive = query("SELECT id, emp_code, full_name_ar, direct_manager_name FROM employees WHERE status = 'نشط'");
+  for (const emp of allActive) {
+    if (!emp.direct_manager_name || emp.direct_manager_name === 'مدير النظام') {
+      run('UPDATE employees SET manager_id = NULL WHERE id = ?', [emp.id]);
+    } else {
+      const mgr = allActive.find(m => m.full_name_ar.trim() === emp.direct_manager_name.trim());
+      if (mgr) {
+        run('UPDATE employees SET manager_id = ? WHERE id = ?', [mgr.id, emp.id]);
+      } else {
+        console.warn(`Manager not found for: ${emp.full_name_ar} (Mgr Name: ${emp.direct_manager_name})`);
+      }
+    }
+  }
+  console.log('Linked manager_id for all employees successfully.');
+
+  // 4. Update Departments and Branches Managers
+  const aliEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%علي سعد حسين البشري%'");
+  const khaledEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%خالد احمد محمد راعي%'");
+  const farisEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%فارس عبدالرحمن القحطاني%'");
+  const abdulmalikEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%عبدالملك سعيد الشريف%'");
+  const haniAsiriEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%هاني علي شامي عسيري%'");
+  const fahdEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%فهد إبراهيم جعفر الاعوري%'");
+  const haniQahtaniEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%هاني عبدالرحمن صالح القحطاني%'");
+  const ahmedYeanEmp = get("SELECT id, full_name_ar FROM employees WHERE full_name_ar LIKE '%احمد عبدالرحمن علي يعن الله%'");
+
+  // Sync branches
+  run("UPDATE branches SET manager_name = 'خالد احمد محمد راعي' WHERE name_ar LIKE '%سيتي بارك%'");
+  run("UPDATE branches SET manager_name = 'علي سعد حسين البشري' WHERE name_ar LIKE '%حي الموظفين%'");
+  run("UPDATE branches SET manager_name = 'فهد إبراهيم جعفر الاعوري' WHERE name_ar LIKE '%الحبيل%'");
+  run("UPDATE branches SET manager_name = 'احمد عبدالرحمن علي يعن الله' WHERE name_ar LIKE '%وسط البلد%'");
+  run("UPDATE branches SET manager_name = 'عبدالملك سعيد الشريف' WHERE is_main = 1 OR name_ar LIKE '%الرئيسي%'");
+
+  // Sync departments
+  run("UPDATE departments SET manager_name = 'خالد احمد محمد راعي' WHERE name_ar LIKE '%سيتي بارك%'");
+  run("UPDATE departments SET manager_name = 'علي سعد حسين البشري' WHERE name_ar LIKE '%حي الموظفين%'");
+  run("UPDATE departments SET manager_name = 'فارس عبدالرحمن القحطاني' WHERE name_ar LIKE '%الهندسية%' OR name_ar LIKE '%المقاولات%'");
+  run("UPDATE departments SET manager_name = 'هاني عبدالرحمن صالح القحطاني' WHERE name_ar LIKE '%المالية%'");
+  run("UPDATE departments SET manager_name = 'فهد إبراهيم جعفر الاعوري' WHERE name_ar LIKE '%الحبيل%'");
+  run("UPDATE departments SET manager_name = 'احمد عبدالرحمن علي يعن الله' WHERE name_ar LIKE '%وسط البلد%'");
+  run("UPDATE departments SET manager_name = 'عبدالملك سعيد الشريف' WHERE name_ar LIKE '%الإدارة الرئيسية%' OR name_ar LIKE '%الموارد البشرية%' OR name_ar LIKE '%المستودع%' OR name_ar LIKE '%الصيانة%'");
+  run("UPDATE departments SET manager_emp_id = (SELECT id FROM employees WHERE full_name_ar = departments.manager_name LIMIT 1)");
+
+  // 5. Sync Users table to exactly 109 accounts
+  // First, ensure admin exists
+  const adminUser = get("SELECT id FROM users WHERE username = 'admin'");
+  if (!adminUser) {
+    run(`
+      INSERT INTO users (username, password, full_name, email, role, permissions, is_active, status, activated_at)
+      VALUES ('admin', 'Jj123', 'مدير النظام', 'admin@jalmajd.com', 'admin', '["all"]', 1, 'نشط', CURRENT_TIMESTAMP)
+    `);
+  } else {
+    run("UPDATE users SET role = 'admin', permissions = '[\"all\"]', is_active = 1, status = 'نشط' WHERE id = ?", [adminUser.id]);
+  }
+
+  // Sync all 108 employees into users table
+  for (const emp of allActive) {
+    const balInfo = balanceData[emp.emp_code] || { perms: 'employee' };
+    const role = balInfo.perms; // 'employee', 'dept_manager', 'hr_manager', 'hr_specialist'
+    const defaultPass = role === 'dept_manager' ? 'Mgr123' : (role.startsWith('hr_') ? 'Hr123' : 'Emp123');
+
+    let perms = ['requests.create', 'leaves.create', 'profile.view', 'circulars.view', 'policies.view'];
+    if (role === 'dept_manager') {
+      perms = ['requests', 'approvals', 'employees', 'tasks', 'reports', 'leaves.approve'];
+    } else if (role === 'hr_manager') {
+      perms = ['all'];
+    } else if (role === 'hr_specialist') {
+      perms = ['employees.view', 'leaves.verify', 'requests.verify', 'reports', 'hub.view'];
+    }
+
+    const permsStr = JSON.stringify(perms);
+    const email = emp.email && emp.email.includes('@') ? emp.email : `${emp.emp_code.toLowerCase()}@jalmajd.com`;
+
+    const userRow = get('SELECT id FROM users WHERE emp_id = ? OR username = ?', [emp.id, emp.emp_code]);
+    if (userRow) {
+      run(`
+        UPDATE users SET
+          username = ?, full_name = ?, email = ?, role = ?, permissions = ?,
+          emp_id = ?, is_active = 1, status = 'نشط'
+        WHERE id = ?
+      `, [emp.emp_code, emp.full_name_ar, email, role, permsStr, emp.id, userRow.id]);
+    } else {
+      run(`
+        INSERT INTO users (
+          username, password, full_name, email, role, permissions,
+          emp_id, is_active, status, activated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'نشط', CURRENT_TIMESTAMP)
+      `, [emp.emp_code, defaultPass, emp.full_name_ar, email, role, permsStr, emp.id]);
+    }
+  }
+
+  console.log('=== VERIFYING FINAL STATS ===');
+  const totalEmployees = get("SELECT COUNT(*) as c FROM employees WHERE status = 'نشط'").c;
+  const totalUsers = get("SELECT COUNT(*) as c FROM users").c;
+
+  console.log(`Total Active Employees: ${totalEmployees} (Target: 108)`);
+  console.log(`Total Users: ${totalUsers} (Target: 109)`);
+
+  const roleStats = query("SELECT role, COUNT(*) as c FROM users GROUP BY role ORDER BY c DESC");
+  console.table(roleStats);
+
+  const mgrStats = query(`
+    SELECT m.emp_code, m.full_name_ar, COUNT(e.id) as subordinates_count
+    FROM employees e
+    JOIN employees m ON e.manager_id = m.id
+    WHERE e.status = 'نشط'
+    GROUP BY m.id
+    ORDER BY subordinates_count DESC
+  `);
+  console.log('Subordinates per Manager:');
+  console.table(mgrStats);
+}
+
+if (require.main === module) {
+  executeMasterUpdate();
+}
+
+module.exports = { executeMasterUpdate };

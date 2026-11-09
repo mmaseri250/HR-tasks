@@ -611,7 +611,7 @@ function initSchema() {
   try { db.exec('ALTER TABLE employees ADD COLUMN qualification_degree TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN qualification_major TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN opening_leave_balance REAL DEFAULT 0;'); } catch (e) {}
-  try { db.exec('ALTER TABLE employees ADD COLUMN accrual_start_date TEXT DEFAULT "2026-11-05";'); } catch (e) {}
+  try { db.exec('ALTER TABLE employees ADD COLUMN accrual_start_date TEXT DEFAULT "2026-11-07";'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN monthly_accrual_rate REAL DEFAULT 1.75;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN photo_url TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE employees ADD COLUMN termination_date TEXT;'); } catch (e) {}

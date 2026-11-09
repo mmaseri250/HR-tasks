@@ -177,9 +177,16 @@ function createTask(data) {
   const cleanAttachments = typeof attachments === 'string' ? attachments.trim() : (attachments ? JSON.stringify(attachments) : '');
 
   const year = new Date().getFullYear();
-  const countRow = get('SELECT COUNT(*) AS total FROM tasks');
-  const seq = String((countRow.total || 0) + 1).padStart(4, '0');
-  const task_no = `TSK-${year}-${seq}`;
+  let maxSeq = 0;
+  try {
+    const maxRow = get(`SELECT task_no FROM tasks WHERE task_no LIKE 'TSK-${year}-%' ORDER BY id DESC LIMIT 1`);
+    if (maxRow && maxRow.task_no) {
+      const parts = maxRow.task_no.split('-');
+      const num = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(num)) maxSeq = num;
+    }
+  } catch (_) {}
+  const task_no = `TSK-${year}-${String(maxSeq + 1).padStart(4, '0')}`;
 
   const todayStr = new Date().toISOString().split('T')[0];
   let finalStatus = status || 'جديدة';

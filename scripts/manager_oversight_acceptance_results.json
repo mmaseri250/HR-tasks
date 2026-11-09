@@ -1,0 +1,66 @@
+{
+  "timestamp": "2026-11-09T05:25:18.868Z",
+  "allPassed": true,
+  "testResults": [
+    {
+      "caseNum": 1,
+      "title": "Admin login and viewing all active employees (Company-wide Oversight)",
+      "passed": true,
+      "details": "API team_count: 108, DB active employees: 108, is_executive: true"
+    },
+    {
+      "caseNum": 2,
+      "title": "Selecting specific Line Manager and loading their exact team",
+      "passed": true,
+      "details": "Ali Al-Bishri subordinates: 25 (Expected 25), Khaled Raee subordinates: 32 (Expected 32)"
+    },
+    {
+      "caseNum": 3,
+      "title": "Assigning task to an authorized employee with DB persistence",
+      "passed": true,
+      "details": "Task created: ID 58, assigned_to: 59137 (بريم بهادور بلال بهادور), priority: عاجلة"
+    },
+    {
+      "caseNum": 4,
+      "title": "Line Manager login isolation (sees only their 25 subordinates)",
+      "passed": true,
+      "details": "Team count: 25, is_executive: false, all members verified under Ali: true"
+    },
+    {
+      "caseNum": 5,
+      "title": "Strict IDOR Protection across API endpoints for Line Managers",
+      "passed": true,
+      "details": "Dashboard query outside team -> HTTP 403 (FORBIDDEN_IDOR), Task assignment outside team -> HTTP 403 (FORBIDDEN_IDOR)"
+    },
+    {
+      "caseNum": 6,
+      "title": "Leave request delivery strictly to the correct Line Manager",
+      "passed": true,
+      "details": "Request visible to Ali (Direct Manager): true, Request visible to Khaled (Unrelated Manager): false"
+    },
+    {
+      "caseNum": 7,
+      "title": "Stage-gate authorization and prevention of unauthorized / self approvals",
+      "passed": true,
+      "details": "Unauthorized manager approval blocked: HTTP 403 (FORBIDDEN_IDOR), Self approval blocked: true"
+    },
+    {
+      "caseNum": 8,
+      "title": "Live verification of all 4 KPI dashboard metrics against SQLite queries",
+      "passed": true,
+      "details": "API Team: 108 vs SQL: 108 | API InProgress: 3 vs SQL: 3 | API Overdue: 0 vs SQL: 0 | API Pending: 5 vs SQL: 5"
+    },
+    {
+      "caseNum": 9,
+      "title": "Verification of 100% hierarchy preservation against certified directives",
+      "passed": true,
+      "details": "Examined 108 employee records: Mismatches=0, Fahmi Subordinates=0 (Exp 0), Faris Subordinates=5 (Exp 5), Abdulmalik Subordinates=33 (Exp 33)"
+    },
+    {
+      "caseNum": 10,
+      "title": "DOM structure, Responsive Layout & Controller Event Listeners Integrity",
+      "passed": true,
+      "details": "All 13 DOM element IDs & Controller event bindings confirmed present and properly styled with Tailwind CSS responsive utilities"
+    }
+  ]
+}
