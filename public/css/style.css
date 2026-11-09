@@ -584,6 +584,30 @@ html[dir="ltr"] #headerLangMenu {
   max-width: 17.5rem !important;
   flex-shrink: 0 !important;
   display: block !important;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-desktop-container.collapsed {
+  width: 5rem !important;
+  min-width: 5rem !important;
+  max-width: 5rem !important;
+}
+
+.sidebar-desktop-container.collapsed .sidebar-brand-text,
+.sidebar-desktop-container.collapsed .sidebar-section-header span,
+.sidebar-desktop-container.collapsed .nav-item span,
+.sidebar-desktop-container.collapsed .sidebar-footer-text {
+  display: none !important;
+}
+
+.sidebar-desktop-container.collapsed .nav-item {
+  justify-content: center !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+.sidebar-desktop-container.collapsed .sidebar-section-header {
+  justify-content: center !important;
 }
 
 main.flex-1 {

@@ -186,15 +186,15 @@
         
         <!-- Company Branding Header (Image 4 exact) -->
         <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
-          <button type="button" class="text-white/80 hover:text-white p-1 transition" title="القائمة">
+          <button type="button" onclick="toggleSidebarCollapse()" class="text-white/80 hover:text-white p-1 transition cursor-pointer" title="طي / توسيع القائمة">
             <i class="fa-solid fa-bars text-base"></i>
           </button>
           <div class="flex items-center gap-2.5">
-            <div class="text-right">
+            <div class="text-right sidebar-brand-text">
               <span class="text-xs font-black text-white block leading-tight">جوهرة المجد</span>
               <span class="text-[10px] font-bold text-amber-200/90 block leading-tight">للتجارة</span>
             </div>
-            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1 shadow-sm flex-shrink-0">
+            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1 shadow-sm flex-shrink-0 cursor-pointer" onclick="switchTab('dashboard')">
               <img src="assets/logo.png" alt="جوهرة المجد" class="w-full h-full object-contain">
             </div>
           </div>
@@ -356,18 +356,12 @@
            ===================================================================== -->
       <section id="view-dashboard" class="space-y-6">
         
-        <!-- 1. Executive Hero Card (Image 5 exact - Building Facade with Golden Swoop & Royal Maroon Gradient) -->
+        <!-- 1. Executive Hero Banner (Pure HTML/CSS + Clean Building Asset + Vector SVG Golden Swoop) -->
         <div class="relative rounded-3xl overflow-hidden shadow-xl border border-amber-500/30 bg-gradient-to-l from-[#4a080d] via-[#65000b] to-[#7d0d17] text-white min-h-[175px] flex flex-col md:flex-row items-stretch">
           
-          <!-- Left side: Building Image with Curved Gold Accent -->
-          <div class="relative w-full md:w-5/12 lg:w-4/12 overflow-hidden flex-shrink-0 min-h-[150px] md:min-h-full">
-            <img src="assets/hero-building.png" alt="شركة جوهرة المجد" class="w-full h-full object-cover object-left">
-            <div class="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/20 to-transparent pointer-events-none hidden md:block"></div>
-          </div>
-
-          <!-- Right side: Executive Text, Badges, & Corporate Identity -->
+          <!-- Right side: Executive Text, Badges, & Corporate Identity (Child 1 in RTL = Placed on Right side, 55%) -->
           <div class="flex-1 p-6 sm:p-8 flex flex-col justify-center text-right z-10 space-y-2.5">
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
               <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#b8860b]/30 text-[#f5d78e] border border-[#d4af37]/40 shadow-xs">
                 <i class="fa-solid fa-crown text-[#ffd700]"></i> لوحة القيادة التنفيذية
               </span>
@@ -376,6 +370,27 @@
             <p class="text-white/85 text-xs sm:text-sm font-medium leading-relaxed max-w-2xl">
               مؤشرات أداء رئيسية وملخص لحالة القوى العاملة والعمليات التشغيلية
             </p>
+          </div>
+
+          <!-- Left side: Clean Corporate Building Photo (Child 2 in RTL = Placed on Left side, 45%) -->
+          <div class="relative w-full md:w-[45%] overflow-hidden flex-shrink-0 min-h-[150px] md:min-h-full">
+            <img src="assets/building-clean.png" alt="مبنى شركة جوهرة المجد" class="w-full h-full object-cover object-center">
+            
+            <!-- True Vector Golden Swoosh Curve Divider on the inner edge (facing text) -->
+            <svg class="absolute inset-y-0 right-0 h-full w-24 md:w-32 pointer-events-none hidden md:block" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <!-- Golden Accent Ribbon -->
+              <path d="M 90 0 C 75 40, 40 75, 15 100 L 25 100 C 50 75, 85 40, 100 0 Z" fill="url(#goldSwoopGrad)" />
+              <!-- Solid Maroon to blend seamlessly into text side -->
+              <path d="M 100 0 C 85 40, 50 75, 25 100 L 100 100 Z" fill="#65000b" />
+              <defs>
+                <linearGradient id="goldSwoopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#fdf0cd" />
+                  <stop offset="30%" stop-color="#f5d070" />
+                  <stop offset="70%" stop-color="#c5982e" />
+                  <stop offset="100%" stop-color="#8b6819" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
 
           <!-- Hidden Compatibility Elements for JS References -->

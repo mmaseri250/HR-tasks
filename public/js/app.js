@@ -1582,6 +1582,14 @@ function handleMobAttendanceClick() {
   switchTab('attendance');
 }
 
+function toggleSidebarCollapse() {
+  const sidebar = document.querySelector('.sidebar-desktop-container');
+  if (sidebar) {
+    sidebar.classList.toggle('collapsed');
+  }
+}
+window.toggleSidebarCollapse = toggleSidebarCollapse;
+
 /* =========================================================================
    1. DASHBOARD CONTROLLER (Ensures charts ALWAYS render cleanly)
    ========================================================================= */
@@ -1708,15 +1716,15 @@ async function loadExecutiveDashboard() {
     if (actionsListEl && Array.isArray(d.action_items)) {
       actionsListEl.innerHTML = d.action_items.map(item => `
         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 border border-slate-100 transition cursor-pointer" onclick="switchTab('${item.tab || item.action_tab || 'leaves'}')">
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200/80 text-slate-700 font-mono">${item.count}</span>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${item.priority === 'عالية' ? 'bg-rose-100 text-rose-800' : (item.priority === 'متوسطة' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')}">${item.priority}</span>
-          </div>
           <div class="flex items-center gap-3">
-            <span class="text-xs font-bold text-slate-800">${item.title}</span>
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm flex-shrink-0">
               <i class="${item.icon || 'fa-regular fa-calendar-check'}"></i>
             </div>
+            <span class="text-xs font-bold text-slate-800">${item.title}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${item.priority === 'عالية' ? 'bg-rose-100 text-rose-800' : (item.priority === 'متوسطة' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800')}">${item.priority}</span>
+            <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200/80 text-slate-700 font-mono">${item.count}</span>
           </div>
         </div>
       `).join('');
@@ -1727,13 +1735,13 @@ async function loadExecutiveDashboard() {
     if (alertsListEl && Array.isArray(d.alerts)) {
       alertsListEl.innerHTML = d.alerts.map(alt => `
         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 border border-slate-100 transition cursor-pointer" onclick="switchTab('${alt.tab || 'compliance'}')">
-          <span class="text-[10px] font-bold text-slate-400 font-mono">${alt.time}</span>
           <div class="flex items-center gap-3">
-            <span class="text-xs font-bold text-slate-800">${alt.text}</span>
-            <div class="w-8 h-8 rounded-lg ${alt.icon_bg || 'bg-amber-100 text-amber-600'} flex items-center justify-center text-sm">
+            <div class="w-8 h-8 rounded-lg ${alt.icon_bg || 'bg-amber-100 text-amber-600'} flex items-center justify-center text-sm flex-shrink-0">
               <i class="${alt.icon || 'fa-solid fa-bell'}"></i>
             </div>
+            <span class="text-xs font-bold text-slate-800">${alt.text}</span>
           </div>
+          <span class="text-[10px] font-bold text-slate-400 font-mono">${alt.time}</span>
         </div>
       `).join('');
     }
